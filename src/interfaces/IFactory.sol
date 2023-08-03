@@ -18,4 +18,12 @@ interface IFactory {
      * @return owner The Vault owner.
      */
     function ownerOfVault(address vault) external view returns (address);
+
+    /**
+     * @notice Function used to transfer a vault between users.
+     * @param from The sender.
+     * @param to The target.
+     * @param vault The address of the vault that is transferred.
+     */
+    function safeTransferFrom(address from, address to, address vault) external;
 }
