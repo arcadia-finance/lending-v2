@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.ACCOUNT_V2_DEPLOY_KEY }}
+          token: ${{ secrets.ACCOUNT_V2_DEPLOY_KEY }}
           submodules: recursive
 
 
