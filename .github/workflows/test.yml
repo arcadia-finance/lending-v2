@@ -20,10 +20,15 @@ jobs:
       - name: Main checkout
         uses: actions/checkout@v3
 
+      - name: Checkout private accounts-v2
+        uses: actions/checkout@v3
+        with:
+          repository: arcadia-finance/accounts-v2
+          ssh-key: ${{ secrets.ACCOUNT_V2_DEPLOY_KEY }}
+
       - name: Submodule checkout
         uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.ACCOUNT_V2_DEPLOY_KEY }}
           submodules: recursive
 
 
