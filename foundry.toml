@@ -4,6 +4,7 @@ out = 'out'
 libs = ['lib']
 optimizer = true
 optimizer_runs = 200
+fuzz = { runs = 50, max_test_rejects = 100_000_000}
 
 [fmt]
 bracket_spacing = true
