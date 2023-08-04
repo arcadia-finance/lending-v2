@@ -37,5 +37,6 @@ jobs:
 
       - name: Run Forge tests
         run: |
+          ssh-agent sh -c 'echo "${{ secrets.PRIVATE_DEPENDENCY }}" | ssh-add -
           forge test -vvv
         id: test
