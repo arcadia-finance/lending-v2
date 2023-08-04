@@ -17,19 +17,12 @@ jobs:
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
-      - name: Main checkout
+      - name: Main Checkout
         uses: actions/checkout@v3
-
-      - name: Checkout private accounts-v2
-        uses: actions/checkout@v3
-        with:
-          repository: arcadia-finance/accounts-v2
-          ssh-key: ${{ secrets.ACCOUNT_V2_DEPLOY_KEY }}
-
-      - name: Submodule checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: true
+        env:
+          SSH_KEY_FOR_SUBMODULE: ${{secrets.ACCOUNT_V2_DEPLOY_KEY}}
+        run:
+          mkdir $HOME/.ssh && echo "$SSH_KEY_FOR_SUBMODULE" > $HOME/.ssh/id_rsa && chmod 600 $HOME/.ssh/id_rsa && git submodule update --init --recursive &&
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
