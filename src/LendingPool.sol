@@ -10,7 +10,7 @@ import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.so
 import { LogExpMath } from "./utils/LogExpMath.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
-import { IVault } from "./interfaces/IVault.sol";
+import { IAccount } from "./interfaces/IAccount.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { TrustedCreditor } from "./TrustedCreditor.sol";
@@ -37,8 +37,8 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
 
     // Seconds per year, leap years ignored.
     uint256 public constant YEARLY_SECONDS = 31_536_000;
-    // Contract address of the Arcadia Vault Factory.
-    address public immutable vaultFactory;
+    // Contract address of the Arcadia Account Factory.
+    address public immutable accountFactory;
     // Contract address of the Liquidator contract.
     address public immutable liquidator;
 
@@ -85,11 +85,11 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     // Map tranche => realisedLiquidity.
     // Amount of `underlying asset` that is claimable by the Tranche. Does not take into account pending interests.
     mapping(address => uint256) public realisedLiquidityOf;
-    // Map vault => initiator.
+    // Map Account => initiator.
     // Stores the address of the initiator of an auction, used to pay out the initiation fee after auction is ended.
     mapping(address => address) public liquidationInitiator;
-    // Map vault => owner => beneficiary => amount.
-    // Stores the credit allowances for a beneficiary per Vault and per Owner.
+    // Map Account => owner => beneficiary => amount.
+    // Stores the credit allowances for a beneficiary per Account and per Owner.
     mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
 
     /* //////////////////////////////////////////////////////////////
@@ -106,13 +106,13 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     event OriginationFeeSet(uint8 originationFee);
     event BorrowCapSet(uint128 borrowCap);
     event SupplyCapSet(uint128 supplyCap);
-    event CreditApproval(address indexed vault, address indexed owner, address indexed beneficiary, uint256 amount);
+    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event Borrow(
-        address indexed vault, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
+        address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
-    event Repay(address indexed vault, address indexed from, uint256 amount);
+    event Repay(address indexed account, address indexed from, uint256 amount);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event VaultVersionSet(uint256 indexed vaultVersion, bool valid);
+    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
 
     error supplyCapExceeded();
 
@@ -146,17 +146,17 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
      * @notice The constructor for a lending pool.
      * @param asset_ The underlying ERC-20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
-     * @param vaultFactory_ The address of the Vault Factory.
+     * @param accountFactory_ The address of the Account Factory.
      * @param liquidator_ The address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(ERC20 asset_, address treasury_, address vaultFactory_, address liquidator_)
+    constructor(ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
         Guardian()
         TrustedCreditor()
         DebtToken(asset_)
     {
         treasury = treasury_;
-        vaultFactory = vaultFactory_;
+        accountFactory = accountFactory_;
         liquidator = liquidator_;
     }
 
@@ -294,9 +294,9 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
                          PROTOCOL CAP LOGIC
     ////////////////////////////////////////////////////////////// */
     /**
-     * @notice Sets the maximum amount of assets that can be borrowed per Vault.
+     * @notice Sets the maximum amount of assets that can be borrowed per Account.
      * @param borrowCap_ The new maximum amount that can be borrowed.
-     * @dev The borrowCap is the maximum amount of assets that can be borrowed per Vault.
+     * @dev The borrowCap is the maximum amount of assets that can be borrowed per Account.
      * @dev If it is set to 0, there is no borrow cap.
      */
     function setBorrowCap(uint128 borrowCap_) external onlyOwner {
@@ -385,7 +385,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
      * @param assets The amount of assets of the underlying ERC-20 tokens being withdrawn.
      * @param receiver The address of the receiver of the underlying ERC-20 tokens.
      * @dev This function can be called by anyone with an open balance (realisedLiquidityOf[address] bigger than 0),
-     * which can be both Tranches as other address (treasury, Liquidation Initiators, Liquidated Vault Owner...).
+     * which can be both Tranches as other address (treasury, Liquidation Initiators, Liquidated Account Owner...).
      */
     function withdrawFromLendingPool(uint256 assets, address receiver)
         external
@@ -409,49 +409,49 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Approve a beneficiary to take out a loan against an Arcadia Vault.
-     * @param beneficiary The address of the beneficiary who can take out a loan backed by an Arcadia Vault.
+     * @notice Approve a beneficiary to take out a loan against an Arcadia Account.
+     * @param beneficiary The address of the beneficiary who can take out a loan backed by an Arcadia Account.
      * @param amount The amount of underlying ERC-20 tokens to be lent out.
-     * @param vault The address of the Arcadia Vault backing the loan.
+     * @param account The address of the Arcadia Account backing the loan.
      */
-    function approveBeneficiary(address beneficiary, uint256 amount, address vault) external {
-        //If vault is not an actual address of a vault, ownerOfVault(address) will return the zero address.
-        require(IFactory(vaultFactory).ownerOfVault(vault) == msg.sender, "LP_AB: UNAUTHORIZED");
+    function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
+        //If Account is not an actual address of a account, ownerOfAccount(address) will return the zero address.
+        require(IFactory(accountFactory).ownerOfAccount(account) == msg.sender, "LP_AB: UNAUTHORIZED");
 
-        creditAllowance[vault][msg.sender][beneficiary] = amount;
+        creditAllowance[account][msg.sender][beneficiary] = amount;
 
-        emit CreditApproval(vault, msg.sender, beneficiary, amount);
+        emit CreditApproval(account, msg.sender, beneficiary, amount);
     }
 
     /**
-     * @notice Takes out a loan backed by collateral in an Arcadia Vault.
+     * @notice Takes out a loan backed by collateral in an Arcadia Account.
      * @param amount The amount of underlying ERC-20 tokens to be lent out.
-     * @param vault The address of the Arcadia Vault backing the loan.
+     * @param account The address of the Arcadia Account backing the loan.
      * @param to The address who receives the lent out underlying tokens.
      * @param referrer A unique identifier of the referrer, who will receive part of the fees generated by this transaction.
      * @dev The sender might be different than the owner if they have the proper allowances.
      */
-    function borrow(uint256 amount, address vault, address to, bytes3 referrer)
+    function borrow(uint256 amount, address account, address to, bytes3 referrer)
         external
         whenBorrowNotPaused
         processInterests
     {
-        //If vault is not an actual address of a vault, ownerOfVault(address) will return the zero address.
-        address vaultOwner = IFactory(vaultFactory).ownerOfVault(vault);
-        require(vaultOwner != address(0), "LP_B: Not a vault");
+        //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
+        address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
+        require(accountOwner != address(0), "LP_B: Not an Account");
 
         uint256 amountWithFee = amount + (amount * originationFee) / 10_000;
 
         //Check allowances to take debt.
-        if (vaultOwner != msg.sender) {
-            uint256 allowed = creditAllowance[vault][vaultOwner][msg.sender];
+        if (accountOwner != msg.sender) {
+            uint256 allowed = creditAllowance[account][accountOwner][msg.sender];
             if (allowed != type(uint256).max) {
-                creditAllowance[vault][vaultOwner][msg.sender] = allowed - amountWithFee;
+                creditAllowance[account][accountOwner][msg.sender] = allowed - amountWithFee;
             }
         }
 
-        //Mint debt tokens to the vault.
-        _deposit(amountWithFee, vault);
+        //Mint debt tokens to the Account.
+        _deposit(amountWithFee, account);
 
         //Add origination fee to the treasury.
         unchecked {
@@ -459,36 +459,36 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
             realisedLiquidityOf[treasury] += amountWithFee - amount;
         }
 
-        //Call vault to check if it is still healthy after the debt is increased with amountWithFee.
-        (bool isHealthy, address trustedCreditor, uint256 vaultVersion) =
-            IVault(vault).isVaultHealthy(0, maxWithdraw(vault));
-        require(isHealthy && trustedCreditor == address(this) && isValidVersion[vaultVersion], "LP_B: Reverted");
+        //Call Account to check if it is still healthy after the debt is increased with amountWithFee.
+        (bool isHealthy, address trustedCreditor, uint256 accountVersion) =
+            IAccount(account).isAccountHealthy(0, maxWithdraw(account));
+        require(isHealthy && trustedCreditor == address(this) && isValidVersion[accountVersion], "LP_B: Reverted");
 
         //Transfer fails if there is insufficient liquidity in the pool.
         asset.safeTransfer(to, amount);
 
-        emit Borrow(vault, msg.sender, to, amount, amountWithFee - amount, referrer);
+        emit Borrow(account, msg.sender, to, amount, amountWithFee - amount, referrer);
     }
 
     /**
      * @notice Repays a loan.
      * @param amount The amount of underlying ERC-20 tokens to be repaid.
-     * @param vault The address of the Arcadia Vault backing the loan.
-     * @dev if Vault is not an actual address of a Vault, maxWithdraw(vault) will always return 0.
+     * @param account The address of the Arcadia Account backing the loan.
+     * @dev if Account is not an actual address of a Account, maxWithdraw(account) will always return 0.
      * Function will not revert, but transferAmount is always 0.
-     * @dev Anyone (EOAs and contracts) can repay debt in the name of a vault.
+     * @dev Anyone (EOAs and contracts) can repay debt in the name of a Account.
      */
-    function repay(uint256 amount, address vault) external whenRepayNotPaused processInterests {
-        uint256 vaultDebt = maxWithdraw(vault);
-        uint256 transferAmount = vaultDebt > amount ? amount : vaultDebt;
+    function repay(uint256 amount, address account) external whenRepayNotPaused processInterests {
+        uint256 accountDebt = maxWithdraw(account);
+        uint256 transferAmount = accountDebt > amount ? amount : accountDebt;
 
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), transferAmount);
 
-        _withdraw(transferAmount, vault, vault);
+        _withdraw(transferAmount, account, account);
 
-        emit Repay(vault, msg.sender, transferAmount);
+        emit Repay(account, msg.sender, transferAmount);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -498,35 +498,35 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     /**
      * @notice Execute and interact with external logic on leverage.
      * @param amountBorrowed The amount of underlying ERC-20 tokens to be lent out.
-     * @param vault The address of the Arcadia Vault backing the loan.
+     * @param account The address of the Arcadia Account backing the loan.
      * @param actionHandler the address of the action handler to call.
      * @param actionData a bytes object containing two actionAssetData structs, an address array and a bytes array.
      * @param referrer A unique identifier of the referrer, who will receive part of the fees generated by this transaction.
      * @dev The sender might be different than the owner if they have the proper allowances.
-     * @dev vaultManagementAction() works similar to flash loans, this function optimistically calls external logic and checks for the vault state at the very end.
+     * @dev accountManagementAction() works similar to flash loans, this function optimistically calls external logic and checks for the Account state at the very end.
      */
     function doActionWithLeverage(
         uint256 amountBorrowed,
-        address vault,
+        address account,
         address actionHandler,
         bytes calldata actionData,
         bytes3 referrer
     ) external whenBorrowNotPaused processInterests {
-        //If vault is not an actual address of a vault, ownerOfVault(address) will return the zero address.
-        address vaultOwner = IFactory(vaultFactory).ownerOfVault(vault);
-        require(vaultOwner != address(0), "LP_DAWL: Not a vault");
+        //If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
+        address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
+        require(accountOwner != address(0), "LP_DAWL: Not an Account");
 
         uint256 amountBorrowedWithFee = amountBorrowed + (amountBorrowed * originationFee) / 10_000;
 
         //Check allowances to take debt.
-        if (vaultOwner != msg.sender) {
-            //Since calling vaultManagementAction() gives the sender full control over all assets in the vault,
+        if (accountOwner != msg.sender) {
+            //Since calling accountManagementAction() gives the sender full control over all assets in the Account,
             //Only Beneficiaries with maximum allowance can call the doActionWithLeverage function.
-            require(creditAllowance[vault][vaultOwner][msg.sender] == type(uint256).max, "LP_DAWL: UNAUTHORIZED");
+            require(creditAllowance[account][accountOwner][msg.sender] == type(uint256).max, "LP_DAWL: UNAUTHORIZED");
         }
 
-        //Mint debt tokens to the vault, debt must be minted Before the actions in the vault are performed.
-        _deposit(amountBorrowedWithFee, vault);
+        //Mint debt tokens to the Account, debt must be minted Before the actions in the Account are performed.
+        _deposit(amountBorrowedWithFee, account);
 
         //Add origination fee to the treasury.
         unchecked {
@@ -537,16 +537,16 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
         //Send Borrowed funds to the actionHandler.
         asset.safeTransfer(actionHandler, amountBorrowed);
 
-        //The actionHandler will use the borrowed funds (optionally with additional assets withdrawn from the Vault)
+        //The actionHandler will use the borrowed funds (optionally with additional assets withdrawn from the account)
         //to execute one or more actions (swap, deposit, mint...).
         //Next the actionHandler will deposit any of the remaining funds or any of the recipient token
-        //resulting from the actions back into the vault.
-        //As last step, after all assets are deposited back into the vault a final health check is done:
-        //The Collateral Value of all assets in the vault is bigger than the total liabilities against the vault (including the margin taken during this function).
-        (address trustedCreditor, uint256 vaultVersion) = IVault(vault).vaultManagementAction(actionHandler, actionData);
-        require(trustedCreditor == address(this) && isValidVersion[vaultVersion], "LP_DAWL: Reverted");
+        //resulting from the actions back into the Account.
+        //As last step, after all assets are deposited back into the Account a final health check is done:
+        //The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the margin taken during this function).
+        (address trustedCreditor, uint256 accountVersion) = IAccount(account).accountManagementAction(actionHandler, actionData);
+        require(trustedCreditor == address(this) && isValidVersion[accountVersion], "LP_DAWL: Reverted");
 
-        emit Borrow(vault, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
+        emit Borrow(account, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -756,24 +756,24 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     }
 
     /**
-     * @notice Starts liquidation of a Vault.
-     * @param vault The vault address.
+     * @notice Starts liquidation of a Account.
+     * @param account The Account address.
      * @dev At the start of the liquidation the debt tokens are burned,
      * as such interests are not accrued during the liquidation.
      */
 
-    function liquidateVault(address vault) external whenLiquidationNotPaused processInterests {
-        //Only Vaults can have debt, and debtTokens are non-transferrable.
-        //Hence by checking that the balance of the address passed as vault is not 0, we know the address
-        //passed as vault is indeed a vault and has debt.
-        uint256 openDebt = maxWithdraw(vault);
-        require(openDebt != 0, "LP_LV: Not a Vault with debt");
+    function liquidateAccount(address account) external whenLiquidationNotPaused processInterests {
+        //Only Accounts can have debt, and debtTokens are non-transferrable.
+        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
+        //passed as Account is indeed a Account and has debt.
+        uint256 openDebt = maxWithdraw(account);
+        require(openDebt != 0, "LP_LV: Not an Account with debt");
 
         //Store liquidation initiator to pay out initiator reward when auction is finished.
-        liquidationInitiator[vault] = msg.sender;
+        liquidationInitiator[account] = msg.sender;
 
         //Start the auction of the collateralised assets to repay debt.
-        ILiquidator(liquidator).startAuction(vault, openDebt, maxInitiatorFee);
+        ILiquidator(liquidator).startAuction(account, openDebt, maxInitiatorFee);
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).
@@ -784,16 +784,16 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
             ++auctionsInProgress;
         }
 
-        //Remove debt from Vault (burn DebtTokens).
-        _withdraw(openDebt, vault, vault);
+        //Remove debt from Account (burn DebtTokens).
+        _withdraw(openDebt, account, account);
 
         //Event emitted by Liquidator.
     }
 
     /**
      * @notice Settles the liquidation after the auction is finished and pays out Creditor, Original owner and Service providers.
-     * @param vault The contract address of the vault.
-     * @param originalOwner The original owner of the vault before the auction.
+     * @param account The contract address of the Account.
+     * @param originalOwner The original owner of the Account before the auction.
      * @param badDebt The amount of liabilities that was not recouped by the auction.
      * @param liquidationInitiatorReward The Reward for the Liquidation Initiator.
      * @param liquidationFee The additional fee the `originalOwner` has to pay to the protocol.
@@ -804,15 +804,15 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
      */
 
     function settleLiquidation(
-        address vault,
+        address account,
         address originalOwner,
         uint256 badDebt,
         uint256 liquidationInitiatorReward,
         uint256 liquidationFee,
         uint256 remainder
     ) external onlyLiquidator processInterests {
-        //Make Initiator rewards claimable for liquidationInitiator[vault].
-        realisedLiquidityOf[liquidationInitiator[vault]] += liquidationInitiatorReward;
+        //Make Initiator rewards claimable for liquidationInitiator[account].
+        realisedLiquidityOf[liquidationInitiator[account]] += liquidationInitiatorReward;
 
         if (badDebt > 0) {
             //Collateral was auctioned for less than the liabilities (openDebt + Liquidation Initiator Reward)
@@ -828,7 +828,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
                 uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + remainder
             );
 
-            //Any remaining assets after paying off liabilities and the fee go back to the original Vault Owner.
+            //Any remaining assets after paying off liabilities and the fee go back to the original Account Owner.
             if (remainder > 0) {
                 //Make remainder claimable by originalOwner.
                 realisedLiquidityOf[originalOwner] += remainder;
@@ -847,7 +847,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     }
 
     /**
-     * @notice Handles the bookkeeping in case of bad debt (Vault became undercollateralised).
+     * @notice Handles the bookkeeping in case of bad debt (Account became undercollateralised).
      * @param badDebt The total amount of underlying assets that need to be written off as bad debt.
      * @dev The order of the Tranches is important, the most senior tranche is at index 0, the most junior at the last index.
      * @dev The most junior tranche will lose its underlying assets first. If all liquidity of a certain Tranche is written off,
@@ -919,30 +919,30 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     }
 
     /* //////////////////////////////////////////////////////////////
-                            VAULT LOGIC
+                            ACCOUNT LOGIC
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Enables or disables a certain Vault version to be used as margin account.
-     * @param vaultVersion The Vault version to be enabled/disabled.
-     * @param valid The validity of the respective vaultVersion.
+     * @notice Enables or disables a certain Account version to be used as margin account.
+     * @param accountVersion the Account version to be enabled/disabled.
+     * @param valid The validity of the respective accountVersion.
      */
-    function setVaultVersion(uint256 vaultVersion, bool valid) external onlyOwner {
-        _setVaultVersion(vaultVersion, valid);
+    function setAccountVersion(uint256 accountVersion, bool valid) external onlyOwner {
+        _setAccountVersion(accountVersion, valid);
 
-        emit VaultVersionSet(vaultVersion, valid);
+        emit AccountVersionSet(accountVersion, valid);
     }
 
     /**
      * @inheritdoc TrustedCreditor
      */
-    function openMarginAccount(uint256 vaultVersion)
+    function openMarginAccount(uint256 accountVersion)
         external
         view
         override
         returns (bool success, address baseCurrency, address liquidator_, uint256 fixedLiquidationCost_)
     {
-        if (isValidVersion[vaultVersion]) {
+        if (isValidVersion[accountVersion]) {
             success = true;
             baseCurrency = address(asset);
             liquidator_ = liquidator;
@@ -953,7 +953,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
     /**
      * @inheritdoc TrustedCreditor
      */
-    function getOpenPosition(address vault) external view override returns (uint256 openPosition) {
-        openPosition = maxWithdraw(vault);
+    function getOpenPosition(address account) external view override returns (uint256 openPosition) {
+        openPosition = maxWithdraw(account);
     }
 }

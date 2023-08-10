@@ -7,47 +7,47 @@ pragma solidity ^0.8.13;
 /**
  * @title Trusted Creditor implementation.
  * @author Pragma Labs
- * @notice This contract contains the minimum functionality a Trusted Creditor, interacting with Arcadia Vaults, needs to implement.
- * @dev For the implementation of Arcadia Vaults, see: https://github.com/arcadia-finance/arcadia-vaults.
+ * @notice This contract contains the minimum functionality a Trusted Creditor, interacting with Arcadia Accounts, needs to implement.
+ * @dev For the implementation of Arcadia Accounts, see: https://github.com/arcadia-finance/accounts-v2.
  */
 abstract contract TrustedCreditor {
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // Map vaultVersion => status.
+    // Map accountVersion => status.
     mapping(uint256 => bool) public isValidVersion;
 
     /* //////////////////////////////////////////////////////////////
-                            VAULT LOGIC
+                            Account LOGIC
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets the validity of vault version to valid.
-     * @param vaultVersion The version current version of the vault.
-     * @param valid The validity of the respective vaultVersion.
+     * @notice Sets the validity of Account version to valid.
+     * @param accountVersion The version current version of the Account.
+     * @param valid The validity of the respective accountVersion.
      */
-    function _setVaultVersion(uint256 vaultVersion, bool valid) internal {
-        isValidVersion[vaultVersion] = valid;
+    function _setAccountVersion(uint256 accountVersion, bool valid) internal {
+        isValidVersion[accountVersion] = valid;
     }
 
     /**
-     * @notice Checks if vault fulfills all requirements and returns application settings.
-     * @param vaultVersion The current version of the vault.
+     * @notice Checks if Account fulfills all requirements and returns application settings.
+     * @param accountVersion The current version of the Account.
      * @return success Bool indicating if all requirements are met.
      * @return baseCurrency The base currency of the application.
      * @return liquidator The liquidator of the application.
      * @return fixedLiquidationCost Estimated fixed costs (independent of size of debt) to liquidate a position.
      */
-    function openMarginAccount(uint256 vaultVersion)
+    function openMarginAccount(uint256 accountVersion)
         external
         virtual
         returns (bool success, address baseCurrency, address liquidator, uint256 fixedLiquidationCost);
 
     /**
-     * @notice Returns the open position of the vault.
-     * @param vault The vault address.
-     * @return openPosition The open position of the vault.
+     * @notice Returns the open position of the Account.
+     * @param account The Account address.
+     * @return openPosition The open position of the Account.
      */
-    function getOpenPosition(address vault) external view virtual returns (uint256 openPosition);
+    function getOpenPosition(address account) external view virtual returns (uint256 openPosition);
 }

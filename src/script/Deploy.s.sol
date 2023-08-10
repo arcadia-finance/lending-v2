@@ -39,7 +39,7 @@ contract DeployScript is DSTest, Script {
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
 
-        pool.setVaultVersion(1, true);
+        pool.setAccountVersion(1, true);
         pool.setOriginationFee(10);
         pool.addTranche(address(srTranche), 50, 0);
         pool.addTranche(address(jrTranche), 40, 20);

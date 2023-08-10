@@ -74,7 +74,7 @@ abstract contract DebtToken is ERC4626 {
     /**
      * @notice Modification of the standard ERC-4626 deposit implementation.
      * @param assets The amount of assets of the underlying ERC-20 token being loaned out.
-     * @param receiver The Arcadia vault with collateral covering the loan.
+     * @param receiver The Arcadia Account with collateral covering the loan.
      * @return shares The corresponding amount of debt shares minted.
      * @dev Only the Lending Pool (which inherits this contract) can issue debt.
      */
@@ -109,7 +109,7 @@ abstract contract DebtToken is ERC4626 {
      * @notice Modification of the standard ERC-4626 withdraw implementation.
      * @param assets The amount of assets of the underlying ERC-20 token being paid back.
      * @param receiver Will always be the Lending Pool.
-     * @param owner_ The Arcadia vault with collateral covering the loan.
+     * @param owner_ The Arcadia Account with collateral covering the loan.
      * @return shares The corresponding amount of debt shares redeemed.
      * @dev Only the Lending Pool (which inherits this contract) can issue debt.
      */
