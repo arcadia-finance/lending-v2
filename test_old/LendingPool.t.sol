@@ -104,6 +104,7 @@ abstract contract LendingPoolTest is Test {
     event MaxInitiatorFeeSet(uint80 maxInitiatorFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
+    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
 
     //Before
     constructor() {
@@ -888,6 +889,8 @@ contract DepositAndWithdrawalTest is LendingPoolTest {
         // When: srTranche deposit and withdraw
         pool.depositInLendingPool(assetsDeposited, liquidityProvider);
 
+        vm.expectEmit();
+        emit LendingPoolWithdrawal(receiver, assetsWithdrawn);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
 
