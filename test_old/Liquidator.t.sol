@@ -655,8 +655,16 @@ contract LiquidatorTest is DeployArcadiaAccounts {
 
         // Avoid stack to deep
         {
+            // Bring variable up to the stack before becoming unreachable (otherwise stack too deep later also)
+            uint128 openDebt_stack = openDebt;
+            uint80 maxInitiatorFee_stack = maxInitiatorFee;
+
+            (,, uint8 initiatorRewardWeight, uint8 penaltyWeight,,,,) =
+                liquidator_.getAuctionInformationPartTwo(address(proxy));
             (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
-                liquidator_.calcLiquidationSettlementValues(openDebt, priceOfAccount, maxInitiatorFee);
+            liquidator_.calcLiquidationSettlementValues(
+                openDebt_stack, priceOfAccount, maxInitiatorFee_stack, initiatorRewardWeight, penaltyWeight
+            );
 
             vm.startPrank(address(69));
             dai.approve(address(liquidator_), type(uint256).max);
@@ -837,8 +845,11 @@ contract LiquidatorTest is DeployArcadiaAccounts {
 
         // Avoid stack to deep
         {
-            (uint256 badDebt, uint256 liquidationInitiatorReward,,) =
-                liquidator_.calcLiquidationSettlementValues(openDebt, 0, maxInitiatorFee);
+            (,, uint8 initiatorRewardWeight, uint8 penaltyWeight,,,,) =
+                liquidator_.getAuctionInformationPartTwo(address(proxy));
+            (uint256 badDebt, uint256 liquidationInitiatorReward,,) = liquidator_.calcLiquidationSettlementValues(
+                openDebt, 0, maxInitiatorFee, initiatorRewardWeight, penaltyWeight
+            );
 
             vm.startPrank(creatorAddress);
             dai.approve(address(liquidator_), type(uint256).max);
@@ -900,7 +911,9 @@ contract LiquidatorTest is DeployArcadiaAccounts {
             uint256 actualLiquidationInitiatorReward,
             uint256 actualLiquidationPenalty,
             uint256 actualRemainder
-        ) = liquidator_.calcLiquidationSettlementValues(openDebt, priceOfAccount, maxInitiatorFee);
+        ) = liquidator_.calcLiquidationSettlementValues(
+            openDebt, priceOfAccount, maxInitiatorFee, initiatorRewardWeight, penaltyWeight
+        );
 
         assertEq(actualBadDebt, expectedBadDebt);
         assertEq(actualLiquidationInitiatorReward, expectedLiquidationInitiatorReward);
