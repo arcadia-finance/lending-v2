@@ -543,10 +543,13 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
         //resulting from the actions back into the Account.
         //As last step, after all assets are deposited back into the Account a final health check is done:
         //The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the margin taken during this function).
-        (address trustedCreditor, uint256 accountVersion) = IAccount(account).accountManagementAction(actionHandler, actionData);
+        (address trustedCreditor, uint256 accountVersion) =
+            IAccount(account).accountManagementAction(actionHandler, actionData);
         require(trustedCreditor == address(this) && isValidVersion[accountVersion], "LP_DAWL: Reverted");
 
-        emit Borrow(account, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
+        emit Borrow(
+            account, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer
+        );
     }
 
     /* //////////////////////////////////////////////////////////////

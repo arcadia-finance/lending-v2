@@ -65,9 +65,10 @@ abstract contract EndToEndTest is DeployArcadiaAccounts {
                 )
             ),
             0,
+            address(0),
             address(0)
         );
-        proxy = Account(proxyAddr);
+        proxy = AccountV1(proxyAddr);
 
         vm.startPrank(accountOwner);
         proxy.openTrustedMarginAccount(address(pool));

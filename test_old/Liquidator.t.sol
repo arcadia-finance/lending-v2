@@ -18,11 +18,11 @@ contract LiquidatorExtension is Liquidator {
         view
         returns (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee, address baseCurrency)
     {
-        openDebt = auctionInformation[account].openDebt;
-        startTime = auctionInformation[account].startTime;
-        inAuction = auctionInformation[account].inAuction;
-        maxInitiatorFee = auctionInformation[account].maxInitiatorFee;
-        baseCurrency = auctionInformation[account].baseCurrency;
+        openDebt = auctionInformation[account_].openDebt;
+        startTime = auctionInformation[account_].startTime;
+        inAuction = auctionInformation[account_].inAuction;
+        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
+        baseCurrency = auctionInformation[account_].baseCurrency;
     }
 
     function getAuctionInformationPartTwo(address account_)
@@ -39,14 +39,14 @@ contract LiquidatorExtension is Liquidator {
             uint64 base_
         )
     {
-        startPriceMultiplier_ = auctionInformation[account].startPriceMultiplier;
-        minPriceMultiplier_ = auctionInformation[account].minPriceMultiplier;
-        initiatorRewardWeight_ = auctionInformation[account].initiatorRewardWeight;
-        penaltyWeight_ = auctionInformation[account].penaltyWeight;
-        cutoffTime_ = auctionInformation[account].cutoffTime;
-        originalOwner = auctionInformation[account].originalOwner;
-        trustedCreditor = auctionInformation[account].trustedCreditor;
-        base_ = auctionInformation[account].base;
+        startPriceMultiplier_ = auctionInformation[account_].startPriceMultiplier;
+        minPriceMultiplier_ = auctionInformation[account_].minPriceMultiplier;
+        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
+        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
+        cutoffTime_ = auctionInformation[account_].cutoffTime;
+        originalOwner = auctionInformation[account_].originalOwner;
+        trustedCreditor = auctionInformation[account_].trustedCreditor;
+        base_ = auctionInformation[account_].base;
     }
 }
 
@@ -114,9 +114,10 @@ contract LiquidatorTest is DeployArcadiaAccounts {
                 )
             ),
             0,
+            address(0),
             address(0)
         );
-        proxy = Account(proxyAddr);
+        proxy = AccountV1(proxyAddr);
 
         proxy.openTrustedMarginAccount(address(pool));
         dai.approve(address(proxy), type(uint256).max);
@@ -866,9 +867,11 @@ contract LiquidatorTest is DeployArcadiaAccounts {
         assertEq(proxy.owner(), to);
     }
 
-    function testSuccess_calcLiquidationSettlementValues(uint128 openDebt, uint256 priceOfAccount, uint88 maxInitiatorFee)
-        public
-    {
+    function testSuccess_calcLiquidationSettlementValues(
+        uint128 openDebt,
+        uint256 priceOfAccount,
+        uint88 maxInitiatorFee
+    ) public {
         uint8 penaltyWeight = liquidator_.penaltyWeight();
         uint8 initiatorRewardWeight = liquidator_.initiatorRewardWeight();
         uint256 expectedLiquidationInitiatorReward = uint256(openDebt) * initiatorRewardWeight / 100;

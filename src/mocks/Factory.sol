@@ -16,7 +16,7 @@ contract Factory {
 
     function createAccount(uint256 salt) external returns (address account) {
         account = address(
-            new Account{salt: bytes32(salt)}(
+            new AccountV1{salt: bytes32(salt)}(
                 msg.sender
             )
         );

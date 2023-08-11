@@ -206,7 +206,8 @@ contract Liquidator is Owned {
         //The attacker could in theory: start auction of malicious contract, self-destruct and create Arcadia-Account with identical contract address.
         //This Account could never be auctioned since auctionInformation[account].inAuction would return true.
         //Finding such a collision requires finding a collision of the keccak256 hash function.
-        (address originalOwner, address baseCurrency, address trustedCreditor) = IAccount(account).liquidateAccount(openDebt);
+        (address originalOwner, address baseCurrency, address trustedCreditor) =
+            IAccount(account).liquidateAccount(openDebt);
 
         //Check that msg.sender is indeed the Creditor of the Account.
         require(trustedCreditor == msg.sender, "LQ_SA: Unauthorised");
@@ -307,10 +308,17 @@ contract Liquidator is Owned {
         );
 
         (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
-        calcLiquidationSettlementValues(auctionInformation_.openDebt, priceOfAccount, auctionInformation_.maxInitiatorFee);
+        calcLiquidationSettlementValues(
+            auctionInformation_.openDebt, priceOfAccount, auctionInformation_.maxInitiatorFee
+        );
 
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, badDebt, liquidationInitiatorReward, liquidationPenalty, remainder
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            liquidationInitiatorReward,
+            liquidationPenalty,
+            remainder
         );
 
         //Change ownership of the auctioned Account to the bidder.
@@ -358,7 +366,12 @@ contract Liquidator is Owned {
             calcLiquidationSettlementValues(auctionInformation_.openDebt, 0, auctionInformation_.maxInitiatorFee); //priceOfAccount is zero.
 
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, badDebt, liquidationInitiatorReward, liquidationPenalty, remainder
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            liquidationInitiatorReward,
+            liquidationPenalty,
+            remainder
         );
 
         //Change ownership of the auctioned account to the protocol owner.
