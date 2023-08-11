@@ -4,7 +4,7 @@
  */
 pragma solidity ^0.8.13;
 
-import "../lib/accounts-v2/src/test/fixtures/ArcadiaVaultsFixture.f.sol";
+import "../lib/accounts-v2/src/test_old/fixtures/ArcadiaAccountsFixture.f.sol";
 
 import { Liquidator } from "../src/Liquidator.sol";
 import { LendingPool, DebtToken, ERC20, InterestRateModule } from "../src/LendingPool.sol";
@@ -12,7 +12,7 @@ import { Tranche } from "../src/Tranche.sol";
 import { ActionMultiCall } from "../lib/accounts-v2/src/actions/MultiCall.sol";
 import { MultiActionMock } from "../lib/accounts-v2/src/mockups/MultiActionMock.sol";
 
-abstract contract EndToEndTest is DeployArcadiaVaults {
+abstract contract EndToEndTest is DeployArcadiaAccounts {
     using stdStorage for StdStorage;
 
     Liquidator liquidator;
@@ -26,12 +26,12 @@ abstract contract EndToEndTest is DeployArcadiaVaults {
     event Transfer(address indexed from, address indexed to, uint256 amount);
 
     //this is a before
-    constructor() DeployArcadiaVaults() {
+    constructor() DeployArcadiaAccounts() {
         vm.startPrank(creatorAddress);
         liquidator = new Liquidator(address(factory));
 
         pool = new LendingPool(ERC20(address(dai)), creatorAddress, address(factory), address(liquidator));
-        pool.setVaultVersion(1, true);
+        pool.setAccountVersion(1, true);
         InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
             baseRatePerYear: Constants.interestRate,
             highSlopePerYear: Constants.interestRate,
@@ -55,8 +55,8 @@ abstract contract EndToEndTest is DeployArcadiaVaults {
 
     //this is a before each
     function setUp() public virtual {
-        vm.prank(vaultOwner);
-        proxyAddr = factory.createVault(
+        vm.prank(accountOwner);
+        proxyAddr = factory.createAccount(
             uint256(
                 keccak256(
                     abi.encodeWithSignature(
@@ -65,11 +65,12 @@ abstract contract EndToEndTest is DeployArcadiaVaults {
                 )
             ),
             0,
+            address(0),
             address(0)
         );
-        proxy = Vault(proxyAddr);
+        proxy = AccountV1(proxyAddr);
 
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         proxy.openTrustedMarginAccount(address(pool));
         dai.approve(address(pool), type(uint256).max);
         dai.approve(address(proxy), type(uint256).max);
@@ -81,7 +82,7 @@ abstract contract EndToEndTest is DeployArcadiaVaults {
     /* ///////////////////////////////////////////////////////////////
                     HELPER FUNCTIONS
     /////////////////////////////////////////////////////////////// */
-    function depositERC20InVault(ERC20Mock token, uint128 amount, address sender)
+    function depositERC20InAccount(ERC20Mock token, uint128 amount, address sender)
         public
         returns (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts)
     {
@@ -113,7 +114,7 @@ contract BorrowAndRepay is EndToEndTest {
     function testSuccess_getFreeMargin_AmountOfAllowedCredit(uint128 amountEth) public {
         uint256 valueOfOneEth = (Constants.WAD * rateEthToUsd) / 10 ** Constants.oracleEthToUsdDecimals;
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
         uint16 collFactor_ = RiskConstants.DEFAULT_COLLATERAL_FACTOR;
 
         uint256 expectedValue = (((valueOfOneEth * amountEth) / 10 ** Constants.ethDecimals) * collFactor_) / 100
@@ -129,7 +130,7 @@ contract BorrowAndRepay is EndToEndTest {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneEth = (Constants.WAD * rateEthToUsd) / 10 ** Constants.oracleEthToUsdDecimals;
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
         uint256 maxCredit = (
             ((valueOfOneEth * amountEth) / 10 ** Constants.ethDecimals) / 10 ** (18 - Constants.daiDecimals)
@@ -137,11 +138,11 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        vm.startPrank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.startPrank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
 
-        assertEq(dai.balanceOf(vaultOwner), amountCredit);
+        assertEq(dai.balanceOf(accountOwner), amountCredit);
     }
 
     function testRevert_borrow_NotAllowTooMuchCreditAfterDeposit(uint128 amountEth, uint128 amountCredit) public {
@@ -150,7 +151,7 @@ contract BorrowAndRepay is EndToEndTest {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneEth = (Constants.WAD * rateEthToUsd) / 10 ** Constants.oracleEthToUsdDecimals;
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
         uint256 maxCredit = (
             ((valueOfOneEth * amountEth) / 10 ** Constants.ethDecimals) / 10 ** (18 - Constants.daiDecimals)
@@ -158,12 +159,12 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit > maxCredit);
 
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         vm.expectRevert("LP_B: Reverted");
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
 
-        assertEq(dai.balanceOf(vaultOwner), 0);
+        assertEq(dai.balanceOf(accountOwner), 0);
     }
 
     function testSuccess_borrow_IncreaseOfDebtPerBlock(uint128 amountEth, uint128 amountCredit, uint24 deltaTimestamp)
@@ -177,7 +178,7 @@ contract BorrowAndRepay is EndToEndTest {
 
         uint256 valueOfOneEth = (Constants.WAD * rateEthToUsd) / 10 ** Constants.oracleEthToUsdDecimals;
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
         uint16 collFactor_ = RiskConstants.DEFAULT_COLLATERAL_FACTOR;
 
         uint256 maxCredit = (
@@ -186,8 +187,8 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        vm.startPrank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.startPrank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
 
         _yearlyInterestRate = pool.interestRate();
@@ -226,16 +227,16 @@ contract BorrowAndRepay is EndToEndTest {
         );
         vm.assume(amountCredit > 0);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.startPrank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.startPrank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
 
         vm.roll(block.number + 10);
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         vm.expectRevert("LP_B: Reverted");
-        pool.borrow(1, address(proxy), vaultOwner, emptyBytes3);
+        pool.borrow(1, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -256,10 +257,10 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.startPrank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.startPrank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
         vm.stopPrank();
 
         vm.prank(oracleOwner);
@@ -287,16 +288,16 @@ contract BorrowAndRepay is EndToEndTest {
         vm.assume(amountEth < type(uint128).max / valueOfOneEth);
 
         (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts) =
-            depositERC20InVault(eth, amountEth, vaultOwner);
+            depositERC20InAccount(eth, amountEth, accountOwner);
 
         uint128 amountCredit = uint128(proxy.getFreeMargin() - 1);
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         assetAmounts[0] = amountEthWithdrawal;
-        vm.startPrank(vaultOwner);
-        vm.expectRevert("V_W: Vault Unhealthy");
+        vm.startPrank(accountOwner);
+        vm.expectRevert("V_W: Account Unhealthy");
         proxy.withdraw(assetAddresses, assetIds, assetAmounts);
         vm.stopPrank();
     }
@@ -315,7 +316,7 @@ contract BorrowAndRepay is EndToEndTest {
         vm.assume(amountEth < type(uint128).max / valueOfOneEth);
 
         (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts) =
-            depositERC20InVault(eth, amountEth, vaultOwner);
+            depositERC20InAccount(eth, amountEth, accountOwner);
 
         vm.assume(
             proxy.getFreeMargin()
@@ -323,11 +324,11 @@ contract BorrowAndRepay is EndToEndTest {
                     + amountCredit
         );
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         assetAmounts[0] = amountEthWithdrawal;
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         proxy.getFreeMargin();
         proxy.withdraw(assetAddresses, assetIds, assetAmounts);
         vm.stopPrank();
@@ -351,10 +352,10 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         uint256 _yearlyInterestRate = pool.interestRate();
 
@@ -386,19 +387,19 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         vm.roll(block.number + blocksToRoll);
 
         uint256 openDebt = proxy.getUsedMargin();
 
         vm.prank(liquidityProvider);
-        dai.transfer(vaultOwner, openDebt - amountCredit);
+        dai.transfer(accountOwner, openDebt - amountCredit);
 
-        vm.prank(vaultOwner);
+        vm.prank(accountOwner);
         pool.repay(openDebt, address(proxy));
 
         assertEq(proxy.getUsedMargin(), 0);
@@ -425,24 +426,24 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         vm.prank(liquidityProvider);
-        dai.transfer(vaultOwner, factor * amountCredit);
+        dai.transfer(accountOwner, factor * amountCredit);
 
         vm.roll(block.number + blocksToRoll);
 
         uint256 openDebt = proxy.getUsedMargin();
-        uint256 balanceBefore = dai.balanceOf(vaultOwner);
+        uint256 balanceBefore = dai.balanceOf(accountOwner);
 
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         pool.repay(openDebt * factor, address(proxy));
         vm.stopPrank();
 
-        uint256 balanceAfter = dai.balanceOf(vaultOwner);
+        uint256 balanceAfter = dai.balanceOf(accountOwner);
 
         assertEq(balanceBefore - openDebt, balanceAfter);
         assertEq(proxy.getUsedMargin(), 0);
@@ -471,10 +472,10 @@ contract BorrowAndRepay is EndToEndTest {
         ) / 100;
         vm.assume(amountCredit <= maxCredit);
 
-        depositERC20InVault(eth, amountEth, vaultOwner);
+        depositERC20InAccount(eth, amountEth, accountOwner);
 
-        vm.prank(vaultOwner);
-        pool.borrow(amountCredit, address(proxy), vaultOwner, emptyBytes3);
+        vm.prank(accountOwner);
+        pool.borrow(amountCredit, address(proxy), accountOwner, emptyBytes3);
 
         uint256 _yearlyInterestRate = pool.interestRate();
 
@@ -483,7 +484,7 @@ contract BorrowAndRepay is EndToEndTest {
         vm.assume(toRepay < amountCredit);
         vm.assume(debt.previewWithdraw(toRepay) > 0);
 
-        vm.prank(vaultOwner);
+        vm.prank(accountOwner);
         pool.repay(toRepay, address(proxy));
         uint128 base = uint128(_yearlyInterestRate) + 10 ** 18;
         uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.YEARLY_SECONDS());
@@ -516,7 +517,7 @@ contract DoActionWithLeverage is EndToEndTest {
         mainRegistry.setAllowedAction(address(action), true);
         vm.stopPrank();
 
-        vm.prank(vaultOwner);
+        vm.prank(accountOwner);
         proxy.setAssetManager(address(pool), true);
     }
 
@@ -539,10 +540,10 @@ contract DoActionWithLeverage is EndToEndTest {
         stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(daiDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxy)).checked_write(daiDebt);
 
-        //Deposit daiCollateral in Vault (have to burn first to avoid overflow)
+        //Deposit daiCollateral in Account (have to burn first to avoid overflow)
         vm.prank(liquidityProvider);
         dai.burn(type(uint64).max);
-        depositERC20InVault(dai, daiCollateral, vaultOwner);
+        depositERC20InAccount(dai, daiCollateral, accountOwner);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -589,7 +590,7 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
 
         //Do swap on leverage
-        vm.prank(vaultOwner);
+        vm.prank(accountOwner);
         pool.doActionWithLeverage(daiMargin, address(proxy), address(action), callData, emptyBytes3);
 
         assertEq(dai.balanceOf(address(pool)), type(uint128).max - daiMargin);
@@ -639,10 +640,10 @@ contract DoActionWithLeverage is EndToEndTest {
         stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(daiDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxy)).checked_write(daiDebt);
 
-        //Deposit daiCollateral in Vault (have to burn first to avoid overflow)
+        //Deposit daiCollateral in Account (have to burn first to avoid overflow)
         vm.prank(liquidityProvider);
         dai.burn(type(uint64).max);
-        depositERC20InVault(dai, daiCollateral, vaultOwner);
+        depositERC20InAccount(dai, daiCollateral, accountOwner);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -689,7 +690,7 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
 
         //Do swap on leverage
-        vm.prank(vaultOwner);
+        vm.prank(accountOwner);
         pool.doActionWithLeverage(daiMargin, address(proxy), address(action), callData, emptyBytes3);
 
         assertEq(dai.balanceOf(address(pool)), type(uint128).max - daiMargin);
@@ -719,10 +720,10 @@ contract DoActionWithLeverage is EndToEndTest {
         stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(daiDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxy)).checked_write(daiDebt);
 
-        //Deposit daiCollateral in Vault (have to burn first to avoid overflow)
+        //Deposit daiCollateral in Account (have to burn first to avoid overflow)
         vm.prank(liquidityProvider);
         dai.burn(type(uint64).max);
-        depositERC20InVault(dai, daiCollateral, vaultOwner);
+        depositERC20InAccount(dai, daiCollateral, accountOwner);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -769,14 +770,14 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
 
         //Do swap on leverage
-        vm.startPrank(vaultOwner);
-        vm.expectRevert("V_VMA: Vault Unhealthy");
+        vm.startPrank(accountOwner);
+        vm.expectRevert("V_VMA: Account Unhealthy");
         pool.doActionWithLeverage(daiMargin, address(proxy), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
     function testRevert_doActionWithLeverage_DifferentTrustedCreditor() public {
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         proxy.closeTrustedMarginAccount();
         proxy.setAssetManager(address(pool), true);
         vm.stopPrank();
@@ -802,15 +803,15 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
 
         //Do swap on leverage
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         vm.expectRevert("LP_DAWL: Reverted");
         pool.doActionWithLeverage(0, address(proxy), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
-    function testRevert_doActionWithLeverage_BadVaultVersion() public {
+    function testRevert_doActionWithLeverage_BadAccountVersion() public {
         vm.prank(creatorAddress);
-        pool.setVaultVersion(1, false);
+        pool.setAccountVersion(1, false);
 
         //Prepare input parameters
         ActionData memory assetDataOut = ActionData({
@@ -833,7 +834,7 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
 
         //Do swap on leverage
-        vm.startPrank(vaultOwner);
+        vm.startPrank(accountOwner);
         vm.expectRevert("LP_DAWL: Reverted");
         pool.doActionWithLeverage(0, address(proxy), address(action), callData, emptyBytes3);
         vm.stopPrank();

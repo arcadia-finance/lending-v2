@@ -4,7 +4,7 @@
  */
 pragma solidity ^0.8.13;
 
-import { Test } from "forge-std/Test.sol";
+import { Test } from "lib/forge-std/src/Test.sol";
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Global_Test is Test {

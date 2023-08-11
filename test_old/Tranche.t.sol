@@ -13,8 +13,8 @@ import "../src/DebtToken.sol";
 
 contract LendingPoolExtension is LendingPool {
     //Extensions to test internal functions of set packed state variables
-    constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
-        LendingPool(_asset, _treasury, _vaultFactory, _liquidator)
+    constructor(ERC20 _asset, address _treasury, address _accountFactory, address _liquidator)
+        LendingPool(_asset, _treasury, _accountFactory, _liquidator)
     { }
 
     function setTotalRealisedLiquidity(uint128 totalRealisedLiquidity_) public {
@@ -29,13 +29,13 @@ abstract contract TrancheTest is Test {
     Tranche tranche;
     Tranche jrTranche;
     DebtToken debt;
-    Vault vault;
+    Account account;
 
     address creator = address(1);
     address tokenCreator = address(2);
     address liquidator = address(3);
     address treasury = address(4);
-    address vaultOwner = address(5);
+    address accountOwner = address(5);
     address liquidityProvider = address(6);
 
     //Before
