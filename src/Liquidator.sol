@@ -309,7 +309,11 @@ contract Liquidator is Owned {
 
         (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
         calcLiquidationSettlementValues(
-            auctionInformation_.openDebt, priceOfAccount, auctionInformation_.maxInitiatorFee
+            auctionInformation_.openDebt,
+            priceOfAccount,
+            auctionInformation_.maxInitiatorFee,
+            auctionInformation_.initiatorRewardWeight,
+            auctionInformation_.penaltyWeight
         );
 
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
@@ -363,7 +367,13 @@ contract Liquidator is Owned {
         auctionInformation[account].inAuction = false;
 
         (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
-            calcLiquidationSettlementValues(auctionInformation_.openDebt, 0, auctionInformation_.maxInitiatorFee); //priceOfAccount is zero.
+        calcLiquidationSettlementValues(
+            auctionInformation_.openDebt,
+            0,
+            auctionInformation_.maxInitiatorFee,
+            auctionInformation_.initiatorRewardWeight,
+            auctionInformation_.penaltyWeight
+        ); //priceOfAccount is zero.
 
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
             account,
@@ -401,16 +411,22 @@ contract Liquidator is Owned {
      * @dev We use a dutch auction: price constantly decreases and the first bidder buys the account
      * And immediately ends the auction.
      */
-    function calcLiquidationSettlementValues(uint256 openDebt, uint256 priceOfAccount, uint88 maxInitiatorFee)
+    function calcLiquidationSettlementValues(
+        uint256 openDebt,
+        uint256 priceOfAccount,
+        uint88 maxInitiatorFee,
+        uint8 initiatorRewardWeight_,
+        uint8 penaltyWeight_
+    )
         public
-        view
+        pure
         returns (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder)
     {
         //openDebt is a uint128 -> all calculations can be unchecked.
         unchecked {
             //Liquidation Initiator Reward is always paid out, independent of the final auction price.
             //The reward is calculated as a fixed percentage of open debt, but capped on the upside (maxInitiatorFee).
-            liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
+            liquidationInitiatorReward = openDebt * initiatorRewardWeight_ / 100;
             liquidationInitiatorReward =
                 liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
 
@@ -419,7 +435,7 @@ contract Liquidator is Owned {
             if (priceOfAccount < openDebt + liquidationInitiatorReward) {
                 badDebt = openDebt + liquidationInitiatorReward - priceOfAccount;
             } else {
-                liquidationPenalty = openDebt * penaltyWeight / 100;
+                liquidationPenalty = openDebt * penaltyWeight_ / 100;
                 remainder = priceOfAccount - openDebt - liquidationInitiatorReward;
 
                 //Check if the remainder can cover the full liquidation penalty.
