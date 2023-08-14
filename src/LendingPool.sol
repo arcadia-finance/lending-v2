@@ -592,7 +592,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
      */
     function liquidityOf(address owner_) external view returns (uint256 assets) {
         // If owner_ is not a tranche, redeemable amount = 0.
-        if (!isTranche[owner_]) { return 0; }
+        if (!isTranche[owner_]) return 0;
         // Avoid a second calculation of unrealised debt (expensive).
         // if interests are already synced this block.
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
