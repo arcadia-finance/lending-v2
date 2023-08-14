@@ -2670,6 +2670,13 @@ contract LiquidationTest is LendingPoolTest {
         assertEq(pool.auctionsInProgress(), auctionsInProgress - 1);
         assertFalse(jrTranche.auctionInProgress());
         assertTrue(srTranche.auctionInProgress());
+
+        // Here we ensure that interests are available, but liquidityOf() should return 0 for junior tranche as it was wiped.
+        stdstore.target(address(pool)).sig(pool.interestWeight.selector).with_key(address(jrTranche)).checked_write(100);
+        pool.setInterestRate(10 ether);
+        pool.setRealisedDebt(10_000 ether);
+        vm.warp(block.timestamp + 30 days);
+        assertEq(pool.liquidityOf(address(jrTranche)), 0);
     }
 
     function testSuccess_settleLiquidation_ProcessDefaultAllTranchesWiped(
