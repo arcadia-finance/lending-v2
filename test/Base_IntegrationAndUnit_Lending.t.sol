@@ -4,10 +4,11 @@
  */
 pragma solidity ^0.8.13;
 
-import { Base_Global_Test } from "./Base_Global.t.sol";
+import "../lib/accounts-v2/src/test/Base_IntegrationAndUnit.t.sol";
+import { Base_Lending_Test } from "./Base_Lending.t.sol";
 
 /// @notice Common logic needed by all integration and unit tests.
-abstract contract Base_IntegrationAndUnit_Test is Base_Global_Test {
+abstract contract Base_IntegrationAndUnit_Lending_Test is Base_Lending_Test, Base_IntegrationAndUnit_Test {
 /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
@@ -19,6 +20,11 @@ abstract contract Base_IntegrationAndUnit_Test is Base_Global_Test {
 /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
+
+    function setUp() public virtual {
+        Base_Lending_Test.setUp();
+        Base_IntegrationAndUnit_Test.setUp();
+    }
 
 /*//////////////////////////////////////////////////////////////////////////
                                       HELPERS
