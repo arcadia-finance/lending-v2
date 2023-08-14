@@ -4,34 +4,34 @@
  */
 pragma solidity ^0.8.13;
 
-import "./Vault.sol";
+import "./AccountV1.sol";
 
 contract Factory {
-    mapping(address => uint256) public vaultIndex;
+    mapping(address => uint256) public accountIndex;
     mapping(uint256 => address) public ownerOf;
 
-    address[] public allVaults;
+    address[] public allAccounts;
 
     constructor() { }
 
-    function createVault(uint256 salt) external returns (address vault) {
-        vault = address(
-            new Vault{salt: bytes32(salt)}(
+    function createAccount(uint256 salt) external returns (address account) {
+        account = address(
+            new AccountV1{salt: bytes32(salt)}(
                 msg.sender
             )
         );
 
-        allVaults.push(vault);
-        uint256 index = allVaults.length;
-        vaultIndex[vault] = index;
+        allAccounts.push(account);
+        uint256 index = allAccounts.length;
+        accountIndex[account] = index;
         ownerOf[index] = msg.sender;
     }
 
-    function isVault(address vault) public view returns (bool) {
-        return vaultIndex[vault] > 0;
+    function isAccount(address account) public view returns (bool) {
+        return accountIndex[account] > 0;
     }
 
-    function ownerOfVault(address vault) public view returns (address owner_) {
-        owner_ = ownerOf[vaultIndex[vault]];
+    function ownerOfAccount(address account) public view returns (address owner_) {
+        owner_ = ownerOf[accountIndex[account]];
     }
 }

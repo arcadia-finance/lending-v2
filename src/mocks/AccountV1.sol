@@ -4,13 +4,13 @@
  */
 pragma solidity ^0.8.13;
 
-contract Vault {
+contract AccountV1 {
     address public owner;
     uint256 public totalValue;
     uint256 public lockedValue;
     address public baseCurrency;
     address public trustedCreditor;
-    uint16 public vaultVersion;
+    uint16 public accountVersion;
 
     uint256 public mockToSurpressWarning;
 
@@ -26,24 +26,24 @@ contract Vault {
         trustedCreditor = _trustedCreditor;
     }
 
-    function isVaultHealthy(uint256 amount, uint256 totalOpenDebt)
+    function isAccountHealthy(uint256 amount, uint256 totalOpenDebt)
         external
         view
-        returns (bool success, address _trustedCreditor, uint256 vaultVersion_)
+        returns (bool success, address _trustedCreditor, uint256 accountVersion_)
     {
         if (amount != 0) {
-            //Check if vault is still healthy after an increase of used margin.
+            //Check if Account is still healthy after an increase of used margin.
             success = totalValue >= lockedValue + amount;
         } else {
-            //Check if vault is healthy for a given amount of openDebt.
+            //Check if Account is healthy for a given amount of openDebt.
             success = totalValue >= totalOpenDebt;
         }
 
-        return (success, trustedCreditor, vaultVersion);
+        return (success, trustedCreditor, accountVersion);
     }
 
-    function vaultManagementAction(address, bytes calldata) external returns (address, uint256) {
+    function accountManagementAction(address, bytes calldata) external returns (address, uint256) {
         mockToSurpressWarning = 1;
-        return (trustedCreditor, vaultVersion);
+        return (trustedCreditor, accountVersion);
     }
 }
