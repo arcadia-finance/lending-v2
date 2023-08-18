@@ -2655,6 +2655,10 @@ contract LiquidationTest is LendingPoolTest {
         vm.prank(address(pool));
         jrTranche.setAuctionInProgress(true);
 
+        // Before settling the liquidation that will wipe out the jr tranche, we ensure that the jr tranche has an interestWeight > 0
+        // This will ensure our testing below of liquidityOf() is valid
+        stdstore.target(address(pool)).sig(pool.interestWeight.selector).with_key(address(jrTranche)).checked_write(100);
+
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
         pool.settleLiquidation(address(account), accountOwner, badDebt, 0, 0, 0);
@@ -2672,7 +2676,6 @@ contract LiquidationTest is LendingPoolTest {
         assertTrue(srTranche.auctionInProgress());
 
         // Here we ensure that interests are available, but liquidityOf() should return 0 for junior tranche as it was wiped.
-        stdstore.target(address(pool)).sig(pool.interestWeight.selector).with_key(address(jrTranche)).checked_write(100);
         pool.setInterestRate(10 ether);
         pool.setRealisedDebt(10_000 ether);
         vm.warp(block.timestamp + 30 days);
