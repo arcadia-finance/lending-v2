@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.13;
+pragma solidity 0.8.19;
 
 import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";

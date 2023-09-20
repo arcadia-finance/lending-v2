@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.13;
+pragma solidity 0.8.19;
 
 import "../../lib/forge-std/src/Test.sol";
 import { DeployAddresses, DeployNumbers, DeployBytes } from "../../lib/accounts-v2/script/Constants/DeployConstants.sol";
