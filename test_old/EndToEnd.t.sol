@@ -616,7 +616,7 @@ contract DoActionWithLeverage is EndToEndTest {
 
         vm.startPrank(liquidityProvider);
         dai.transfer(address(action), debtAmount);
-        action.executeAction(abi.encode(ad, ad, tos, dataArr));
+        action.executeAction(abi.encode(ad, ad, ad, tos, dataArr));
         vm.stopPrank();
 
         assertEq(debt.balanceOf(address(proxy)), 0);
