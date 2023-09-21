@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.13;
+pragma solidity 0.8.19;
 
 import "../lib/accounts-v2/src/test_old/fixtures/ArcadiaAccountsFixture.f.sol";
 
@@ -297,7 +297,7 @@ contract BorrowAndRepay is EndToEndTest {
 
         assetAmounts[0] = amountEthWithdrawal;
         vm.startPrank(accountOwner);
-        vm.expectRevert("V_W: Account Unhealthy");
+        vm.expectRevert("A_W: Account Unhealthy");
         proxy.withdraw(assetAddresses, assetIds, assetAmounts);
         vm.stopPrank();
     }
@@ -587,7 +587,9 @@ contract DoActionWithLeverage is EndToEndTest {
         assetDataIn.assetTypes[0] = 0;
         assetDataOut.assetIds[0] = 0;
 
-        bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
+        ActionData memory transferFromOwner;
+
+        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, assetDataIn, to, data);
 
         //Do swap on leverage
         vm.prank(accountOwner);
@@ -614,7 +616,7 @@ contract DoActionWithLeverage is EndToEndTest {
 
         vm.startPrank(liquidityProvider);
         dai.transfer(address(action), debtAmount);
-        action.executeAction(abi.encode(ad, ad, tos, dataArr));
+        action.executeAction(abi.encode(ad, ad, ad, tos, dataArr));
         vm.stopPrank();
 
         assertEq(debt.balanceOf(address(proxy)), 0);
@@ -687,7 +689,9 @@ contract DoActionWithLeverage is EndToEndTest {
         assetDataIn.assetTypes[0] = 0;
         assetDataOut.assetIds[0] = 0;
 
-        bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
+        ActionData memory transferFromOwner;
+
+        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, assetDataIn, to, data);
 
         //Do swap on leverage
         vm.prank(accountOwner);
@@ -767,11 +771,13 @@ contract DoActionWithLeverage is EndToEndTest {
         assetDataIn.assetTypes[0] = 0;
         assetDataOut.assetIds[0] = 0;
 
-        bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
+        ActionData memory transferFromOwner;
+
+        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, assetDataIn, to, data);
 
         //Do swap on leverage
         vm.startPrank(accountOwner);
-        vm.expectRevert("V_VMA: Account Unhealthy");
+        vm.expectRevert("A_AMA: Account Unhealthy");
         pool.doActionWithLeverage(daiMargin, address(proxy), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
@@ -800,7 +806,9 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes[] memory data = new bytes[](0);
         address[] memory to = new address[](0);
 
-        bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
+        ActionData memory transferFromOwner;
+
+        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, assetDataIn, to, data);
 
         //Do swap on leverage
         vm.startPrank(accountOwner);
@@ -831,7 +839,9 @@ contract DoActionWithLeverage is EndToEndTest {
         bytes[] memory data = new bytes[](0);
         address[] memory to = new address[](0);
 
-        bytes memory callData = abi.encode(assetDataOut, assetDataIn, to, data);
+        ActionData memory transferFromOwner;
+
+        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, assetDataIn, to, data);
 
         //Do swap on leverage
         vm.startPrank(accountOwner);
