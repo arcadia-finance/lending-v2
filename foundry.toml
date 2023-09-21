@@ -1,7 +1,7 @@
 [profile.default]
 src = 'src'
 out = 'out'
-test = 'test_old'
+test = 'test'
 libs = ['lib']
 optimizer = true
 optimizer_runs = 20

@@ -4,43 +4,53 @@
  */
 pragma solidity 0.8.19;
 
-import "../lib/accounts-v2/src/test/Base_Global.t.sol";
+import { Base_Global_Test } from "../lib/accounts-v2/src/test/Base_Global.t.sol";
 
-import { Factory } from "../src/mocks/Factory.sol";
 import { AccountV1 } from "../src/mocks/AccountV1.sol";
-import { Liquidator } from "../src/mocks/Liquidator.sol";
 import { Asset } from "../src/mocks/Asset.sol";
+import { Events } from "./utils/Events.sol";
+import { Factory } from "../src/mocks/Factory.sol";
+import { LendingPoolExtension } from "./utils/Extensions.sol";
+import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
- 
+
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
-abstract contract Base_Lending_Test is Base_Global_Test {
-/*//////////////////////////////////////////////////////////////////////////
+abstract contract Base_Lending_Test is Base_Global_Test, Events {
+    /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
-    Liquidator internal liquidator;
+    Asset internal asset;
+    LendingPoolExtension internal pool;
+    LiquidatorExtension internal liquidator;
     Tranche internal jrTranche;
     Tranche internal srTranche;
-    LendingPoolExtension internal lendingPoolExtension;
-    Asset internal asset;
 
-/*//////////////////////////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
 
-/*//////////////////////////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
 
-    function setUp() public virtual {
-
+    function setUp() public virtual override {
         Base_Global_Test.setUp();
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                      HELPERS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function deployArcadiaLending() internal virtual {
+        // ToDo : move to Types users
+        address treasury = address(34_567);
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
-        liquidator = new Liquidator();
-        lendingPoolExtension = new lendingPoolExtension(asset, users.treasury, address(factory), address(liquidator));
+        liquidator = new LiquidatorExtension(address(factory));
+        pool = new LendingPoolExtension(asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
@@ -48,16 +58,12 @@ abstract contract Base_Lending_Test is Base_Global_Test {
         // Label the base test contracts.
         vm.label({ account: address(asset), newLabel: "Asset" });
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });
-        vm.label({ account: address(lendingPoolExtension), newLabel: "Lending Pool Extension" });
+        vm.label({ account: address(pool), newLabel: "Lending Pool" });
         vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });
         vm.label({ account: address(jrTranche), newLabel: "Junior Tranche" });
     }
 
-/*//////////////////////////////////////////////////////////////////////////
-                                      HELPERS
-    //////////////////////////////////////////////////////////////////////////*/
-
-/*//////////////////////////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////
                                     CALL EXPECTS
     //////////////////////////////////////////////////////////////////////////*/
 }

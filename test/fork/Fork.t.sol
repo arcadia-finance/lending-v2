@@ -4,10 +4,10 @@
  */
 pragma solidity 0.8.19;
 
-import { Base_Global_Test } from "../Base_Global.t.sol";
+import { Base_Lending_Test } from "../Base.t.sol";
 
 /// @notice Common logic needed by all fork tests.
-abstract contract Base_Fork_Test is Base_Global_Test {
+abstract contract Fork_Lending_Test is Base_Lending_Test {
 /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/

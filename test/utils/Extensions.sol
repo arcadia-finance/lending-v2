@@ -4,11 +4,16 @@
  */
 pragma solidity 0.8.19;
 
-import { LendingPool } from "../../src/LendingPool.sol";
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
+import { LendingPool } from "../../src/LendingPool.sol";
+import { Liquidator } from "../../src/Liquidator.sol";
+
+/* //////////////////////////////////////////////////////////////
+                        LENDING POOL
+////////////////////////////////////////////////////////////// */
+
 contract LendingPoolExtension is LendingPool {
-    //Extensions to test internal functions
     constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
         LendingPool(_asset, _treasury, _vaultFactory, _liquidator)
     { }
@@ -59,5 +64,49 @@ contract LendingPoolExtension is LendingPool {
 
     function setAuctionsInProgress(uint16 amount) public {
         auctionsInProgress = amount;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
+                            LENDING POOL
+    ////////////////////////////////////////////////////////////// */
+
+contract LiquidatorExtension is Liquidator {
+    constructor(address factory_) Liquidator(factory_) { }
+
+    function getAuctionInformationPartOne(address account_)
+        public
+        view
+        returns (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee, address baseCurrency)
+    {
+        openDebt = auctionInformation[account_].openDebt;
+        startTime = auctionInformation[account_].startTime;
+        inAuction = auctionInformation[account_].inAuction;
+        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
+        baseCurrency = auctionInformation[account_].baseCurrency;
+    }
+
+    function getAuctionInformationPartTwo(address account_)
+        public
+        view
+        returns (
+            uint16 startPriceMultiplier_,
+            uint8 minPriceMultiplier_,
+            uint8 initiatorRewardWeight_,
+            uint8 penaltyWeight_,
+            uint16 cutoffTime_,
+            address originalOwner,
+            address trustedCreditor,
+            uint64 base_
+        )
+    {
+        startPriceMultiplier_ = auctionInformation[account_].startPriceMultiplier;
+        minPriceMultiplier_ = auctionInformation[account_].minPriceMultiplier;
+        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
+        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
+        cutoffTime_ = auctionInformation[account_].cutoffTime;
+        originalOwner = auctionInformation[account_].originalOwner;
+        trustedCreditor = auctionInformation[account_].trustedCreditor;
+        base_ = auctionInformation[account_].base;
     }
 }
