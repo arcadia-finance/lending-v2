@@ -10,6 +10,7 @@ import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
+import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPoolExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
@@ -41,7 +42,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
-        Base_Lending_Test.setUp();
         Fuzz_Test.setUp();
 
         deployArcadiaLending();
@@ -63,6 +63,12 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
+
+        // For clarity, some contracts have a generalised name in some tests.
+        tranche = srTranche;
+
+        // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
+        debt = DebtToken(address(pool));
 
         // Label the base test contracts.
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });

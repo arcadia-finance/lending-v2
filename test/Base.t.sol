@@ -9,6 +9,7 @@ import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 import { AccountV1 } from "./utils/mocks/AccountV1.sol";
 import { Asset } from "./utils/mocks/Asset.sol";
 import { Events } from "./utils/Events.sol";
+import { DebtToken } from "../src/DebtToken.sol";
 import { Factory } from "./utils/mocks/Factory.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
@@ -21,10 +22,12 @@ abstract contract Base_Lending_Test is Base_Test, Events {
     //////////////////////////////////////////////////////////////////////////*/
 
     Asset internal asset;
+    DebtToken internal debt;
     LendingPoolExtension internal pool;
     LiquidatorExtension internal liquidator;
     Tranche internal jrTranche;
     Tranche internal srTranche;
+    Tranche internal tranche;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
@@ -54,6 +57,12 @@ abstract contract Base_Lending_Test is Base_Test, Events {
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
+
+        // For clarity, some contracts have a generalised name in some tests.
+        tranche = srTranche;
+
+        // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
+        debt = DebtToken(address(pool));
 
         // Label the base test contracts.
         vm.label({ account: address(asset), newLabel: "Asset" });
