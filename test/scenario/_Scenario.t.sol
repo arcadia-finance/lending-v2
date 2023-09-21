@@ -34,6 +34,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
 
     function setUp() public virtual override(Fuzz_Lending_Test) {
         Fuzz_Lending_Test.setUp();
+        deployArcadiaLendingWithAccounts();
 
         vm.prank(users.creatorAddress);
         pool.addTranche(address(tranche), 50, 0);

@@ -10,6 +10,7 @@ import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
+import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPoolExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
@@ -33,6 +34,9 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
+    // ToDo : move to Types users
+    address internal treasury;
+
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -42,18 +46,41 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
-        Fuzz_Test.setUp();
+        // ToDo : move to Types users
+        treasury = address(34_567);
 
-        deployArcadiaLending();
+        vm.label({ account: treasury, newLabel: "Treasury" });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                       HELPERS
     //////////////////////////////////////////////////////////////////////////*/
+    function deployArcadiaLendingWithoutAccounts() internal virtual {
+        // Deploy the base test contracts.
+        vm.startPrank(users.creatorAddress);
+        asset = new Asset("Asset", "ASSET", 18);
+        liquidator = new LiquidatorExtension(address(factory));
+        pool = new LendingPoolExtension(asset, treasury, address(factory), address(liquidator));
+        srTranche = new Tranche(address(pool), "Senior", "SR");
+        jrTranche = new Tranche(address(pool), "Junior", "JR");
+        vm.stopPrank();
 
-    function deployArcadiaLending() internal override {
-        // ToDo : move to Types users
-        address treasury = address(34_567);
+        // For clarity, some contracts have a generalised name in some tests.
+        tranche = srTranche;
+
+        // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
+        debt = DebtToken(address(pool));
+
+        // Label the base test contracts.
+        vm.label({ account: address(asset), newLabel: "Asset" });
+        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
+        vm.label({ account: address(pool), newLabel: "Lending Pool" });
+        vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });
+        vm.label({ account: address(jrTranche), newLabel: "Junior Tranche" });
+    }
+
+    function deployArcadiaLendingWithAccounts() internal {
+        Fuzz_Test.setUp();
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
@@ -71,6 +98,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         debt = DebtToken(address(pool));
 
         // Label the base test contracts.
+        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });
         vm.label({ account: address(pool), newLabel: "Lending Pool" });
         vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });

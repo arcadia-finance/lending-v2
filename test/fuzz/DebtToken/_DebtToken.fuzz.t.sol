@@ -6,13 +6,17 @@ pragma solidity 0.8.19;
 
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 
+import { DebtTokenExtension } from "../../utils/Extensions.sol";
+
 /**
- * @notice Common logic needed by all "Liquidator" fuzz tests.
+ * @notice Common logic needed by all "DebtToken" fuzz tests.
  */
-abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
+abstract contract DebtToken_Fuzz_Test is Fuzz_Lending_Test {
     /* ///////////////////////////////////////////////////////////////
                              VARIABLES
     /////////////////////////////////////////////////////////////// */
+
+    DebtTokenExtension internal debt_;
 
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -20,12 +24,8 @@ abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
 
     function setUp() public virtual override(Fuzz_Lending_Test) {
         Fuzz_Lending_Test.setUp();
-        deployArcadiaLendingWithAccounts();
+        deployArcadiaLendingWithoutAccounts();
 
-        vm.prank(users.creatorAddress);
-        pool.setAccountVersion(1, true);
-
-        vm.prank(users.accountOwner);
-        proxyAccount.openTrustedMarginAccount(address(pool));
+        debt_ = new DebtTokenExtension(asset);
     }
 }

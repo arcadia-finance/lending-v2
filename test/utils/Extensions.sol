@@ -6,8 +6,29 @@ pragma solidity 0.8.19;
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
+import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+
+/* //////////////////////////////////////////////////////////////
+                        DEBT TOKEN
+////////////////////////////////////////////////////////////// */
+
+contract DebtTokenExtension is DebtToken {
+    constructor(ERC20 asset_) DebtToken(asset_) { }
+
+    function deposit_(uint256 assets, address receiver) public returns (uint256 shares) {
+        shares = _deposit(assets, receiver);
+    }
+
+    function withdraw_(uint256 assets, address receiver, address owner_) public returns (uint256 shares) {
+        shares = _withdraw(assets, receiver, owner_);
+    }
+
+    function totalAssets() public view override returns (uint256 totalDebt) {
+        totalDebt = realisedDebt;
+    }
+}
 
 /* //////////////////////////////////////////////////////////////
                         LENDING POOL
