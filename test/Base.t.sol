@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { Base_Global_Test } from "../lib/accounts-v2/src/test/Base_Global.t.sol";
+import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 
 import { AccountV1 } from "../src/mocks/AccountV1.sol";
 import { Asset } from "../src/mocks/Asset.sol";
@@ -15,7 +15,7 @@ import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
-abstract contract Base_Lending_Test is Base_Global_Test, Events {
+abstract contract Base_Lending_Test is Base_Test, Events {
     /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
@@ -35,7 +35,7 @@ abstract contract Base_Lending_Test is Base_Global_Test, Events {
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override {
-        Base_Global_Test.setUp();
+        Base_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////////////////

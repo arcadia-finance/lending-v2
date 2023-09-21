@@ -5,7 +5,7 @@
 pragma solidity 0.8.19;
 
 import { Base_Lending_Test } from "../Base.t.sol";
-import { Base_IntegrationAndUnit_Test } from "../../lib/accounts-v2/src/test/Base_IntegrationAndUnit.t.sol";
+import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
@@ -23,7 +23,7 @@ import { Tranche } from "../../src/Tranche.sol";
  * (eg. a uint256 from 0 to type(uint256).max), unless the parameter/variable is bound by an invariant.
  * If this case, said invariant must be explicitly tested in the invariant tests.
  */
-abstract contract Fuzz_Lending_Test is Base_Lending_Test, Base_IntegrationAndUnit_Test {
+abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
     /*//////////////////////////////////////////////////////////////////////////
                                      CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -31,8 +31,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Base_IntegrationAndUni
     /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
-
-    AccountV1 internal proxyAccount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
@@ -42,13 +40,11 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Base_IntegrationAndUni
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
 
-    function setUp() public virtual override(Base_Lending_Test, Base_IntegrationAndUnit_Test) {
+    function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
         Base_Lending_Test.setUp();
-        Base_IntegrationAndUnit_Test.setUp();
+        Fuzz_Test.setUp();
 
         deployArcadiaLending();
-
-        proxyAccount = AccountV1(deployedAccountInputs0);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
