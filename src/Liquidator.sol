@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { LogExpMath } from "./utils/LogExpMath.sol";
+import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";

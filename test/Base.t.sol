@@ -6,10 +6,10 @@ pragma solidity 0.8.19;
 
 import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 
-import { AccountV1 } from "../src/mocks/AccountV1.sol";
-import { Asset } from "../src/mocks/Asset.sol";
+import { AccountV1 } from "./utils/mocks/AccountV1.sol";
+import { Asset } from "./utils/mocks/Asset.sol";
 import { Events } from "./utils/Events.sol";
-import { Factory } from "../src/mocks/Factory.sol";
+import { Factory } from "./utils/mocks/Factory.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";

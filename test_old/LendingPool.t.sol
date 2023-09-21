@@ -6,12 +6,12 @@ pragma solidity 0.8.19;
 
 import "../lib/forge-std/src/Test.sol";
 import "../src/LendingPool.sol";
-import "../src/mocks/Asset.sol";
-import "../src/mocks/Factory.sol";
-import "../src/mocks/Liquidator.sol";
+import "./utils/mocks/Asset.sol";
+import "./utils/mocks/Factory.sol";
+import "./utils/mocks/Liquidator.sol";
 import "../src/Tranche.sol";
 import "../src/DebtToken.sol";
-import "../src/mocks/AccountV1.sol";
+import "./utils/mocks/AccountV1.sol";
 
 contract LendingPoolExtension is LendingPool {
     //Extensions to test internal functions

@@ -5,7 +5,7 @@
 pragma solidity 0.8.19;
 
 import "../lib/forge-std/src/Test.sol";
-import { Guardian } from "../src/security/Guardian.sol";
+import { Guardian } from "../src/guardians/Guardian.sol";
 
 contract LendingPoolMockup is Guardian {
     uint256 public totalSupply;
