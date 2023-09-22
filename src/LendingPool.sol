@@ -16,7 +16,7 @@ import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { TrustedCreditor } from "./TrustedCreditor.sol";
 import { ERC20, ERC4626, DebtToken } from "./DebtToken.sol";
 import { InterestRateModule } from "./InterestRateModule.sol";
-import { Guardian } from "./guardians/Guardian.sol";
+import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 
 /**
  * @title Arcadia LendingPool.
@@ -27,7 +27,7 @@ import { Guardian } from "./guardians/Guardian.sol";
  * since totalAssets() cannot be manipulated by the first minter.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
  */
-contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule, ILendingPool {
+contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, InterestRateModule, ILendingPool {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
@@ -152,7 +152,7 @@ contract LendingPool is Guardian, TrustedCreditor, DebtToken, InterestRateModule
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
     constructor(ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
-        Guardian()
+        LendingPoolGuardian()
         TrustedCreditor()
         DebtToken(asset_)
     {

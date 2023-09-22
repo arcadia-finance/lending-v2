@@ -5,20 +5,18 @@
 
 pragma solidity 0.8.19;
 
-import { Owned } from "../../lib/solmate/src/auth/Owned.sol";
+import { BaseGuardian } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
- * @title Guardian
+ * @title LendingPool Guardian
  * @author Pragma Labs
- * @notice This module provides the logic that allows authorized accounts to trigger an emergency stop.
+ * @notice This module provides the logic for the LendingPool that allows authorized accounts to trigger an emergency stop.
  */
-abstract contract Guardian is Owned {
+abstract contract LendingPoolGuardian is BaseGuardian {
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // Address of the Guardian.
-    address public guardian;
     // Flag indicating if the repay() function is paused.
     bool public repayPaused;
     // Flag indicating if the withdraw() function is paused.
@@ -29,14 +27,11 @@ abstract contract Guardian is Owned {
     bool public depositPaused;
     // Flag indicating if the liquidation() function is paused.
     bool public liquidationPaused;
-    // Last timestamp an emergency stop was triggered.
-    uint256 public pauseTimestamp;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event GuardianChanged(address indexed oldGuardian, address indexed newGuardian);
     event PauseUpdate(
         bool repayPauseUpdate,
         bool withdrawPauseUpdate,
@@ -54,14 +49,6 @@ abstract contract Guardian is Owned {
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
-
-    /**
-     * @dev Throws if called by any account other than the guardian.
-     */
-    modifier onlyGuardian() {
-        require(msg.sender == guardian, "Guardian: Only guardian");
-        _;
-    }
 
     /**
      * @dev This modifier is used to restrict access to certain functions when the contract is paused for repay.
@@ -112,41 +99,16 @@ abstract contract Guardian is Owned {
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
-    constructor() Owned(msg.sender) { }
-
-    /* //////////////////////////////////////////////////////////////
-                            GUARDIAN LOGIC
-    ////////////////////////////////////////////////////////////// */
-
-    /**
-     * @notice This function is used to set the guardian address.
-     * @param guardian_ The address of the new guardian.
-     * @dev Allows onlyOwner to change the guardian address.
-     */
-    function changeGuardian(address guardian_) external onlyOwner {
-        emit GuardianChanged(guardian, guardian_);
-
-        guardian = guardian_;
-    }
+    constructor() { }
 
     /* //////////////////////////////////////////////////////////////
                             PAUSING LOGIC
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice This function is used to pause all the flags of the contract.
-     * @dev This function can be called by the guardian to pause all functionality in the event of an emergency.
-     * This function pauses repay, withdraw, borrow, deposit and liquidation.
-     * This function can only be called by the guardian.
-     * The guardian can only pause the protocol again after 32 days have past since the last pause.
-     * This is to prevent that a malicious guardian can take user-funds hostage for an indefinite time.
-     * @dev After the guardian has paused the protocol, the owner has 30 days to find potential problems,
-     * find a solution and unpause the protocol. If the protocol is not unpaused after 30 days,
-     * an emergency procedure can be started by any user to unpause the protocol.
-     * All users have now at least a two-day window to withdraw assets and close positions before
-     * the protocol can again be paused (after 32 days).
+     * @inheritdoc BaseGuardian
      */
-    function pause() external onlyGuardian {
+    function pause() external override onlyGuardian {
         require(block.timestamp > pauseTimestamp + 32 days, "G_P: Cannot pause");
         repayPaused = true;
         withdrawPaused = true;
@@ -186,13 +148,9 @@ abstract contract Guardian is Owned {
     }
 
     /**
-     * @notice This function is used to unPause all flags.
-     * @dev If the protocol is not unpaused after 30 days, any user can unpause the protocol.
-     * This ensures that no rogue owner or guardian can lock user funds for an indefinite amount of time.
-     * All users have now at least a two-day window to withdraw assets and close positions before
-     * the protocol can again be paused (after 32 days).
+     * @inheritdoc BaseGuardian
      */
-    function unPause() external {
+    function unPause() external override {
         require(block.timestamp > pauseTimestamp + 30 days, "G_UP: Cannot unPause");
         if (repayPaused || withdrawPaused || borrowPaused || depositPaused || liquidationPaused) {
             repayPaused = false;
