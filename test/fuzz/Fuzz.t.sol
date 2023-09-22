@@ -65,6 +65,10 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
 
+        // Set the Guardian.
+        vm.prank(users.creatorAddress);
+        pool.changeGuardian(users.guardian);
+
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
 
@@ -90,6 +94,10 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
+
+        // Set the Guardian.
+        vm.prank(users.creatorAddress);
+        pool.changeGuardian(users.guardian);
 
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
