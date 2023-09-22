@@ -36,7 +36,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
         bool repayPauseUpdate,
         bool withdrawPauseUpdate,
         bool borrowPauseUpdate,
-        bool supplyPauseUpdate,
+        bool depositPauseUpdate,
         bool liquidationPauseUpdate
     );
 
@@ -152,14 +152,12 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      */
     function unPause() external override {
         require(block.timestamp > pauseTimestamp + 30 days, "G_UP: Cannot unPause");
-        if (repayPaused || withdrawPaused || borrowPaused || depositPaused || liquidationPaused) {
-            repayPaused = false;
-            withdrawPaused = false;
-            borrowPaused = false;
-            depositPaused = false;
-            liquidationPaused = false;
+        repayPaused = false;
+        withdrawPaused = false;
+        borrowPaused = false;
+        depositPaused = false;
+        liquidationPaused = false;
 
-            emit PauseUpdate(false, false, false, false, false);
-        }
+        emit PauseUpdate(false, false, false, false, false);
     }
 }

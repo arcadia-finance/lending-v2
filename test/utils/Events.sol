@@ -13,6 +13,18 @@ abstract contract Events {
     event InterestRate(uint80 interestRate);
 
     /* //////////////////////////////////////////////////////////////
+                        LENDING POOL GUARDIAN
+    ////////////////////////////////////////////////////////////// */
+
+    event PauseUpdate(
+        bool repayPauseUpdate,
+        bool withdrawPauseUpdate,
+        bool borrowPauseUpdate,
+        bool PauseUpdate,
+        bool liquidationPauseUpdate
+    );
+
+    /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 

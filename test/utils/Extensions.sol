@@ -9,6 +9,7 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
+import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 
 /* //////////////////////////////////////////////////////////////
@@ -110,8 +111,34 @@ contract LendingPoolExtension is LendingPool {
 }
 
 /* //////////////////////////////////////////////////////////////
-                            LENDING POOL
-    ////////////////////////////////////////////////////////////// */
+                    LENDING POOL GUARDIAN
+////////////////////////////////////////////////////////////// */
+
+contract LendingPoolGuardianExtension is LendingPoolGuardian {
+    constructor() LendingPoolGuardian() { }
+
+    function setPauseTimestamp(uint256 pauseTimestamp_) public {
+        pauseTimestamp = pauseTimestamp_;
+    }
+
+    function setFlags(
+        bool repayPaused_,
+        bool withdrawPaused_,
+        bool borrowPaused_,
+        bool depositPaused_,
+        bool liquidationPaused_
+    ) public {
+        repayPaused = repayPaused_;
+        withdrawPaused = withdrawPaused_;
+        borrowPaused = borrowPaused_;
+        depositPaused = depositPaused_;
+        liquidationPaused = liquidationPaused_;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
+                        LIQUIDATOR
+////////////////////////////////////////////////////////////// */
 
 contract LiquidatorExtension is Liquidator {
     constructor(address factory_) Liquidator(factory_) { }
