@@ -7,6 +7,7 @@ pragma solidity 0.8.19;
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
 import { DebtToken } from "../../src/DebtToken.sol";
+import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 
@@ -27,6 +28,26 @@ contract DebtTokenExtension is DebtToken {
 
     function totalAssets() public view override returns (uint256 totalDebt) {
         totalDebt = realisedDebt;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
+                    INTEREST RATE MODULE
+////////////////////////////////////////////////////////////// */
+
+contract InterestRateModuleExtension is InterestRateModule {
+    //Extensions to test internal functions
+
+    function setInterestConfig(InterestRateConfiguration calldata newConfig) public {
+        _setInterestConfig(newConfig);
+    }
+
+    function calculateInterestRate(uint256 utilisation) public view returns (uint256) {
+        return _calculateInterestRate(utilisation);
+    }
+
+    function updateInterestRate(uint256 realisedDebt_, uint256 totalRealisedLiquidity_) public {
+        return _updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
     }
 }
 

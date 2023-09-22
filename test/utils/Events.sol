@@ -7,7 +7,13 @@ pragma solidity 0.8.19;
 /// @notice Abstract contract containing all the events emitted by the protocol.
 abstract contract Events {
     /* //////////////////////////////////////////////////////////////
-                                EVENTS
+                     INTEREST RATE MODULE
+    ////////////////////////////////////////////////////////////// */
+
+    event InterestRate(uint80 interestRate);
+
+    /* //////////////////////////////////////////////////////////////
+                            LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 
     event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
