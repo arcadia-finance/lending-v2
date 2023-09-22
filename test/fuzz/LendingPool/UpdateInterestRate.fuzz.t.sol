@@ -21,7 +21,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_updateInterestRate(
+    function testFuzz_Success_updateInterestRate(
         address sender,
         uint24 deltaTimestamp,
         uint128 realisedDebt,

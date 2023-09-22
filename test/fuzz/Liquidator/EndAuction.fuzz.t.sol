@@ -21,7 +21,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_endAuction_NonOwner(address unprivilegedAddress_, address account_, address to) public {
+    function testFuzz_Revert_endAuction_NonOwner(address unprivilegedAddress_, address account_, address to) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
@@ -30,14 +30,14 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_endAuction_NotForSale(address account_, address to) public {
+    function testFuzz_Revert_endAuction_NotForSale(address account_, address to) public {
         vm.startPrank(users.creatorAddress);
         vm.expectRevert("LQ_EA: Not for sale");
         liquidator.endAuction(account_, to);
         vm.stopPrank();
     }
 
-    function testRevert_endAuction_AuctionNotExpired(
+    function testFuzz_Revert_endAuction_AuctionNotExpired(
         uint256 openDebt,
         uint256 realisedLiquidity,
         uint16 halfLifeTime,
@@ -77,7 +77,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_endAuction(
+    function testFuzz_Success_endAuction(
         uint256 openDebt,
         uint256 realisedLiquidity,
         uint16 halfLifeTime,

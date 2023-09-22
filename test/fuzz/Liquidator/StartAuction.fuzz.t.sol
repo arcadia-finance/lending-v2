@@ -21,7 +21,7 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_startAuction_AuctionOngoing(uint128 openDebt) public {
+    function testFuzz_Revert_startAuction_AuctionOngoing(uint128 openDebt) public {
         vm.assume(openDebt > 0);
 
         vm.prank(address(pool));
@@ -33,7 +33,7 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_startAuction_NonCreditor(address unprivilegedAddress_, uint128 openDebt) public {
+    function testFuzz_Revert_startAuction_NonCreditor(address unprivilegedAddress_, uint128 openDebt) public {
         vm.assume(openDebt > 0);
 
         vm.assume(unprivilegedAddress_ != address(pool));
@@ -44,7 +44,7 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_startAuction(uint128 openDebt, uint80 maxInitiatorFee) public {
+    function testFuzz_Success_startAuction(uint128 openDebt, uint80 maxInitiatorFee) public {
         vm.assume(openDebt > 0);
 
         vm.startPrank(address(pool));

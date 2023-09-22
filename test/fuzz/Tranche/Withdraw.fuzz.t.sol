@@ -23,7 +23,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_withdraw_Locked(uint128 assets, address receiver, address owner) public {
+    function testFuzz_Revert_withdraw_Locked(uint128 assets, address receiver, address owner) public {
         vm.prank(address(pool));
         tranche.lock();
 
@@ -33,7 +33,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_AuctionInProgress(uint128 assets, address receiver, address owner) public {
+    function testFuzz_Revert_withdraw_AuctionInProgress(uint128 assets, address receiver, address owner) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 
@@ -43,7 +43,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_Unauthorised(
+    function testFuzz_Revert_withdraw_Unauthorised(
         uint128 assets,
         address receiver,
         address owner,
@@ -61,7 +61,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_InsufficientApproval(
+    function testFuzz_Revert_withdraw_InsufficientApproval(
         uint128 assetsDeposited,
         uint128 sharesAllowed,
         address receiver,
@@ -84,7 +84,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_InsufficientAssets(
+    function testFuzz_Revert_withdraw_InsufficientAssets(
         uint128 assetsDeposited,
         uint128 assetsWithdrawn,
         address owner,
@@ -102,7 +102,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_withdraw_ByOwner(
+    function testFuzz_Success_withdraw_ByOwner(
         uint128 assetsDeposited,
         uint128 assetsWithdrawn,
         address owner,
@@ -126,7 +126,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(asset.balanceOf(receiver), assetsWithdrawn);
     }
 
-    function testSuccess_withdraw_ByLimitedAuthorisedAddress(
+    function testFuzz_Success_withdraw_ByLimitedAuthorisedAddress(
         uint128 assetsDeposited,
         uint128 sharesAllowed,
         uint128 assetsWithdrawn,
@@ -158,7 +158,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(asset.balanceOf(receiver), assetsWithdrawn);
     }
 
-    function testSuccess_withdraw_ByMaxAuthorisedAddress(
+    function testFuzz_Success_withdraw_ByMaxAuthorisedAddress(
         uint128 assetsDeposited,
         uint128 assetsWithdrawn,
         address receiver,

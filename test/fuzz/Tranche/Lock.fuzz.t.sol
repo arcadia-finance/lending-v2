@@ -21,7 +21,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_lock_Unauthorised(address unprivilegedAddress) public {
+    function testFuzz_Revert_lock_Unauthorised(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != address(pool));
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_lock() public {
+    function testFuzz_Success_lock() public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 

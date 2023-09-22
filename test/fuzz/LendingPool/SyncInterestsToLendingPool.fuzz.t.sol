@@ -21,7 +21,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_syncInterestsToLiquidityProviders(
+    function testFuzz_Success_syncInterestsToLiquidityProviders(
         uint128 interests,
         uint8 weightSr,
         uint8 weightJr,

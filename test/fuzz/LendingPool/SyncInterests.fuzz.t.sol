@@ -23,7 +23,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_syncInterests(
+    function testFuzz_Success_syncInterests(
         uint24 deltaTimestamp,
         uint128 realisedDebt,
         uint120 realisedLiquidity,

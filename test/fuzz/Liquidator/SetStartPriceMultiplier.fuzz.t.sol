@@ -21,7 +21,9 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setStartPriceMultiplier_NonOwner(address unprivilegedAddress_, uint16 priceMultiplier) public {
+    function testFuzz_Revert_setStartPriceMultiplier_NonOwner(address unprivilegedAddress_, uint16 priceMultiplier)
+        public
+    {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
@@ -30,7 +32,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_setStartPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
+    function testFuzz_Revert_setStartPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(priceMultiplier > 300);
 
@@ -41,7 +43,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_setStartPriceMultiplier_tooLow(uint16 priceMultiplier) public {
+    function testFuzz_Revert_setStartPriceMultiplier_tooLow(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(priceMultiplier < 100);
 
@@ -52,7 +54,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setStartPriceMultiplier(uint16 priceMultiplier) public {
+    function testFuzz_Success_setStartPriceMultiplier(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(priceMultiplier > 100);
         vm.assume(priceMultiplier < 301);

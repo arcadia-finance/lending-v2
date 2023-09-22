@@ -24,14 +24,16 @@ contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_buyAccount_notForSale(address bidder) public {
+    function testFuzz_Revert_buyAccount_notForSale(address bidder) public {
         vm.startPrank(bidder);
         vm.expectRevert("LQ_BV: Not for sale");
         liquidator.buyAccount(address(proxyAccount));
         vm.stopPrank();
     }
 
-    function testRevert_buyAccount_InsufficientFunds(address bidder, uint128 openDebt, uint136 bidderFunds) public {
+    function testFuzz_Revert_buyAccount_InsufficientFunds(address bidder, uint128 openDebt, uint136 bidderFunds)
+        public
+    {
         vm.assume(openDebt > 0);
         vm.assume(bidder != address(pool));
 
@@ -50,7 +52,7 @@ contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_buyAccount(
+    function testFuzz_Success_buyAccount(
         uint256 openDebt,
         uint256 realisedLiquidity,
         uint256 bidderFunds,

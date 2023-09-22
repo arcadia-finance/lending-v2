@@ -21,7 +21,7 @@ contract Redeem_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_redeem(uint256 shares, address receiver, address owner, address sender) public {
+    function testFuzz_Revert_redeem(uint256 shares, address receiver, address owner, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(FunctionNotImplemented.selector);
         debt_.redeem(shares, receiver, owner);

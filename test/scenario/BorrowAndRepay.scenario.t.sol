@@ -28,7 +28,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_borrow_NotAllowTooMuchCreditAfterDeposit(uint128 amountToken, uint128 amountCredit) public {
+    function testScenario_Revert_borrow_NotAllowTooMuchCreditAfterDeposit(uint128 amountToken, uint128 amountCredit)
+        public
+    {
         vm.assume(amountToken > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
@@ -50,7 +52,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(mockERC20.stable1.balanceOf(users.accountOwner), 0);
     }
 
-    function testRevert_borrow_NotAllowCreditAfterLargeUnrealizedDebt(uint128 amountToken) public {
+    function testScenario_Revert_borrow_NotAllowCreditAfterLargeUnrealizedDebt(uint128 amountToken) public {
         uint128 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals);
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
@@ -76,7 +78,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_OpenDebtIsTooLarge(
+    function testScenario_Revert_withdraw_OpenDebtIsTooLarge(
         uint128 amountToken,
         uint128 amountTokenWithdrawal,
         uint128 amountCredit
@@ -115,7 +117,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_getFreeMargin_AmountOfAllowedCredit(uint128 amountToken) public {
+    function testScenario_Success_getFreeMargin_AmountOfAllowedCredit(uint128 amountToken) public {
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
         depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
@@ -129,7 +131,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(actualValue, expectedValue);
     }
 
-    function testSuccess_borrow_AllowCreditAfterDeposit(uint128 amountToken, uint128 amountCredit) public {
+    function testScenario_Success_borrow_AllowCreditAfterDeposit(uint128 amountToken, uint128 amountCredit) public {
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
         vm.assume(amountToken > 0);
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
@@ -150,9 +152,11 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(mockERC20.stable1.balanceOf(users.accountOwner), amountCredit);
     }
 
-    function testSuccess_borrow_IncreaseOfDebtPerBlock(uint128 amountToken, uint128 amountCredit, uint24 deltaTimestamp)
-        public
-    {
+    function testScenario_Success_borrow_IncreaseOfDebtPerBlock(
+        uint128 amountToken,
+        uint128 amountCredit,
+        uint24 deltaTimestamp
+    ) public {
         vm.assume(amountToken > 0);
         uint256 _yearlyInterestRate = pool.interestRate();
         uint128 base = 1e18 + 5e16; //1 + r expressed as 18 decimals fixed point number
@@ -197,7 +201,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(actualDebt, expectedDebt);
     }
 
-    function testSuccess_borrow_AllowAdditionalCreditAfterPriceIncrease(
+    function testScenario_Success_borrow_AllowAdditionalCreditAfterPriceIncrease(
         uint128 amountToken,
         uint128 amountCredit,
         uint16 newPrice
@@ -235,7 +239,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(actualAvailableCredit, expectedAvailableCredit); //no blocks pass in foundry
     }
 
-    function testSuccess_withdraw_OpenDebtIsNotTooLarge(
+    function testScenario_Success_withdraw_OpenDebtIsNotTooLarge(
         uint128 amountToken,
         uint128 amountTokenWithdrawal,
         uint128 amountCredit
@@ -270,7 +274,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_syncInterests_IncreaseBalanceDebtContract(
+    function testScenario_Success_syncInterests_IncreaseBalanceDebtContract(
         uint128 amountToken,
         uint128 amountCredit,
         uint24 deltaTimestamp
@@ -308,7 +312,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(unrealisedDebt, balanceAfter - balanceBefore);
     }
 
-    function testSuccess_repay_ExactDebt(uint128 amountToken, uint128 amountCredit, uint16 blocksToRoll) public {
+    function testScenario_Success_repay_ExactDebt(uint128 amountToken, uint128 amountCredit, uint16 blocksToRoll)
+        public
+    {
         vm.assume(amountToken > 0);
         vm.assume(amountCredit > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
@@ -343,7 +349,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(proxyAccount.getUsedMargin(), 0);
     }
 
-    function testSuccess_repay_ExessiveDebt(
+    function testScenario_Success_repay_ExessiveDebt(
         uint128 amountToken,
         uint128 amountCredit,
         uint16 blocksToRoll,
@@ -389,7 +395,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(proxyAccount.getUsedMargin(), 0);
     }
 
-    function testSuccess_repay_PartialDebt(
+    function testScenario_Success_repay_PartialDebt(
         uint128 amountToken,
         uint128 amountCredit,
         uint24 deltaTimestamp,

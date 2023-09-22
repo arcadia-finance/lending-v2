@@ -23,7 +23,7 @@ contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_totalAssets(uint120 realisedDebt, uint256 interestRate, uint24 deltaTimestamp) public {
+    function testFuzz_Success_totalAssets(uint120 realisedDebt, uint256 interestRate, uint24 deltaTimestamp) public {
         vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
         vm.assume(interestRate <= 1e3 * 1e18); // 1000%.
         vm.assume(interestRate > 0);

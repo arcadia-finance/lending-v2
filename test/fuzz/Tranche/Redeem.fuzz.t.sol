@@ -23,7 +23,7 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_redeem_Locked(uint128 shares, address receiver, address owner) public {
+    function testFuzz_Revert_redeem_Locked(uint128 shares, address receiver, address owner) public {
         vm.prank(address(pool));
         tranche.lock();
 
@@ -33,14 +33,14 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_redeem_ZeroAssets(address receiver, address owner) public {
+    function testFuzz_Revert_redeem_ZeroAssets(address receiver, address owner) public {
         vm.startPrank(users.liquidityProvider);
         vm.expectRevert("T_R: ZERO_ASSETS");
         tranche.redeem(0, receiver, owner);
         vm.stopPrank();
     }
 
-    function testRevert_redeem_Unauthorised(
+    function testFuzz_Revert_redeem_Unauthorised(
         uint128 shares,
         address receiver,
         address owner,
@@ -58,7 +58,7 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_redeem_InsufficientApproval(
+    function testFuzz_Revert_redeem_InsufficientApproval(
         uint128 sharesMinted,
         uint128 sharesAllowed,
         address receiver,
@@ -81,7 +81,7 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_redeem_InsufficientShares(
+    function testFuzz_Revert_redeem_InsufficientShares(
         uint128 sharesMinted,
         uint128 sharesRedeemed,
         address owner,
@@ -99,9 +99,12 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_redeem_ByOwner(uint128 sharesMinted, uint128 sharesRedeemed, address owner, address receiver)
-        public
-    {
+    function testFuzz_Success_redeem_ByOwner(
+        uint128 sharesMinted,
+        uint128 sharesRedeemed,
+        address owner,
+        address receiver
+    ) public {
         vm.assume(sharesMinted > 0);
         vm.assume(sharesRedeemed > 0);
         vm.assume(sharesMinted >= sharesRedeemed);
@@ -121,7 +124,7 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(asset.balanceOf(receiver), sharesRedeemed);
     }
 
-    function testSuccess_redeem_ByLimitedAuthorisedAddress(
+    function testFuzz_Success_redeem_ByLimitedAuthorisedAddress(
         uint128 sharesMinted,
         uint128 sharesAllowed,
         uint128 sharesRedeemed,
@@ -154,7 +157,7 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(asset.balanceOf(receiver), sharesRedeemed);
     }
 
-    function testSuccess_redeem_ByMaxAuthorisedAddress(
+    function testFuzz_Success_redeem_ByMaxAuthorisedAddress(
         uint128 sharesMinted,
         uint128 sharesRedeemed,
         address receiver,

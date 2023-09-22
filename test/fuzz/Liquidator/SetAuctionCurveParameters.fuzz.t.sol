@@ -23,7 +23,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setAuctionCurveParameters_NonOwner(
+    function testFuzz_Revert_setAuctionCurveParameters_NonOwner(
         address unprivilegedAddress_,
         uint16 halfLifeTime,
         uint16 cutoffTime
@@ -36,7 +36,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_setAuctionCurveParameters_BaseTooHigh(uint16 halfLifeTime, uint16 cutoffTime) public {
+    function testFuzz_Revert_setAuctionCurveParameters_BaseTooHigh(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(halfLifeTime > 8 * 60 * 60);
 
@@ -47,7 +47,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_setAuctionCurveParameters_BaseTooLow(uint16 halfLifeTime, uint16 cutoffTime) public {
+    function testFuzz_Revert_setAuctionCurveParameters_BaseTooLow(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(halfLifeTime < 2 * 60);
 
@@ -58,7 +58,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_setAuctionCurveParameters_AuctionCutoffTimeTooHigh(uint16 halfLifeTime, uint16 cutoffTime)
+    function testFuzz_Revert_setAuctionCurveParameters_AuctionCutoffTimeTooHigh(uint16 halfLifeTime, uint16 cutoffTime)
         public
     {
         // Preprocess: limit the fuzzing to acceptable levels
@@ -74,7 +74,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_setAuctionCurveParameters_AuctionCutoffTimeTooLow(uint16 halfLifeTime, uint16 cutoffTime)
+    function testFuzz_Revert_setAuctionCurveParameters_AuctionCutoffTimeTooLow(uint16 halfLifeTime, uint16 cutoffTime)
         public
     {
         // Preprocess: limit the fuzzing to acceptable levels
@@ -90,7 +90,9 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_setAuctionCurveParameters_PowerFunctionReverts(uint8 halfLifeTime, uint16 cutoffTime) public {
+    function testFuzz_Revert_setAuctionCurveParameters_PowerFunctionReverts(uint8 halfLifeTime, uint16 cutoffTime)
+        public
+    {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(halfLifeTime > 2 * 60);
         vm.assume(halfLifeTime < 15 * 60);
@@ -103,7 +105,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testSuccess_setAuctionCurveParameters_Base(uint16 halfLifeTime, uint16 cutoffTime) public {
+    function testFuzz_Success_setAuctionCurveParameters_Base(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(halfLifeTime > 2 * 60);
         vm.assume(halfLifeTime < 8 * 60 * 60);
@@ -124,7 +126,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         assertEq(liquidator.base(), expectedBase);
     }
 
-    function testSuccess_setAuctionCurveParameters_cutoffTime(uint16 halfLifeTime, uint16 cutoffTime) public {
+    function testFuzz_Success_setAuctionCurveParameters_cutoffTime(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
         vm.assume(halfLifeTime > 1 * 60 * 60);
         vm.assume(halfLifeTime < 8 * 60 * 60);

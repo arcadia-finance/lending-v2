@@ -21,7 +21,7 @@ contract SyncLiquidationFeeToLiquidityProviders_LendingPool_Fuzz_Test is Lending
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_syncLiquidationFeeToLiquidityProviders(
+    function testFuzz_Success_syncLiquidationFeeToLiquidityProviders(
         uint128 penalty,
         uint8 weightSr,
         uint8 weightJr,

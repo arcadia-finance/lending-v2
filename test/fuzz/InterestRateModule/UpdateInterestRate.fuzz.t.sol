@@ -23,7 +23,7 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_updateInterestRate_totalRealisedLiquidityMoreThanZero(
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(
         uint128 realisedDebt_,
         uint128 totalRealisedLiquidity_,
         uint72 baseRate_,
@@ -76,7 +76,7 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
         assertEq(actualInterestRate, expectedInterestRate);
     }
 
-    function testSuccess_updateInterestRate_totalRealisedLiquidityZero(
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityZero(
         uint256 realisedDebt_,
         uint72 baseRate_,
         uint72 highSlope_,

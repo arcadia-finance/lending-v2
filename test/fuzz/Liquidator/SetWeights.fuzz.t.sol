@@ -21,7 +21,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setWeights_NonOwner(
+    function testFuzz_Revert_setWeights_NonOwner(
         address unprivilegedAddress_,
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight
@@ -34,7 +34,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_setWeights_WeightsTooHigh(uint8 initiatorRewardWeight, uint8 penaltyWeight) public {
+    function testFuzz_Revert_setWeights_WeightsTooHigh(uint8 initiatorRewardWeight, uint8 penaltyWeight) public {
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight > 11);
 
         vm.startPrank(users.creatorAddress);
@@ -43,7 +43,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setWeights(uint8 initiatorRewardWeight, uint8 penaltyWeight) public {
+    function testFuzz_Success_setWeights(uint8 initiatorRewardWeight, uint8 penaltyWeight) public {
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight <= 11);
 
         vm.startPrank(users.creatorAddress);

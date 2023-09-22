@@ -29,7 +29,7 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setInterestWeight_InvalidOwner(address unprivilegedAddress) public {
+    function testFuzz_Revert_setInterestWeight_InvalidOwner(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -38,14 +38,14 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_setInterestWeight_InexistingTranche(uint256 index) public {
+    function testFuzz_Revert_setInterestWeight_InexistingTranche(uint256 index) public {
         vm.startPrank(users.creatorAddress);
         vm.expectRevert("TR_SIW: Non Existing Tranche");
         pool.setInterestWeight(index, 50);
         vm.stopPrank();
     }
 
-    function testSuccess_setInterestWeight() public {
+    function testFuzz_Success_setInterestWeight() public {
         vm.startPrank(users.creatorAddress);
         pool.addTranche(address(srTranche), 50, 0);
 

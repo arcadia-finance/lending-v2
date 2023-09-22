@@ -21,7 +21,7 @@ contract CalcLiquidationSettlementValues_Liquidator_Fuzz_Test is Liquidator_Fuzz
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_calcLiquidationSettlementValues(
+    function testFuzz_Success_calcLiquidationSettlementValues(
         uint128 openDebt,
         uint256 priceOfAccount,
         uint88 maxInitiatorFee

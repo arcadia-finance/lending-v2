@@ -24,14 +24,14 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_deposit_External(uint256 assets, address receiver, address sender) public {
+    function testFuzz_Revert_deposit_External(uint256 assets, address receiver, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(FunctionNotImplemented.selector);
         debt_.deposit(assets, receiver);
         vm.stopPrank();
     }
 
-    function testSuccess_deposit_Internal_FirstDeposit(uint256 assets, address receiver) public {
+    function testFuzz_Success_deposit_Internal_FirstDeposit(uint256 assets, address receiver) public {
         vm.assume(assets > 0);
 
         debt_.deposit_(assets, receiver);
@@ -41,7 +41,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         assertEq(debt_.realisedDebt(), assets);
     }
 
-    function testSuccess_deposit_Internal_NotFirstDeposit(
+    function testFuzz_Success_deposit_Internal_NotFirstDeposit(
         uint256 assets,
         address receiver,
         uint256 totalSupply,

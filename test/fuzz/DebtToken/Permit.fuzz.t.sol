@@ -21,7 +21,7 @@ contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_permit(
+    function testFuzz_Revert_permit(
         address owner,
         address spender,
         uint256 value,

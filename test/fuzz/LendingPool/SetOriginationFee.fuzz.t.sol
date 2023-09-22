@@ -21,7 +21,7 @@ contract SetOriginationFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setOriginationFee_InvalidOwner(address unprivilegedAddress) public {
+    function testFuzz_Revert_setOriginationFee_InvalidOwner(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract SetOriginationFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setOriginationFee(uint8 fee) public {
+    function testFuzz_Success_setOriginationFee(uint8 fee) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit OriginationFeeSet(fee);

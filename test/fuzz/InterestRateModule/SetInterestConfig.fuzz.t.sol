@@ -23,7 +23,7 @@ contract SetInterestConfig_InterestRateModule_Fuzz_Test is InterestRateModule_Fu
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_setInterestConfig(
+    function testFuzz_Success_setInterestConfig(
         uint72 baseRate_,
         uint72 highSlope_,
         uint72 lowSlope_,

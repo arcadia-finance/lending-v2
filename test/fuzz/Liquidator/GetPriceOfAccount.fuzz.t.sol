@@ -23,14 +23,14 @@ contract GetPriceOfAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_getPriceOfAccount_NotForSale(address accountAddress) public {
+    function testFuzz_Success_getPriceOfAccount_NotForSale(address accountAddress) public {
         (uint256 price, bool inAuction) = liquidator.getPriceOfAccount(accountAddress);
 
         assertEq(price, 0);
         assertEq(inAuction, false);
     }
 
-    function testSuccess_getPriceOfAccount_BeforeCutOffTime(
+    function testFuzz_Success_getPriceOfAccount_BeforeCutOffTime(
         uint32 startTime,
         uint16 halfLifeTime,
         uint32 currentTime,
@@ -80,7 +80,7 @@ contract GetPriceOfAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(inAuction, true);
     }
 
-    function testSuccess_getPriceOfAccount_AfterCutOffTime(
+    function testFuzz_Success_getPriceOfAccount_AfterCutOffTime(
         uint32 startTime,
         uint16 halfLifeTime,
         uint32 currentTime,

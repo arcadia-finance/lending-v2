@@ -23,7 +23,7 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_calculateInterestRate_UnderOptimalUtilisation(
+    function testFuzz_Success_calculateInterestRate_UnderOptimalUtilisation(
         uint40 utilisation,
         uint72 baseRate_,
         uint72 highSlope_,
@@ -55,7 +55,7 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         assertEq(actualInterestRate, expectedInterestRate);
     }
 
-    function testSuccess_calculateInterestRate_OverOptimalUtilisation(
+    function testFuzz_Success_calculateInterestRate_OverOptimalUtilisation(
         uint40 utilisation,
         uint72 baseRate_,
         uint72 highSlope_,

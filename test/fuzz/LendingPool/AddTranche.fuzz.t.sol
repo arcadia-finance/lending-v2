@@ -34,7 +34,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_addTranche_InvalidOwner(address unprivilegedAddress) public {
+    function testFuzz_Revert_addTranche_InvalidOwner(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -43,7 +43,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
+    function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(srTranche), 0, interestWeight, liquidationWeight);
@@ -59,7 +59,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertTrue(pool_.isTranche(address(srTranche)));
     }
 
-    function testRevert_addTranche_SingleTrancheTwice() public {
+    function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
         vm.expectRevert("TR_AD: Already exists");
@@ -67,7 +67,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_addTranche_MultipleTranches(
+    function testFuzz_Success_addTranche_MultipleTranches(
         uint16 interestWeightSr,
         uint16 liquidationWeightSr,
         uint16 interestWeightJr,

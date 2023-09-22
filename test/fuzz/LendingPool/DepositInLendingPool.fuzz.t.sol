@@ -21,7 +21,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_depositInLendingPool_NonTranche(address unprivilegedAddress, uint128 assets, address from)
+    function testFuzz_Revert_depositInLendingPool_NonTranche(address unprivilegedAddress, uint128 assets, address from)
         public
     {
         vm.assume(unprivilegedAddress != address(jrTranche));
@@ -33,7 +33,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_depositInLendingPool_NotApproved(uint128 amount) public {
+    function testFuzz_Revert_depositInLendingPool_NotApproved(uint128 amount) public {
         vm.assume(amount > 0);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), 0);
@@ -44,7 +44,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_depositInLendingPool_Paused(uint128 amount0, uint128 amount1) public {
+    function testFuzz_Revert_depositInLendingPool_Paused(uint128 amount0, uint128 amount1) public {
         vm.assume(amount0 <= type(uint128).max - amount1);
 
         vm.warp(35 days);
@@ -60,7 +60,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amount1, users.liquidityProvider);
     }
 
-    function testRevert_depositInLendingPool_SupplyCap(uint256 amount, uint128 supplyCap) public {
+    function testFuzz_Revert_depositInLendingPool_SupplyCap(uint256 amount, uint128 supplyCap) public {
         vm.assume(pool.totalRealisedLiquidity() + amount > supplyCap);
         vm.assume(supplyCap > 0);
 
@@ -72,7 +72,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amount, users.liquidityProvider);
     }
 
-    function testSuccess_depositInLendingPool_SupplyCapBackToZero(uint256 amount) public {
+    function testFuzz_Success_depositInLendingPool_SupplyCapBackToZero(uint256 amount) public {
         vm.assume(pool.totalRealisedLiquidity() + amount > 1);
         vm.assume(amount <= type(uint128).max);
 
@@ -99,7 +99,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
     }
 
-    function testSuccess_depositInLendingPool_FirstDepositByTranche(uint256 amount) public {
+    function testFuzz_Success_depositInLendingPool_FirstDepositByTranche(uint256 amount) public {
         vm.assume(amount <= type(uint128).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
@@ -109,7 +109,9 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
     }
 
-    function testSuccess_depositInLendingPool_MultipleDepositsByTranches(uint128 amount0, uint128 amount1) public {
+    function testFuzz_Success_depositInLendingPool_MultipleDepositsByTranches(uint128 amount0, uint128 amount1)
+        public
+    {
         vm.assume(amount0 <= type(uint128).max - amount1);
 
         uint256 totalAmount = uint256(amount0) + uint256(amount1);

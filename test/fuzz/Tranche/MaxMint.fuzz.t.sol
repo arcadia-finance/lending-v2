@@ -24,14 +24,14 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_maxMint_AuctionInProgress(address receiver) public {
+    function testFuzz_Success_maxMint_AuctionInProgress(address receiver) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 
         assertEq(tranche.maxMint(receiver), 0);
     }
 
-    function testSuccess_maxMint_Paused(address receiver) public {
+    function testFuzz_Success_maxMint_Paused(address receiver) public {
         vm.warp(35 days);
         vm.startPrank(users.creatorAddress);
         pool.changeGuardian(users.creatorAddress);
@@ -41,7 +41,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), 0);
     }
 
-    function testSuccess_maxMint_SupplyCapExceeded(address receiver, uint128 supplyCap, uint128 totalLiquidity)
+    function testFuzz_Success_maxMint_SupplyCapExceeded(address receiver, uint128 supplyCap, uint128 totalLiquidity)
         public
     {
         vm.assume(supplyCap > 0);
@@ -54,7 +54,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), 0);
     }
 
-    function testSuccess_maxMint_WithSupplyCapZeroSupply(
+    function testFuzz_Success_maxMint_WithSupplyCapZeroSupply(
         address receiver,
         uint128 supplyCap,
         uint128 totalLiquidity,
@@ -78,7 +78,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), maxShares);
     }
 
-    function testSuccess_maxMint_WithSupplyCapNonZeroShares(
+    function testFuzz_Success_maxMint_WithSupplyCapNonZeroShares(
         address receiver,
         uint128 supplyCap,
         uint128 totalLiquidity,
@@ -105,7 +105,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), maxShares);
     }
 
-    function testSuccess_maxMint_WithoutSupplyCapZeroSupply(
+    function testFuzz_Success_maxMint_WithoutSupplyCapZeroSupply(
         address receiver,
         uint128 totalLiquidity,
         uint128 liquidityOf
@@ -125,7 +125,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), maxShares);
     }
 
-    function testSuccess_maxMint_WithoutSupplyCapNonZeroShares(
+    function testFuzz_Success_maxMint_WithoutSupplyCapNonZeroShares(
         address receiver,
         uint128 totalLiquidity,
         uint128 liquidityOf,

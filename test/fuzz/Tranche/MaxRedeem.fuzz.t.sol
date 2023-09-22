@@ -24,21 +24,21 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_maxRedeem_Locked(address owner) public {
+    function testFuzz_Success_maxRedeem_Locked(address owner) public {
         vm.prank(address(pool));
         tranche.lock();
 
         assertEq(tranche.maxRedeem(owner), 0);
     }
 
-    function testSuccess_maxRedeem_AuctionInProgress(address owner) public {
+    function testFuzz_Success_maxRedeem_AuctionInProgress(address owner) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 
         assertEq(tranche.maxRedeem(owner), 0);
     }
 
-    function testSuccess_maxRedeem_Paused(address owner) public {
+    function testFuzz_Success_maxRedeem_Paused(address owner) public {
         vm.warp(35 days);
         vm.startPrank(users.creatorAddress);
         pool.changeGuardian(users.creatorAddress);
@@ -48,7 +48,7 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxRedeem(owner), 0);
     }
 
-    function testSuccess_maxRedeem_LimitedByShares(
+    function testFuzz_Success_maxRedeem_LimitedByShares(
         address owner,
         uint128 shares,
         uint128 totalShares,
@@ -82,7 +82,7 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxRedeem(owner), shares);
     }
 
-    function testSuccess_maxRedeem_LimitedByUnderlyingAssets(
+    function testFuzz_Success_maxRedeem_LimitedByUnderlyingAssets(
         address owner,
         uint128 shares,
         uint128 totalShares,

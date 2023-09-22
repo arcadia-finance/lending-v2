@@ -21,7 +21,7 @@ contract SetAuctionInProgress_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setAuctionInProgress_Unauthorised(address unprivilegedAddress) public {
+    function testFuzz_Revert_setAuctionInProgress_Unauthorised(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != address(pool));
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract SetAuctionInProgress_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setAuctionInProgress(bool set) public {
+    function testFuzz_Success_setAuctionInProgress(bool set) public {
         vm.startPrank(address(pool));
         vm.expectEmit(true, true, true, true);
         emit AuctionFlagSet(set);

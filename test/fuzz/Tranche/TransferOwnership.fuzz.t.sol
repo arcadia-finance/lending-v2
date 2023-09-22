@@ -21,7 +21,7 @@ contract TransferOwnership_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_transferOwnership_nonOwner(address unprivilegedAddress, address newOwner) public {
+    function testFuzz_Revert_transferOwnership_nonOwner(address unprivilegedAddress, address newOwner) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract TransferOwnership_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_transferOwnership(address newOwner) public {
+    function testFuzz_Success_transferOwnership(address newOwner) public {
         vm.startPrank(users.creatorAddress);
         tranche.transferOwnership(newOwner);
         vm.stopPrank();

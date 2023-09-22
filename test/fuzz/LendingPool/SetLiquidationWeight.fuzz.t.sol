@@ -29,7 +29,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setLiquidationWeight_InvalidOwner(address unprivilegedAddress) public {
+    function testFuzz_Revert_setLiquidationWeight_InvalidOwner(address unprivilegedAddress) public {
         // Given: all neccesary contracts are deployed on the setup
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
@@ -41,7 +41,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_setLiquidationWeight_InexistingTranche() public {
+    function testFuzz_Revert_setLiquidationWeight_InexistingTranche() public {
         // Given: all neccesary contracts are deployed on the setup
         vm.startPrank(users.creatorAddress);
         // When: users.creatorAddress setInterestWeight on index 0
@@ -51,7 +51,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setLiquidationWeight() public {
+    function testFuzz_Success_setLiquidationWeight() public {
         // Given: all neccesary contracts are deployed on the setup
         vm.startPrank(users.creatorAddress);
         // When: users.creatorAddress calls addTranche with srTranche and 50, calss setInterestWeight with 0 and 40

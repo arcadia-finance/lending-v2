@@ -25,19 +25,19 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_donateToTranche_indexIsNoTranche(uint256 index) public {
+    function testFuzz_Revert_donateToTranche_indexIsNoTranche(uint256 index) public {
         vm.assume(index >= pool.numberOfTranches());
 
         vm.expectRevert(stdError.indexOOBError);
         pool.donateToTranche(index, 1);
     }
 
-    function testRevert_donateToTranche_zeroAssets() public {
+    function testFuzz_Revert_donateToTranche_zeroAssets() public {
         vm.expectRevert("LP_DTT: Amount is 0");
         pool.donateToTranche(1, 0);
     }
 
-    function testRevert_donateToTranche_SupplyCap(uint256 amount, uint128 supplyCap) public {
+    function testFuzz_Revert_donateToTranche_SupplyCap(uint256 amount, uint128 supplyCap) public {
         // Given: amount should be greater than 1
         vm.assume(amount > 1);
         vm.assume(pool.totalRealisedLiquidity() + amount > supplyCap);
@@ -52,7 +52,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.donateToTranche(1, amount);
     }
 
-    function testRevert_donateToTranche_InsufficientShares(uint32 initialShares, uint128 assets, address donator)
+    function testFuzz_Revert_donateToTranche_InsufficientShares(uint32 initialShares, uint128 assets, address donator)
         public
     {
         vm.assume(assets > 0);
@@ -74,7 +74,9 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_donateToTranche(uint8 index, uint128 assets, address donator, uint128 initialShares) public {
+    function testFuzz_Success_donateToTranche(uint8 index, uint128 assets, address donator, uint128 initialShares)
+        public
+    {
         vm.assume(assets > 0);
         vm.assume(assets <= type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
         vm.assume(index < pool.numberOfTranches());

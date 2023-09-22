@@ -21,7 +21,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_skim_OngoingAuctions(uint16 auctionsInProgress_, address sender) public {
+    function testFuzz_Revert_skim_OngoingAuctions(uint16 auctionsInProgress_, address sender) public {
         vm.assume(auctionsInProgress_ > 0);
         pool.setAuctionsInProgress(auctionsInProgress_);
 
@@ -31,7 +31,9 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_skim(uint128 balanceOf, uint128 totalDebt, uint128 totalLiquidity, address sender) public {
+    function testFuzz_Success_skim(uint128 balanceOf, uint128 totalDebt, uint128 totalLiquidity, address sender)
+        public
+    {
         vm.assume(uint256(balanceOf) + totalDebt <= type(uint128).max);
         vm.assume(totalLiquidity <= balanceOf + totalDebt);
 

@@ -21,9 +21,10 @@ contract SetFixedLiquidationCost_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setFixedLiquidationCost_Unauthorised(address unprivilegedAddress, uint96 fixedLiquidationCost)
-        public
-    {
+    function testFuzz_Revert_setFixedLiquidationCost_Unauthorised(
+        address unprivilegedAddress,
+        uint96 fixedLiquidationCost
+    ) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -32,7 +33,7 @@ contract SetFixedLiquidationCost_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testSuccess_setFixedLiquidationCost(uint96 fixedLiquidationCost) public {
+    function testFuzz_Success_setFixedLiquidationCost(uint96 fixedLiquidationCost) public {
         vm.prank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit FixedLiquidationCostSet(fixedLiquidationCost);

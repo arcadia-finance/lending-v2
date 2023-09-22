@@ -21,7 +21,7 @@ contract TransferOwnership_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_transferOwnership_NonOwner(address unprivilegedAddress_, address to) public {
+    function testFuzz_Revert_transferOwnership_NonOwner(address unprivilegedAddress_, address to) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
@@ -30,7 +30,7 @@ contract TransferOwnership_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_transferOwnership(address to) public {
+    function testFuzz_Success_transferOwnership(address to) public {
         vm.assume(to != address(0));
 
         vm.prank(users.creatorAddress);

@@ -21,7 +21,7 @@ contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_mint_Locked(uint128 shares, address receiver) public {
+    function testFuzz_Revert_mint_Locked(uint128 shares, address receiver) public {
         vm.prank(address(pool));
         tranche.lock();
 
@@ -31,7 +31,7 @@ contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_mint(uint128 shares, address receiver) public {
+    function testFuzz_Success_mint(uint128 shares, address receiver) public {
         vm.assume(shares > 0);
 
         vm.prank(users.liquidityProvider);

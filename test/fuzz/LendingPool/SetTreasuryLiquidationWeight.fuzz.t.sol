@@ -21,7 +21,7 @@ contract SetTreasuryLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setTreasuryLiquidationWeight_InvalidOwner(address unprivilegedAddress) public {
+    function testFuzz_Revert_setTreasuryLiquidationWeight_InvalidOwner(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract SetTreasuryLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_
         vm.stopPrank();
     }
 
-    function testSuccess_setTreasuryLiquidationWeight() public {
+    function testFuzz_Success_setTreasuryLiquidationWeight() public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit TreasuryLiquidationWeightSet(5);

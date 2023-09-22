@@ -24,7 +24,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_liquidateAccount_Paused(address liquidationInitiator, address account_) public {
+    function testFuzz_Revert_liquidateAccount_Paused(address liquidationInitiator, address account_) public {
         vm.warp(35 days);
         vm.prank(users.guardian);
         pool.pause();
@@ -34,7 +34,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.liquidateAccount(account_);
     }
 
-    function testRevert_liquidateAccount_NoDebt(address liquidationInitiator, address account_) public {
+    function testFuzz_Revert_liquidateAccount_NoDebt(address liquidationInitiator, address account_) public {
         // Given: Account has no debt
 
         // When: liquidationInitiator tries to liquidate the proxyAccount
@@ -45,7 +45,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_liquidateAccount_NoOngoingAuctions(address liquidationInitiator, uint128 amountLoaned)
+    function testFuzz_Success_liquidateAccount_NoOngoingAuctions(address liquidationInitiator, uint128 amountLoaned)
         public
     {
         // Given: Account has debt
@@ -81,7 +81,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-    function testSuccess_liquidateAccount_WithOngoingAuctions(
+    function testFuzz_Success_liquidateAccount_WithOngoingAuctions(
         address liquidationInitiator,
         uint128 amountLoaned,
         uint16 auctionsInProgress

@@ -21,9 +21,10 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_openMarginAccount_InvalidAccountVersion(uint256 accountVersion, uint96 fixedLiquidationCost)
-        public
-    {
+    function testFuzz_Success_openMarginAccount_InvalidAccountVersion(
+        uint256 accountVersion,
+        uint96 fixedLiquidationCost
+    ) public {
         // Given: accountVersion is invalid
         vm.startPrank(users.creatorAddress);
         pool.setAccountVersion(accountVersion, false);
@@ -41,7 +42,7 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(0, fixedLiquidationCost_);
     }
 
-    function testSuccess_openMarginAccount_ValidAccountVersion(uint256 accountVersion, uint96 fixedLiquidationCost)
+    function testFuzz_Success_openMarginAccount_ValidAccountVersion(uint256 accountVersion, uint96 fixedLiquidationCost)
         public
     {
         // Given: accountVersion is valid

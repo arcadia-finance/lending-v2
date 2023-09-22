@@ -46,7 +46,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_doActionWithLeverage_DifferentTrustedCreditor() public {
+    function testScenario_Revert_doActionWithLeverage_DifferentTrustedCreditor() public {
         vm.startPrank(users.accountOwner);
         proxyAccount.closeTrustedMarginAccount();
         proxyAccount.setAssetManager(address(pool), true);
@@ -81,7 +81,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testRevert_doActionWithLeverage_BadAccountVersion() public {
+    function testScenario_Revert_doActionWithLeverage_BadAccountVersion() public {
         vm.prank(users.creatorAddress);
         pool.setAccountVersion(1, false);
 
@@ -114,7 +114,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testRevert_doActionWithLeverage_InsufficientCollateral(
+    function testScenario_Revert_doActionWithLeverage_InsufficientCollateral(
         uint64 stableDebt,
         uint64 stableCollateral,
         uint64 tokenOut
@@ -200,9 +200,11 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_doActionWithLeverage_repayExact(uint32 stableDebt, uint72 stableCollateral, uint32 tokenOut)
-        public
-    {
+    function testScenario_Success_doActionWithLeverage_repayExact(
+        uint32 stableDebt,
+        uint72 stableCollateral,
+        uint32 tokenOut
+    ) public {
         (uint256 tokenRate) = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
         (uint256 stableRate) = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
 
@@ -313,7 +315,9 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         assertEq(proxyAccount.getUsedMargin(), 0);
     }
 
-    function testSuccess_doActionWithLeverage(uint32 stableDebt, uint72 stableCollateral, uint32 tokenOut) public {
+    function testScenario_Success_doActionWithLeverage(uint32 stableDebt, uint72 stableCollateral, uint32 tokenOut)
+        public
+    {
         (uint256 tokenRate) = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
         (uint256 stableRate) = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
 

@@ -23,7 +23,7 @@ contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setInterestConfig_NonOwner(
+    function testFuzz_Revert_setInterestConfig_NonOwner(
         address unprivilegedAddress,
         uint8 baseRate_,
         uint8 highSlope_,
@@ -45,7 +45,7 @@ contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setInterestConfig(
+    function testFuzz_Success_setInterestConfig(
         uint8 baseRate_,
         uint8 highSlope_,
         uint8 lowSlope_,

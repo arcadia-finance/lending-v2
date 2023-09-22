@@ -21,7 +21,7 @@ contract SetMaxInitiatorFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setMaxInitiatorFee_Unauthorised(address unprivilegedAddress) public {
+    function testFuzz_Revert_setMaxInitiatorFee_Unauthorised(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract SetMaxInitiatorFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setMaxInitiatorFee(uint80 maxFee) public {
+    function testFuzz_Success_setMaxInitiatorFee(uint80 maxFee) public {
         vm.prank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit MaxInitiatorFeeSet(maxFee);

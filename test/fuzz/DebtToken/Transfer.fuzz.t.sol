@@ -21,7 +21,7 @@ contract Transfer_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_transfer(address to, uint256 amount, address sender) public {
+    function testFuzz_Revert_transfer(address to, uint256 amount, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(FunctionNotImplemented.selector);
         debt_.transfer(to, amount);

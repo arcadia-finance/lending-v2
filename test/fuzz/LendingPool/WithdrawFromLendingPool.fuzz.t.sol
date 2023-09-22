@@ -21,7 +21,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_withdrawFromLendingPool_Unauthorised(
+    function testFuzz_Revert_withdrawFromLendingPool_Unauthorised(
         uint128 assetsWithdrawn,
         address receiver,
         address unprivilegedAddress
@@ -38,7 +38,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_withdrawFromLendingPool_InsufficientAssets(
+    function testFuzz_Revert_withdrawFromLendingPool_InsufficientAssets(
         uint128 assetsDeposited,
         uint128 assetsWithdrawn,
         address receiver
@@ -53,7 +53,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testRevert_withdrawFromLendingPool_Paused(
+    function testFuzz_Revert_withdrawFromLendingPool_Paused(
         uint128 assetsDeposited,
         uint128 assetsWithdrawn,
         address receiver
@@ -74,9 +74,11 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
     }
 
-    function testSuccess_withdrawFromLendingPool(uint128 assetsDeposited, uint128 assetsWithdrawn, address receiver)
-        public
-    {
+    function testFuzz_Success_withdrawFromLendingPool(
+        uint128 assetsDeposited,
+        uint128 assetsWithdrawn,
+        address receiver
+    ) public {
         vm.assume(receiver != address(pool));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(assetsDeposited >= assetsWithdrawn);

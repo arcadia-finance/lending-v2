@@ -29,13 +29,13 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_borrow_NonAccount(uint256 amount, address nonAccount, address to) public {
+    function testFuzz_Revert_borrow_NonAccount(uint256 amount, address nonAccount, address to) public {
         vm.assume(nonAccount != address(proxyAccount));
         vm.expectRevert("LP_B: Not an Account");
         pool.borrow(amount, nonAccount, to, emptyBytes3);
     }
 
-    function testRevert_borrow_Unauthorised(uint256 amount, address beneficiary, address to) public {
+    function testFuzz_Revert_borrow_Unauthorised(uint256 amount, address beneficiary, address to) public {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.assume(amount > 0);
@@ -45,7 +45,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_InsufficientApproval(
+    function testFuzz_Revert_borrow_InsufficientApproval(
         uint256 amountAllowed,
         uint256 amountLoaned,
         address beneficiary,
@@ -63,7 +63,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_InsufficientApprovalAfterTransfer(
+    function testFuzz_Revert_borrow_InsufficientApprovalAfterTransfer(
         uint256 amountLoaned,
         address beneficiary,
         address to,
@@ -87,7 +87,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_InsufficientCollateral(uint128 amountLoaned, uint256 collateralValue, address to)
+    function testFuzz_Revert_borrow_InsufficientCollateral(uint128 amountLoaned, uint256 collateralValue, address to)
         public
     {
         vm.assume(collateralValue < amountLoaned);
@@ -101,7 +101,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_DifferentTrustedCreditor(
+    function testFuzz_Revert_borrow_DifferentTrustedCreditor(
         uint128 amountLoaned,
         uint256 collateralValue,
         address to,
@@ -130,7 +130,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_BadAccountVersion(uint128 amountLoaned, uint256 collateralValue, address to) public {
+    function testFuzz_Revert_borrow_BadAccountVersion(uint128 amountLoaned, uint256 collateralValue, address to)
+        public
+    {
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
 
@@ -145,7 +147,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_InsufficientLiquidity(
+    function testFuzz_Revert_borrow_InsufficientLiquidity(
         uint128 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -167,7 +169,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_borrow_Paused(uint128 amountLoaned, uint256 collateralValue, uint128 liquidity, address to)
+    function testFuzz_Revert_borrow_Paused(uint128 amountLoaned, uint256 collateralValue, uint128 liquidity, address to)
         public
     {
         vm.assume(collateralValue <= amountLoaned);
@@ -189,7 +191,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
 
-    function testRevert_borrow_BorrowCap(
+    function testFuzz_Revert_borrow_BorrowCap(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -216,7 +218,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
 
-    function testSuccess_borrow_BorrowCapSetToZeroAgain(
+    function testFuzz_Success_borrow_BorrowCapSetToZeroAgain(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -256,7 +258,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
     }
 
-    function testSuccess_borrow_BorrowCapNotReached(
+    function testFuzz_Success_borrow_BorrowCapNotReached(
         uint256 amountLoaned,
         uint256 amountLoanedToFail,
         uint256 collateralValue,
@@ -306,7 +308,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
     }
 
-    function testSuccess_borrow_ByAccountOwner(
+    function testFuzz_Success_borrow_ByAccountOwner(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -334,7 +336,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
     }
 
-    function testSuccess_borrow_ByLimitedAuthorisedAddress(
+    function testFuzz_Success_borrow_ByLimitedAuthorisedAddress(
         uint256 amountAllowed,
         uint256 amountLoaned,
         uint256 collateralValue,
@@ -370,7 +372,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
     }
 
-    function testSuccess_borrow_ByMaxAuthorisedAddress(
+    function testFuzz_Success_borrow_ByMaxAuthorisedAddress(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -401,7 +403,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
     }
 
-    function testSuccess_borrow_originationFeeAvailable(
+    function testFuzz_Success_borrow_originationFeeAvailable(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
@@ -446,7 +448,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(totalRealisedLiquidityPre + (amountLoaned * originationFee / 10_000), totalRealisedLiquidityPost);
     }
 
-    function testSuccess_borrow_EmitReferralEvent(
+    function testFuzz_Success_borrow_EmitReferralEvent(
         uint256 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,

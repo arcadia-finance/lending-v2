@@ -21,7 +21,7 @@ contract Mint_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_mint(uint256 shares, address receiver, address sender) public {
+    function testFuzz_Revert_mint(uint256 shares, address receiver, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(FunctionNotImplemented.selector);
         debt_.mint(shares, receiver);

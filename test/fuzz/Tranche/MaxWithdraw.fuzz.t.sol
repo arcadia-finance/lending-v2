@@ -24,21 +24,21 @@ contract MaxWithdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_maxWithdraw_Locked(address owner) public {
+    function testFuzz_Success_maxWithdraw_Locked(address owner) public {
         vm.prank(address(pool));
         tranche.lock();
 
         assertEq(tranche.maxWithdraw(owner), 0);
     }
 
-    function testSuccess_maxWithdraw_AuctionInProgress(address owner) public {
+    function testFuzz_Success_maxWithdraw_AuctionInProgress(address owner) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 
         assertEq(tranche.maxWithdraw(owner), 0);
     }
 
-    function testSuccess_maxWithdraw_Paused(address owner) public {
+    function testFuzz_Success_maxWithdraw_Paused(address owner) public {
         vm.warp(35 days);
         vm.startPrank(users.creatorAddress);
         pool.changeGuardian(users.creatorAddress);
@@ -48,7 +48,7 @@ contract MaxWithdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxWithdraw(owner), 0);
     }
 
-    function testSuccess_maxWithdraw_LimitedByShares(
+    function testFuzz_Success_maxWithdraw_LimitedByShares(
         address owner,
         uint128 shares,
         uint128 totalShares,
@@ -81,7 +81,7 @@ contract MaxWithdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxWithdraw(owner), claimableAssets);
     }
 
-    function testSuccess_maxWithdraw_LimitedByUnderlyingAssets(
+    function testFuzz_Success_maxWithdraw_LimitedByUnderlyingAssets(
         address owner,
         uint128 shares,
         uint128 totalShares,

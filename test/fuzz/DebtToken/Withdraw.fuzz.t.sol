@@ -24,14 +24,16 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_withdraw_External(uint256 assets, address receiver, address owner, address sender) public {
+    function testFuzz_Revert_withdraw_External(uint256 assets, address receiver, address owner, address sender)
+        public
+    {
         vm.startPrank(sender);
         vm.expectRevert(FunctionNotImplemented.selector);
         debt_.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
 
-    function testRevert_withdraw_Internal_ZeroShares(
+    function testFuzz_Revert_withdraw_Internal_ZeroShares(
         uint256 assets,
         address owner,
         uint256 totalSupply,
@@ -51,7 +53,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         debt_.withdraw_(assets, owner, owner);
     }
 
-    function testSuccess_withdraw_Internal(
+    function testFuzz_Success_withdraw_Internal(
         uint256 assetsWithdrawn,
         address owner,
         uint256 initialShares,

@@ -25,7 +25,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_settleLiquidation_Unauthorised(
+    function testFuzz_Revert_settleLiquidation_Unauthorised(
         uint128 badDebt,
         uint128 liquidationInitiatorReward,
         uint128 liquidationPenalty,
@@ -50,7 +50,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_settleLiquidation_ExcessBadDebt(
+    function testFuzz_Revert_settleLiquidation_ExcessBadDebt(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
         uint128 badDebt
@@ -69,7 +69,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.settleLiquidation(address(proxyAccount), users.accountOwner, badDebt, 0, 0, 0);
     }
 
-    function testSuccess_settleLiquidation_Surplus(
+    function testFuzz_Success_settleLiquidation_Surplus(
         uint128 liquidity,
         uint128 liquidationInitiatorReward,
         uint128 liquidationPenalty,
@@ -140,7 +140,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-    function testSuccess_settleLiquidation_ProcessDefault(
+    function testFuzz_Success_settleLiquidation_ProcessDefault(
         uint128 liquidity,
         uint128 badDebt,
         uint128 liquidationInitiatorReward,
@@ -181,7 +181,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.totalRealisedLiquidity(), uint256(liquidity) + liquidationInitiatorReward - badDebt);
     }
 
-    function testSuccess_settleLiquidation_MultipleAuctionsOngoing(uint128 liquidity, uint16 auctionsInProgress)
+    function testFuzz_Success_settleLiquidation_MultipleAuctionsOngoing(uint128 liquidity, uint16 auctionsInProgress)
         public
     {
         // Given: Liquidity is deposited in Lending Pool
@@ -204,7 +204,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-    function testSuccess_settleLiquidation_ProcessDefaultNoTrancheWiped(
+    function testFuzz_Success_settleLiquidation_ProcessDefaultNoTrancheWiped(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
         uint128 badDebt
@@ -229,7 +229,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.totalRealisedLiquidity(), totalAmount - badDebt);
     }
 
-    function testSuccess_settleLiquidation_ProcessDefaultOneTrancheWiped(
+    function testFuzz_Success_settleLiquidation_ProcessDefaultOneTrancheWiped(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
         uint128 badDebt,
@@ -279,7 +279,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.liquidityOf(address(jrTranche)), 0);
     }
 
-    function testSuccess_settleLiquidation_ProcessDefaultAllTranchesWiped(
+    function testFuzz_Success_settleLiquidation_ProcessDefaultAllTranchesWiped(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
         uint16 auctionsInProgress

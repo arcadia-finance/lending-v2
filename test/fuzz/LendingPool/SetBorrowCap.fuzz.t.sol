@@ -21,7 +21,7 @@ contract SetBorrowCap_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setBorrowCap_InvalidOwner(address unprivilegedAddress, uint128 borrowCap) public {
+    function testFuzz_Revert_setBorrowCap_InvalidOwner(address unprivilegedAddress, uint128 borrowCap) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
@@ -30,7 +30,7 @@ contract SetBorrowCap_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setBorrowCap(uint128 borrowCap) public {
+    function testFuzz_Success_setBorrowCap(uint128 borrowCap) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit BorrowCapSet(borrowCap);

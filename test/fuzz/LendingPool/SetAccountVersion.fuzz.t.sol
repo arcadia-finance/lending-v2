@@ -21,7 +21,7 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_setAccountVersion_NonOwner(address unprivilegedAddress, uint256 accountVersion, bool valid)
+    function testFuzz_Revert_setAccountVersion_NonOwner(address unprivilegedAddress, uint256 accountVersion, bool valid)
         public
     {
         vm.assume(unprivilegedAddress != users.creatorAddress);
@@ -32,7 +32,7 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_setAccountVersion_setValid(uint256 accountVersion) public {
+    function testFuzz_Success_setAccountVersion_setValid(uint256 accountVersion) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit AccountVersionSet(accountVersion, true);
@@ -42,7 +42,7 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertTrue(pool.isValidVersion(accountVersion));
     }
 
-    function testSuccess_setAccountVersion_setInvalid(uint256 accountVersion) public {
+    function testFuzz_Success_setAccountVersion_setInvalid(uint256 accountVersion) public {
         vm.prank(users.creatorAddress);
         pool.setIsValidVersion(accountVersion, true);
 

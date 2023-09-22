@@ -23,7 +23,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testSuccess_liquidityOf(
+    function testFuzz_Success_liquidityOf(
         uint256 interestRate,
         uint24 deltaTimestamp,
         uint128 realisedDebt,

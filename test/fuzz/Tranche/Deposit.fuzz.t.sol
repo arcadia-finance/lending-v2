@@ -21,7 +21,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testRevert_deposit_Locked(uint128 assets, address receiver) public {
+    function testFuzz_Revert_deposit_Locked(uint128 assets, address receiver) public {
         vm.prank(address(pool));
         tranche.lock();
 
@@ -31,14 +31,14 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testRevert_deposit_ZeroShares(address receiver) public {
+    function testFuzz_Revert_deposit_ZeroShares(address receiver) public {
         vm.startPrank(users.liquidityProvider);
         vm.expectRevert("T_D: ZERO_SHARES");
         tranche.deposit(0, receiver);
         vm.stopPrank();
     }
 
-    function testRevert_deposit_AuctionInProgress(uint128 assets, address receiver) public {
+    function testFuzz_Revert_deposit_AuctionInProgress(uint128 assets, address receiver) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);
 
@@ -48,7 +48,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testSuccess_deposit(uint128 assets, address receiver) public {
+    function testFuzz_Success_deposit(uint128 assets, address receiver) public {
         vm.assume(assets > 0);
 
         vm.prank(users.liquidityProvider);
@@ -60,7 +60,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(asset.balanceOf(address(pool)), assets);
     }
 
-    function testSuccess_deposit_sync(uint128 assets, address receiver) public {
+    function testFuzz_Success_deposit_sync(uint128 assets, address receiver) public {
         vm.assume(assets > 3);
 
         vm.prank(users.liquidityProvider);
