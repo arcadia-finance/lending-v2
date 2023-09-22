@@ -43,4 +43,11 @@ abstract contract Events {
         uint128 liquidationPenalty,
         uint128 remainder
     );
+
+    /* //////////////////////////////////////////////////////////////
+                            TRANCHE
+    ////////////////////////////////////////////////////////////// */
+
+    event LockSet(bool status);
+    event AuctionFlagSet(bool status);
 }
