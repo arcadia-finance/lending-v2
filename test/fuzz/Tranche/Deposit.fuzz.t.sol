@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "deposit" of contract "Tranche".
+ * @notice Fuzz tests for the function "deposit" of contract "Tranche".
  */
 contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

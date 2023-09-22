@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "setMinimumPriceMultiplier" of contract "Liquidator".
+ * @notice Fuzz tests for the function "setMinimumPriceMultiplier" of contract "Liquidator".
  */
 contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

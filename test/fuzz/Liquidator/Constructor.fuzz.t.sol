@@ -9,7 +9,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { Liquidator } from "../../../src/Liquidator.sol";
 
 /**
- * @notice Fuzz tests for the "constructor" of contract "Liquidator".
+ * @notice Fuzz tests for the function "constructor" of contract "Liquidator".
  */
 contract Constructor_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

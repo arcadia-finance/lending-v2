@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "transferOwnership" of contract "Liquidator".
+ * @notice Fuzz tests for the function "transferOwnership" of contract "Liquidator".
  */
 contract TransferOwnership_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

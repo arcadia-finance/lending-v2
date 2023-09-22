@@ -9,7 +9,7 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 import { Tranche } from "../../../src/Tranche.sol";
 
 /**
- * @notice Fuzz tests for the "constructor" of contract "Tranche".
+ * @notice Fuzz tests for the function "constructor" of contract "Tranche".
  */
 contract Constructor_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

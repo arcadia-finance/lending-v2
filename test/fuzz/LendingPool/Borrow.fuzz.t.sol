@@ -14,7 +14,7 @@ import { LendingPool } from "../../../src/LendingPool.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
- * @notice Fuzz tests for the "borrow" of contract "LendingPool".
+ * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
  */
 contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;

@@ -9,7 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
- * @notice Fuzz tests for the "totalAssets" of contract "LendingPool".
+ * @notice Fuzz tests for the function "totalAssets" of contract "LendingPool".
  */
 contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

@@ -11,7 +11,7 @@ import { ActionMultiCallV2 } from "../../../lib/accounts-v2/src/actions/MultiCal
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
- * @notice Fuzz tests for the "doActionWithLeverage" of contract "LendingPool".
+ * @notice Fuzz tests for the function "doActionWithLeverage" of contract "LendingPool".
  */
 contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

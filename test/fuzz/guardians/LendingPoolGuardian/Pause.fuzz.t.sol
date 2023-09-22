@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "pause" of contract "LendingPoolGuardian".
+ * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
  */
 contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

@@ -11,7 +11,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { Tranche } from "../../../src/Tranche.sol";
 
 /**
- * @notice Fuzz tests for the "donateToTranche" of contract "LendingPool".
+ * @notice Fuzz tests for the function "donateToTranche" of contract "LendingPool".
  */
 contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

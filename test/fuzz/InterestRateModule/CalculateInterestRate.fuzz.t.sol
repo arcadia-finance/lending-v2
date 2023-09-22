@@ -9,7 +9,7 @@ import { InterestRateModule_Fuzz_Test } from "./_InterestRateModule.fuzz.t.sol";
 import { InterestRateModule } from "../../../src/InterestRateModule.sol";
 
 /**
- * @notice Fuzz tests for the "calculateInterestRate" of contract "InterestRateModule".
+ * @notice Fuzz tests for the function "calculateInterestRate" of contract "InterestRateModule".
  */
 contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

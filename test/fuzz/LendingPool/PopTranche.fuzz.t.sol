@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "popTranche" of contract "LendingPool".
+ * @notice Fuzz tests for the function "popTranche" of contract "LendingPool".
  */
 contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

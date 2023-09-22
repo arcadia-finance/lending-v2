@@ -11,7 +11,7 @@ import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
 
 /**
- * @notice Fuzz tests for the "addTranche" of contract "LendingPool".
+ * @notice Fuzz tests for the function "addTranche" of contract "LendingPool".
  */
 contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

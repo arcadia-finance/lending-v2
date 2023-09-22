@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "setTreasuryLiquidationWeight" of contract "LendingPool".
+ * @notice Fuzz tests for the function "setTreasuryLiquidationWeight" of contract "LendingPool".
  */
 contract SetTreasuryLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

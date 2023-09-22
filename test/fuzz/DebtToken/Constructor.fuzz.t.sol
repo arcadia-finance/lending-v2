@@ -9,7 +9,7 @@ import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 import { DebtTokenExtension } from "../../utils/Extensions.sol";
 
 /**
- * @notice Fuzz tests for the "constructor" of contract "DebtToken".
+ * @notice Fuzz tests for the function "constructor" of contract "DebtToken".
  */
 contract Constructor_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

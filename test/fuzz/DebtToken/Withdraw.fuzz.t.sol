@@ -9,7 +9,7 @@ import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the "withdraw" of contract "DebtToken".
+ * @notice Fuzz tests for the function "withdraw" of contract "DebtToken".
  */
 contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     using stdStorage for StdStorage;

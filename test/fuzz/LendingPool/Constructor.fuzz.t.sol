@@ -12,7 +12,7 @@ import { LendingPool } from "../../../src/LendingPool.sol";
 import { Constants } from "../../../lib/accounts-v2/test/utils/Constants.sol";
 
 /**
- * @notice Fuzz tests for the "constructor" of contract "LendingPool".
+ * @notice Fuzz tests for the function "constructor" of contract "LendingPool".
  */
 contract Constructor_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

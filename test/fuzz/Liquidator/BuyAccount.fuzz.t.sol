@@ -9,7 +9,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the "buyAccount" of contract "Liquidator".
+ * @notice Fuzz tests for the function "buyAccount" of contract "Liquidator".
  */
 contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using stdStorage for StdStorage;

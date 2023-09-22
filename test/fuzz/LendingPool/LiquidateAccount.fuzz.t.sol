@@ -9,7 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the "liquidateAccount" of contract "LendingPool".
+ * @notice Fuzz tests for the function "liquidateAccount" of contract "LendingPool".
  */
 contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;

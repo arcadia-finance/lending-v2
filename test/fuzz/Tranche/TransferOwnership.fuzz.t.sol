@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "transferOwnership" of contract "Tranche".
+ * @notice Fuzz tests for the function "transferOwnership" of contract "Tranche".
  */
 contract TransferOwnership_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the "permit" of contract "DebtToken".
+ * @notice Fuzz tests for the function "permit" of contract "DebtToken".
  */
 contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

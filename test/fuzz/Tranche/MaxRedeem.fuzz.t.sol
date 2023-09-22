@@ -9,7 +9,7 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the "maxRedeem" of contract "Tranche".
+ * @notice Fuzz tests for the function "maxRedeem" of contract "Tranche".
  */
 contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     using stdStorage for StdStorage;

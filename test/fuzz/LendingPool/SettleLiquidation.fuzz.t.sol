@@ -10,7 +10,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the "settleLiquidation" of contract "LendingPool".
+ * @notice Fuzz tests for the function "settleLiquidation" of contract "LendingPool".
  */
 contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;

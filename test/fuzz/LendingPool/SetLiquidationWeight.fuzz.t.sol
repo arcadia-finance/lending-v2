@@ -11,7 +11,7 @@ import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { LendingPoolExtension } from "../../utils/Extensions.sol";
 
 /**
- * @notice Fuzz tests for the "setLiquidationWeight" of contract "LendingPool".
+ * @notice Fuzz tests for the function "setLiquidationWeight" of contract "LendingPool".
  */
 contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

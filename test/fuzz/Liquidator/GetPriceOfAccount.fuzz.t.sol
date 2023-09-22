@@ -9,7 +9,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
 /**
- * @notice Fuzz tests for the "getPriceOfAccount" of contract "Liquidator".
+ * @notice Fuzz tests for the function "getPriceOfAccount" of contract "Liquidator".
  */
 contract GetPriceOfAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

@@ -9,7 +9,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
 /**
- * @notice Fuzz tests for the "setAuctionCurveParameters" of contract "Liquidator".
+ * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "Liquidator".
  */
 contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
