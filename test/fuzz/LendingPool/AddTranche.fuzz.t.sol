@@ -43,6 +43,14 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
+    function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
+        vm.startPrank(users.creatorAddress);
+        pool_.addTranche(address(srTranche), 50, 0);
+        vm.expectRevert("TR_AD: Already exists");
+        pool_.addTranche(address(srTranche), 40, 0);
+        vm.stopPrank();
+    }
+
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
@@ -57,14 +65,6 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool_.liquidationWeightTranches(0), liquidationWeight);
         assertEq(pool_.tranches(0), address(srTranche));
         assertTrue(pool_.isTranche(address(srTranche)));
-    }
-
-    function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
-        vm.startPrank(users.creatorAddress);
-        pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert("TR_AD: Already exists");
-        pool_.addTranche(address(srTranche), 40, 0);
-        vm.stopPrank();
     }
 
     function testFuzz_Success_addTranche_MultipleTranches(
