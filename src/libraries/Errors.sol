@@ -75,6 +75,8 @@ library Errors {
                                     TRANCHE
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Thrown when a tranche is locked.
     error Tranche_Locked();
+    /// @notice Thrown when amount of shares would represent zero assets.
     error Tranche_ZeroAssets();
 }

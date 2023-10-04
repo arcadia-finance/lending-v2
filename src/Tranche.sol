@@ -10,6 +10,7 @@ import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { IGuardian } from "./interfaces/IGuardian.sol";
+import { Errors } from "./libraries/Errors.sol";
 
 /**
  * @title Tranche
@@ -46,7 +47,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     modifier notLocked() {
-        require(!locked, "TRANCHE: LOCKED");
+        if (locked) revert Errors.Tranche_Locked();
         _;
     }
 
@@ -57,7 +58,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
     modifier notDuringAuction() {
-        require(!auctionInProgress, "TRANCHE: AUCTION IN PROGRESS");
+        if (auctionInProgress) revert Errors.AuctionOngoing();
         _;
     }
 
@@ -92,7 +93,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Only the Lending Pool can call this function, only trigger is a severe default event.
      */
     function lock() external {
-        require(msg.sender == address(lendingPool), "T_L: UNAUTHORIZED");
+        if (msg.sender != address(lendingPool)) revert Errors.Unauthorized();
         locked = true;
         auctionInProgress = false;
 
@@ -119,7 +120,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        require(msg.sender == address(lendingPool), "T_SAIP: UNAUTHORIZED");
+        if (msg.sender != address(lendingPool)) revert Errors.Unauthorized();
         auctionInProgress = auctionInProgress_;
 
         emit AuctionFlagSet(auctionInProgress_);
@@ -146,7 +147,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
-        require((shares = previewDepositAndSync(assets)) != 0, "T_D: ZERO_SHARES");
+        if ((shares = previewDepositAndSync(assets)) == 0) revert Errors.ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
         lendingPool.depositInLendingPool(assets, msg.sender);
@@ -236,7 +237,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         }
 
         // Check for rounding error since we round down in previewRedeem.
-        require((assets = previewRedeemAndSync(shares)) != 0, "T_R: ZERO_ASSETS");
+        if ((assets = previewRedeemAndSync(shares)) == 0) revert Errors.Tranche_ZeroAssets();
 
         _burn(owner_, shares);
 

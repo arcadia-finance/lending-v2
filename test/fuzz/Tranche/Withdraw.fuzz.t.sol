@@ -8,9 +8,11 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 
+import { Errors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "Tranche".
  */
+
 contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -28,7 +30,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert("TRANCHE: LOCKED");
+        vm.expectRevert(Errors.Tranche_Locked.selector);
         tranche.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -38,7 +40,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.setAuctionInProgress(true);
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert("TRANCHE: AUCTION IN PROGRESS");
+        vm.expectRevert(Errors.AuctionOngoing.selector);
         tranche.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
