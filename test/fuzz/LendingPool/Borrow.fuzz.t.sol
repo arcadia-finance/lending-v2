@@ -12,6 +12,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 
 import { LendingPool } from "../../../src/LendingPool.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
@@ -213,7 +214,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setBorrowCap(borrowCap);
 
-        vm.expectRevert("DT_D: BORROW_CAP_EXCEEDED");
+        vm.expectRevert(Errors.DebtToken_BorrowCapExceeded.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
@@ -242,7 +243,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setBorrowCap(1);
 
         // Then: borrow should revert with "LP_B: Borrow cap reached"
-        vm.expectRevert("DT_D: BORROW_CAP_EXCEEDED");
+        vm.expectRevert(Errors.DebtToken_BorrowCapExceeded.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
 
@@ -285,7 +286,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setBorrowCap(1);
 
         // Then: borrow should revert with "LP_B: Borrow cap reached"
-        vm.expectRevert("DT_D: BORROW_CAP_EXCEEDED");
+        vm.expectRevert(Errors.DebtToken_BorrowCapExceeded.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
 
@@ -294,7 +295,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setBorrowCap(100);
 
         // Then: borrow should still fail with exceeding amount
-        vm.expectRevert("DT_D: BORROW_CAP_EXCEEDED");
+        vm.expectRevert(Errors.DebtToken_BorrowCapExceeded.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoanedToFail, address(proxyAccount), to, emptyBytes3);
 

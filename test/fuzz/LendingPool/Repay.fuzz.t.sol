@@ -7,6 +7,7 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
@@ -92,7 +93,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
-        vm.expectRevert("DT_W: ZERO_SHARES");
+        vm.expectRevert(Errors.ZeroShares.selector);
         pool.repay(amountRepaid, nonAccount);
         vm.stopPrank();
     }

@@ -7,6 +7,7 @@ pragma solidity 0.8.19;
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "DebtToken".
@@ -49,7 +50,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         stdstore.target(address(debt_)).sig(debt_.realisedDebt.selector).checked_write(totalDebt);
 
-        vm.expectRevert("DT_W: ZERO_SHARES");
+        vm.expectRevert(Errors.ZeroShares.selector);
         debt_.withdraw_(assets, owner, owner);
     }
 
