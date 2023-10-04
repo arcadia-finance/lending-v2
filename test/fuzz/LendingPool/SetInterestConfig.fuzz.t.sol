@@ -7,10 +7,11 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { InterestRateModule } from "../../../src/InterestRateModule.sol";
-
+import { Errors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setInterestConfig" of contract "LendingPool".
  */
+
 contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

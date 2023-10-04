@@ -5,6 +5,7 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "depositInLendingPool" of contract "LendingPool".
@@ -28,7 +29,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(srTranche));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("LP: Only tranche");
+        vm.expectRevert(Errors.LendingPool_OnlyTranche.selector);
         pool.depositInLendingPool(assets, from);
         vm.stopPrank();
     }
@@ -67,7 +68,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(supplyCap);
 
-        vm.expectRevert(supplyCapExceeded.selector);
+        vm.expectRevert(Errors.LendingPool_SupplyCapExceeded.selector);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
     }
@@ -81,7 +82,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setSupplyCap(1);
 
         // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(supplyCapExceeded.selector);
+        vm.expectRevert(Errors.LendingPool_SupplyCapExceeded.selector);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
 

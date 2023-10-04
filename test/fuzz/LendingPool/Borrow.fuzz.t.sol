@@ -32,7 +32,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_borrow_NonAccount(uint256 amount, address nonAccount, address to) public {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert("LP_B: Not an Account");
+        vm.expectRevert(Errors.LendingPool_IsNotAnAccount.selector);
         pool.borrow(amount, nonAccount, to, emptyBytes3);
     }
 
@@ -97,7 +97,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert("LP_B: Reverted");
+        vm.expectRevert(Errors.LendingPool_Reverted.selector);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
         vm.stopPrank();
     }
@@ -126,7 +126,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert("LP_B: Reverted");
+        vm.expectRevert(Errors.LendingPool_Reverted.selector);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
         vm.stopPrank();
     }
@@ -143,7 +143,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setAccountVersion(1, false);
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert("LP_B: Reverted");
+        vm.expectRevert(Errors.LendingPool_Reverted.selector);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
         vm.stopPrank();
     }

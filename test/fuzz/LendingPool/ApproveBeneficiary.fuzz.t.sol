@@ -5,6 +5,7 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "approveBeneficiary" of contract "LendingPool".
@@ -25,7 +26,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert("LP_AB: UNAUTHORIZED");
+        vm.expectRevert(Errors.Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, nonAccount);
     }
 
@@ -37,7 +38,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != users.accountOwner);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("LP_AB: UNAUTHORIZED");
+        vm.expectRevert(Errors.Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
         vm.stopPrank();
     }

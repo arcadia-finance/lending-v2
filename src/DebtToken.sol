@@ -81,9 +81,7 @@ abstract contract DebtToken is ERC4626 {
      */
     function _deposit(uint256 assets, address receiver) internal returns (uint256 shares) {
         shares = previewDeposit(assets); // No need to check for rounding error, previewDeposit rounds up.
-        if (borrowCap > 0 && maxWithdraw(receiver) + assets > borrowCap) {
-            revert Errors.DebtToken_BorrowCapExceeded();
-        }
+        if (borrowCap > 0 && maxWithdraw(receiver) + assets > borrowCap) revert Errors.DebtToken_BorrowCapExceeded();
 
         _mint(receiver, shares);
 
@@ -118,9 +116,7 @@ abstract contract DebtToken is ERC4626 {
      */
     function _withdraw(uint256 assets, address receiver, address owner_) internal returns (uint256 shares) {
         // Check for rounding error since we round down in previewWithdraw.
-        if ((shares = previewWithdraw(assets)) == 0) {
-            revert Errors.ZeroShares();
-        }
+        if ((shares = previewWithdraw(assets)) == 0) revert Errors.ZeroShares();
 
         _burn(owner_, shares);
 

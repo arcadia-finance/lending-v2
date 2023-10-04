@@ -7,8 +7,8 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
-
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { Errors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "addTranche" of contract "LendingPool".
@@ -46,7 +46,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert("TR_AD: Already exists");
+        vm.expectRevert(Errors.LendingPool_TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40, 0);
         vm.stopPrank();
     }
