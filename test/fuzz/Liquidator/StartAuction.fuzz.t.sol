@@ -6,9 +6,11 @@ pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
+import { Errors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "startAuction" of contract "Liquidator".
  */
+
 contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -28,7 +30,7 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.startAuction(address(proxyAccount), openDebt, type(uint80).max);
 
         vm.startPrank(address(pool));
-        vm.expectRevert("LQ_SA: Auction already ongoing");
+        vm.expectRevert(Errors.AuctionOngoing.selector);
         liquidator.startAuction(address(proxyAccount), openDebt, type(uint80).max);
         vm.stopPrank();
     }
@@ -39,7 +41,7 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(unprivilegedAddress_ != address(pool));
 
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert("LQ_SA: Unauthorised");
+        vm.expectRevert(Errors.Unauthorized.selector);
         liquidator.startAuction(address(proxyAccount), openDebt, type(uint80).max);
         vm.stopPrank();
     }

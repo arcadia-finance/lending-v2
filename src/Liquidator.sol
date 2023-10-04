@@ -10,13 +10,14 @@ import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
-
+import { Errors } from "./libraries/Errors.sol";
 /**
  * @title Liquidator
  * @author Pragma Labs
  * @notice The liquidator holds the execution logic and storage of all things related to liquidating Arcadia Accounts.
  * Ensure your total value denomination remains above the liquidation threshold, or risk being liquidated!
  */
+
 contract Liquidator is Owned {
     using SafeTransferLib for ERC20;
 
@@ -111,7 +112,7 @@ contract Liquidator is Owned {
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
     function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_) external onlyOwner {
-        require(initiatorRewardWeight_ + penaltyWeight_ <= 11, "LQ_SW: Weights Too High");
+        if (initiatorRewardWeight_ + penaltyWeight_ > 11) revert Errors.Liquidator_WeightsTooHigh();
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
@@ -134,10 +135,10 @@ contract Liquidator is Owned {
      */
     function setAuctionCurveParameters(uint16 halfLifeTime, uint16 cutoffTime_) external onlyOwner {
         //Checks that new parameters are within reasonable boundaries.
-        require(halfLifeTime > 120, "LQ_SACP: halfLifeTime too low"); // 2 minutes
-        require(halfLifeTime < 28_800, "LQ_SACP: halfLifeTime too high"); // 8 hours
-        require(cutoffTime_ > 3600, "LQ_SACP: cutoff too low"); // 1 hour
-        require(cutoffTime_ < 64_800, "LQ_SACP: cutoff too high"); // 18 hours
+        if (halfLifeTime < 120) revert Errors.Liquidator_HalfLifeTimeTooLow(); // 2 minutes
+        if (halfLifeTime > 28_800) revert Errors.Liquidator_HalfLifeTimeTooHigh(); // 8 hours
+        if (cutoffTime_ < 3600) revert Errors.Liquidator_CutOffTooLow(); // 1 hour
+        if (cutoffTime_ > 64_800) revert Errors.Liquidator_CutOffTooHigh(); // 18 hours
 
         //Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
@@ -163,8 +164,8 @@ contract Liquidator is Owned {
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        require(startPriceMultiplier_ > 100, "LQ_SSPM: multiplier too low");
-        require(startPriceMultiplier_ < 301, "LQ_SSPM: multiplier too high");
+        if (startPriceMultiplier_ < 100) revert Errors.Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ > 301) revert Errors.Liquidator_MultiplierTooHigh();
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -176,7 +177,7 @@ contract Liquidator is Owned {
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        require(minPriceMultiplier_ < 91, "LQ_SMPM: multiplier too high");
+        if (minPriceMultiplier_ > 91) revert Errors.Liquidator_MultiplierTooHigh();
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
@@ -194,7 +195,7 @@ contract Liquidator is Owned {
      * @dev This function is called by the Creditor who is owed the debt issued against the Account.
      */
     function startAuction(address account, uint256 openDebt, uint80 maxInitiatorFee) public {
-        require(!auctionInformation[account].inAuction, "LQ_SA: Auction already ongoing");
+        if (auctionInformation[account].inAuction) revert Errors.AuctionOngoing();
 
         //Avoid possible re-entrance with the same Account address.
         auctionInformation[account].inAuction = true;
@@ -210,7 +211,7 @@ contract Liquidator is Owned {
             IAccount(account).liquidateAccount(openDebt);
 
         //Check that msg.sender is indeed the Creditor of the Account.
-        require(trustedCreditor == msg.sender, "LQ_SA: Unauthorised");
+        if (trustedCreditor != msg.sender) revert Errors.Unauthorized();
 
         auctionInformation[account].openDebt = uint128(openDebt);
         auctionInformation[account].startTime = uint32(block.timestamp);
@@ -295,7 +296,7 @@ contract Liquidator is Owned {
      */
     function buyAccount(address account) external {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
-        require(auctionInformation_.inAuction, "LQ_BV: Not for sale");
+        if (!auctionInformation_.inAuction) revert Errors.Liquidator_NotForSale();
 
         uint256 priceOfAccount = _calcPriceOfAccount(auctionInformation_);
         //Stop the auction, this will prevent any possible reentrance attacks.
@@ -355,13 +356,13 @@ contract Liquidator is Owned {
      */
     function endAuction(address account, address to) external onlyOwner {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
-        require(auctionInformation_.inAuction, "LQ_EA: Not for sale");
+        if (!auctionInformation_.inAuction) revert Errors.Liquidator_NotForSale();
 
         uint256 timePassed;
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
         }
-        require(timePassed > cutoffTime, "LQ_EA: Auction not expired");
+        if (timePassed <= cutoffTime) revert Errors.Liquidator_AuctionNotExpired();
 
         //Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;

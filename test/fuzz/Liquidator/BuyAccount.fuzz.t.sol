@@ -8,9 +8,11 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
+import { Errors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "buyAccount" of contract "Liquidator".
  */
+
 contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -26,7 +28,7 @@ contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_buyAccount_notForSale(address bidder) public {
         vm.startPrank(bidder);
-        vm.expectRevert("LQ_BV: Not for sale");
+        vm.expectRevert(Errors.Liquidator_NotForSale.selector);
         liquidator.buyAccount(address(proxyAccount));
         vm.stopPrank();
     }
