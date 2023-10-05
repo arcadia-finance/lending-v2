@@ -25,9 +25,7 @@ contract TotalAssets_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_totalAssets(uint128 assets) public {
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            assets
-        );
+        pool.setRealisedLiquidityOf(address(tranche), assets);
 
         assertEq(tranche.totalAssets(), assets);
     }

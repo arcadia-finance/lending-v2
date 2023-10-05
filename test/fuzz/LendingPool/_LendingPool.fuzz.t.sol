@@ -53,7 +53,7 @@ abstract contract LendingPool_Fuzz_Test is Fuzz_Lending_Test {
         returns (uint256 unrealisedDebt)
     {
         uint256 base = 1e18 + interestRate;
-        uint256 exponent = uint256(deltaTimestamp) * 1e18 / pool.YEARLY_SECONDS();
+        uint256 exponent = uint256(deltaTimestamp) * 1e18 / pool.YEARLY_SECONDS_();
         unrealisedDebt = (uint256(realisedDebt) * (LogExpMath.pow(base, exponent) - 1e18)) / 1e18;
     }
 }

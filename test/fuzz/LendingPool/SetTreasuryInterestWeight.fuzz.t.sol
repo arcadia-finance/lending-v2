@@ -37,14 +37,14 @@ contract SetTreasuryInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Tes
         pool.setTreasuryInterestWeight(5);
         vm.stopPrank();
 
-        assertEq(pool.totalInterestWeight(), 95);
-        assertEq(pool.interestWeightTreasury(), 5);
+        assertEq(pool.getTotalInterestWeight(), 95);
+        assertEq(pool.getInterestWeightTreasury(), 5);
 
         vm.startPrank(users.creatorAddress);
         pool.setTreasuryInterestWeight(10);
         vm.stopPrank();
 
-        assertEq(pool.totalInterestWeight(), 100);
-        assertEq(pool.interestWeightTreasury(), 10);
+        assertEq(pool.getTotalInterestWeight(), 100);
+        assertEq(pool.getInterestWeightTreasury(), 10);
     }
 }

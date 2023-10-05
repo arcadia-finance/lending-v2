@@ -25,25 +25,25 @@ contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setLiquidationWeight(0, 10);
 
-        assertEq(pool.totalInterestWeight(), 100);
-        assertEq(pool.interestWeightTranches(0), 50);
-        assertEq(pool.interestWeightTranches(1), 40);
-        assertEq(pool.totalLiquidationWeight(), 110);
-        assertEq(pool.liquidationWeightTranches(0), 10);
-        assertEq(pool.liquidationWeightTranches(1), 20);
-        assertTrue(pool.isTranche(address(srTranche)));
-        assertTrue(pool.isTranche(address(jrTranche)));
+        assertEq(pool.getTotalInterestWeight(), 100);
+        assertEq(pool.getInterestWeightTranches(0), 50);
+        assertEq(pool.getInterestWeightTranches(1), 40);
+        assertEq(pool.getTotalLiquidationWeight(), 110);
+        assertEq(pool.getLiquidationWeightTranches(0), 10);
+        assertEq(pool.getLiquidationWeightTranches(1), 20);
+        assertTrue(pool.getIsTranche(address(srTranche)));
+        assertTrue(pool.getIsTranche(address(jrTranche)));
 
         vm.expectEmit(true, true, true, true);
         emit TranchePopped(address(jrTranche));
         pool.popTranche(1, address(jrTranche));
 
-        assertEq(pool.totalInterestWeight(), 60);
-        assertEq(pool.interestWeightTranches(0), 50);
-        assertEq(pool.totalLiquidationWeight(), 90);
-        assertEq(pool.liquidationWeightTranches(0), 10);
-        assertEq(pool.tranches(0), address(srTranche));
-        assertTrue(pool.isTranche(address(srTranche)));
-        assertTrue(!pool.isTranche(address(jrTranche)));
+        assertEq(pool.getTotalInterestWeight(), 60);
+        assertEq(pool.getInterestWeightTranches(0), 50);
+        assertEq(pool.getTotalLiquidationWeight(), 90);
+        assertEq(pool.getLiquidationWeightTranches(0), 10);
+        assertEq(pool.getTranches(0), address(srTranche));
+        assertTrue(pool.getIsTranche(address(srTranche)));
+        assertTrue(!pool.getIsTranche(address(jrTranche)));
     }
 }

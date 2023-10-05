@@ -67,14 +67,14 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.liquidateAccount(address(proxyAccount));
 
         // Then: liquidationInitiator should be set
-        assertEq(pool.liquidationInitiator(address(proxyAccount)), liquidationInitiator);
+        assertEq(pool.getLiquidationInitiator(address(proxyAccount)), liquidationInitiator);
 
         // Then: The debt of the Account should be decreased with amountLiquidated
         assertEq(debt.balanceOf(address(proxyAccount)), 0);
         assertEq(debt.totalSupply(), 0);
 
         // Then: auctionsInProgress should increase
-        assertEq(pool.auctionsInProgress(), 1);
+        assertEq(pool.getAuctionsInProgress(), 1);
         // and the most junior tranche should be locked
         // ToDo: Check for emit
         assertTrue(jrTranche.auctionInProgress());
@@ -112,14 +112,14 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.liquidateAccount(address(proxyAccount));
 
         // Then: liquidationInitiator should be set
-        assertEq(pool.liquidationInitiator(address(proxyAccount)), liquidationInitiator);
+        assertEq(pool.getLiquidationInitiator(address(proxyAccount)), liquidationInitiator);
 
         // Then: The debt of the Account should be decreased with amountLiquidated
         assertEq(debt.balanceOf(address(proxyAccount)), 0);
         assertEq(debt.totalSupply(), 0);
 
         // Then: auctionsInProgress should increase
-        assertEq(pool.auctionsInProgress(), auctionsInProgress + 1);
+        assertEq(pool.getAuctionsInProgress(), auctionsInProgress + 1);
         // and the most junior tranche should be locked
         assertTrue(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());

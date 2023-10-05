@@ -42,9 +42,9 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         uint256 interestJr = uint256(interests) * weightJr / totalInterestWeight;
         uint256 interestTreasury = interests - interestSr - interestJr;
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), interestSr);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), interestJr);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interestTreasury);
+        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), interestSr);
+        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), interestJr);
+        assertEq(pool.getRealisedLiquidityOf(address(treasury)), interestTreasury);
         assertEq(pool.totalRealisedLiquidity(), interests);
     }
 }

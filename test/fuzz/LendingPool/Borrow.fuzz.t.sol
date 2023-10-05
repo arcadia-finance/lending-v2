@@ -368,7 +368,8 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(to), amountLoaned);
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
         assertEq(
-            pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), amountAllowed - amountLoaned
+            pool.getCreditAllowance(address(proxyAccount), users.accountOwner, beneficiary),
+            amountAllowed - amountLoaned
         );
     }
 
@@ -400,7 +401,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(to), amountLoaned);
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
-        assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
+        assertEq(pool.getCreditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
     }
 
     function testFuzz_Success_borrow_originationFeeAvailable(
@@ -430,14 +431,14 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        uint256 treasuryBalancePre = pool.realisedLiquidityOf(treasury);
+        uint256 treasuryBalancePre = pool.getRealisedLiquidityOf(treasury);
         uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, ref);
         vm.stopPrank();
 
-        uint256 treasuryBalancePost = pool.realisedLiquidityOf(treasury);
+        uint256 treasuryBalancePost = pool.getRealisedLiquidityOf(treasury);
         uint256 totalRealisedLiquidityPost = pool.totalRealisedLiquidity();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);

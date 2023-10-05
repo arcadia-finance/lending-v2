@@ -85,7 +85,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(type(uint128).max);
 
-        address tranche_ = pool.tranches(index);
+        address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);
         Tranche(tranche_).mint(initialShares, users.liquidityProvider);
         mockERC20.stable1.transfer(donator, assets);
@@ -93,7 +93,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         uint256 donatorBalancePre = mockERC20.stable1.balanceOf(donator);
         uint256 poolBalancePre = mockERC20.stable1.balanceOf(address(pool));
-        uint256 realisedLiqOfPre = pool.realisedLiquidityOf(tranche_);
+        uint256 realisedLiqOfPre = pool.getRealisedLiquidityOf(tranche_);
         uint256 totalRealisedLiqPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(donator);
@@ -105,7 +105,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         uint256 donatorBalancePost = mockERC20.stable1.balanceOf(donator);
         uint256 poolBalancePost = mockERC20.stable1.balanceOf(address(pool));
-        uint256 realisedLiqOfPost = pool.realisedLiquidityOf(tranche_);
+        uint256 realisedLiqOfPost = pool.getRealisedLiquidityOf(tranche_);
         uint256 totalRealisedLiqPost = pool.totalRealisedLiquidity();
 
         assertEq(donatorBalancePost + assets, donatorBalancePre);

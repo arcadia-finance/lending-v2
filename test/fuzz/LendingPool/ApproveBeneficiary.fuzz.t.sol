@@ -49,6 +49,6 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
         vm.stopPrank();
 
-        assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), amount);
+        assertEq(pool.getCreditAllowance(address(proxyAccount), users.accountOwner, beneficiary), amount);
     }
 }

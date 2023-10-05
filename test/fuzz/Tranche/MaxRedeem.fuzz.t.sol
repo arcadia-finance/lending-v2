@@ -64,9 +64,7 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            claimableLiquidityOfTranche
-        );
+        pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
         stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool)).checked_write(
             availableLiquidityOfTranche
         );
@@ -98,9 +96,7 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            claimableLiquidityOfTranche
-        );
+        pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
         stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool)).checked_write(
             availableLiquidityOfTranche
         );

@@ -66,6 +66,6 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.maxWithdraw(address(proxyAccount)), realisedDebt + interests);
         assertEq(debt.maxRedeem(address(proxyAccount)), realisedDebt);
         assertEq(debt.totalAssets(), realisedDebt + interests);
-        assertEq(pool.lastSyncedTimestamp(), start_timestamp + deltaTimestamp);
+        assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
     }
 }

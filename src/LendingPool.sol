@@ -36,61 +36,61 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     ////////////////////////////////////////////////////////////// */
 
     // Seconds per year, leap years ignored.
-    uint256 public constant YEARLY_SECONDS = 31_536_000;
+    uint256 internal constant YEARLY_SECONDS = 31_536_000;
     // Contract address of the Arcadia Account Factory.
-    address public immutable accountFactory;
+    address internal immutable accountFactory;
     // Contract address of the Liquidator contract.
-    address public immutable liquidator;
+    address internal immutable liquidator;
 
     // Last timestamp that interests were realized.
-    uint32 public lastSyncedTimestamp;
+    uint32 internal lastSyncedTimestamp;
     // Origination fee, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
-    uint8 public originationFee;
+    uint8 internal originationFee;
     // Sum of all the interest weights of the tranches + treasury.
-    uint24 public totalInterestWeight;
+    uint24 internal totalInterestWeight;
     // Fraction (interestWeightTreasury / totalInterestWeight) of the interest fees that go to the treasury.
-    uint16 public interestWeightTreasury;
+    uint16 internal interestWeightTreasury;
     // Sum of the liquidation weights of the tranches + treasury.
-    uint24 public totalLiquidationWeight;
+    uint24 internal totalLiquidationWeight;
     // Fraction (liquidationWeightTreasury / totalLiquidationWeight) of the liquidation fees that goes to the treasury.
-    uint16 public liquidationWeightTreasury;
+    uint16 internal liquidationWeightTreasury;
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
     uint128 public totalRealisedLiquidity;
     // Maximum amount of `underlying asset` that can be supplied to the pool.
     uint128 public supplyCap;
     // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-    uint96 public fixedLiquidationCost;
+    uint96 internal fixedLiquidationCost;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 public maxInitiatorFee;
+    uint80 internal maxInitiatorFee;
     // Number of auctions that are currently in progress.
-    uint16 public auctionsInProgress;
+    uint16 internal auctionsInProgress;
     // Address of the protocol treasury.
-    address public treasury;
+    address internal treasury;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
-    uint16[] public interestWeightTranches;
+    uint16[] internal interestWeightTranches;
     // Array of the liquidation weights of each Tranche.
     // Fraction (liquidationWeightTranches[i] / totalLiquidationWeight) of the liquidation fees that go to Tranche i.
-    uint16[] public liquidationWeightTranches;
+    uint16[] internal liquidationWeightTranches;
     // Array of the contract addresses of the Tranches.
-    address[] public tranches;
+    address[] internal tranches;
 
     // Map tranche => status.
-    mapping(address => bool) public isTranche;
+    mapping(address => bool) internal isTranche;
     // Map tranche => interestWeight.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
-    mapping(address => uint256) public interestWeight;
+    mapping(address => uint256) internal interestWeight;
     // Map tranche => realisedLiquidity.
     // Amount of `underlying asset` that is claimable by the Tranche. Does not take into account pending interests.
-    mapping(address => uint256) public realisedLiquidityOf;
+    mapping(address => uint256) internal realisedLiquidityOf;
     // Map Account => initiator.
     // Stores the address of the initiator of an auction, used to pay out the initiation fee after auction is ended.
-    mapping(address => address) public liquidationInitiator;
+    mapping(address => address) internal liquidationInitiator;
     // Map Account => owner => beneficiary => amount.
     // Stores the credit allowances for a beneficiary per Account and per Owner.
-    mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
+    mapping(address => mapping(address => mapping(address => uint256))) internal creditAllowance;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS

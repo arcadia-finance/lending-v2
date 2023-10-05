@@ -57,6 +57,9 @@ contract InterestRateModuleExtension is InterestRateModule {
 ////////////////////////////////////////////////////////////// */
 
 contract LendingPoolExtension is LendingPool {
+    // Seconds per year, leap years ignored.
+    uint256 public constant YEARLY_SECONDS_ = 31_536_000;
+
     constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
         LendingPool(_asset, _treasury, _vaultFactory, _liquidator)
     { }
@@ -107,6 +110,102 @@ contract LendingPoolExtension is LendingPool {
 
     function setAuctionsInProgress(uint16 amount) public {
         auctionsInProgress = amount;
+    }
+
+    function setLiquidationInitiator(address account, address initiator) public {
+        liquidationInitiator[account] = initiator;
+    }
+
+    function setInterestWeight(address tranche, uint256 interestWeight_) public {
+        interestWeight[tranche] = interestWeight_;
+    }
+
+    function setRealisedLiquidityOf(address tranche, uint256 amount) public {
+        realisedLiquidityOf[tranche] = amount;
+    }
+
+    function getLastSyncedTimestamp() public view returns (uint32 lastSyncedTimestamp_) {
+        lastSyncedTimestamp_ = lastSyncedTimestamp;
+    }
+
+    function getOriginationFee() public view returns (uint8 originationFee_) {
+        originationFee_ = originationFee;
+    }
+
+    function getTotalInterestWeight() public view returns (uint24 totalInterestWeight_) {
+        totalInterestWeight_ = totalInterestWeight;
+    }
+
+    function getInterestWeightTreasury() public view returns (uint16 interestWeightTreasury_) {
+        interestWeightTreasury_ = interestWeightTreasury;
+    }
+
+    function getTotalLiquidationWeight() public view returns (uint24 totalLiquidationWeight_) {
+        totalLiquidationWeight_ = totalLiquidationWeight;
+    }
+
+    function getLiquidationWeightTreasury() public view returns (uint16 liquidationWeightTreasury_) {
+        liquidationWeightTreasury_ = liquidationWeightTreasury;
+    }
+
+    function getFixedLiquidationCost() public view returns (uint96) {
+        return fixedLiquidationCost;
+    }
+
+    function getMaxInitiatorFee() public view returns (uint80) {
+        return maxInitiatorFee;
+    }
+
+    function getAuctionsInProgress() public view returns (uint16) {
+        return auctionsInProgress;
+    }
+
+    function getTreasury() public view returns (address) {
+        return treasury;
+    }
+
+    function getIsTranche(address tranche) public view returns (bool) {
+        return isTranche[tranche];
+    }
+
+    function getInterestWeight(address tranche) public view returns (uint256) {
+        return interestWeight[tranche];
+    }
+
+    function getRealisedLiquidityOf(address tranche) public view returns (uint256) {
+        return realisedLiquidityOf[tranche];
+    }
+
+    function getLiquidationInitiator(address account) public view returns (address inititator) {
+        return liquidationInitiator[account];
+    }
+
+    function getCreditAllowance(address account, address ownerOfAccount, address beneficiary)
+        public
+        view
+        returns (uint256)
+    {
+        return creditAllowance[account][ownerOfAccount][beneficiary];
+    }
+
+    function getInterestWeightTranches(uint16 id) public view returns (uint16) {
+        return interestWeightTranches[id];
+    }
+
+    function getLiquidationWeightTranches(uint16 id) public view returns (uint16) {
+        return liquidationWeightTranches[id];
+    }
+
+    function getTranches(uint16 id) public view returns (address) {
+        return tranches[id];
+    }
+
+    function getAccountFactory() public view returns (address) {
+        return accountFactory;
+    }
+
+    function getLiquidator() public view returns (address) {
+        return liquidator;
     }
 }
 
