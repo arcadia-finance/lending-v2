@@ -60,7 +60,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(amountLoaned + 1);
+        debt.setRealisedDebt(amountLoaned + 1);
 
         // When: Liquidator calls liquidateAccount
         vm.prank(liquidationInitiator);
@@ -98,7 +98,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(amountLoaned + 1);
+        debt.setRealisedDebt(amountLoaned + 1);
 
         //And: an auction is ongoing
         vm.assume(auctionsInProgress > 0);

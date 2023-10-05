@@ -10,7 +10,7 @@ import { AccountV1 } from "./utils/mocks/AccountV1.sol";
 import { Asset } from "./utils/mocks/Asset.sol";
 import { Errors } from "./utils/Errors.sol";
 import { Events } from "./utils/Events.sol";
-import { DebtToken } from "../src/DebtToken.sol";
+import { DebtTokenExtension } from "./utils/Extensions.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
@@ -22,7 +22,7 @@ abstract contract Base_Lending_Test is Base_Test, Errors, Events {
     //////////////////////////////////////////////////////////////////////////*/
 
     Asset internal asset;
-    DebtToken internal debt;
+    DebtTokenExtension internal debt;
     LendingPoolExtension internal pool;
     LiquidatorExtension internal liquidator;
     Tranche internal jrTranche;

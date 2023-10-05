@@ -30,6 +30,18 @@ contract DebtTokenExtension is DebtToken {
     function totalAssets() public view override returns (uint256 totalDebt) {
         totalDebt = realisedDebt;
     }
+
+    function getRealisedDebt() public view returns (uint256) {
+        return realisedDebt;
+    }
+
+    function getBorrowCap() public view returns (uint256) {
+        return borrowCap;
+    }
+
+    function setRealisedDebt(uint256 realisedDebt_) public {
+        realisedDebt = realisedDebt_;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -206,6 +218,10 @@ contract LendingPoolExtension is LendingPool {
 
     function getLiquidator() public view returns (address) {
         return liquidator;
+    }
+
+    function getBorrowCap() public view returns (uint256) {
+        return borrowCap;
     }
 }
 
