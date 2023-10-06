@@ -6,7 +6,6 @@ libs = ['lib']
 optimizer = true
 optimizer_runs = 20
 fuzz = { runs = 50, max_test_rejects = 100_000_000}
-gas_reports = ["LendingPool"]
 
 [fmt]
 bracket_spacing = true

@@ -12,8 +12,7 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
-import { LendingPoolExtension } from "../utils/Extensions.sol";
-import { LendingPool } from "../../src/LendingPool.sol";
+import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
 
@@ -37,7 +36,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     // ToDo : move to Types users
     address internal treasury;
-    LendingPool public lendingPool;
+    LendingPool public poolTest;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
@@ -63,6 +62,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         asset = new Asset("Asset", "ASSET", 18);
         liquidator = new LiquidatorExtension(address(factory));
         pool = new LendingPoolExtension(asset, treasury, address(factory), address(liquidator));
+        poolTest = new LendingPool(asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
