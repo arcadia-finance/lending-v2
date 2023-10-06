@@ -73,10 +73,10 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.stopPrank();
 
         // Then: All flags are set to True.
-        assertTrue(lendingPoolGuardian.repayPaused());
+        assertTrue(lendingPoolGuardian.isRepayPaused());
         assertTrue(lendingPoolGuardian.withdrawPaused());
-        assertTrue(lendingPoolGuardian.borrowPaused());
+        assertTrue(lendingPoolGuardian.isBorrowPaused());
         assertTrue(lendingPoolGuardian.depositPaused());
-        assertTrue(lendingPoolGuardian.liquidationPaused());
+        assertTrue(lendingPoolGuardian.isLiquidationPaused());
     }
 }
