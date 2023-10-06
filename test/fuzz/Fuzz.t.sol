@@ -13,6 +13,7 @@ import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
 import { LendingPoolExtension } from "../utils/Extensions.sol";
+import { LendingPool } from "../../src/LendingPool.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
 
@@ -36,6 +37,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     // ToDo : move to Types users
     address internal treasury;
+    LendingPool public lendingPool;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS

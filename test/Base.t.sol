@@ -11,6 +11,7 @@ import { Asset } from "./utils/mocks/Asset.sol";
 import { Errors } from "./utils/Errors.sol";
 import { Events } from "./utils/Events.sol";
 import { DebtTokenExtension } from "./utils/Extensions.sol";
+import { LendingPool } from "../src/LendingPool.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
