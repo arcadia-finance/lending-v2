@@ -293,4 +293,32 @@ contract LiquidatorExtension is Liquidator {
         trustedCreditor = auctionInformation[account_].trustedCreditor;
         base_ = auctionInformation[account_].base;
     }
+
+    function getPenaltyWeight() public view returns (uint8) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint8) {
+        return initiatorRewardWeight;
+    }
+
+    function getCutoffTime() public view returns (uint16) {
+        return cutoffTime;
+    }
+
+    function getBase() public view returns (uint64) {
+        return base;
+    }
+
+    function getMinPriceMultiplier() public view returns (uint64) {
+        return minPriceMultiplier;
+    }
+
+    function getStartPriceMultiplier() public view returns (uint16) {
+        return startPriceMultiplier;
+    }
+
+    function getFactory() public view returns (address) {
+        return factory;
+    }
 }

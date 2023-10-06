@@ -68,6 +68,6 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
 
         // Then: multiplier sets correctly
-        assertEq(liquidator.startPriceMultiplier(), priceMultiplier);
+        assertEq(liquidator.getStartPriceMultiplier(), priceMultiplier);
     }
 }
