@@ -10,7 +10,7 @@ import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
-import { Errors } from "./libraries/Errors.sol";
+
 /**
  * @title Liquidator
  * @author Pragma Labs
@@ -88,6 +88,33 @@ contract Liquidator is Owned {
     );
 
     /* //////////////////////////////////////////////////////////////
+                              ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    /// @notice Thrown when liquidation weights are above maximum value.
+    error Liquidator_WeightsTooHigh();
+    /// @notice Thrown when halfLifeTime is below minimum value.
+    error Liquidator_HalfLifeTimeTooLow();
+    /// @notice Thrown when halfLifeTime is above maximum value.
+    error Liquidator_HalfLifeTimeTooHigh();
+    /// @notice Thrown when cutOffTime is below minimum value.
+    error Liquidator_CutOffTooLow();
+    /// @notice Thrown when cutOffTime is above maximum value.
+    error Liquidator_CutOffTooHigh();
+    /// @notice Thrown when the start price multiplier is below minimum value.
+    error Liquidator_MultiplierTooLow();
+    /// @notice Thrown when the start price multiplier is above the maximum value.
+    error Liquidator_MultiplierTooHigh();
+    /// @notice Thrown when an Account is not for sale.
+    error Liquidator_NotForSale();
+    /// @notice Thrown when the auction did not yet expire.
+    error Liquidator_AuctionNotExpired();
+    /// @notice Thrown when caller is not valid.
+    error Liquidator_Unauthorized();
+    /// @notice Thrown when an auction is in process.
+    error Liquidator_AuctionOngoing();
+
+    /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
@@ -112,7 +139,7 @@ contract Liquidator is Owned {
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
     function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_) external onlyOwner {
-        if (initiatorRewardWeight_ + penaltyWeight_ > 11) revert Errors.Liquidator_WeightsTooHigh();
+        if (initiatorRewardWeight_ + penaltyWeight_ > 11) revert Liquidator_WeightsTooHigh();
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
@@ -135,10 +162,10 @@ contract Liquidator is Owned {
      */
     function setAuctionCurveParameters(uint16 halfLifeTime, uint16 cutoffTime_) external onlyOwner {
         //Checks that new parameters are within reasonable boundaries.
-        if (halfLifeTime < 120) revert Errors.Liquidator_HalfLifeTimeTooLow(); // 2 minutes
-        if (halfLifeTime > 28_800) revert Errors.Liquidator_HalfLifeTimeTooHigh(); // 8 hours
-        if (cutoffTime_ < 3600) revert Errors.Liquidator_CutOffTooLow(); // 1 hour
-        if (cutoffTime_ > 64_800) revert Errors.Liquidator_CutOffTooHigh(); // 18 hours
+        if (halfLifeTime < 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
+        if (halfLifeTime > 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
+        if (cutoffTime_ < 3600) revert Liquidator_CutOffTooLow(); // 1 hour
+        if (cutoffTime_ > 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
 
         //Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
@@ -164,8 +191,8 @@ contract Liquidator is Owned {
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        if (startPriceMultiplier_ < 100) revert Errors.Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ > 301) revert Errors.Liquidator_MultiplierTooHigh();
+        if (startPriceMultiplier_ < 100) revert Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ > 301) revert Liquidator_MultiplierTooHigh();
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -177,7 +204,7 @@ contract Liquidator is Owned {
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        if (minPriceMultiplier_ > 91) revert Errors.Liquidator_MultiplierTooHigh();
+        if (minPriceMultiplier_ > 91) revert Liquidator_MultiplierTooHigh();
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
@@ -195,7 +222,7 @@ contract Liquidator is Owned {
      * @dev This function is called by the Creditor who is owed the debt issued against the Account.
      */
     function startAuction(address account, uint256 openDebt, uint80 maxInitiatorFee) public {
-        if (auctionInformation[account].inAuction) revert Errors.AuctionOngoing();
+        if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
 
         //Avoid possible re-entrance with the same Account address.
         auctionInformation[account].inAuction = true;
@@ -211,7 +238,7 @@ contract Liquidator is Owned {
             IAccount(account).liquidateAccount(openDebt);
 
         //Check that msg.sender is indeed the Creditor of the Account.
-        if (trustedCreditor != msg.sender) revert Errors.Unauthorized();
+        if (trustedCreditor != msg.sender) revert Liquidator_Unauthorized();
 
         auctionInformation[account].openDebt = uint128(openDebt);
         auctionInformation[account].startTime = uint32(block.timestamp);
@@ -296,7 +323,7 @@ contract Liquidator is Owned {
      */
     function buyAccount(address account) external {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_.inAuction) revert Errors.Liquidator_NotForSale();
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
         uint256 priceOfAccount = _calcPriceOfAccount(auctionInformation_);
         //Stop the auction, this will prevent any possible reentrance attacks.
@@ -356,13 +383,13 @@ contract Liquidator is Owned {
      */
     function endAuction(address account, address to) external onlyOwner {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_.inAuction) revert Errors.Liquidator_NotForSale();
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
         uint256 timePassed;
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
         }
-        if (timePassed <= cutoffTime) revert Errors.Liquidator_AuctionNotExpired();
+        if (timePassed <= cutoffTime) revert Liquidator_AuctionNotExpired();
 
         //Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;

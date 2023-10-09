@@ -10,7 +10,6 @@ import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { IGuardian } from "./interfaces/IGuardian.sol";
-import { Errors } from "./libraries/Errors.sol";
 
 /**
  * @title Tranche
@@ -43,11 +42,26 @@ contract Tranche is ITranche, ERC4626, Owned {
     event AuctionFlagSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    /// @notice Thrown when a tranche is locked.
+    error Tranche_Locked();
+    /// @notice Thrown when amount of shares would represent zero assets.
+    error Tranche_ZeroAssets();
+    /// @notice Thrown when an auction is in process.
+    error Tranche_AuctionOngoing();
+    /// @notice Thrown when caller is not valid.
+    error Tranche_Unauthorized();
+    /// @notice Thrown when amount of asset would represent zero shares.
+    error Tranche_ZeroShares();
+
+    /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
     modifier notLocked() {
-        if (locked) revert Errors.Tranche_Locked();
+        if (locked) revert Tranche_Locked();
         _;
     }
 
@@ -58,7 +72,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
     modifier notDuringAuction() {
-        if (auctionInProgress) revert Errors.AuctionOngoing();
+        if (auctionInProgress) revert Tranche_AuctionOngoing();
         _;
     }
 
@@ -93,7 +107,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Only the Lending Pool can call this function, only trigger is a severe default event.
      */
     function lock() external {
-        if (msg.sender != address(lendingPool)) revert Errors.Unauthorized();
+        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
         locked = true;
         auctionInProgress = false;
 
@@ -120,7 +134,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        if (msg.sender != address(lendingPool)) revert Errors.Unauthorized();
+        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
         auctionInProgress = auctionInProgress_;
 
         emit AuctionFlagSet(auctionInProgress_);
@@ -147,7 +161,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
-        if ((shares = previewDepositAndSync(assets)) == 0) revert Errors.ZeroShares();
+        if ((shares = previewDepositAndSync(assets)) == 0) revert Tranche_ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
         lendingPool.depositInLendingPool(assets, msg.sender);
@@ -237,7 +251,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         }
 
         // Check for rounding error since we round down in previewRedeem.
-        if ((assets = previewRedeemAndSync(shares)) == 0) revert Errors.Tranche_ZeroAssets();
+        if ((assets = previewRedeemAndSync(shares)) == 0) revert Tranche_ZeroAssets();
 
         _burn(owner_, shares);
 

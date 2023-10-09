@@ -6,9 +6,11 @@ pragma solidity 0.8.19;
 
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "transfer" of contract "DebtToken".
  */
+
 contract Transfer_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -23,7 +25,7 @@ contract Transfer_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_transfer(address to, uint256 amount, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(Errors.DebtToken_FunctionNotImplemented.selector);
         debt_.transfer(to, amount);
         vm.stopPrank();
     }

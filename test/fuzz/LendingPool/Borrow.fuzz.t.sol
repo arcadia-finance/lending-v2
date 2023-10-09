@@ -12,7 +12,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 
 import { LendingPool } from "../../../src/LendingPool.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
-import { Errors } from "../../../src/libraries/Errors.sol";
+import { Errors } from "../../utils/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
@@ -187,7 +187,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(Errors.LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }

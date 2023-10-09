@@ -8,7 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
-import { Errors } from "../../../src/libraries/Errors.sol";
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "liquidateAccount" of contract "LendingPool".
  */
@@ -31,7 +31,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(Errors.LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(liquidationInitiator);
         pool.liquidateAccount(account_);
     }

@@ -7,11 +7,11 @@ pragma solidity 0.8.19;
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-import { Errors } from "../../../src/libraries/Errors.sol";
-
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "DebtToken".
  */
+
 contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         public
     {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(Errors.DebtToken_FunctionNotImplemented.selector);
         debt_.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -50,7 +50,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         stdstore.target(address(debt_)).sig(debt_.realisedDebt.selector).checked_write(totalDebt);
 
-        vm.expectRevert(Errors.ZeroShares.selector);
+        vm.expectRevert(Errors.DebtToken_ZeroShares.selector);
         debt_.withdraw_(assets, owner, owner);
     }
 

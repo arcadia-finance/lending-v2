@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
-import { Errors } from "../../../src/libraries/Errors.sol";
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "Liquidator".
  */

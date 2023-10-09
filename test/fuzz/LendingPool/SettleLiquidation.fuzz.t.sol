@@ -8,7 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-import { Errors } from "../../../src/libraries/Errors.sol";
+import { Errors } from "../../utils/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "settleLiquidation" of contract "LendingPool".

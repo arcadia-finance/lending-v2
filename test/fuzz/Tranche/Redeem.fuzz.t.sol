@@ -8,7 +8,7 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 
-import { Errors } from "../../../src/libraries/Errors.sol";
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "redeem" of contract "Tranche".
  */

@@ -44,7 +44,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    error FunctionIsPaused();
+    error LendingPoolGuardian_FunctionIsPaused();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -55,7 +55,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if repay is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert FunctionIsPaused();
+        if (repayPaused) revert LendingPoolGuardian_FunctionIsPaused();
         _;
     }
 
@@ -64,7 +64,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if withdraw is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert FunctionIsPaused();
+        if (withdrawPaused) revert LendingPoolGuardian_FunctionIsPaused();
         _;
     }
 
@@ -73,7 +73,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if borrow is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert FunctionIsPaused();
+        if (borrowPaused) revert LendingPoolGuardian_FunctionIsPaused();
         _;
     }
 
@@ -82,7 +82,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if deposit is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert FunctionIsPaused();
+        if (depositPaused) revert LendingPoolGuardian_FunctionIsPaused();
         _;
     }
 
@@ -91,7 +91,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if liquidation is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert FunctionIsPaused();
+        if (liquidationPaused) revert LendingPoolGuardian_FunctionIsPaused();
         _;
     }
 
