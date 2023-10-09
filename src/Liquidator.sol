@@ -90,27 +90,59 @@ contract Liquidator is Owned {
                               ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    /// @notice Thrown when liquidation weights are above maximum value.
+    /**
+     * @notice Thrown when liquidation weights are above maximum value.
+     */
     error Liquidator_WeightsTooHigh();
-    /// @notice Thrown when halfLifeTime is below minimum value.
+
+    /**
+     * @notice Thrown when halfLifeTime is below minimum value.
+     */
     error Liquidator_HalfLifeTimeTooLow();
-    /// @notice Thrown when halfLifeTime is above maximum value.
+
+    /**
+     * @notice Thrown when halfLifeTime is above maximum value.
+     */
     error Liquidator_HalfLifeTimeTooHigh();
-    /// @notice Thrown when cutOffTime is below minimum value.
+
+    /**
+     * @notice Thrown when cutOffTime is below minimum value.
+     */
     error Liquidator_CutOffTooLow();
-    /// @notice Thrown when cutOffTime is above maximum value.
+
+    /**
+     * @notice Thrown when cutOffTime is above maximum value.
+     */
     error Liquidator_CutOffTooHigh();
-    /// @notice Thrown when the start price multiplier is below minimum value.
+
+    /**
+     * @notice Thrown when the start price multiplier is below minimum value.
+     */
     error Liquidator_MultiplierTooLow();
-    /// @notice Thrown when the start price multiplier is above the maximum value.
+
+    /**
+     * @notice Thrown when the start price multiplier is above the maximum value.
+     */
     error Liquidator_MultiplierTooHigh();
-    /// @notice Thrown when an Account is not for sale.
+
+    /**
+     * @notice Thrown when an Account is not for sale.
+     */
     error Liquidator_NotForSale();
-    /// @notice Thrown when the auction did not yet expire.
+
+    /**
+     * @notice Thrown when the auction did not yet expire.
+     */
     error Liquidator_AuctionNotExpired();
-    /// @notice Thrown when caller is not valid.
+
+    /**
+     * @notice Thrown when caller is not valid.
+     */
     error Liquidator_Unauthorized();
-    /// @notice Thrown when an auction is in process.
+
+    /**
+     * @notice Thrown when an auction is in process.
+     */
     error Liquidator_AuctionOngoing();
 
     /* //////////////////////////////////////////////////////////////
