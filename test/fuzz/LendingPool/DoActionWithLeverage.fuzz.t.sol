@@ -159,7 +159,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
-        assertEq(pool.getCreditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
+        assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
     }
 
     function testFuzz_Success_doActionWithLeverage_originationFeeAvailable(
@@ -187,14 +187,14 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        uint256 treasuryBalancePre = pool.getRealisedLiquidityOf(treasury);
+        uint256 treasuryBalancePre = pool.realisedLiquidityOf(treasury);
         uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(users.accountOwner);
         pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
 
-        uint256 treasuryBalancePost = pool.getRealisedLiquidityOf(treasury);
+        uint256 treasuryBalancePost = pool.realisedLiquidityOf(treasury);
         uint256 totalRealisedLiquidityPost = pool.totalRealisedLiquidity();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);

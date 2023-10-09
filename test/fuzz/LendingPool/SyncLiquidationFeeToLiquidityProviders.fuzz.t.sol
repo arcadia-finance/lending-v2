@@ -41,8 +41,8 @@ contract SyncLiquidationFeeToLiquidityProviders_LendingPool_Fuzz_Test is Lending
         uint256 penaltyJr = uint256(penalty) * weightJr / totalPenaltyWeight;
         uint256 penaltyTreasury = penalty - penaltySr - penaltyJr;
 
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), penaltySr);
-        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), penaltyJr);
-        assertEq(pool.getRealisedLiquidityOf(address(treasury)), penaltyTreasury);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), penaltySr);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), penaltyJr);
+        assertEq(pool.realisedLiquidityOf(address(treasury)), penaltyTreasury);
     }
 }

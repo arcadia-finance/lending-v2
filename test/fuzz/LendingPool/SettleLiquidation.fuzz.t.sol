@@ -121,15 +121,15 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         }
 
         // Then: Initiator should be able to claim his rewards for liquidation initiation
-        assertEq(pool.getRealisedLiquidityOf(initiator), liquidationInitiatorReward);
+        assertEq(pool.realisedLiquidityOf(initiator), liquidationInitiatorReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
         // And: The jr tranche will get its part of the liquidationpenalty
-        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
         // And: treasury will get its part of the liquidationpenalty
-        assertEq(pool.getRealisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
+        assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remaindershould be claimable by the original owner
-        assertEq(pool.getRealisedLiquidityOf(users.accountOwner), remainder);
+        assertEq(pool.realisedLiquidityOf(users.accountOwner), remainder);
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationInitiatorReward + liquidationPenalty + remainder);
 
@@ -170,10 +170,10 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
 
         // Then: Initiator should be able to claim his rewards for liquidation initiation
-        assertEq(pool.getRealisedLiquidityOf(initiator), liquidationInitiatorReward);
+        assertEq(pool.realisedLiquidityOf(initiator), liquidationInitiatorReward);
 
         // And: The badDebt amount should be discounted from the most junior tranche
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), liquidity - badDebt);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity - badDebt);
 
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), uint256(liquidity) + liquidationInitiatorReward - badDebt);
@@ -222,8 +222,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Then: realisedLiquidityOf for srTranche should be liquiditySenior, realisedLiquidityOf jrTranche should be liquidityJunior minus badDebt,
         // totalRealisedLiquidity should be equal to totalAmount minus badDebt
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), liquiditySenior);
-        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), liquidityJunior - badDebt);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquiditySenior);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liquidityJunior - badDebt);
         assertEq(pool.totalRealisedLiquidity(), totalAmount - badDebt);
     }
 
@@ -260,8 +260,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Then: supplyBalances srTranche should be totalAmount minus badDebt, supplyBalances jrTranche should be 0,
         // totalSupply should be equal to totalAmount minus badDebt, isTranche for jrTranche should return false
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), totalAmount - badDebt);
-        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), 0);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), totalAmount - badDebt);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
         assertEq(pool.totalRealisedLiquidity(), totalAmount - badDebt);
         assertFalse(pool.getIsTranche(address(jrTranche)));
 
@@ -303,8 +303,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Then: supplyBalances srTranche should be totalAmount minus badDebt, supplyBalances jrTranche should be 0,
         // totalSupply should be equal to totalAmount minus badDebt, isTranche for jrTranche should return false
-        assertEq(pool.getRealisedLiquidityOf(address(srTranche)), 0);
-        assertEq(pool.getRealisedLiquidityOf(address(jrTranche)), 0);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), 0);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
         assertEq(pool.totalRealisedLiquidity(), 0);
         assertFalse(pool.getIsTranche(address(jrTranche)));
         assertFalse(pool.getIsTranche(address(srTranche)));

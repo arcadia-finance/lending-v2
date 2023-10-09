@@ -84,13 +84,13 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     mapping(address => uint256) internal interestWeight;
     // Map tranche => realisedLiquidity.
     // Amount of `underlying asset` that is claimable by the Tranche. Does not take into account pending interests.
-    mapping(address => uint256) internal realisedLiquidityOf;
+    mapping(address => uint256) public realisedLiquidityOf;
     // Map Account => initiator.
     // Stores the address of the initiator of an auction, used to pay out the initiation fee after auction is ended.
     mapping(address => address) internal liquidationInitiator;
     // Map Account => owner => beneficiary => amount.
     // Stores the credit allowances for a beneficiary per Account and per Owner.
-    mapping(address => mapping(address => mapping(address => uint256))) internal creditAllowance;
+    mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS

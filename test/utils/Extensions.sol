@@ -69,9 +69,6 @@ contract InterestRateModuleExtension is InterestRateModule {
 ////////////////////////////////////////////////////////////// */
 
 contract LendingPoolExtension is LendingPool {
-    // Seconds per year, leap years ignored.
-    uint256 public constant YEARLY_SECONDS_ = 31_536_000;
-
     constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
         LendingPool(_asset, _treasury, _vaultFactory, _liquidator)
     { }
@@ -184,20 +181,8 @@ contract LendingPoolExtension is LendingPool {
         return interestWeight[tranche];
     }
 
-    function getRealisedLiquidityOf(address tranche) public view returns (uint256) {
-        return realisedLiquidityOf[tranche];
-    }
-
     function getLiquidationInitiator(address account) public view returns (address inititator) {
         return liquidationInitiator[account];
-    }
-
-    function getCreditAllowance(address account, address ownerOfAccount, address beneficiary)
-        public
-        view
-        returns (uint256)
-    {
-        return creditAllowance[account][ownerOfAccount][beneficiary];
     }
 
     function getInterestWeightTranches(uint16 id) public view returns (uint16) {
@@ -222,6 +207,10 @@ contract LendingPoolExtension is LendingPool {
 
     function getBorrowCap() public view returns (uint256) {
         return borrowCap;
+    }
+
+    function getYearlySeconds() public pure returns (uint256) {
+        return YEARLY_SECONDS;
     }
 }
 
