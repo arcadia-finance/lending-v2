@@ -39,7 +39,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
     function testFuzz_Revert_setAuctionCurveParameters_BaseTooHigh(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(halfLifeTime > 8 * 60 * 60);
+        vm.assume(halfLifeTime >= 8 * 60 * 60);
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -50,7 +50,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
     function testFuzz_Revert_setAuctionCurveParameters_BaseTooLow(uint16 halfLifeTime, uint16 cutoffTime) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(halfLifeTime < 2 * 60);
+        vm.assume(halfLifeTime <= 2 * 60);
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -66,7 +66,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.assume(halfLifeTime > 2 * 60);
         vm.assume(halfLifeTime < 8 * 60 * 60);
 
-        vm.assume(cutoffTime > 18 * 60 * 60);
+        vm.assume(cutoffTime >= 18 * 60 * 60);
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -82,7 +82,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.assume(halfLifeTime > 2 * 60);
         vm.assume(halfLifeTime < 8 * 60 * 60);
 
-        vm.assume(cutoffTime < 1 * 60 * 60);
+        vm.assume(cutoffTime <= 1 * 60 * 60);
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
