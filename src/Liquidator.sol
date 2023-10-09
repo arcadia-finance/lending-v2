@@ -17,7 +17,6 @@ import { Owned } from "lib/solmate/src/auth/Owned.sol";
  * @notice The liquidator holds the execution logic and storage of all things related to liquidating Arcadia Accounts.
  * Ensure your total value denomination remains above the liquidation threshold, or risk being liquidated!
  */
-
 contract Liquidator is Owned {
     using SafeTransferLib for ERC20;
 
@@ -162,10 +161,10 @@ contract Liquidator is Owned {
      */
     function setAuctionCurveParameters(uint16 halfLifeTime, uint16 cutoffTime_) external onlyOwner {
         //Checks that new parameters are within reasonable boundaries.
-        if (halfLifeTime < 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
-        if (halfLifeTime > 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
-        if (cutoffTime_ < 3600) revert Liquidator_CutOffTooLow(); // 1 hour
-        if (cutoffTime_ > 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
+        if (halfLifeTime <= 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
+        if (halfLifeTime >= 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
+        if (cutoffTime_ <= 3600) revert Liquidator_CutOffTooLow(); // 1 hour
+        if (cutoffTime_ >= 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
 
         //Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
