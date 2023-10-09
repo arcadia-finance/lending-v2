@@ -190,8 +190,8 @@ contract Liquidator is Owned {
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        if (startPriceMultiplier_ < 100) revert Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ > 301) revert Liquidator_MultiplierTooHigh();
+        if (startPriceMultiplier_ <= 100) revert Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ >= 301) revert Liquidator_MultiplierTooHigh();
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -203,7 +203,7 @@ contract Liquidator is Owned {
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        if (minPriceMultiplier_ > 91) revert Liquidator_MultiplierTooHigh();
+        if (minPriceMultiplier_ >= 91) revert Liquidator_MultiplierTooHigh();
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
