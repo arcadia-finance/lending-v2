@@ -90,8 +90,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        stdstore.target(address(pool)).sig(pool.liquidationInitiator.selector).with_key(address(proxyAccount))
-            .checked_write(initiator);
+        pool.setLiquidationInitiator(address(proxyAccount), initiator);
 
         pool.setAuctionsInProgress(1);
         vm.prank(address(pool));
@@ -105,19 +104,19 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // round up
         uint256 liqPenaltyTreasury =
-            uint256(liquidationPenalty) * pool.liquidationWeightTreasury() / pool.totalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
         if (
-            uint256(liqPenaltyTreasury) * pool.totalLiquidationWeight()
-                < uint256(liquidationPenalty) * pool.liquidationWeightTreasury()
+            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
+                < uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury()
         ) {
             liqPenaltyTreasury++;
         }
 
         uint256 liqPenaltyJunior =
-            uint256(liquidationPenalty) * pool.liquidationWeightTranches(1) / pool.totalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
         if (
-            uint256(liqPenaltyTreasury) * pool.totalLiquidationWeight()
-                < uint256(liquidationPenalty) * pool.liquidationWeightTranches(1)
+            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
+                < uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1)
         ) {
             liqPenaltyTreasury--;
         }
@@ -136,7 +135,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationInitiatorReward + liquidationPenalty + remainder);
 
         //ToDo: check emit Tranche
-        assertEq(pool.auctionsInProgress(), 0);
+        assertEq(pool.getAuctionsInProgress(), 0);
         assertFalse(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
     }
@@ -158,8 +157,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        stdstore.target(address(pool)).sig(pool.liquidationInitiator.selector).with_key(address(proxyAccount))
-            .checked_write(initiator);
+        pool.setLiquidationInitiator(address(proxyAccount), initiator);
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
@@ -200,7 +198,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.settleLiquidation(address(proxyAccount), users.accountOwner, 0, 0, 0, 0);
 
         //ToDo: check emit Tranche
-        assertEq(pool.auctionsInProgress(), auctionsInProgress - 1);
+        assertEq(pool.getAuctionsInProgress(), auctionsInProgress - 1);
         assertTrue(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
     }
@@ -255,7 +253,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Before settling the liquidation that will wipe out the jr tranche, we ensure that the jr tranche has an interestWeight > 0
         // This will ensure our testing below of liquidityOf() is valid
-        stdstore.target(address(pool)).sig(pool.interestWeight.selector).with_key(address(jrTranche)).checked_write(100);
+        pool.setInterestWeight(address(jrTranche), 100);
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
@@ -266,10 +264,10 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(address(srTranche)), totalAmount - badDebt);
         assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
         assertEq(pool.totalRealisedLiquidity(), totalAmount - badDebt);
-        assertFalse(pool.isTranche(address(jrTranche)));
+        assertFalse(pool.getIsTranche(address(jrTranche)));
 
         //ToDo: check emits Tranche
-        assertEq(pool.auctionsInProgress(), auctionsInProgress - 1);
+        assertEq(pool.getAuctionsInProgress(), auctionsInProgress - 1);
         assertFalse(jrTranche.auctionInProgress());
         assertTrue(srTranche.auctionInProgress());
 
@@ -309,11 +307,11 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(address(srTranche)), 0);
         assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
         assertEq(pool.totalRealisedLiquidity(), 0);
-        assertFalse(pool.isTranche(address(jrTranche)));
-        assertFalse(pool.isTranche(address(srTranche)));
+        assertFalse(pool.getIsTranche(address(jrTranche)));
+        assertFalse(pool.getIsTranche(address(srTranche)));
 
         //ToDo: check emits Tranche
-        assertEq(pool.auctionsInProgress(), auctionsInProgress - 1);
+        assertEq(pool.getAuctionsInProgress(), auctionsInProgress - 1);
         assertFalse(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
     }

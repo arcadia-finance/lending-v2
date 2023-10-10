@@ -30,6 +30,18 @@ contract DebtTokenExtension is DebtToken {
     function totalAssets() public view override returns (uint256 totalDebt) {
         totalDebt = realisedDebt;
     }
+
+    function getRealisedDebt() public view returns (uint256) {
+        return realisedDebt;
+    }
+
+    function getBorrowCap() public view returns (uint256) {
+        return borrowCap;
+    }
+
+    function setRealisedDebt(uint256 realisedDebt_) public {
+        realisedDebt = realisedDebt_;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -108,6 +120,98 @@ contract LendingPoolExtension is LendingPool {
     function setAuctionsInProgress(uint16 amount) public {
         auctionsInProgress = amount;
     }
+
+    function setLiquidationInitiator(address account, address initiator) public {
+        liquidationInitiator[account] = initiator;
+    }
+
+    function setInterestWeight(address tranche, uint256 interestWeight_) public {
+        interestWeight[tranche] = interestWeight_;
+    }
+
+    function setRealisedLiquidityOf(address tranche, uint256 amount) public {
+        realisedLiquidityOf[tranche] = amount;
+    }
+
+    function getLastSyncedTimestamp() public view returns (uint32 lastSyncedTimestamp_) {
+        lastSyncedTimestamp_ = lastSyncedTimestamp;
+    }
+
+    function getOriginationFee() public view returns (uint8 originationFee_) {
+        originationFee_ = originationFee;
+    }
+
+    function getTotalInterestWeight() public view returns (uint24 totalInterestWeight_) {
+        totalInterestWeight_ = totalInterestWeight;
+    }
+
+    function getInterestWeightTreasury() public view returns (uint16 interestWeightTreasury_) {
+        interestWeightTreasury_ = interestWeightTreasury;
+    }
+
+    function getTotalLiquidationWeight() public view returns (uint24 totalLiquidationWeight_) {
+        totalLiquidationWeight_ = totalLiquidationWeight;
+    }
+
+    function getLiquidationWeightTreasury() public view returns (uint16 liquidationWeightTreasury_) {
+        liquidationWeightTreasury_ = liquidationWeightTreasury;
+    }
+
+    function getFixedLiquidationCost() public view returns (uint96) {
+        return fixedLiquidationCost;
+    }
+
+    function getMaxInitiatorFee() public view returns (uint80) {
+        return maxInitiatorFee;
+    }
+
+    function getAuctionsInProgress() public view returns (uint16) {
+        return auctionsInProgress;
+    }
+
+    function getTreasury() public view returns (address) {
+        return treasury;
+    }
+
+    function getIsTranche(address tranche) public view returns (bool) {
+        return isTranche[tranche];
+    }
+
+    function getInterestWeight(address tranche) public view returns (uint256) {
+        return interestWeight[tranche];
+    }
+
+    function getLiquidationInitiator(address account) public view returns (address inititator) {
+        return liquidationInitiator[account];
+    }
+
+    function getInterestWeightTranches(uint16 id) public view returns (uint16) {
+        return interestWeightTranches[id];
+    }
+
+    function getLiquidationWeightTranches(uint16 id) public view returns (uint16) {
+        return liquidationWeightTranches[id];
+    }
+
+    function getTranches(uint16 id) public view returns (address) {
+        return tranches[id];
+    }
+
+    function getAccountFactory() public view returns (address) {
+        return accountFactory;
+    }
+
+    function getLiquidator() public view returns (address) {
+        return liquidator;
+    }
+
+    function getBorrowCap() public view returns (uint256) {
+        return borrowCap;
+    }
+
+    function getYearlySeconds() public pure returns (uint256) {
+        return YEARLY_SECONDS;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -133,6 +237,18 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
         borrowPaused = borrowPaused_;
         depositPaused = depositPaused_;
         liquidationPaused = liquidationPaused_;
+    }
+
+    function isRepayPaused() public view returns (bool) {
+        return repayPaused;
+    }
+
+    function isBorrowPaused() public view returns (bool) {
+        return borrowPaused;
+    }
+
+    function isLiquidationPaused() public view returns (bool) {
+        return liquidationPaused;
     }
 }
 
@@ -177,5 +293,33 @@ contract LiquidatorExtension is Liquidator {
         originalOwner = auctionInformation[account_].originalOwner;
         trustedCreditor = auctionInformation[account_].trustedCreditor;
         base_ = auctionInformation[account_].base;
+    }
+
+    function getPenaltyWeight() public view returns (uint8) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint8) {
+        return initiatorRewardWeight;
+    }
+
+    function getCutoffTime() public view returns (uint16) {
+        return cutoffTime;
+    }
+
+    function getBase() public view returns (uint64) {
+        return base;
+    }
+
+    function getMinPriceMultiplier() public view returns (uint64) {
+        return minPriceMultiplier;
+    }
+
+    function getStartPriceMultiplier() public view returns (uint16) {
+        return startPriceMultiplier;
+    }
+
+    function getFactory() public view returns (address) {
+        return factory;
     }
 }

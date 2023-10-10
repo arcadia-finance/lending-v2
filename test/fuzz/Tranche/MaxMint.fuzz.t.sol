@@ -68,9 +68,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(supplyCap);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            liquidityOf
-        );
+        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
 
         uint256 maxAssets = supplyCap - totalLiquidity;
         uint256 maxShares = maxAssets;
@@ -94,9 +92,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(supplyCap);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            liquidityOf
-        );
+        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
 
         uint256 maxAssets = supplyCap - totalLiquidity;
@@ -115,9 +111,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
 
         vm.prank(users.creatorAddress);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            liquidityOf
-        );
+        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
 
         uint256 maxAssets = type(uint128).max - totalLiquidity;
         uint256 maxShares = maxAssets;
@@ -137,9 +131,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
 
         vm.prank(users.creatorAddress);
         pool.setTotalRealisedLiquidity(totalLiquidity);
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(tranche)).checked_write(
-            liquidityOf
-        );
+        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
 
         uint256 maxAssets = type(uint128).max - totalLiquidity;

@@ -62,21 +62,21 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(amountLoaned + 1);
+        debt.setRealisedDebt(amountLoaned + 1);
 
         // When: Liquidator calls liquidateAccount
         vm.prank(liquidationInitiator);
         pool.liquidateAccount(address(proxyAccount));
 
         // Then: liquidationInitiator should be set
-        assertEq(pool.liquidationInitiator(address(proxyAccount)), liquidationInitiator);
+        assertEq(pool.getLiquidationInitiator(address(proxyAccount)), liquidationInitiator);
 
         // Then: The debt of the Account should be decreased with amountLiquidated
         assertEq(debt.balanceOf(address(proxyAccount)), 0);
         assertEq(debt.totalSupply(), 0);
 
         // Then: auctionsInProgress should increase
-        assertEq(pool.auctionsInProgress(), 1);
+        assertEq(pool.getAuctionsInProgress(), 1);
         // and the most junior tranche should be locked
         // ToDo: Check for emit
         assertTrue(jrTranche.auctionInProgress());
@@ -100,7 +100,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(amountLoaned + 1);
+        debt.setRealisedDebt(amountLoaned + 1);
 
         //And: an auction is ongoing
         vm.assume(auctionsInProgress > 0);
@@ -114,14 +114,14 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.liquidateAccount(address(proxyAccount));
 
         // Then: liquidationInitiator should be set
-        assertEq(pool.liquidationInitiator(address(proxyAccount)), liquidationInitiator);
+        assertEq(pool.getLiquidationInitiator(address(proxyAccount)), liquidationInitiator);
 
         // Then: The debt of the Account should be decreased with amountLiquidated
         assertEq(debt.balanceOf(address(proxyAccount)), 0);
         assertEq(debt.totalSupply(), 0);
 
         // Then: auctionsInProgress should increase
-        assertEq(pool.auctionsInProgress(), auctionsInProgress + 1);
+        assertEq(pool.getAuctionsInProgress(), auctionsInProgress + 1);
         // and the most junior tranche should be locked
         assertTrue(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());

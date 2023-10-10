@@ -64,7 +64,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         // Then: totalInterestWeight should be equal to 40, interestWeightTranches index 0 should return 40, interestWeight of srTranche should return 40
-        assertEq(pool.totalLiquidationWeight(), 40);
-        assertEq(pool.liquidationWeightTranches(0), 40);
+        assertEq(pool.getTotalLiquidationWeight(), 40);
+        assertEq(pool.getLiquidationWeightTranches(0), 40);
     }
 }

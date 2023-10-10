@@ -25,26 +25,26 @@ contract Liquidator is Owned {
     ////////////////////////////////////////////////////////////// */
 
     // The contract address of the Factory.
-    address public immutable factory;
+    address internal immutable factory;
     // Sets the begin price of the auction.
     // Defined as a percentage of openDebt, 2 decimals precision -> 150 = 150%.
-    uint16 public startPriceMultiplier;
+    uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to.
     // Defined as a percentage of openDebt, 2 decimals precision -> 60 = 60%.
-    uint8 public minPriceMultiplier;
+    uint8 internal minPriceMultiplier;
     // The base of the auction price curve (exponential).
     // Determines how fast the auction price drops per second, 18 decimals precision.
-    uint64 public base;
+    uint64 internal base;
     // Maximum time that the auction declines, after which price is equal to the minimum price set by minPriceMultiplier.
     // Time in seconds, with 0 decimals precision.
-    uint16 public cutoffTime;
+    uint16 internal cutoffTime;
     // Fee paid to the Liquidation Initiator.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
-    uint8 public initiatorRewardWeight;
+    uint8 internal initiatorRewardWeight;
     // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
-    uint8 public penaltyWeight;
+    uint8 internal penaltyWeight;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;

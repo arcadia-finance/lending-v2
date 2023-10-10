@@ -39,13 +39,13 @@ contract SetTreasuryLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_
         pool.setTreasuryLiquidationWeight(5);
         vm.stopPrank();
 
-        assertEq(pool.totalLiquidationWeight(), 25);
-        assertEq(pool.liquidationWeightTreasury(), 5);
+        assertEq(pool.getTotalLiquidationWeight(), 25);
+        assertEq(pool.getLiquidationWeightTreasury(), 5);
 
         vm.prank(users.creatorAddress);
         pool.setTreasuryLiquidationWeight(10);
 
-        assertEq(pool.totalLiquidationWeight(), 30);
-        assertEq(pool.liquidationWeightTreasury(), 10);
+        assertEq(pool.getTotalLiquidationWeight(), 30);
+        assertEq(pool.getLiquidationWeightTreasury(), 10);
     }
 }

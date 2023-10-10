@@ -54,7 +54,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.setWeights(initiatorRewardWeight, penaltyWeight);
         vm.stopPrank();
 
-        assertEq(liquidator.penaltyWeight(), penaltyWeight);
-        assertEq(liquidator.initiatorRewardWeight(), initiatorRewardWeight);
+        assertEq(liquidator.getPenaltyWeight(), penaltyWeight);
+        assertEq(liquidator.getInitiatorRewardWeight(), initiatorRewardWeight);
     }
 }

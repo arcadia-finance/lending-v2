@@ -38,6 +38,6 @@ contract SetMaxInitiatorFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         emit MaxInitiatorFeeSet(maxFee);
         pool.setMaxInitiatorFee(maxFee);
 
-        assertEq(pool.maxInitiatorFee(), maxFee);
+        assertEq(pool.getMaxInitiatorFee(), maxFee);
     }
 }

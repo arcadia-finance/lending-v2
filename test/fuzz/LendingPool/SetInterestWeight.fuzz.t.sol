@@ -55,8 +55,8 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setInterestWeight(0, 40);
         vm.stopPrank();
 
-        assertEq(pool.totalInterestWeight(), 40);
-        assertEq(pool.interestWeightTranches(0), 40);
-        assertEq(pool.interestWeight(address(srTranche)), 40);
+        assertEq(pool.getTotalInterestWeight(), 40);
+        assertEq(pool.getInterestWeightTranches(0), 40);
+        assertEq(pool.getInterestWeight(address(srTranche)), 40);
     }
 }

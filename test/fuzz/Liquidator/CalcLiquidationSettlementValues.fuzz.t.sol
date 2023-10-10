@@ -26,8 +26,8 @@ contract CalcLiquidationSettlementValues_Liquidator_Fuzz_Test is Liquidator_Fuzz
         uint256 priceOfAccount,
         uint88 maxInitiatorFee
     ) public {
-        uint8 penaltyWeight = liquidator.penaltyWeight();
-        uint8 initiatorRewardWeight = liquidator.initiatorRewardWeight();
+        uint8 penaltyWeight = liquidator.getPenaltyWeight();
+        uint8 initiatorRewardWeight = liquidator.getInitiatorRewardWeight();
         uint256 expectedLiquidationInitiatorReward = uint256(openDebt) * initiatorRewardWeight / 100;
         expectedLiquidationInitiatorReward =
             expectedLiquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : expectedLiquidationInitiatorReward;

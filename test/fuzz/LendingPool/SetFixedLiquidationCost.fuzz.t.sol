@@ -41,6 +41,6 @@ contract SetFixedLiquidationCost_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         emit FixedLiquidationCostSet(fixedLiquidationCost);
         pool.setFixedLiquidationCost(fixedLiquidationCost);
 
-        assertEq(pool.fixedLiquidationCost(), fixedLiquidationCost);
+        assertEq(pool.getFixedLiquidationCost(), fixedLiquidationCost);
     }
 }

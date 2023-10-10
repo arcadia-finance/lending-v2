@@ -84,14 +84,14 @@ contract StartAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                 uint64 base
             ) = liquidator.getAuctionInformationPartTwo(address(proxyAccount));
 
-            assertEq(startPriceMultiplier, liquidator.startPriceMultiplier());
-            assertEq(minPriceMultiplier, liquidator.minPriceMultiplier());
-            assertEq(initiatorRewardWeight, liquidator.initiatorRewardWeight());
-            assertEq(penaltyWeight, liquidator.penaltyWeight());
-            assertEq(cutoffTime, liquidator.cutoffTime());
+            assertEq(startPriceMultiplier, liquidator.getStartPriceMultiplier());
+            assertEq(minPriceMultiplier, liquidator.getMinPriceMultiplier());
+            assertEq(initiatorRewardWeight, liquidator.getInitiatorRewardWeight());
+            assertEq(penaltyWeight, liquidator.getPenaltyWeight());
+            assertEq(cutoffTime, liquidator.getCutoffTime());
             assertEq(originalOwner, users.accountOwner);
             assertEq(trustedCreditor, address(pool));
-            assertEq(base, liquidator.base());
+            assertEq(base, liquidator.getBase());
         }
     }
 }

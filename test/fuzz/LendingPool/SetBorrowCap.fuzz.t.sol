@@ -39,6 +39,6 @@ contract SetBorrowCap_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setBorrowCap(borrowCap);
         vm.stopPrank();
 
-        assertEq(pool.borrowCap(), borrowCap);
+        assertEq(pool.getBorrowCap(), borrowCap);
     }
 }

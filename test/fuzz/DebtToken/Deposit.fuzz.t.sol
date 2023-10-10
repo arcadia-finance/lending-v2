@@ -40,7 +40,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
 
         assertEq(debt_.balanceOf(receiver), assets);
         assertEq(debt_.totalSupply(), assets);
-        assertEq(debt_.realisedDebt(), assets);
+        assertEq(debt_.getRealisedDebt(), assets);
     }
 
     function testFuzz_Success_deposit_Internal_NotFirstDeposit(
@@ -56,7 +56,8 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         vm.assume(assets <= type(uint256).max / totalSupply); //Avoid overflow in next assumption
 
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
-        stdstore.target(address(debt_)).sig(debt_.realisedDebt.selector).checked_write(totalDebt);
+
+        debt_.setRealisedDebt(totalDebt);
 
         uint256 shares = assets * totalSupply / totalDebt;
         if (shares * totalDebt < assets * totalSupply) {
@@ -69,6 +70,6 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
 
         assertEq(debt_.balanceOf(receiver), shares);
         assertEq(debt_.totalSupply(), totalSupply + shares);
-        assertEq(debt_.realisedDebt(), totalDebt + assets);
+        assertEq(debt_.getRealisedDebt(), totalDebt + assets);
     }
 }

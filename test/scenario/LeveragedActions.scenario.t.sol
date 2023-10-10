@@ -136,7 +136,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(stableDebt);
+        debt.setRealisedDebt(stableDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
             stableDebt
         );
@@ -222,7 +222,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(stableDebt);
+        debt.setRealisedDebt(stableDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
             stableDebt
         );
@@ -335,7 +335,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
-        stdstore.target(address(debt)).sig(debt.realisedDebt.selector).checked_write(stableDebt);
+        debt.setRealisedDebt(stableDebt);
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
             stableDebt
         );

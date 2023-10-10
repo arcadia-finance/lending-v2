@@ -39,6 +39,6 @@ contract SetOriginationFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setOriginationFee(fee);
         vm.stopPrank();
 
-        assertEq(pool.originationFee(), fee);
+        assertEq(pool.getOriginationFee(), fee);
     }
 }

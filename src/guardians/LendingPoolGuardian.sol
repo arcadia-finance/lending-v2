@@ -18,15 +18,15 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     ////////////////////////////////////////////////////////////// */
 
     // Flag indicating if the repay() function is paused.
-    bool public repayPaused;
+    bool internal repayPaused;
     // Flag indicating if the withdraw() function is paused.
     bool public withdrawPaused;
     // Flag indicating if the borrow() function is paused.
-    bool public borrowPaused;
+    bool internal borrowPaused;
     // Flag indicating if the deposit() function is paused.
     bool public depositPaused;
     // Flag indicating if the liquidation() function is paused.
-    bool public liquidationPaused;
+    bool internal liquidationPaused;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
