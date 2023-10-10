@@ -47,7 +47,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         vm.assume(totalDebt > assets * totalSupply);
 
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
-        stdstore.target(address(debt_)).sig(debt_.realisedDebt.selector).checked_write(totalDebt);
+        debt_.setRealisedDebt(totalDebt);
 
         vm.expectRevert("DT_W: ZERO_SHARES");
         debt_.withdraw_(assets, owner, owner);
@@ -72,12 +72,12 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
 
         stdstore.target(address(debt_)).sig(debt_.balanceOf.selector).with_key(owner).checked_write(initialShares);
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
-        stdstore.target(address(debt_)).sig(debt_.realisedDebt.selector).checked_write(totalDebt);
+        debt_.setRealisedDebt(totalDebt);
 
         debt_.withdraw_(assetsWithdrawn, owner, owner);
 
         assertEq(debt_.balanceOf(owner), initialShares - sharesRedeemed);
         assertEq(debt_.totalSupply(), totalSupply - sharesRedeemed);
-        assertEq(debt_.realisedDebt(), totalDebt - assetsWithdrawn);
+        assertEq(debt_.getRealisedDebt(), totalDebt - assetsWithdrawn);
     }
 }

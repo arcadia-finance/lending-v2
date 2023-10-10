@@ -85,7 +85,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(type(uint128).max);
 
-        address tranche_ = pool.tranches(index);
+        address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);
         Tranche(tranche_).mint(initialShares, users.liquidityProvider);
         mockERC20.stable1.transfer(donator, assets);

@@ -69,10 +69,10 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
 
         // Then: Flags can only be toggled from paused (true) to unpaused (false)
         // if initialFlag was true en new flag is false.
-        assertEq(lendingPoolGuardian.repayPaused(), initialFlags.repayPaused && flags.repayPaused);
+        assertEq(lendingPoolGuardian.isRepayPaused(), initialFlags.repayPaused && flags.repayPaused);
         assertEq(lendingPoolGuardian.withdrawPaused(), initialFlags.withdrawPaused && flags.withdrawPaused);
-        assertEq(lendingPoolGuardian.borrowPaused(), initialFlags.borrowPaused && flags.borrowPaused);
+        assertEq(lendingPoolGuardian.isBorrowPaused(), initialFlags.borrowPaused && flags.borrowPaused);
         assertEq(lendingPoolGuardian.depositPaused(), initialFlags.depositPaused && flags.depositPaused);
-        assertEq(lendingPoolGuardian.liquidationPaused(), initialFlags.liquidationPaused && flags.liquidationPaused);
+        assertEq(lendingPoolGuardian.isLiquidationPaused(), initialFlags.liquidationPaused && flags.liquidationPaused);
     }
 }

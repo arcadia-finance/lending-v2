@@ -160,7 +160,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountToken > 0);
         uint256 _yearlyInterestRate = pool.interestRate();
         uint128 base = 1e18 + 5e16; //1 + r expressed as 18 decimals fixed point number
-        uint128 exponent = (uint128(deltaTimestamp) * 1e18) / uint128(pool.YEARLY_SECONDS());
+        uint128 exponent = (uint128(deltaTimestamp) * 1e18) / uint128(pool.getYearlySeconds());
         vm.assume(amountCredit < type(uint128).max / LogExpMath.pow(base, exponent));
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
@@ -192,7 +192,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
                 debtAtStart
                     * (
                         LogExpMath.pow(
-                            _yearlyInterestRate + 10 ** 18, (uint256(deltaTimestamp) * 10 ** 18) / pool.YEARLY_SECONDS()
+                            _yearlyInterestRate + 10 ** 18, (uint256(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds()
                         )
                     )
             ) / 10 ** 18
@@ -305,7 +305,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 balanceAfter = debt.totalAssets();
 
         uint128 base = uint128(_yearlyInterestRate) + 10 ** 18;
-        uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.YEARLY_SECONDS());
+        uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds());
         uint128 expectedDebt = uint128((amountCredit * (LogExpMath.pow(base, exponent))) / 10 ** 18);
         uint128 unrealisedDebt = expectedDebt - amountCredit;
 
@@ -430,7 +430,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.prank(users.accountOwner);
         pool.repay(toRepay, address(proxyAccount));
         uint128 base = uint128(_yearlyInterestRate) + 10 ** 18;
-        uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.YEARLY_SECONDS());
+        uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds());
         uint128 expectedDebt = uint128((amountCredit * (LogExpMath.pow(base, exponent))) / 10 ** 18) - toRepay;
 
         assertEq(proxyAccount.getUsedMargin(), expectedDebt);
@@ -438,7 +438,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.warp(block.timestamp + deltaTimestamp);
         _yearlyInterestRate = pool.interestRate();
         base = uint128(_yearlyInterestRate) + 10 ** 18;
-        exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.YEARLY_SECONDS());
+        exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds());
         expectedDebt = uint128((expectedDebt * (LogExpMath.pow(base, exponent))) / 10 ** 18);
 
         assertEq(proxyAccount.getUsedMargin(), expectedDebt);

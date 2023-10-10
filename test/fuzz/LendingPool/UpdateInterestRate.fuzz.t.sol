@@ -54,7 +54,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 interestTreasury = interest - interestSr - interestJr;
 
         assertEq(debt.totalAssets(), realisedDebt + interest);
-        assertEq(pool.lastSyncedTimestamp(), start_timestamp + deltaTimestamp);
+        assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
         assertEq(pool.realisedLiquidityOf(address(srTranche)), interestSr);
         assertEq(pool.realisedLiquidityOf(address(jrTranche)), interestJr);
         assertEq(pool.realisedLiquidityOf(address(treasury)), interestTreasury);

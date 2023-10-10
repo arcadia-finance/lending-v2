@@ -11,8 +11,8 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
-import { DebtToken } from "../../src/DebtToken.sol";
-import { LendingPoolExtension } from "../utils/Extensions.sol";
+import { DebtTokenExtension } from "../utils/Extensions.sol";
+import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
 
@@ -36,6 +36,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     // ToDo : move to Types users
     address internal treasury;
+    LendingPool public poolTest;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
@@ -73,7 +74,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         tranche = srTranche;
 
         // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
-        debt = DebtToken(address(pool));
+        debt = DebtTokenExtension(address(pool));
 
         // Label the base test contracts.
         vm.label({ account: address(asset), newLabel: "Asset" });
@@ -103,7 +104,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         tranche = srTranche;
 
         // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
-        debt = DebtToken(address(pool));
+        debt = DebtTokenExtension(address(pool));
 
         // Label the base test contracts.
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });

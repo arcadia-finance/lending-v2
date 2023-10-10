@@ -34,6 +34,6 @@ contract SetTreasury_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setTreasury(users.creatorAddress);
 
-        assertEq(pool.treasury(), users.creatorAddress);
+        assertEq(pool.getTreasury(), users.creatorAddress);
     }
 }

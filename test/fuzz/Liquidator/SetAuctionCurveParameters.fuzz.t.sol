@@ -123,7 +123,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
 
         // Then: the discount rate is correctly set
-        assertEq(liquidator.base(), expectedBase);
+        assertEq(liquidator.getBase(), expectedBase);
     }
 
     function testFuzz_Success_setAuctionCurveParameters_cutoffTime(uint16 halfLifeTime, uint16 cutoffTime) public {
@@ -139,6 +139,6 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
 
         // Then: the max auction time is set
-        assertEq(liquidator.cutoffTime(), cutoffTime);
+        assertEq(liquidator.getCutoffTime(), cutoffTime);
     }
 }

@@ -8,7 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 
-import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolExtension } from "../../utils/Extensions.sol";
 
 /**
  * @notice Fuzz tests for the function "addTranche" of contract "LendingPool".
@@ -18,7 +18,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    LendingPool internal pool_;
+    LendingPoolExtension internal pool_;
 
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -28,7 +28,8 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool_Fuzz_Test.setUp();
 
         vm.prank(users.creatorAddress);
-        pool_ = new LendingPool(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
+        pool_ =
+            new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -58,13 +59,13 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool_.addTranche(address(srTranche), interestWeight, liquidationWeight);
         vm.stopPrank();
 
-        assertEq(pool_.totalInterestWeight(), interestWeight);
-        assertEq(pool_.interestWeightTranches(0), interestWeight);
-        assertEq(pool_.interestWeight(address(srTranche)), interestWeight);
-        assertEq(pool_.totalLiquidationWeight(), liquidationWeight);
-        assertEq(pool_.liquidationWeightTranches(0), liquidationWeight);
-        assertEq(pool_.tranches(0), address(srTranche));
-        assertTrue(pool_.isTranche(address(srTranche)));
+        assertEq(pool_.getTotalInterestWeight(), interestWeight);
+        assertEq(pool_.getInterestWeightTranches(0), interestWeight);
+        assertEq(pool_.getInterestWeight(address(srTranche)), interestWeight);
+        assertEq(pool_.getTotalLiquidationWeight(), liquidationWeight);
+        assertEq(pool_.getLiquidationWeightTranches(0), liquidationWeight);
+        assertEq(pool_.getTranches(0), address(srTranche));
+        assertTrue(pool_.getIsTranche(address(srTranche)));
     }
 
     function testFuzz_Success_addTranche_MultipleTranches(
@@ -83,17 +84,17 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool_.addTranche(address(jrTranche), interestWeightJr, liquidationWeightJr);
         vm.stopPrank();
 
-        assertEq(pool_.totalInterestWeight(), uint256(interestWeightSr) + interestWeightJr);
-        assertEq(pool_.interestWeightTranches(0), interestWeightSr);
-        assertEq(pool_.interestWeightTranches(1), interestWeightJr);
-        assertEq(pool_.interestWeight(address(srTranche)), interestWeightSr);
-        assertEq(pool_.interestWeight(address(jrTranche)), interestWeightJr);
-        assertEq(pool_.totalLiquidationWeight(), uint256(liquidationWeightSr) + liquidationWeightJr);
-        assertEq(pool_.liquidationWeightTranches(0), liquidationWeightSr);
-        assertEq(pool_.liquidationWeightTranches(1), liquidationWeightJr);
-        assertEq(pool_.tranches(0), address(srTranche));
-        assertEq(pool_.tranches(1), address(jrTranche));
-        assertTrue(pool_.isTranche(address(srTranche)));
-        assertTrue(pool_.isTranche(address(jrTranche)));
+        assertEq(pool_.getTotalInterestWeight(), uint256(interestWeightSr) + interestWeightJr);
+        assertEq(pool_.getInterestWeightTranches(0), interestWeightSr);
+        assertEq(pool_.getInterestWeightTranches(1), interestWeightJr);
+        assertEq(pool_.getInterestWeight(address(srTranche)), interestWeightSr);
+        assertEq(pool_.getInterestWeight(address(jrTranche)), interestWeightJr);
+        assertEq(pool_.getTotalLiquidationWeight(), uint256(liquidationWeightSr) + liquidationWeightJr);
+        assertEq(pool_.getLiquidationWeightTranches(0), liquidationWeightSr);
+        assertEq(pool_.getLiquidationWeightTranches(1), liquidationWeightJr);
+        assertEq(pool_.getTranches(0), address(srTranche));
+        assertEq(pool_.getTranches(1), address(jrTranche));
+        assertTrue(pool_.getIsTranche(address(srTranche)));
+        assertTrue(pool_.getIsTranche(address(jrTranche)));
     }
 }

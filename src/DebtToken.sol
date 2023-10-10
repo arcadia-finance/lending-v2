@@ -24,9 +24,9 @@ abstract contract DebtToken is ERC4626 {
     ////////////////////////////////////////////////////////////// */
 
     // Total amount of `underlying asset` that debtors have in debt, does not take into account pending interests.
-    uint256 public realisedDebt;
+    uint256 internal realisedDebt;
     // Maximum amount of `underlying asset` in debt that a single debtor can take.
-    uint128 public borrowCap;
+    uint128 internal borrowCap;
 
     error FunctionNotImplemented();
 
