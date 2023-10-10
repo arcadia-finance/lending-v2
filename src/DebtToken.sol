@@ -32,19 +32,11 @@ abstract contract DebtToken is ERC4626 {
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    /**
-     * @notice Thrown when assets to borrow exceeds amount of debt that a single debtor can take on that asset.
-     */
+    // Thrown when assets to borrow exceeds amount of debt that a single debtor can take on that asset.
     error DebtToken_BorrowCapExceeded();
-
-    /**
-     * @notice Thrown when function called has not be implemented.
-     */
+    // Thrown when function called has not be implemented.
     error DebtToken_FunctionNotImplemented();
-
-    /**
-     * @notice Thrown when amount of asset would represent zero shares.
-     */
+    // Thrown when amount of asset would represent zero shares.
     error DebtToken_ZeroShares();
 
     /* //////////////////////////////////////////////////////////////

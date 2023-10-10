@@ -44,6 +44,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
+    // Thrown when the contract is paused for a certain action.
     error LendingPoolGuardian_FunctionIsPaused();
 
     /* //////////////////////////////////////////////////////////////

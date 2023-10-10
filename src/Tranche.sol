@@ -45,29 +45,15 @@ contract Tranche is ITranche, ERC4626, Owned {
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    /**
-     * @notice Thrown when a tranche is locked.
-     */
+    // Thrown when a tranche is locked.
     error Tranche_Locked();
-
-    /**
-     * @notice Thrown when amount of shares would represent zero assets.
-     */
+    // Thrown when amount of shares would represent zero assets.
     error Tranche_ZeroAssets();
-
-    /**
-     * @notice Thrown when an auction is in process.
-     */
+    // Thrown when an auction is in process.
     error Tranche_AuctionOngoing();
-
-    /**
-     * @notice Thrown when caller is not valid.
-     */
+    // Thrown when caller is not valid.
     error Tranche_Unauthorized();
-
-    /**
-     * @notice Thrown when amount of asset would represent zero shares.
-     */
+    // Thrown when amount of asset would represent zero shares.
     error Tranche_ZeroShares();
 
     /* //////////////////////////////////////////////////////////////

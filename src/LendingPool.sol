@@ -119,69 +119,31 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    /**
-     * @notice Thrown when caller is not Liquidator.
-     */
+    // Thrown when caller is not Liquidator.
     error LendingPool_OnlyLiquidator();
-
-    /**
-     * @notice Thrown when caller is not Tranche.
-     */
+    // Thrown when caller is not Tranche.
     error LendingPool_OnlyTranche();
-
-    /**
-     * @notice Thrown when maximum amount of asset that can be supplied to the pool would be exceeded.
-     */
+    // Thrown when maximum amount of asset that can be supplied to the pool would be exceeded.
     error LendingPool_SupplyCapExceeded();
-
-    /**
-     * @notice Thrown when the tranche of the lending pool already exists.
-     */
+    // Thrown when the tranche of the lending pool already exists.
     error LendingPool_TrancheAlreadyExists();
-
-    /**
-     * @notice Thrown when a specified tranche does not exist.
-     */
+    // Thrown when a specified tranche does not exist.
     error LendingPool_NonExistingTranche();
-
-    /**
-     * @notice Thrown when asset amount in input is zero.
-     */
+    // Thrown when asset amount in input is zero.
     error LendingPool_ZeroAmount();
-
-    /**
-     * @notice Thrown when less than 1 share outstanding to mitigate share manipulation.
-     */
+    // Thrown when less than 1 share outstanding to mitigate share manipulation.
     error LendingPool_InsufficientShares();
-
-    /**
-     * @notice Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
-     */
+    // Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
     error LendingPool_AmountExceedsBalance();
-
-    /**
-     * @notice Thrown when account specified is not an Arcadia Account.
-     */
+    // Thrown when account specified is not an Arcadia Account.
     error LendingPool_IsNotAnAccount();
-
-    /**
-     * @notice Thrown when an Account would become unhealthy OR the trusted creditor of the Account is not the specific lending pool OR the Account version would not be valid.
-     */
+    // Thrown when an Account would become unhealthy OR the trusted creditor of the Account is not the specific lending pool OR the Account version would not be valid.
     error LendingPool_Reverted();
-
-    /**
-     * @notice Thrown when an account has zero debt.
-     */
+    // Thrown when an account has zero debt.
     error LendingPool_IsNotAnAccountWithDebt();
-
-    /**
-     * @notice Thrown when caller is not valid.
-     */
+    // Thrown when caller is not valid.
     error LendingPool_Unauthorized();
-
-    /**
-     * @notice Thrown when an auction is in process.
-     */
+    // Thrown when an auction is in process.
     error LendingPool_AuctionOngoing();
 
     /* //////////////////////////////////////////////////////////////
