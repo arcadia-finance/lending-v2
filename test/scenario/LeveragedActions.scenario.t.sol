@@ -13,7 +13,7 @@ import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { ActionMultiCallV2 } from "../../lib/accounts-v2/src/actions/MultiCallV2.sol";
 import { ActionData } from "../../lib/accounts-v2/src/actions/utils/ActionData.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
-import { Errors } from "../../src/libraries/Errors.sol";
+import { LendingPool } from "../../src/LendingPool.sol";
 
 /**
  * @notice Scenario tests for With Leveraged Actions flows.
@@ -77,7 +77,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(Errors.LendingPool_Reverted.selector);
+        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
         pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
@@ -110,7 +110,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(Errors.LendingPool_Reverted.selector);
+        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
         pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
