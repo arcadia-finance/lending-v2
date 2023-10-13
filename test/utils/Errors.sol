@@ -4,8 +4,8 @@
  */
 pragma solidity 0.8.19;
 
-/// @notice Library containing all custom errors for lending-v2
-library Errors {
+/// @notice Contract containing all custom errors for lending-v2
+abstract contract Errors {
     /*//////////////////////////////////////////////////////////////////////////
                                     DEBT TOKEN
     //////////////////////////////////////////////////////////////////////////*/

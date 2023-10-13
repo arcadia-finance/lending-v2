@@ -8,7 +8,6 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-import { Errors } from "../../utils/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "settleLiquidation" of contract "LendingPool".
@@ -39,7 +38,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert(Errors.LendingPool_OnlyLiquidator.selector);
+        vm.expectRevert(LendingPool_OnlyLiquidator.selector);
         pool.settleLiquidation(
             address(proxyAccount),
             users.accountOwner,

@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
-import { Errors } from "../../utils/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "Liquidator".
  */
@@ -43,7 +43,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_HalfLifeTimeTooHigh.selector);
+        vm.expectRevert(Liquidator_HalfLifeTimeTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -54,7 +54,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_HalfLifeTimeTooLow.selector);
+        vm.expectRevert(Liquidator_HalfLifeTimeTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -70,7 +70,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_CutOffTooHigh.selector);
+        vm.expectRevert(Liquidator_CutOffTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -86,7 +86,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_CutOffTooLow.selector);
+        vm.expectRevert(Liquidator_CutOffTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }

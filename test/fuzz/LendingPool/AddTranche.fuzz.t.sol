@@ -9,7 +9,6 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 
 import { LendingPoolExtension } from "../../utils/Extensions.sol";
-import { Errors } from "../../utils/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "addTranche" of contract "LendingPool".
@@ -48,7 +47,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert(Errors.LendingPool_TrancheAlreadyExists.selector);
+        vm.expectRevert(LendingPool_TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40, 0);
         vm.stopPrank();
     }

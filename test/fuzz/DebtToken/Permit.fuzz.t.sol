@@ -6,7 +6,6 @@ pragma solidity 0.8.19;
 
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
-import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "permit" of contract "DebtToken".
  */
@@ -34,7 +33,7 @@ contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         address sender
     ) public {
         vm.startPrank(sender);
-        vm.expectRevert(Errors.DebtToken_FunctionNotImplemented.selector);
+        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
         debt_.permit(owner, spender, value, deadline, v, r, s);
         vm.stopPrank();
     }

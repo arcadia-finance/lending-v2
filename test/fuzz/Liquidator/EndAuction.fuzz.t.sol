@@ -6,7 +6,6 @@ pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
-import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
@@ -34,7 +33,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_endAuction_NotForSale(address account_, address to) public {
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_NotForSale.selector);
+        vm.expectRevert(Liquidator_NotForSale.selector);
         liquidator.endAuction(account_, to);
         vm.stopPrank();
     }
@@ -74,7 +73,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.warp(block.timestamp + timePassed);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_AuctionNotExpired.selector);
+        vm.expectRevert(Liquidator_AuctionNotExpired.selector);
         liquidator.endAuction(address(proxyAccount), to);
         vm.stopPrank();
     }

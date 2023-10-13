@@ -9,7 +9,6 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 
 import { Tranche } from "../../../src/Tranche.sol";
-import { Errors } from "../../utils/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "donateToTranche" of contract "LendingPool".
@@ -34,7 +33,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_donateToTranche_zeroAssets() public {
-        vm.expectRevert(Errors.LendingPool_ZeroAmount.selector);
+        vm.expectRevert(LendingPool_ZeroAmount.selector);
         pool.donateToTranche(1, 0);
     }
 
@@ -49,7 +48,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setSupplyCap(supplyCap);
 
         // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(Errors.LendingPool_SupplyCapExceeded.selector);
+        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
         pool.donateToTranche(1, amount);
     }
 
@@ -70,7 +69,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(donator);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(Errors.LendingPool_InsufficientShares.selector);
+        vm.expectRevert(LendingPool_InsufficientShares.selector);
         pool.donateToTranche(0, assets);
         vm.stopPrank();
     }

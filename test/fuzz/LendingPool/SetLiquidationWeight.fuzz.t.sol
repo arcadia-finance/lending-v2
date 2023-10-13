@@ -9,7 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 
 import { LendingPoolExtension } from "../../utils/Extensions.sol";
-import { Errors } from "../../utils/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "setLiquidationWeight" of contract "LendingPool".
  */
@@ -47,7 +47,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         // When: users.creatorAddress setInterestWeight on index 0
         // Then: setInterestWeight should revert with TR_SIW: Non Existing Tranche
-        vm.expectRevert(Errors.LendingPool_NonExistingTranche.selector);
+        vm.expectRevert(LendingPool_NonExistingTranche.selector);
         pool.setLiquidationWeight(0, 50);
         vm.stopPrank();
     }

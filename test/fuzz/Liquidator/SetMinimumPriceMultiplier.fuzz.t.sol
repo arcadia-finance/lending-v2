@@ -6,7 +6,6 @@ pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
-import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setMinimumPriceMultiplier" of contract "Liquidator".
  */
@@ -29,7 +28,7 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the minimum price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Errors.Liquidator_MultiplierTooHigh.selector);
+        vm.expectRevert(Liquidator_MultiplierTooHigh.selector);
         liquidator.setMinimumPriceMultiplier(priceMultiplier);
         vm.stopPrank();
     }

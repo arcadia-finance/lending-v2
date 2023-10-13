@@ -14,9 +14,10 @@ import { LendingPool } from "../src/LendingPool.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
+import { Errors } from "./utils/Errors.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
-abstract contract Base_Lending_Test is Base_Test, Events {
+abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
