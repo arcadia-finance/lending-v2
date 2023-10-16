@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "setSupplyCap" of contract "LendingPool".
  */
+
 contract SetSupplyCap_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

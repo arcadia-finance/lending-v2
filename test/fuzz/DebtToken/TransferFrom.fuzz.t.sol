@@ -9,6 +9,7 @@ import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "transferFrom" of contract "DebtToken".
  */
+
 contract TransferFrom_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -23,7 +24,7 @@ contract TransferFrom_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_transferFrom(address from, address to, uint256 amount, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
         debt_.transferFrom(from, to, amount);
         vm.stopPrank();
     }

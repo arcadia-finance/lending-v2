@@ -9,6 +9,7 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "mint" of contract "Tranche".
  */
+
 contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -26,7 +27,7 @@ contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert("TRANCHE: LOCKED");
+        vm.expectRevert(Tranche_Locked.selector);
         tranche.mint(shares, receiver);
         vm.stopPrank();
     }

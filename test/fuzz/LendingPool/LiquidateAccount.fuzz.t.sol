@@ -11,6 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "liquidateAccount" of contract "LendingPool".
  */
+
 contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -29,7 +30,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(liquidationInitiator);
         pool.liquidateAccount(account_);
     }
@@ -40,7 +41,7 @@ contract LiquidateAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: liquidationInitiator tries to liquidate the proxyAccount
         // Then: liquidateAccount should revert with "LP_LV: Not a Account with debt"
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert("LP_LV: Not an Account with debt");
+        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
         pool.liquidateAccount(account_);
         vm.stopPrank();
     }

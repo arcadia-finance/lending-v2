@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "withdrawFromLendingPool" of contract "LendingPool".
  */
+
 contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -33,7 +34,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         pool.depositInLendingPool(assetsWithdrawn, users.liquidityProvider);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("LP_WFLP: Amount exceeds balance");
+        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -48,7 +49,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
 
-        vm.expectRevert("LP_WFLP: Amount exceeds balance");
+        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -69,7 +70,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(address(srTranche));
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
     }

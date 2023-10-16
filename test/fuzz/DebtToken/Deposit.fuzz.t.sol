@@ -11,6 +11,7 @@ import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "deposit" of contract "DebtToken".
  */
+
 contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -26,7 +27,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_deposit_External(uint256 assets, address receiver, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
         debt_.deposit(assets, receiver);
         vm.stopPrank();
     }

@@ -47,7 +47,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert("TR_AD: Already exists");
+        vm.expectRevert(LendingPool_TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40, 0);
         vm.stopPrank();
     }

@@ -28,7 +28,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(srTranche));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("LP: Only tranche");
+        vm.expectRevert(LendingPool_OnlyTranche.selector);
         pool.depositInLendingPool(assets, from);
         vm.stopPrank();
     }
@@ -51,11 +51,11 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount0, users.liquidityProvider);
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         vm.prank(address(jrTranche));
         pool.depositInLendingPool(amount1, users.liquidityProvider);
     }
@@ -67,7 +67,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setSupplyCap(supplyCap);
 
-        vm.expectRevert(supplyCapExceeded.selector);
+        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
     }
@@ -81,7 +81,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setSupplyCap(1);
 
         // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(supplyCapExceeded.selector);
+        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
 

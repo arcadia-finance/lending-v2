@@ -49,7 +49,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes calldata actionData
     ) public {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert("LP_DAWL: Not an Account");
+        vm.expectRevert(LendingPool_IsNotAnAccount.selector);
         pool.doActionWithLeverage(amount, nonAccount, actionHandler_, actionData, emptyBytes3);
     }
 
@@ -62,7 +62,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.startPrank(beneficiary);
-        vm.expectRevert("LP_DAWL: UNAUTHORIZED");
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.doActionWithLeverage(amount, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
@@ -81,7 +81,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, amountAllowed, address(proxyAccount));
 
         vm.startPrank(beneficiary);
-        vm.expectRevert("LP_DAWL: UNAUTHORIZED");
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.doActionWithLeverage(amountLoaned, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
