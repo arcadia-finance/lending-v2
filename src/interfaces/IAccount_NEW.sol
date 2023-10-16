@@ -42,4 +42,15 @@ interface IAccount_NEW {
     function accountManagementAction(address actionHandler, bytes calldata actionData)
         external
         returns (address, uint256);
+
+    function checkAndStartLiquidation()
+        external
+        returns (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            address creditor,
+            uint256 debt,
+            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+        );
 }

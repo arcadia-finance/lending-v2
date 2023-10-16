@@ -9,8 +9,10 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
+import { LendingPool_NEW } from "../../src/LendingPool_NEW.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+import { Liquidator_NEW } from "../../src/Liquidator_NEW.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -214,6 +216,12 @@ contract LendingPoolExtension is LendingPool {
     }
 }
 
+contract LendingPoolExtension_NEW is LendingPool_NEW {
+    constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
+        LendingPool_NEW(_asset, _treasury, _vaultFactory, _liquidator)
+    { }
+}
+
 /* //////////////////////////////////////////////////////////////
                     LENDING POOL GUARDIAN
 ////////////////////////////////////////////////////////////// */
@@ -321,5 +329,13 @@ contract LiquidatorExtension is Liquidator {
 
     function getFactory() public view returns (address) {
         return factory;
+    }
+}
+
+contract LiquidatorExtension_NEW is Liquidator_NEW {
+    constructor() Liquidator_NEW() { }
+
+    function get_locked() public view returns (uint256) {
+        return locked;
     }
 }

@@ -12,8 +12,9 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
-import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
+import { LendingPoolExtension, LendingPool, LendingPoolExtension_NEW } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
+import { LiquidatorExtension_NEW } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
 
 /**
@@ -61,6 +62,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
         liquidator = new LiquidatorExtension(address(factory));
+        liquidator_new = new LiquidatorExtension_NEW();
         pool = new LendingPoolExtension(asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
@@ -90,8 +92,13 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         liquidator = new LiquidatorExtension(address(factory));
+        liquidator_new = new LiquidatorExtension_NEW();
         pool =
             new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
+
+        pool_new =
+        new LendingPoolExtension_NEW(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator_new));
+
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
@@ -108,8 +115,9 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // Label the base test contracts.
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });
-        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
+        vm.label({ account: address(liquidator_new), newLabel: "Liquidator_NEW" });
         vm.label({ account: address(pool), newLabel: "Lending Pool" });
+        vm.label({ account: address(pool_new), newLabel: "Lending Pool New" });
         vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });
         vm.label({ account: address(jrTranche), newLabel: "Junior Tranche" });
     }

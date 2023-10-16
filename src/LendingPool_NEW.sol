@@ -964,4 +964,6 @@ contract LendingPool_NEW is LendingPoolGuardian, TrustedCreditor, DebtToken, Int
     function getOpenPosition(address account) external view override returns (uint256 openPosition) {
         openPosition = maxWithdraw(account);
     }
+
+    function startLiquidation(address account, uint256 debt) external { }
 }

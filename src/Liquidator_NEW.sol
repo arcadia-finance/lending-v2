@@ -20,6 +20,8 @@ contract Liquidator_NEW is Owned {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
+    uint256 locked;
+
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
@@ -28,9 +30,20 @@ contract Liquidator_NEW is Owned {
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
+    constructor() Owned(msg.sender) {
+        locked = 1;
+    }
+
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
+
+    modifier nonReentrant() {
+        require(locked == 1, "L: REENTRANCY");
+        locked = 2;
+        _;
+        locked = 1;
+    }
 
     /*///////////////////////////////////////////////////////////////
                         MANAGE AUCTION SETTINGS
@@ -39,4 +52,24 @@ contract Liquidator_NEW is Owned {
     /*///////////////////////////////////////////////////////////////
                             AUCTION LOGIC
     ///////////////////////////////////////////////////////////////*/
+
+    function liquidateAccount(address account) external nonReentrant {
+        // Store the initiator address
+        address initiator = msg.sender;
+
+        // Call Account to check if account is solvent and if it is solvent start the liquidation in the Account.
+        (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            address creditor,
+            uint256 debt,
+            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+        ) = IAccount_NEW(account).checkAndStartLiquidation();
+
+        // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
+        ILendingPool_NEW(creditor).startLiquidation(account, debt);
+
+        // Fill the auction struct
+    }
 }
