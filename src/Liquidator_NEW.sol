@@ -68,7 +68,7 @@ contract Liquidator_NEW is Owned {
         ) = IAccount_NEW(account).checkAndStartLiquidation();
 
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).checkAccountAndStartLiquidation(account, debt);
+        ILendingPool_NEW(creditor).startLiquidation(account, debt);
 
         // Fill the auction struct
     }

@@ -71,5 +71,5 @@ interface ILendingPool_NEW {
         uint256 remainder
     ) external;
 
-    function checkAccountAndStartLiquidation(address account, uint256 debt) external;
+    function startLiquidation(address account, uint256 debt) external;
 }
