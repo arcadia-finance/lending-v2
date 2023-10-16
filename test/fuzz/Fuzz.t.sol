@@ -97,7 +97,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
 
         pool_new =
-            new LendingPoolExtension_NEW(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator_new));
+        new LendingPoolExtension_NEW(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator_new));
 
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");

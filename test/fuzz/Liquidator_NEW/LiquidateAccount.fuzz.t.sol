@@ -22,11 +22,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_liquidateAuction(address ecosystem_contributor) public {
-
         vm.assume(ecosystem_contributor != address(0));
 
         vm.prank(ecosystem_contributor);
         liquidator_new.liquidateAccount(address(proxyAccount_New));
-
     }
 }

@@ -218,7 +218,7 @@ contract LendingPoolExtension is LendingPool {
 
 contract LendingPoolExtension_NEW is LendingPool_NEW {
     constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
-    LendingPool_NEW(_asset, _treasury, _vaultFactory, _liquidator)
+        LendingPool_NEW(_asset, _treasury, _vaultFactory, _liquidator)
     { }
 
     function popTranche(uint256 index, address tranche) public {
@@ -471,7 +471,6 @@ contract LiquidatorExtension is Liquidator {
         return factory;
     }
 }
-
 
 contract LiquidatorExtension_NEW is Liquidator_NEW {
     constructor() Liquidator_NEW() { }
