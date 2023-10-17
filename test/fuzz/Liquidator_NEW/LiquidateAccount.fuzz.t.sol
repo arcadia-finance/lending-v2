@@ -8,6 +8,8 @@ import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 import { StdStorage, stdStorage } from "../../../lib/forge-std/src/Test.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { StdStorage } from "lib/forge-std/src/StdStorage.sol";
+import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
+import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -66,6 +68,48 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         vm.prank(liquidationInitiator);
         vm.expectRevert("A_CASL, Account not liquidatable");
         liquidator_new.liquidateAccount(address(proxyAccount));
+    }
+
+    function testFuzz_Revert_liquidateAccount_MaliciousAccount_NoDebtInCreditor(
+        address liquidationInitiator,
+        uint128 amountLoaned
+    ) public {
+        // Given: Arcadia Lending pool
+        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+        vm.prank(address(srTranche_new));
+        pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
+
+        // And: AccountV1Malicious is created
+        AccountV1Malicious maliciousAccount = new AccountV1Malicious(address(pool_new));
+
+        // When Then: Liquidation Initiator calls liquidateAccount, It should revert because of malicious account address does not have debt in creditor
+        vm.prank(liquidationInitiator);
+        vm.expectRevert("LP_SL: Not an Account with debt");
+        liquidator_new.liquidateAccount(address(maliciousAccount));
+    }
+
+    function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
+        address liquidationInitiator
+    ) public {
+        // Given: Malicious Lending pool
+        LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
+
+        // And: AccountV1Malicious is created
+        AccountV1Malicious maliciousAccount = new AccountV1Malicious(address(pool_malicious));
+
+        // When Then: Liquidation Initiator calls liquidateAccount, It will succeed
+        vm.prank(liquidationInitiator);
+        liquidator_new.liquidateAccount(address(maliciousAccount));
+
+        // And: No harm to protocol
+        // Since lending pool is maliciousAccount, it will not represent the real value in the protocol
+        // So, no harm to protocol
+
+        // Then: Auction will be set but lending pool will not be in auction mode
+        bool isAuctionActive = liquidator_new.getAuctionIsActive(address(maliciousAccount));
+        assertEq(isAuctionActive, true);
+
+        assertGe(pool_new.getAuctionsInProgress(), 0);
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt(address liquidationInitiator, uint128 amountLoaned)
