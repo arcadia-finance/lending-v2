@@ -96,5 +96,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
         uint128 startDebt = liquidator_new.getAuctionStartDebt(address(proxyAccount));
         assertEq(startDebt, uint128(amountLoaned + 1));
+
+        assertGe(pool_new.getAuctionsInProgress(), 0);
     }
 }
