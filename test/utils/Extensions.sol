@@ -213,6 +213,11 @@ contract LendingPoolExtension is LendingPool {
     function getYearlySeconds() public pure returns (uint256) {
         return YEARLY_SECONDS;
     }
+
+    function setOpenPosition(address account, uint128 amount) public {
+//        openPosition[account] = amount;
+        balanceOf[account] = amount;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -338,5 +343,29 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function getAuctionStartDebt(address account) public view returns (uint128) {
         return auctionInformation[account].startDebt;
+    }
+
+    function getBase() public view returns (uint64) {
+        return base;
+    }
+
+    function getCutoffTime() public view returns (uint16) {
+        return cutoffTime;
+    }
+
+    function getMinPriceMultiplier() public view returns (uint64) {
+        return minPriceMultiplier;
+    }
+
+    function getStartPriceMultiplier() public view returns (uint16) {
+        return startPriceMultiplier;
+    }
+
+    function getPenaltyWeight() public view returns (uint8) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint8) {
+        return initiatorRewardWeight;
     }
 }

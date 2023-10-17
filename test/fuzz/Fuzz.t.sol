@@ -49,6 +49,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
         // ToDo : move to Types users
+        Base_Lending_Test.setUp();
         treasury = address(34_567);
 
         vm.label({ account: treasury, newLabel: "Treasury" });

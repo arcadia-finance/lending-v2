@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
