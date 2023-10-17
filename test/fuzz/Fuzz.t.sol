@@ -12,7 +12,7 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
-import { LendingPoolExtension, LendingPool, LendingPoolExtension_NEW } from "../utils/Extensions.sol";
+import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension_NEW } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
@@ -96,11 +96,13 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         pool =
             new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
 
-        pool_new =
-        new LendingPoolExtension_NEW(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator_new));
+        pool_new = new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator_new));
 
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
+
+        srTranche_new = new Tranche(address(pool_new), "Senior", "SR");
+        jrTranche_new = new Tranche(address(pool_new), "Junior", "JR");
         vm.stopPrank();
 
         // Set the Guardian.
@@ -112,6 +114,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
         debt = DebtTokenExtension(address(pool));
+        debt_new = DebtTokenExtension(address(pool_new));
 
         // Label the base test contracts.
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });
