@@ -65,5 +65,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // Then: Auction should be set and started
         bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
         assertEq(isAuctionActive, true);
+
+        uint128 startDebt = liquidator_new.getAuctionStartDebt(address(proxyAccount));
+        assertEq(startDebt, uint128(amountLoaned + 1));
     }
 }
