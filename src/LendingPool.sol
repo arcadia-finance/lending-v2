@@ -977,8 +977,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         if (auctionsInProgress == 0) {
             ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
         }
-    unchecked {
-        ++auctionsInProgress;
-    }
+        unchecked {
+            ++auctionsInProgress;
+        }
     }
 }

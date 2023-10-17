@@ -7,14 +7,12 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 import { StdStorage, stdStorage } from "../../../lib/forge-std/src/Test.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
-import {StdStorage} from "lib/forge-std/src/StdStorage.sol";
-
+import { StdStorage } from "lib/forge-std/src/StdStorage.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
-
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -48,7 +46,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_liquidateAccount_NotLiquidatable_Healthy(address liquidationInitiator, uint128 amountLoaned) public {
+    function testFuzz_Revert_liquidateAccount_NotLiquidatable_Healthy(
+        address liquidationInitiator,
+        uint128 amountLoaned
+    ) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 0);
@@ -67,7 +68,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         liquidator_new.liquidateAccount(address(proxyAccount));
     }
 
-    function testFuzz_Success_liquidateAccount_UnhealthyDebt(address liquidationInitiator, uint128 amountLoaned) public {
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt(address liquidationInitiator, uint128 amountLoaned)
+        public
+    {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 0);
