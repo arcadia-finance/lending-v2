@@ -53,6 +53,7 @@ contract Liquidator_NEW is Owned {
         uint128 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
+        uint8[] assetShares; // The distribution of the assets in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -195,10 +196,26 @@ contract Liquidator_NEW is Owned {
         ILendingPool_NEW(creditor).startLiquidation(account, debt);
 
         // Fill the auction struct
-        auctionInformation[account].startDebt = uint128(debt);
+        auctionInformation[account].startDebt = _calculateStartDebt(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
+//        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
+    }
+
+    function _calculateStartDebt(uint256 debt) internal returns (uint128 startDebt) {
+        startDebt = uint128(debt) * uint128(startPriceMultiplier) / 100;
+    }
+
+    function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_) internal pure returns (uint8[] memory assetDistributions) {
+        uint256 totalValue;
+        for (uint256 i; i < riskValues_.length; i++) {
+            totalValue += riskValues_[i].valueInBaseCurrency;
+        }
+        assetDistributions = new uint8[](riskValues_.length);
+        for (uint256 i; i < riskValues_.length; i++) {
+            assetDistributions[i] = uint8(riskValues_[i].valueInBaseCurrency * 100 / totalValue);
+        }
     }
 }
