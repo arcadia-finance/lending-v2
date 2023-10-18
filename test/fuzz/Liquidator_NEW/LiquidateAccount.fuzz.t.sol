@@ -118,7 +118,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100 ); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool_new), type(uint256).max);
@@ -138,8 +138,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
         assertEq(isAuctionActive, true);
 
-        uint128 startDebt = liquidator_new.getAuctionStartDebt(address(proxyAccount));
-        uint128 loan = uint128(amountLoaned + 1) * 150 / 100;
+        uint256 startDebt = liquidator_new.getAuctionStartDebt(address(proxyAccount));
+        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
 
         assertEq(startDebt, loan);
 

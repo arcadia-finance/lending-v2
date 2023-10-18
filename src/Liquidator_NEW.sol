@@ -48,7 +48,7 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
+        uint256 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         uint128 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
@@ -198,17 +198,21 @@ contract Liquidator_NEW is Owned {
         // Fill the auction struct
         auctionInformation[account].startDebt = _calculateStartDebt(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
-//        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        //        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
     }
 
-    function _calculateStartDebt(uint256 debt) internal returns (uint128 startDebt) {
-        startDebt = uint128(debt) * uint128(startPriceMultiplier) / 100;
+    function _calculateStartDebt(uint256 debt) internal view returns (uint256 startDebt) {
+        startDebt = debt * uint256(startPriceMultiplier) / 100;
     }
 
-    function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_) internal pure returns (uint8[] memory assetDistributions) {
+    function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+        internal
+        pure
+        returns (uint8[] memory assetDistributions)
+    {
         uint256 totalValue;
         for (uint256 i; i < riskValues_.length; i++) {
             totalValue += riskValues_[i].valueInBaseCurrency;
