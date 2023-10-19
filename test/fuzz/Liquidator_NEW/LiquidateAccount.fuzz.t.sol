@@ -5,9 +5,7 @@
 pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
-import { StdStorage, stdStorage } from "../../../lib/forge-std/src/Test.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
-import { StdStorage } from "lib/forge-std/src/StdStorage.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 
@@ -15,7 +13,6 @@ import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
-    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
