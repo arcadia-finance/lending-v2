@@ -964,7 +964,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         openPosition = maxWithdraw(account);
     }
 
-    function startLiquidation(address account, uint256 debt) external {
+    function startLiquidation(address account, uint256 debt) external onlyLiquidator {
         //Only Accounts can have debt, and debtTokens are non-transferable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
