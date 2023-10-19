@@ -6,9 +6,11 @@ pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
+import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setWeights" of contract "Liquidator".
  */
+
 contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -38,7 +40,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight > 11);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SW: Weights Too High");
+        vm.expectRevert(Liquidator_WeightsTooHigh.selector);
         liquidator.setWeights(initiatorRewardWeight, penaltyWeight);
         vm.stopPrank();
     }

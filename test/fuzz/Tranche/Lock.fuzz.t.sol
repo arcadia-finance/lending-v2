@@ -9,6 +9,7 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "lock" of contract "Tranche".
  */
+
 contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -25,7 +26,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(pool));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("T_L: UNAUTHORIZED");
+        vm.expectRevert(Tranche_Unauthorized.selector);
         tranche.lock();
         vm.stopPrank();
     }

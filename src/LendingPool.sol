@@ -115,19 +115,48 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
 
-    error supplyCapExceeded();
+    /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when caller is not Liquidator.
+    error LendingPool_OnlyLiquidator();
+    // Thrown when caller is not Tranche.
+    error LendingPool_OnlyTranche();
+    // Thrown when maximum amount of asset that can be supplied to the pool would be exceeded.
+    error LendingPool_SupplyCapExceeded();
+    // Thrown when the tranche of the lending pool already exists.
+    error LendingPool_TrancheAlreadyExists();
+    // Thrown when a specified tranche does not exist.
+    error LendingPool_NonExistingTranche();
+    // Thrown when asset amount in input is zero.
+    error LendingPool_ZeroAmount();
+    // Thrown when less than 1 share outstanding to mitigate share manipulation.
+    error LendingPool_InsufficientShares();
+    // Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
+    error LendingPool_AmountExceedsBalance();
+    // Thrown when account specified is not an Arcadia Account.
+    error LendingPool_IsNotAnAccount();
+    // Thrown when an Account would become unhealthy OR the trusted creditor of the Account is not the specific lending pool OR the Account version would not be valid.
+    error LendingPool_Reverted();
+    // Thrown when an account has zero debt.
+    error LendingPool_IsNotAnAccountWithDebt();
+    // Thrown when caller is not valid.
+    error LendingPool_Unauthorized();
+    // Thrown when an auction is in process.
+    error LendingPool_AuctionOngoing();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
     modifier onlyLiquidator() {
-        require(liquidator == msg.sender, "LP: Only liquidator");
+        if (liquidator != msg.sender) revert LendingPool_OnlyLiquidator();
         _;
     }
 
     modifier onlyTranche() {
-        require(isTranche[msg.sender], "LP: Only tranche");
+        if (!isTranche[msg.sender]) revert LendingPool_OnlyTranche();
         _;
     }
 
@@ -176,7 +205,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The liquidationWeight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
-        require(!isTranche[tranche], "TR_AD: Already exists");
+        if (isTranche[tranche]) revert LendingPool_TrancheAlreadyExists();
+
         totalInterestWeight += interestWeight_;
         interestWeightTranches.push(interestWeight_);
         interestWeight[tranche] = interestWeight_;
@@ -197,7 +227,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The interestWeight of each Tranche determines the relative share yield (interest payments) that goes to its Liquidity providers.
      */
     function setInterestWeight(uint256 index, uint16 weight) external onlyOwner {
-        require(index < tranches.length, "TR_SIW: Non Existing Tranche");
+        if (index >= tranches.length) revert LendingPool_NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + weight;
         interestWeightTranches[index] = weight;
         interestWeight[tranches[index]] = weight;
@@ -212,7 +242,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The liquidationWeight determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function setLiquidationWeight(uint256 index, uint16 weight) external onlyOwner {
-        require(index < tranches.length, "TR_SLW: Non Existing Tranche");
+        if (index >= tranches.length) revert LendingPool_NonExistingTranche();
         totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + weight;
         liquidationWeightTranches[index] = weight;
 
@@ -336,9 +366,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         onlyTranche
         processInterests
     {
-        if (supplyCap > 0) {
-            if (totalRealisedLiquidity + assets > supplyCap) revert supplyCapExceeded();
-        }
+        if (supplyCap > 0 && totalRealisedLiquidity + assets > supplyCap) revert LendingPool_SupplyCapExceeded();
+
         // Need to transfer before minting or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(from, address(this), assets);
@@ -358,21 +387,19 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev Can be used by anyone to donate assets to the Lending Pool.
      * It is supposed to serve as a way to compensate the jrTranche after an
      * auction didn't get sold and was manually Liquidated by the Protocol.
-     * @dev First minter of a tranche could abuse this function by mining only 1 share,
+     * @dev First minter of a tranche could abuse this function by minting only 1 share,
      * frontrun next minter by calling this function and inflate the share price.
      * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
-        require(assets > 0, "LP_DTT: Amount is 0");
+        if (assets == 0) revert LendingPool_ZeroAmount();
 
-        if (supplyCap > 0) {
-            if (totalRealisedLiquidity + assets > supplyCap) revert supplyCapExceeded();
-        }
+        if (supplyCap > 0 && totalRealisedLiquidity + assets > supplyCap) revert LendingPool_SupplyCapExceeded();
 
         address tranche = tranches[trancheIndex];
         //Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
         //See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
-        require(ERC4626(tranche).totalSupply() >= 10 ** decimals, "LP_DTT: Insufficient shares");
+        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPool_InsufficientShares();
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
@@ -394,7 +421,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         whenWithdrawNotPaused
         processInterests
     {
-        require(realisedLiquidityOf[msg.sender] >= assets, "LP_WFLP: Amount exceeds balance");
+        if (realisedLiquidityOf[msg.sender] < assets) revert LendingPool_AmountExceedsBalance();
 
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
@@ -420,7 +447,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      */
     function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
         //If Account is not an actual address of a account, ownerOfAccount(address) will return the zero address.
-        require(IFactory(accountFactory).ownerOfAccount(account) == msg.sender, "LP_AB: UNAUTHORIZED");
+        if (IFactory(accountFactory).ownerOfAccount(account) != msg.sender) revert LendingPool_Unauthorized();
 
         creditAllowance[account][msg.sender][beneficiary] = amount;
 
@@ -442,7 +469,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     {
         //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
-        require(accountOwner != address(0), "LP_B: Not an Account");
+        if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
         uint256 amountWithFee = amount + (amount * originationFee) / 10_000;
 
@@ -466,7 +493,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Call Account to check if it is still healthy after the debt is increased with amountWithFee.
         (bool isHealthy, address trustedCreditor, uint256 accountVersion) =
             IAccount(account).isAccountHealthy(0, maxWithdraw(account));
-        require(isHealthy && trustedCreditor == address(this) && isValidVersion[accountVersion], "LP_B: Reverted");
+        if (!isHealthy || trustedCreditor != address(this) || !isValidVersion[accountVersion]) {
+            revert LendingPool_Reverted();
+        }
 
         //Transfer fails if there is insufficient liquidity in the pool.
         asset.safeTransfer(to, amount);
@@ -518,7 +547,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     ) external whenBorrowNotPaused processInterests {
         //If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
-        require(accountOwner != address(0), "LP_DAWL: Not an Account");
+        if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
         uint256 amountBorrowedWithFee = amountBorrowed + (amountBorrowed * originationFee) / 10_000;
 
@@ -526,7 +555,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         if (accountOwner != msg.sender) {
             //Since calling accountManagementAction() gives the sender full control over all assets in the Account,
             //Only Beneficiaries with maximum allowance can call the doActionWithLeverage function.
-            require(creditAllowance[account][accountOwner][msg.sender] == type(uint256).max, "LP_DAWL: UNAUTHORIZED");
+            if (creditAllowance[account][accountOwner][msg.sender] != type(uint256).max) {
+                revert LendingPool_Unauthorized();
+            }
         }
 
         //Mint debt tokens to the Account, debt must be minted Before the actions in the Account are performed.
@@ -549,7 +580,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the margin taken during this function).
         (address trustedCreditor, uint256 accountVersion) =
             IAccount(account).accountManagementAction(actionHandler, actionData);
-        require(trustedCreditor == address(this) && isValidVersion[accountVersion], "LP_DAWL: Reverted");
+        if (trustedCreditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
 
         emit Borrow(
             account, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer
@@ -619,7 +650,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     function skim() external processInterests {
         //During auctions, debt tokens are burned at start of the auction, while auctions proceeds are only returned
         //at the end of the auction -> skim function must be blocked during auctions.
-        require(auctionsInProgress == 0, "LP_S: Auctions Ongoing");
+        if (auctionsInProgress != 0) revert LendingPool_AuctionOngoing();
 
         //Pending interests are synced via the processInterests modifier.
         uint256 delta = asset.balanceOf(address(this)) + realisedDebt - totalRealisedLiquidity;
@@ -774,7 +805,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
         uint256 openDebt = maxWithdraw(account);
-        require(openDebt != 0, "LP_LV: Not an Account with debt");
+        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
         //Store liquidation initiator to pay out initiator reward when auction is finished.
         liquidationInitiator[account] = msg.sender;

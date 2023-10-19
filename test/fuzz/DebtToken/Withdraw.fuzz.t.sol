@@ -11,6 +11,7 @@ import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "DebtToken".
  */
+
 contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -28,7 +29,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         public
     {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
         debt_.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -49,7 +50,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         debt_.setRealisedDebt(totalDebt);
 
-        vm.expectRevert("DT_W: ZERO_SHARES");
+        vm.expectRevert(DebtToken_ZeroShares.selector);
         debt_.withdraw_(assets, owner, owner);
     }
 

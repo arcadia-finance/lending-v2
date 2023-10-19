@@ -38,7 +38,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert("LP: Only liquidator");
+        vm.expectRevert(LendingPool_OnlyLiquidator.selector);
         pool.settleLiquidation(
             address(proxyAccount),
             users.accountOwner,
