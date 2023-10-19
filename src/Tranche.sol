@@ -42,11 +42,26 @@ contract Tranche is ITranche, ERC4626, Owned {
     event AuctionFlagSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when a tranche is locked.
+    error Tranche_Locked();
+    // Thrown when amount of shares would represent zero assets.
+    error Tranche_ZeroAssets();
+    // Thrown when an auction is in process.
+    error Tranche_AuctionOngoing();
+    // Thrown when caller is not valid.
+    error Tranche_Unauthorized();
+    // Thrown when amount of asset would represent zero shares.
+    error Tranche_ZeroShares();
+
+    /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
     modifier notLocked() {
-        require(!locked, "TRANCHE: LOCKED");
+        if (locked) revert Tranche_Locked();
         _;
     }
 
@@ -57,7 +72,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
     modifier notDuringAuction() {
-        require(!auctionInProgress, "TRANCHE: AUCTION IN PROGRESS");
+        if (auctionInProgress) revert Tranche_AuctionOngoing();
         _;
     }
 
@@ -92,7 +107,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Only the Lending Pool can call this function, only trigger is a severe default event.
      */
     function lock() external {
-        require(msg.sender == address(lendingPool), "T_L: UNAUTHORIZED");
+        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
         locked = true;
         auctionInProgress = false;
 
@@ -119,7 +134,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        require(msg.sender == address(lendingPool), "T_SAIP: UNAUTHORIZED");
+        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
         auctionInProgress = auctionInProgress_;
 
         emit AuctionFlagSet(auctionInProgress_);
@@ -146,7 +161,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
-        require((shares = previewDepositAndSync(assets)) != 0, "T_D: ZERO_SHARES");
+        if ((shares = previewDepositAndSync(assets)) == 0) revert Tranche_ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
         lendingPool.depositInLendingPool(assets, msg.sender);
@@ -236,7 +251,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         }
 
         // Check for rounding error since we round down in previewRedeem.
-        require((assets = previewRedeemAndSync(shares)) != 0, "T_R: ZERO_ASSETS");
+        if ((assets = previewRedeemAndSync(shares)) == 0) revert Tranche_ZeroAssets();
 
         _burn(owner_, shares);
 

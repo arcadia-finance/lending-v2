@@ -11,6 +11,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 /**
  * @notice Fuzz tests for the function "redeem" of contract "Tranche".
  */
+
 contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -28,14 +29,14 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert("TRANCHE: LOCKED");
+        vm.expectRevert(Tranche_Locked.selector);
         tranche.redeem(shares, receiver, owner);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_redeem_ZeroAssets(address receiver, address owner) public {
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert("T_R: ZERO_ASSETS");
+        vm.expectRevert(Tranche_ZeroAssets.selector);
         tranche.redeem(0, receiver, owner);
         vm.stopPrank();
     }

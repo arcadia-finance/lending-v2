@@ -11,6 +11,7 @@ import { InterestRateModule } from "../../../src/InterestRateModule.sol";
 /**
  * @notice Fuzz tests for the function "setInterestConfig" of contract "LendingPool".
  */
+
 contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

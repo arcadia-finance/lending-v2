@@ -13,6 +13,7 @@ import { LendingPoolExtension } from "../../utils/Extensions.sol";
 /**
  * @notice Fuzz tests for the function "setInterestWeight" of contract "LendingPool".
  */
+
 contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -40,7 +41,7 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_setInterestWeight_InexistingTranche(uint256 index) public {
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("TR_SIW: Non Existing Tranche");
+        vm.expectRevert(LendingPool_NonExistingTranche.selector);
         pool.setInterestWeight(index, 50);
         vm.stopPrank();
     }
