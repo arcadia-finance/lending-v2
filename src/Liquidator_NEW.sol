@@ -211,7 +211,7 @@ contract Liquidator_NEW is Owned {
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal
         pure
-        returns (uint8[] memory assetDistributions)
+        returns (uint16[] memory assetDistributions)
     {
         uint256 totalValue;
         for (uint256 i; i < riskValues_.length;) {
