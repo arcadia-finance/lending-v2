@@ -81,7 +81,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
         // When Then: Liquidation Initiator calls liquidateAccount, It should revert because of malicious account address does not have debt in creditor
         vm.prank(liquidationInitiator);
-        vm.expectRevert("LP_SL: Not an Account with debt");
+        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
         liquidator_new.liquidateAccount(address(maliciousAccount));
     }
 
