@@ -1001,6 +1001,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //passed as Account is indeed a Account and has debt.
         uint256 openDebt = maxWithdraw(account);
         require(openDebt != 0, "LP_SL: Not an Account with debt");
+        if (openDebt == 0 ) revert LendingPool_IsNotAnAccountWithDebt();
         require(debt == openDebt, "LP_SL: Debt values not match");
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
