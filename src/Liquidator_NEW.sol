@@ -72,4 +72,42 @@ contract Liquidator_NEW is Owned {
 
         // Fill the auction struct
     }
+
+    function _calculateAskPrice(
+        uint256[] memory askedAssetAmounts,
+        address[] memory askedAssetIds,
+        address[] memory assetShares,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds,
+        uint256 startPrice,
+        uint256 base,
+        uint256 startPriceMultiplier,
+        uint256 minPriceMultiplier,
+        uint256 timePassed
+    ) internal pure returns (uint256 askPrice) {
+        require(
+            askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length,
+            "Arrays length mismatch"
+        );
+
+        uint256 askedShares;
+        uint256 totalShares = 100;
+
+        for (uint256 i = 0; i < askedAssetAmounts.length; i++) {
+            askedShares += assetShares[i] * (askedAssetAmounts[i] / assetAmounts[i]);
+        }
+
+        unchecked {
+            //Bring to 18 decimals precision for LogExpMath.pow()
+            //No overflow possible: uint32 * uint64.
+            timePassed = timePassed * 1e18;
+
+            //Calculate the price
+            askPrice = startPrice * askedShares
+                * (
+                    LogExpMath.pow(base, timePassed) * (startPriceMultiplier - minPriceMultiplier)
+                        + 1e18 * uint256(minPriceMultiplier)
+                ) / (1e20 * totalShares);
+        }
+    }
 }
