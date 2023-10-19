@@ -198,7 +198,7 @@ contract Liquidator_NEW is Owned {
         // Fill the auction struct
         auctionInformation[account].startDebt = _calculateStartDebt(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
-        //        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -214,12 +214,18 @@ contract Liquidator_NEW is Owned {
         returns (uint8[] memory assetDistributions)
     {
         uint256 totalValue;
-        for (uint256 i; i < riskValues_.length; i++) {
+        for (uint256 i; i < riskValues_.length;) {
             totalValue += riskValues_[i].valueInBaseCurrency;
+            unchecked {
+                ++i;
+            }
         }
         assetDistributions = new uint8[](riskValues_.length);
-        for (uint256 i; i < riskValues_.length; i++) {
+        for (uint256 i; i < riskValues_.length;) {
             assetDistributions[i] = uint8(riskValues_[i].valueInBaseCurrency * 100 / totalValue);
+            unchecked {
+                ++i;
+            }
         }
     }
 }
