@@ -205,7 +205,7 @@ contract Liquidator_NEW is Owned {
     }
 
     function _calculateStartDebt(uint256 debt) internal view returns (uint256 startDebt) {
-        startDebt = debt * uint256(startPriceMultiplier) / 100;
+        startDebt = debt * startPriceMultiplier / 100;
     }
 
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
@@ -213,15 +213,16 @@ contract Liquidator_NEW is Owned {
         pure
         returns (uint16[] memory assetDistributions)
     {
+        uint256 length = riskValues_.length;
         uint256 totalValue;
-        for (uint256 i; i < riskValues_.length;) {
+        for (uint256 i; i < length;) {
             totalValue += riskValues_[i].valueInBaseCurrency;
             unchecked {
                 ++i;
             }
         }
         assetDistributions = new uint16[](riskValues_.length);
-        for (uint256 i; i < riskValues_.length;) {
+        for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
             //
             assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10_000 / totalValue);
