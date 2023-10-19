@@ -53,7 +53,7 @@ contract Liquidator_NEW is Owned {
         uint128 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint8[] assetShares; // The distribution of the assets in the Account.
+        uint16[] assetShares; // The distribution of the assets in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -220,9 +220,11 @@ contract Liquidator_NEW is Owned {
                 ++i;
             }
         }
-        assetDistributions = new uint8[](riskValues_.length);
+        assetDistributions = new uint16[](riskValues_.length);
         for (uint256 i; i < riskValues_.length;) {
-            assetDistributions[i] = uint8(riskValues_[i].valueInBaseCurrency * 100 / totalValue);
+            // The asset distribution is calculated as a percentage of the total value of the assets.
+            //
+            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10000 / totalValue);
             unchecked {
                 ++i;
             }
