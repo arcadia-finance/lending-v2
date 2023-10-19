@@ -135,7 +135,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
         assertEq(isAuctionActive, true);
 
-        uint256 startDebt = liquidator_new.getAuctionStartDebt(address(proxyAccount));
+        uint256 startDebt = liquidator_new.getAuctionStartPrice(address(proxyAccount));
         uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
 
         assertEq(startDebt, loan);

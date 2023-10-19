@@ -48,12 +48,12 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint256 startDebt; // The open debt, same decimal precision as baseCurrency.
+        uint256 startPrice; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
-        uint128 paidDebt; // The amount of debt that has been paid off.
+        uint256 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint16[] assetShares; // The distribution of the assets in the Account.
+        uint16[] assetShares; // The distribution of the assets in the Account. it is in 4 decimal precision -> 10000 = 100%, 1000 = 10% . The order of the assets is the same as in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ contract Liquidator_NEW is Owned {
         ILendingPool_NEW(creditor).startLiquidation(account, debt);
 
         // Fill the auction struct
-        auctionInformation[account].startDebt = _calculateStartDebt(debt);
+        auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
 
@@ -204,8 +204,8 @@ contract Liquidator_NEW is Owned {
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
     }
 
-    function _calculateStartDebt(uint256 debt) internal view returns (uint256 startDebt) {
-        startDebt = debt * startPriceMultiplier / 100;
+    function _calculateStartPrice(uint256 debt) internal view returns (uint256 startPrice) {
+        startPrice = debt * startPriceMultiplier / 100;
     }
 
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)

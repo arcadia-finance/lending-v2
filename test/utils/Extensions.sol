@@ -341,8 +341,8 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         return auctionInformation[account].inAuction;
     }
 
-    function getAuctionStartDebt(address account) public view returns (uint256) {
-        return auctionInformation[account].startDebt;
+    function getAuctionStartPrice(address account) public view returns (uint256) {
+        return auctionInformation[account].startPrice;
     }
 
     function getBase() public view returns (uint64) {
