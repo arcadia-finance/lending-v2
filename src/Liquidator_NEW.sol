@@ -224,7 +224,7 @@ contract Liquidator_NEW is Owned {
         for (uint256 i; i < riskValues_.length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
             //
-            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10000 / totalValue);
+            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10_000 / totalValue);
             unchecked {
                 ++i;
             }
