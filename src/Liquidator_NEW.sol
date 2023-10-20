@@ -239,9 +239,6 @@ contract Liquidator_NEW is Owned {
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
         uint256 startPrice,
-//        uint256 base,
-//        uint256 startPriceMultiplier,
-//        uint256 minPriceMultiplier,
         uint256 timePassed
     ) internal view returns (uint256 askPrice) {
         require(

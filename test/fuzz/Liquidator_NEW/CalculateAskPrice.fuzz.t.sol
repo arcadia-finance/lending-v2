@@ -37,9 +37,6 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW 
         uint256[] memory assetIds = new uint256[](1);
         askedIds[0] = 0;
 
-//        uint64 base = 1_000_000_000_000_000_000;
-//        uint16 startPriceMultiplier = 100;
-//        uint8 minPriceMultiplier = 60;
         uint256 timePassed = 0;
 
         uint256 askPrice = liquidator_new.calculateAskPrice(
@@ -49,9 +46,6 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW 
             assetAmounts,
             assetIds,
             startPrice,
-//            base,
-//            startPriceMultiplier,
-//            minPriceMultiplier,
             timePassed
         );
 
