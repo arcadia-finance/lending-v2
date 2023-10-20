@@ -177,6 +177,19 @@ contract Liquidator_NEW is Owned {
                             AUCTION LOGIC
     ///////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Initiate the liquidation of a specific account.
+     * @param account The address of the account to be liquidated.
+     * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
+     * 1. Sets the initiator address to the sender and flags the account as being in an auction.
+     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount_NEW` contract to check if the account is solvent
+     *    and start the liquidation process within the account.
+     * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
+     * 4. Calculates the starting price for the liquidation based on the account's debt.
+     * 5. Records the start time and asset distribution for the auction.
+     * 6. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
+     * @return The function does not return any values.
+     */
     function liquidateAccount(address account) external nonReentrant {
         // Store the initiator address and set the inAuction flag to true.
         auctionInformation[account].initiator = msg.sender;
@@ -204,10 +217,23 @@ contract Liquidator_NEW is Owned {
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
     }
 
+    /**
+     * @notice Calculate the starting price for a liquidation based on the specified debt amount.
+     * @param debt The amount of debt for which to calculate the starting price.
+     * @return The calculated starting price, expressed as a fraction of the debt.
+     * @dev This function is an internal view function, and it calculates the starting price for a liquidation
+     *      based on a given debt amount. The start price is determined by multiplying the debt by the
+     *      `startPriceMultiplier` and dividing the result by 100.
+     */
     function _calculateStartPrice(uint256 debt) internal view returns (uint256 startPrice) {
         startPrice = debt * startPriceMultiplier / 100;
     }
 
+    /**
+     * @notice Calculate asset distribution percentages based on provided risk values.
+     * @param riskValues_ An array of risk values for assets.
+     * @return An array of asset distribution percentages (in tenths of a percent, e.g., 10,000 represents 100%).
+     */
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal
         pure
@@ -224,7 +250,6 @@ contract Liquidator_NEW is Owned {
         assetDistributions = new uint16[](riskValues_.length);
         for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
-            //
             assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10_000 / totalValue);
             unchecked {
                 ++i;
