@@ -215,7 +215,6 @@ contract LendingPoolExtension is LendingPool {
     }
 
     function setOpenPosition(address account, uint128 amount) public {
-        //        openPosition[account] = amount;
         balanceOf[account] = amount;
     }
 }
