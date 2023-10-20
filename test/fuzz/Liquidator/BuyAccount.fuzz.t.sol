@@ -11,6 +11,7 @@ import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "buyAccount" of contract "Liquidator".
  */
+
 contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -26,7 +27,7 @@ contract BuyAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_buyAccount_notForSale(address bidder) public {
         vm.startPrank(bidder);
-        vm.expectRevert("LQ_BV: Not for sale");
+        vm.expectRevert(Liquidator_NotForSale.selector);
         liquidator.buyAccount(address(proxyAccount));
         vm.stopPrank();
     }

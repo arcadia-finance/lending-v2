@@ -4,20 +4,18 @@
  */
 pragma solidity 0.8.19;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 
-import { Errors } from "../../utils/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setWeights" of contract "Liquidator".
  */
-
-contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        Liquidator_Fuzz_Test_NEW.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -32,7 +30,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight);
+        liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight);
         vm.stopPrank();
     }
 
@@ -40,8 +38,8 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight > 11);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Liquidator_WeightsTooHigh.selector);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight);
+        vm.expectRevert("LQ_SW: Weights Too High");
+        liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight);
         vm.stopPrank();
     }
 
@@ -51,10 +49,10 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit WeightsSet(initiatorRewardWeight, penaltyWeight);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight);
+        liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight);
         vm.stopPrank();
 
-        assertEq(liquidator.getPenaltyWeight(), penaltyWeight);
-        assertEq(liquidator.getInitiatorRewardWeight(), initiatorRewardWeight);
+        assertEq(liquidator_new.getPenaltyWeight(), penaltyWeight);
+        assertEq(liquidator_new.getInitiatorRewardWeight(), initiatorRewardWeight);
     }
 }

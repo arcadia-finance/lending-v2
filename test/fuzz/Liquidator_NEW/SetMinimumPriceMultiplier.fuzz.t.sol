@@ -4,19 +4,18 @@
  */
 pragma solidity 0.8.19;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "setMinimumPriceMultiplier" of contract "Liquidator".
  */
-
-contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        Liquidator_Fuzz_Test_NEW.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -28,8 +27,8 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the minimum price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Liquidator_MultiplierTooHigh.selector);
-        liquidator.setMinimumPriceMultiplier(priceMultiplier);
+        vm.expectRevert("LQ_SMPM: multiplier too high");
+        liquidator_new.setMinimumPriceMultiplier(priceMultiplier);
         vm.stopPrank();
     }
 
@@ -42,10 +41,10 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         // When: the owner sets the minimum price multiplier
         vm.expectEmit(true, true, true, true);
         emit MinimumPriceMultiplierSet(priceMultiplier);
-        liquidator.setMinimumPriceMultiplier(priceMultiplier);
+        liquidator_new.setMinimumPriceMultiplier(priceMultiplier);
         vm.stopPrank();
 
         // Then: multiplier sets correctly
-        assertEq(liquidator.getMinPriceMultiplier(), priceMultiplier);
+        assertEq(liquidator_new.getMinPriceMultiplier(), priceMultiplier);
     }
 }

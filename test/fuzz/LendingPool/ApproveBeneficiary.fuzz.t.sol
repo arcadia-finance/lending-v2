@@ -25,7 +25,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert("LP_AB: UNAUTHORIZED");
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, nonAccount);
     }
 
@@ -37,7 +37,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != users.accountOwner);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert("LP_AB: UNAUTHORIZED");
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
         vm.stopPrank();
     }

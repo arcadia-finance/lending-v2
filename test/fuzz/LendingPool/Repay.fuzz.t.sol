@@ -11,6 +11,7 @@ import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConsta
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
  */
+
 contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -74,7 +75,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         pool.repay(amountLoaned, address(proxyAccount));
         vm.stopPrank();
     }
@@ -92,7 +93,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
-        vm.expectRevert("DT_W: ZERO_SHARES");
+        vm.expectRevert(DebtToken_ZeroShares.selector);
         pool.repay(amountRepaid, nonAccount);
         vm.stopPrank();
     }

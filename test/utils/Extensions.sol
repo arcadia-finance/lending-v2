@@ -9,7 +9,6 @@ import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
-import { LendingPool_NEW } from "../../src/LendingPool_NEW.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator_NEW } from "../../src/Liquidator_NEW.sol";
@@ -214,12 +213,11 @@ contract LendingPoolExtension is LendingPool {
     function getYearlySeconds() public pure returns (uint256) {
         return YEARLY_SECONDS;
     }
-}
 
-contract LendingPoolExtension_NEW is LendingPool_NEW {
-    constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
-        LendingPool_NEW(_asset, _treasury, _vaultFactory, _liquidator)
-    { }
+    function setOpenPosition(address account, uint128 amount) public {
+        //        openPosition[account] = amount;
+        balanceOf[account] = amount;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -335,8 +333,40 @@ contract LiquidatorExtension is Liquidator {
 contract LiquidatorExtension_NEW is Liquidator_NEW {
     constructor() Liquidator_NEW() { }
 
-    function get_locked() public view returns (uint256) {
+    function getLocked() public view returns (uint256) {
         return locked;
+    }
+
+    function getAuctionIsActive(address account) public view returns (bool) {
+        return auctionInformation[account].inAuction;
+    }
+
+    function getAuctionStartPrice(address account) public view returns (uint256) {
+        return auctionInformation[account].startPrice;
+    }
+
+    function getBase() public view returns (uint64) {
+        return base;
+    }
+
+    function getCutoffTime() public view returns (uint16) {
+        return cutoffTime;
+    }
+
+    function getMinPriceMultiplier() public view returns (uint64) {
+        return minPriceMultiplier;
+    }
+
+    function getStartPriceMultiplier() public view returns (uint16) {
+        return startPriceMultiplier;
+    }
+
+    function getPenaltyWeight() public view returns (uint8) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint8) {
+        return initiatorRewardWeight;
     }
 
     function calculateAskPrice(

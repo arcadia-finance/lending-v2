@@ -33,7 +33,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_donateToTranche_zeroAssets() public {
-        vm.expectRevert("LP_DTT: Amount is 0");
+        vm.expectRevert(LendingPool_ZeroAmount.selector);
         pool.donateToTranche(1, 0);
     }
 
@@ -48,7 +48,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setSupplyCap(supplyCap);
 
         // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(supplyCapExceeded.selector);
+        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
         pool.donateToTranche(1, amount);
     }
 
@@ -69,7 +69,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(donator);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert("LP_DTT: Insufficient shares");
+        vm.expectRevert(LendingPool_InsufficientShares.selector);
         pool.donateToTranche(0, assets);
         vm.stopPrank();
     }

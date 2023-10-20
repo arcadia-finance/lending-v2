@@ -9,6 +9,7 @@ import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "permit" of contract "DebtToken".
  */
+
 contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -32,7 +33,7 @@ contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         address sender
     ) public {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
         debt_.permit(owner, spender, value, deadline, v, r, s);
         vm.stopPrank();
     }
