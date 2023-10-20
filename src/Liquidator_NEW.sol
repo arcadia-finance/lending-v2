@@ -234,16 +234,16 @@ contract Liquidator_NEW is Owned {
 
     function _calculateAskPrice(
         uint256[] memory askedAssetAmounts,
-        address[] memory askedAssetIds,
-        address[] memory assetShares,
+        uint256[] memory askedAssetIds,
+        uint256[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
         uint256 startPrice,
-        uint256 base,
-        uint256 startPriceMultiplier,
-        uint256 minPriceMultiplier,
+//        uint256 base,
+//        uint256 startPriceMultiplier,
+//        uint256 minPriceMultiplier,
         uint256 timePassed
-    ) internal pure returns (uint256 askPrice) {
+    ) internal view returns (uint256 askPrice) {
         require(
             askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length,
             "Arrays length mismatch"

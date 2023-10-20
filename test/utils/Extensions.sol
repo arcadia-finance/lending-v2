@@ -371,16 +371,16 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function calculateAskPrice(
         uint256[] memory askedAssetAmounts,
-        address[] memory askedAssetIds,
-        address[] memory assetShares,
+        uint256[] memory askedAssetIds,
+        uint256[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
         uint256 startPrice,
-        uint256 base,
-        uint256 startPriceMultiplier,
-        uint256 minPriceMultiplier,
+//        uint256 base,
+//        uint256 startPriceMultiplier,
+//        uint256 minPriceMultiplier,
         uint256 timePassed
-    ) public pure returns (uint256) {
+    ) public view returns (uint256) {
         return _calculateAskPrice(
             askedAssetAmounts,
             askedAssetIds,
@@ -388,9 +388,9 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
             assetAmounts,
             assetIds,
             startPrice,
-            base,
-            startPriceMultiplier,
-            minPriceMultiplier,
+//            base,
+//            startPriceMultiplier,
+//            minPriceMultiplier,
             timePassed
         );
     }
