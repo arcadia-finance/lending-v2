@@ -215,7 +215,6 @@ contract LendingPoolExtension is LendingPool {
     }
 
     function setOpenPosition(address account, uint128 amount) public {
-        //        openPosition[account] = amount;
         balanceOf[account] = amount;
     }
 }
@@ -387,5 +386,13 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
             startPrice,
             timePassed
         );
+    }
+
+    function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+        public
+        view
+        returns (uint32[] memory assetDistribution)
+    {
+        return _getAssetDistribution(riskValues_);
     }
 }

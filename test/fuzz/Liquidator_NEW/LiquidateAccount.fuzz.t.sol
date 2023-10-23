@@ -69,7 +69,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
     function testFuzz_Revert_liquidateAccount_MaliciousAccount_NoDebtInCreditor(
         address liquidationInitiator,
-        uint128 amountLoaned
+        uint128 amountLoaned,
+        uint256 totalOpenDebt,
+        uint256 valueInBaseCurrency,
+        uint256 collateralFactor,
+        uint256 liquidationFactor
     ) public {
         // Given: Arcadia Lending pool
         mockERC20.stable1.approve(address(pool_new), type(uint256).max);
@@ -77,7 +81,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
         // And: AccountV1Malicious is created
-        AccountV1Malicious maliciousAccount = new AccountV1Malicious(address(pool_new));
+        AccountV1Malicious maliciousAccount =
+        new AccountV1Malicious(address(pool_new), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor);
 
         // When Then: Liquidation Initiator calls liquidateAccount, It should revert because of malicious account address does not have debt in creditor
         vm.prank(liquidationInitiator);
@@ -86,13 +91,20 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
     }
 
     function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
-        address liquidationInitiator
+        address liquidationInitiator,
+        uint128 totalOpenDebt,
+        uint128 valueInBaseCurrency,
+        uint256 collateralFactor,
+        uint256 liquidationFactor
     ) public {
+        vm.assume(valueInBaseCurrency > 0);
+        vm.assume(totalOpenDebt > 0);
         // Given: Malicious Lending pool
         LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
 
         // And: AccountV1Malicious is created
-        AccountV1Malicious maliciousAccount = new AccountV1Malicious(address(pool_malicious));
+        AccountV1Malicious maliciousAccount =
+        new AccountV1Malicious(address(pool_malicious), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor);
 
         // When Then: Liquidation Initiator calls liquidateAccount, It will succeed
         vm.prank(liquidationInitiator);

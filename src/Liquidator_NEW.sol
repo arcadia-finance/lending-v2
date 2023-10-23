@@ -53,7 +53,7 @@ contract Liquidator_NEW is Owned {
         uint256 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint16[] assetShares; // The distribution of the assets in the Account. it is in 4 decimal precision -> 10000 = 100%, 1000 = 10% . The order of the assets is the same as in the Account.
+        uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -79,6 +79,13 @@ contract Liquidator_NEW is Owned {
         cutoffTime = 14_400; //4 hours
         base = 999_807_477_651_317_446; //3600s halflife, 14_400 cutoff
     }
+
+    /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when the liquidateAccount function is called on an account that is already in an auction.
+    error Liquidator_AuctionOngoing();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -177,7 +184,22 @@ contract Liquidator_NEW is Owned {
                             AUCTION LOGIC
     ///////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Initiate the liquidation of a specific account.
+     * @param account The address of the account to be liquidated.
+     * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
+     * 1. Sets the initiator address to the sender and flags the account as being in an auction.
+     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount_NEW` contract to check if the account is solvent
+     *    and start the liquidation process within the account.
+     * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
+     * 4. Calculates the starting price for the liquidation based on the account's debt.
+     * 5. Records the start time and asset distribution for the auction.
+     * 6. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
+     */
     function liquidateAccount(address account) external nonReentrant {
+        // Check if the account is already in an auction.
+        if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
+
         // Store the initiator address and set the inAuction flag to true.
         auctionInformation[account].initiator = msg.sender;
         auctionInformation[account].inAuction = true;
@@ -204,28 +226,42 @@ contract Liquidator_NEW is Owned {
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
     }
 
+    /**
+     * @notice Calculate the starting price for a liquidation based on the specified debt amount.
+     * @param debt The amount of debt for which to calculate the starting price.
+     * @return startPrice The calculated starting price, expressed as a fraction of the debt.
+     * @dev This function is an internal view function, and it calculates the starting price for a liquidation
+     *      based on a given debt amount. The start price is determined by multiplying the debt by the
+     *      `startPriceMultiplier` and dividing the result by 100.
+     */
     function _calculateStartPrice(uint256 debt) internal view returns (uint256 startPrice) {
         startPrice = debt * startPriceMultiplier / 100;
     }
 
+    /**
+     * @notice Calculate asset distribution percentages based on provided risk values.
+     * @param riskValues_ An array of risk values for assets.
+     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 10,000 represents 100%).
+     */
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal
         pure
-        returns (uint16[] memory assetDistributions)
+        returns (uint32[] memory assetDistributions)
     {
         uint256 length = riskValues_.length;
         uint256 totalValue;
         for (uint256 i; i < length;) {
-            totalValue += riskValues_[i].valueInBaseCurrency;
+            unchecked {
+                totalValue += riskValues_[i].valueInBaseCurrency;
+            }
             unchecked {
                 ++i;
             }
         }
-        assetDistributions = new uint16[](riskValues_.length);
+        assetDistributions = new uint32[](length);
         for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
-            //
-            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10_000 / totalValue);
+            assetDistributions[i] = uint32(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
             unchecked {
                 ++i;
             }
