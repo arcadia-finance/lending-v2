@@ -95,13 +95,12 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_doActionWithLeverage_InsufficientLiquidity(
         uint128 amountLoaned,
-        uint256 collateralValue,
+        uint128 collateralValue,
         uint128 liquidity,
         bytes calldata actionData,
         bytes calldata signature
     ) public {
         vm.assume(collateralValue >= amountLoaned);
-        vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
         vm.assume(liquidity < amountLoaned);
         vm.assume(liquidity > 0);
 
@@ -118,12 +117,11 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_doActionWithLeverage_ByAccountOwner(
-        uint256 amountLoaned,
-        uint256 collateralValue,
+        uint128 amountLoaned,
+        uint128 collateralValue,
         uint128 liquidity
     ) public {
         vm.assume(collateralValue >= amountLoaned);
-        vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
@@ -146,13 +144,12 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_doActionWithLeverage_ByMaxAuthorisedAddress(
-        uint256 amountLoaned,
-        uint256 collateralValue,
+        uint128 amountLoaned,
+        uint128 collateralValue,
         uint128 liquidity,
         address beneficiary
     ) public {
         vm.assume(collateralValue >= amountLoaned);
-        vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
         vm.assume(beneficiary != users.accountOwner);
@@ -177,17 +174,14 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_doActionWithLeverage_originationFeeAvailable(
-        uint256 amountLoaned,
-        uint256 collateralValue,
+        uint128 amountLoaned,
+        uint128 collateralValue,
         uint128 liquidity,
         uint8 originationFee
     ) public {
-        vm.assume(amountLoaned <= type(uint256).max / (uint256(originationFee) + 1));
-        vm.assume(amountLoaned <= type(uint256).max - (amountLoaned * originationFee / 10_000));
-        vm.assume(collateralValue >= amountLoaned + (amountLoaned * originationFee / 10_000));
-        vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
-        vm.assume(liquidity <= type(uint128).max - (amountLoaned * originationFee / 10_000));
+        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(amountLoaned > 0);
 
         vm.prank(users.creatorAddress);
@@ -215,26 +209,28 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
-        assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned + (amountLoaned * originationFee / 10_000));
-        assertEq(treasuryBalancePre + (amountLoaned * originationFee / 10_000), treasuryBalancePost);
-        assertEq(totalRealisedLiquidityPre + (amountLoaned * originationFee / 10_000), totalRealisedLiquidityPost);
+        assertEq(
+            debt.balanceOf(address(proxyAccount)),
+            uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000)
+        );
+        assertEq(treasuryBalancePre + (uint256(amountLoaned) * originationFee / 10_000), treasuryBalancePost);
+        assertEq(
+            totalRealisedLiquidityPre + (uint256(amountLoaned) * originationFee / 10_000), totalRealisedLiquidityPost
+        );
     }
 
     function testFuzz_Success_doActionWithLeverage_EmitReferralEvent(
-        uint256 amountLoaned,
-        uint256 collateralValue,
+        uint128 amountLoaned,
+        uint128 collateralValue,
         uint128 liquidity,
         uint8 originationFee,
         bytes3 ref
     ) public {
-        vm.assume(amountLoaned <= type(uint256).max / (uint256(originationFee) + 1));
-        vm.assume(amountLoaned <= type(uint256).max - (amountLoaned * originationFee / 10_000));
-        vm.assume(collateralValue >= amountLoaned + (amountLoaned * originationFee / 10_000));
-        vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        uint256 fee = amountLoaned * originationFee / 10_000;
+        uint256 fee = uint256(amountLoaned) * originationFee / 10_000;
 
         vm.prank(users.creatorAddress);
         pool.setOriginationFee(originationFee);
