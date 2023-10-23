@@ -50,7 +50,6 @@ contract AccountV1Malicious {
 
         creditor_ = trustedCreditor;
 
-        //        totalOpenDebt = 10_000_000_000_000_000_000;
         totalOpenDebt_ = totalOpenDebt;
 
         assetAndRiskValues = new RiskModule.AssetValueAndRiskVariables[](1);
