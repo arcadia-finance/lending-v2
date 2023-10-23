@@ -251,15 +251,17 @@ contract Liquidator_NEW is Owned {
         uint256 length = riskValues_.length;
         uint256 totalValue;
         for (uint256 i; i < length;) {
-            totalValue += riskValues_[i].valueInBaseCurrency;
+            unchecked {
+                totalValue += riskValues_[i].valueInBaseCurrency;
+            }
             unchecked {
                 ++i;
             }
         }
-        assetDistributions = new uint32[](riskValues_.length);
+        assetDistributions = new uint32[](length);
         for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
-            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
+            assetDistributions[i] = uint32(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
             unchecked {
                 ++i;
             }

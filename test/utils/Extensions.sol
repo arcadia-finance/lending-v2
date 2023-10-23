@@ -12,6 +12,7 @@ import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator_NEW } from "../../src/Liquidator_NEW.sol";
+import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -366,5 +367,13 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function getInitiatorRewardWeight() public view returns (uint8) {
         return initiatorRewardWeight;
+    }
+
+    function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+        public
+        view
+        returns (uint32[] memory assetDistribution)
+    {
+        return _getAssetDistribution(riskValues_);
     }
 }
