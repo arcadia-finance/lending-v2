@@ -8,6 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/actions/utils/ActionData.sol";
 import { ActionMultiCallV2 } from "../../../lib/accounts-v2/src/actions/MultiCallV2.sol";
+import { IPermit2 } from "../../../lib/accounts-v2/test/utils/Interfaces.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
@@ -36,7 +37,8 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         ActionData memory emptyActionData;
         address[] memory to;
         bytes[] memory data;
-        callData = abi.encode(emptyActionData, emptyActionData, emptyActionData, to, data);
+        bytes memory signature;
+        callData = abi.encode(emptyActionData, emptyActionData, signature, emptyActionData, to, data);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -46,24 +48,26 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 amount,
         address nonAccount,
         address actionHandler_,
-        bytes calldata actionData
+        bytes calldata actionData,
+        bytes calldata signature
     ) public {
         vm.assume(nonAccount != address(proxyAccount));
         vm.expectRevert(LendingPool_IsNotAnAccount.selector);
-        pool.doActionWithLeverage(amount, nonAccount, actionHandler_, actionData, emptyBytes3);
+        pool.doActionWithLeverage(amount, nonAccount, actionHandler_, actionData, signature, emptyBytes3);
     }
 
     function testFuzz_Revert_doActionWithLeverage_Unauthorised(
         uint256 amount,
         address beneficiary,
         address actionHandler_,
-        bytes calldata actionData
+        bytes calldata actionData,
+        bytes calldata signature
     ) public {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.startPrank(beneficiary);
         vm.expectRevert(LendingPool_Unauthorized.selector);
-        pool.doActionWithLeverage(amount, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
+        pool.doActionWithLeverage(amount, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -72,7 +76,8 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 amountLoaned,
         address beneficiary,
         address actionHandler_,
-        bytes calldata actionData
+        bytes calldata actionData,
+        bytes calldata signature
     ) public {
         vm.assume(beneficiary != users.accountOwner);
         vm.assume(amountAllowed < type(uint256).max);
@@ -82,7 +87,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(beneficiary);
         vm.expectRevert(LendingPool_Unauthorized.selector);
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3
+        );
         vm.stopPrank();
     }
 
@@ -90,7 +97,8 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 amountLoaned,
         uint256 collateralValue,
         uint128 liquidity,
-        bytes calldata actionData
+        bytes calldata actionData,
+        bytes calldata signature
     ) public {
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(collateralValue <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
@@ -103,7 +111,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), actionData, emptyBytes3);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), address(actionHandler), actionData, signature, emptyBytes3
+        );
         vm.stopPrank();
     }
 
@@ -126,7 +136,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
+        );
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
@@ -154,7 +166,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, type(uint256).max, address(proxyAccount));
 
         vm.prank(beneficiary);
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
+        );
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
@@ -191,7 +205,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(users.accountOwner);
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
+        );
         vm.stopPrank();
 
         uint256 treasuryBalancePost = pool.realisedLiquidityOf(treasury);
@@ -234,7 +250,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
         emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, fee, ref);
-        pool.doActionWithLeverage(amountLoaned, address(proxyAccount), address(actionHandler), callData, ref);
+        pool.doActionWithLeverage(
+            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), ref
+        );
         vm.stopPrank();
     }
 }

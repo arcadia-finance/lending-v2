@@ -37,7 +37,7 @@ interface IAccount {
      * @return trustedCreditor_ The contract address of the trusted creditor.
      * @return accountVersion_ The Account version.
      */
-    function accountManagementAction(address actionHandler, bytes calldata actionData)
+    function accountManagementAction(address actionHandler, bytes calldata actionData, bytes calldata signature)
         external
         returns (address, uint256);
 }
