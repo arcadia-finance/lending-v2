@@ -12,7 +12,6 @@ import { Events } from "./utils/Events.sol";
 import { DebtTokenExtension } from "./utils/Extensions.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
-import { LendingPoolExtension_NEW } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension_NEW } from "./utils/Extensions.sol";
 import { Tranche } from "../src/Tranche.sol";
@@ -28,11 +27,13 @@ abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     DebtTokenExtension internal debt;
     DebtTokenExtension internal debt_new;
     LendingPoolExtension internal pool;
-    LendingPoolExtension_NEW internal pool_new;
+    LendingPoolExtension internal pool_new;
     LiquidatorExtension internal liquidator;
     LiquidatorExtension_NEW internal liquidator_new;
     Tranche internal jrTranche;
     Tranche internal srTranche;
+    Tranche internal jrTranche_new;
+    Tranche internal srTranche_new;
     Tranche internal tranche;
 
     /*//////////////////////////////////////////////////////////////////////////

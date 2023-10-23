@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - AF-33-Partial-Liquidation
 
 env:
   FOUNDRY_PROFILE: ci
