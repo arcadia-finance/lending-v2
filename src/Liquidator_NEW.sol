@@ -195,7 +195,6 @@ contract Liquidator_NEW is Owned {
      * 4. Calculates the starting price for the liquidation based on the account's debt.
      * 5. Records the start time and asset distribution for the auction.
      * 6. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
-     * @return The function does not return any values.
      */
     function liquidateAccount(address account) external nonReentrant {
         // Check if the account is already in an auction.
@@ -230,7 +229,7 @@ contract Liquidator_NEW is Owned {
     /**
      * @notice Calculate the starting price for a liquidation based on the specified debt amount.
      * @param debt The amount of debt for which to calculate the starting price.
-     * @return The calculated starting price, expressed as a fraction of the debt.
+     * @return startPrice The calculated starting price, expressed as a fraction of the debt.
      * @dev This function is an internal view function, and it calculates the starting price for a liquidation
      *      based on a given debt amount. The start price is determined by multiplying the debt by the
      *      `startPriceMultiplier` and dividing the result by 100.
@@ -242,7 +241,7 @@ contract Liquidator_NEW is Owned {
     /**
      * @notice Calculate asset distribution percentages based on provided risk values.
      * @param riskValues_ An array of risk values for assets.
-     * @return An array of asset distribution percentages (in tenths of a percent, e.g., 10,000 represents 100%).
+     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 10,000 represents 100%).
      */
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal

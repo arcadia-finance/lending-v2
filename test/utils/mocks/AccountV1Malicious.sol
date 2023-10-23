@@ -8,9 +8,23 @@ import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 contract AccountV1Malicious {
     address public trustedCreditor;
+    uint256 public totalOpenDebt;
+    uint256 public valueInBaseCurrency;
+    uint256 public collateralFactor;
+    uint256 public liquidationFactor;
 
-    constructor(address _trustedCreditor) payable {
-        trustedCreditor = _trustedCreditor;
+    constructor(
+        address trustedCreditor_,
+        uint256 totalOpenDebt_,
+        uint256 valueInBaseCurrency_,
+        uint256 collateralFactor_,
+        uint256 liquidationFactor_
+    ) payable {
+        trustedCreditor = trustedCreditor_;
+        totalOpenDebt = totalOpenDebt_;
+        valueInBaseCurrency = valueInBaseCurrency_;
+        collateralFactor = collateralFactor_;
+        liquidationFactor = liquidationFactor_;
     }
 
     function checkAndStartLiquidation()
@@ -21,7 +35,7 @@ contract AccountV1Malicious {
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
             address creditor_,
-            uint256 totalOpenDebt,
+            uint256 totalOpenDebt_,
             RiskModule.AssetValueAndRiskVariables[] memory assetAndRiskValues
         )
     {
@@ -36,11 +50,12 @@ contract AccountV1Malicious {
 
         creditor_ = trustedCreditor;
 
-        totalOpenDebt = 10_000_000_000_000_000_000;
+        //        totalOpenDebt = 10_000_000_000_000_000_000;
+        totalOpenDebt_ = totalOpenDebt;
 
         assetAndRiskValues = new RiskModule.AssetValueAndRiskVariables[](1);
-        assetAndRiskValues[0].valueInBaseCurrency = 100_000_000_000_000_000_000;
-        assetAndRiskValues[0].collateralFactor = 50;
-        assetAndRiskValues[0].liquidationFactor = 60;
+        assetAndRiskValues[0].valueInBaseCurrency = valueInBaseCurrency;
+        assetAndRiskValues[0].collateralFactor = collateralFactor;
+        assetAndRiskValues[0].liquidationFactor = liquidationFactor;
     }
 }
