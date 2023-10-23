@@ -81,6 +81,13 @@ contract Liquidator_NEW is Owned {
     }
 
     /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when the liquidateAccount function is called on an account that is already in an auction.
+    error Liquidator_AuctionOngoing();
+
+    /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
@@ -191,6 +198,9 @@ contract Liquidator_NEW is Owned {
      * @return The function does not return any values.
      */
     function liquidateAccount(address account) external nonReentrant {
+        // Check if the account is already in an auction.
+        if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
+
         // Store the initiator address and set the inAuction flag to true.
         auctionInformation[account].initiator = msg.sender;
         auctionInformation[account].inAuction = true;
