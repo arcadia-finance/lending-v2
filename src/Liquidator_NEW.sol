@@ -53,7 +53,7 @@ contract Liquidator_NEW is Owned {
         uint256 paidDebt; // The amount of debt that has been paid off.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint16[] assetShares; // The distribution of the assets in the Account. it is in 4 decimal precision -> 10000 = 100%, 1000 = 10% . The order of the assets is the same as in the Account.
+        uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -246,7 +246,7 @@ contract Liquidator_NEW is Owned {
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal
         pure
-        returns (uint16[] memory assetDistributions)
+        returns (uint32[] memory assetDistributions)
     {
         uint256 length = riskValues_.length;
         uint256 totalValue;
@@ -256,10 +256,10 @@ contract Liquidator_NEW is Owned {
                 ++i;
             }
         }
-        assetDistributions = new uint16[](riskValues_.length);
+        assetDistributions = new uint32[](riskValues_.length);
         for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
-            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 10_000 / totalValue);
+            assetDistributions[i] = uint16(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
             unchecked {
                 ++i;
             }
