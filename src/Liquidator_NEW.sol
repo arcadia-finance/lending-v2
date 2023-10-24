@@ -294,9 +294,12 @@ contract Liquidator_NEW is Owned {
 
         // process the bid for later bids
         _processBid(account, assetAmounts, assetIds);
+
+        // Transfer the assets to the bidder.
+        IAccount_NEW(account).auctionBuy(assetIds, assetAmounts, msg.sender);
     }
 
-    function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds) internal {
+    function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount) internal {
         uint256 length = assetAmounts.length;
 
         uint256[] memory newAssetAmounts = new uint256[](length);
@@ -318,6 +321,7 @@ contract Liquidator_NEW is Owned {
 
         auctionInformation[account].assetAmounts = newAssetAmounts;
         auctionInformation[account].assetIds = newAssetIds;
+        auctionInformation[account].totalBids += bidAmount;
     }
 
     function _calculateAskPrice(
