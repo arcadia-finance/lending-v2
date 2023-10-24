@@ -56,6 +56,7 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
+        address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
         uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
         uint256[] assetIds; // The ids of the assets in the Account. The order of the assets is the same as in the Account.
@@ -230,6 +231,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
         auctionInformation[account].assetAmounts = assetAmounts;
+        auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
 
         // Emit event
@@ -296,7 +298,7 @@ contract Liquidator_NEW is Owned {
         _processBid(account, assetAmounts, assetIds);
 
         // Transfer the assets to the bidder.
-        IAccount_NEW(account).auctionBuy(assetIds, assetAmounts, msg.sender);
+        IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
     }
 
     function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount) internal {
