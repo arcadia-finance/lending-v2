@@ -50,7 +50,7 @@ contract Liquidator_NEW is Owned {
     struct AuctionInformation {
         uint256 startPrice; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
-        uint256 paidDebt; // The amount of debt that has been paid off.
+        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
@@ -274,7 +274,7 @@ contract Liquidator_NEW is Owned {
         uint256[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
-        uint256 startPrice,
+        uint128 startPrice,
         uint256 timePassed
     ) internal view returns (uint256 askPrice) {
         require(
@@ -283,10 +283,14 @@ contract Liquidator_NEW is Owned {
         );
 
         uint256 askedShares;
-        uint256 totalShares = 100;
+        uint256 totalShares;
 
-        for (uint256 i = 0; i < askedAssetAmounts.length; i++) {
-            askedShares += assetShares[i] * (askedAssetAmounts[i] / assetAmounts[i]);
+        for (uint256 i; i < askedAssetAmounts.length;) {
+            unchecked {
+                askedShares += assetShares[i] * askedAssetAmounts[i] / assetAmounts[i];
+                totalShares += assetShares[i];
+                ++i;
+            }
         }
 
         unchecked {
@@ -295,11 +299,13 @@ contract Liquidator_NEW is Owned {
             timePassed = timePassed * 1e18;
 
             //Calculate the price
-            askPrice = startPrice * askedShares
-                * (
-                    LogExpMath.pow(base, timePassed) * (startPriceMultiplier - minPriceMultiplier)
-                        + 1e18 * uint256(minPriceMultiplier)
-                ) / (1e20 * totalShares);
+            askPrice = (
+                uint256(startPrice)
+                    * (
+                        LogExpMath.pow(base, timePassed) * (startPriceMultiplier - minPriceMultiplier)
+                            + 1e18 * uint256(minPriceMultiplier)
+                    )
+            ) / (1e20 * totalShares / askedShares);
         }
     }
 }

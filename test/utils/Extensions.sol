@@ -12,6 +12,7 @@ import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator_NEW } from "../../src/Liquidator_NEW.sol";
+import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -374,17 +375,11 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         uint256[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
-        uint256 startPrice,
+        uint128 startPrice,
         uint256 timePassed
     ) public view returns (uint256) {
         return _calculateAskPrice(
-            askedAssetAmounts,
-            askedAssetIds,
-            assetShares,
-            assetAmounts,
-            assetIds,
-            startPrice,
-            timePassed
+            askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
         );
     }
 
