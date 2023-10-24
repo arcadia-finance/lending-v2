@@ -372,7 +372,7 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
     function calculateAskPrice(
         uint256[] memory askedAssetAmounts,
         uint256[] memory askedAssetIds,
-        uint256[] memory assetShares,
+        uint32[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
         uint128 startPrice,

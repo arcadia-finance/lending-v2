@@ -32,7 +32,7 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW 
         uint256[] memory askedIds = new uint256[](1);
         askedIds[0] = 1;
 
-        uint256[] memory assetShares = new uint256[](1);
+        uint32[] memory assetShares = new uint32[](1);
         assetShares[0] = 1_000_000;
 
         uint256[] memory assetAmounts = new uint256[](1);
