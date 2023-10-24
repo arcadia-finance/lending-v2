@@ -7,4 +7,4 @@
 [submodule "lib/accounts-v2"]
 	path = lib/accounts-v2
 	url = git@github.com:arcadia-finance/accounts-v2.git
-	branch = AF-284-PL-liquidation-flow-initiated
+	branch = dev_partial_liquidations

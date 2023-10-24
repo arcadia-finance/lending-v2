@@ -543,6 +543,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         address account,
         address actionHandler,
         bytes calldata actionData,
+        bytes calldata signature,
         bytes3 referrer
     ) external whenBorrowNotPaused processInterests {
         //If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
@@ -578,9 +579,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //resulting from the actions back into the Account.
         //As last step, after all assets are deposited back into the Account a final health check is done:
         //The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the margin taken during this function).
-        (address trustedCreditor, uint256 accountVersion) =
-            IAccount(account).accountManagementAction(actionHandler, actionData);
-        if (trustedCreditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
+        {
+            (address trustedCreditor, uint256 accountVersion) =
+                IAccount(account).accountManagementAction(actionHandler, actionData, signature);
+            if (trustedCreditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
+        }
 
         emit Borrow(
             account, msg.sender, actionHandler, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer
