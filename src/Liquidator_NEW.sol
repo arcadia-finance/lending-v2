@@ -301,7 +301,9 @@ contract Liquidator_NEW is Owned {
         IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
     }
 
-    function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount) internal {
+    function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount)
+        internal
+    {
         uint256 length = assetAmounts.length;
 
         uint256[] memory newAssetAmounts = new uint256[](length);
