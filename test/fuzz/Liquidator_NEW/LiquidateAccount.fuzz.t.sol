@@ -122,7 +122,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
     }
 
     function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint128 amountLoaned)
-    public
+        public
     {
         // Given: Account auction is already started
         bytes3 emptyBytes3;

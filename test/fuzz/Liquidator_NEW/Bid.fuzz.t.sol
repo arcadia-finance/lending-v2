@@ -25,9 +25,7 @@ contract Bid_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_bid_(address bidder, address account_)
-        public
-    {
+    function testFuzz_Revert_bid_(address bidder, address account_) public {
         // Given: Account is not in the auction
         uint256[] memory assetAmounts = new uint256[](1);
         uint256[] memory assetIds = new uint256[](1);
@@ -37,5 +35,4 @@ contract Bid_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         liquidator_new.bid(address(account_), assetAmounts, assetIds);
         vm.stopPrank();
     }
-
 }
