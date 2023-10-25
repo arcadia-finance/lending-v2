@@ -121,13 +121,18 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertGe(pool_new.getAuctionsInProgress(), 0);
     }
 
-    function testFuzz_Success_liquidateAccount_UnhealthyDebt(address liquidationInitiator, uint128 amountLoaned)
-        public
-    {
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt(
+        address liquidationInitiator,
+        uint128 amountLoaned,
+        uint8 initiatorRewardWeight,
+        uint8 penaltyWeight,
+        uint8 closingRewardWeight
+    ) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
+        vm.assume(initiatorRewardWeight + penaltyWeight + closingRewardWeight <= 11);
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool_new), type(uint256).max);
@@ -135,6 +140,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+
+        // Set weights
+        vm.prank(users.creatorAddress);
+        liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt_new.setRealisedDebt(uint256(amountLoaned + 1));
@@ -147,11 +156,27 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
         assertEq(isAuctionActive, true);
 
-        uint256 startDebt = liquidator_new.getAuctionStartPrice(address(proxyAccount));
+        uint256 startPrice = liquidator_new.getAuctionStartPrice(address(proxyAccount));
         uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
 
-        assertEq(startDebt, loan);
-
+        assertEq(startPrice, loan);
         assertGe(pool_new.getAuctionsInProgress(), 1);
+
+        // And : Auction struct should be correct
+        (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee) =
+            liquidator_new.getAuctionInformationPartOne(address(proxyAccount));
+        (uint8 initiatorRewardWeight_, uint8 penaltyWeight_, uint8 closingRewardWeight_, address trustedCreditor_) =
+            liquidator_new.getAuctionInformationPartTwo(address(proxyAccount));
+
+        assertEq(openDebt, amountLoaned + 1);
+        assertEq(startTime, block.timestamp);
+        assertEq(inAuction, true);
+        assertEq(maxInitiatorFee, pool_new.maxInitiatorFee());
+        assertEq(initiatorRewardWeight, initiatorRewardWeight_);
+        assertEq(penaltyWeight, penaltyWeight_);
+        assertEq(closingRewardWeight, closingRewardWeight_);
+        assertEq(trustedCreditor_, address(pool_new));
+
+        // assert new openDebt is with fees included
     }
 }

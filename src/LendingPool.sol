@@ -62,7 +62,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
     uint96 internal fixedLiquidationCost;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 internal maxInitiatorFee;
+    uint80 public maxInitiatorFee;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
     // Address of the protocol treasury.
@@ -962,7 +962,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     /**
      * @notice Start a liquidation for a specific account with debt.
      * @param account The address of the account with debt to be liquidated.
-     * @param debt The amount of debt to be liquidated from the account.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -970,12 +969,17 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The function updates the count of ongoing auctions.
      * @dev Liquidations can only be initiated for accounts with non-zero open debt.
      */
-    function startLiquidation(address account, uint256 debt) external onlyLiquidator {
+    function startLiquidation(address account, uint256 debt, uint256 liquidationIncentives) external onlyLiquidator {
         //Only Accounts can have debt, and debtTokens are non-transferable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
+
+        // Note : is this really needed, as we previously verify in checkAndStartLiquidation() that the account has openDebt > 0
         uint256 openDebt = maxWithdraw(account);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+
+        // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
+        _deposit(liquidationIncentives, account);
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).

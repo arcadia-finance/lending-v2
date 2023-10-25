@@ -8,7 +8,6 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/actions/utils/ActionData.sol";
 import { ActionMultiCallV2 } from "../../../lib/accounts-v2/src/actions/MultiCallV2.sol";
-import { IPermit2 } from "../../../lib/accounts-v2/test/utils/Interfaces.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
