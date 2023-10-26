@@ -25,7 +25,6 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_StartLiquidation_NonLiquidator(
         address account,
         address unprivilegedAddress,
-        uint256 openDebt,
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight,
         uint8 closingRewardWeight
@@ -69,7 +68,6 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_startLiquidation_NoOngoingAuctions(
-        address liquidationInitiator,
         uint128 amountLoaned,
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight,
@@ -114,11 +112,11 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(maxInitiatorFee_, maxInitiatorFee);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = amountLoaned * initiatorRewardWeightStack / 100;
+        uint256 liquidationInitiatorReward = uint256(amountLoaned) * initiatorRewardWeightStack / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        uint256 liquidationPenalty = amountLoaned * penaltyWeightStack / 100;
-        uint256 closingReward = amountLoaned * closingRewardWeightStack / 100;
+        uint256 liquidationPenalty = uint256(amountLoaned) * penaltyWeightStack / 100;
+        uint256 closingReward = uint256(amountLoaned) * closingRewardWeightStack / 100;
 
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
@@ -127,7 +125,6 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_startLiquidation_OngoingAuctions(
-        address liquidationInitiator,
         uint128 amountLoaned,
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight,

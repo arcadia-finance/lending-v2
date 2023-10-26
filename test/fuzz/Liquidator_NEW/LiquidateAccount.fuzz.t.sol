@@ -99,8 +99,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         uint256 collateralFactor,
         uint256 liquidationFactor
     ) public {
-        // Avoid overflow when calculating the liquidation incentives (penaltyWeight is highest value)
-        vm.assume(totalOpenDebt < type(uint256).max / liquidator_new.getPenaltyWeight());
         vm.assume(valueInBaseCurrency > 0);
         vm.assume(totalOpenDebt > 0);
         // Given: Malicious Lending pool
