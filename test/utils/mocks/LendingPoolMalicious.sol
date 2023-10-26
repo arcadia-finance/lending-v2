@@ -9,5 +9,7 @@ import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 contract LendingPoolMalicious {
     constructor() { }
 
-    function startLiquidation(address account, uint256 debt) external { }
+    uint80 public maxInitiatorFee;
+
+    function startLiquidation(address account, uint256 debt, uint256 liquidationIncentives) external { }
 }

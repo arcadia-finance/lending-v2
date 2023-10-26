@@ -396,6 +396,10 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         return initiatorRewardWeight;
     }
 
+    function getClosingRewardWeight() public view returns (uint8) {
+        return closingRewardWeight;
+    }
+
     function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         public
         view
