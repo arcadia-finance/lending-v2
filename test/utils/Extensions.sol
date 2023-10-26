@@ -390,4 +390,12 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
     {
         return _getAssetDistribution(riskValues_);
     }
+
+    function getAuctionTotalBids(address account) public view returns (uint256) {
+        return auctionInformation[account].totalBids;
+    }
+
+    function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
+        return auctionInformation[account].assetAmounts;
+    }
 }

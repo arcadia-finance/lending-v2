@@ -97,6 +97,9 @@ contract Liquidator_NEW is Owned {
     // Thrown when the bid function is called on an account that auction does not exist.
     error Liquidator_NotForSale();
 
+    // Thrown when the bid function with invalid asset amounts or ids.
+    error Liquidator_InvalidBid();
+
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
@@ -225,7 +228,7 @@ contract Liquidator_NEW is Owned {
         ) = IAccount_NEW(account).checkAndStartLiquidation();
 
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).startLiquidation(account, debt);
+        ILendingPool_NEW(creditor).startLiquidation(account);
 
         // Fill the auction struct
         auctionInformation[account].startPrice = _calculateStartPrice(debt);
@@ -294,13 +297,13 @@ contract Liquidator_NEW is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        ILendingPool_NEW(auctionInformation_.creditor).repay(askPrice, account);
-
-        // process the bid for later bids
-        _processBid(account, assetAmounts, assetIds, askPrice);
+        ILendingPool_NEW(auctionInformation_.creditor).auctionRepay(askPrice, account, msg.sender);
 
         // Transfer the assets to the bidder.
         IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
+
+        // process the bid for later bids
+        _processBid(account, assetAmounts, assetIds, askPrice);
     }
 
     function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount)
@@ -312,7 +315,6 @@ contract Liquidator_NEW is Owned {
         uint256[] memory newAssetIds = new uint256[](length);
 
         uint256[] memory oldAssetAmounts = auctionInformation[account].assetAmounts;
-        uint256[] memory oldAssetIds = auctionInformation[account].assetIds;
 
         for (uint256 i; i < length;) {
             newAssetAmounts[i] = oldAssetAmounts[i] - assetAmounts[i];
@@ -359,10 +361,9 @@ contract Liquidator_NEW is Owned {
         uint128 startPrice,
         uint256 timePassed
     ) internal view returns (uint256 askPrice) {
-        require(
-            askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length,
-            "Arrays length mismatch"
-        );
+        if (!(askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length)) {
+            revert Liquidator_InvalidBid();
+        }
 
         uint256 askedShares;
         uint256 totalShares;
