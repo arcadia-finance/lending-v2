@@ -176,7 +176,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertGe(pool_new.getAuctionsInProgress(), 1);
 
         // And : Auction struct should be correct
-        (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee) =
+        (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee_) =
             liquidator_new.getAuctionInformationPartOne(address(proxyAccount));
 
         (uint8 initiatorRewardWeight_, uint8 penaltyWeight_, uint8 closingRewardWeight_, address trustedCreditor_) =
@@ -185,7 +185,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertEq(openDebt, amountLoanedStack + 1);
         assertEq(startTime, block.timestamp);
         assertEq(inAuction, true);
-        assertEq(maxInitiatorFee, pool_new.maxInitiatorFee());
+        assertEq(maxInitiatorFee_, pool_new.maxInitiatorFee());
         assertEq(initiatorRewardWeightStack, initiatorRewardWeight_);
         assertEq(penaltyWeightStack, penaltyWeight_);
         assertEq(closingRewardWeightStack, closingRewardWeight_);
@@ -194,7 +194,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // And : Liquidation incentives should have been added to openDebt of Account
         uint256 liquidationInitiatorReward = openDebt * initiatorRewardWeight_ / 100;
         liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
+            liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
         uint256 liquidationPenalty = openDebt * penaltyWeight_ / 100;
         uint256 closingReward = openDebt * closingRewardWeight_ / 100;
 

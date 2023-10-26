@@ -35,7 +35,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
-        pool.startLiquidation(account, openDebt, liquidationIncentives);
+        pool.startLiquidation(account, liquidationIncentives);
         vm.stopPrank();
     }
 }

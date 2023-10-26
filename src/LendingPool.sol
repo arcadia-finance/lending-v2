@@ -975,6 +975,12 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         whenLiquidationNotPaused
         processInterests
     {
+        //Only Accounts can have debt, and debtTokens are non-transferrable.
+        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
+        //passed as Account is indeed a Account and has debt.
+        uint256 openDebt = maxWithdraw(account);
+        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationIncentives, account);
 

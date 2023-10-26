@@ -250,7 +250,7 @@ contract Liquidator_NEW is Owned {
         uint256 liquidationIncentives = liquidationInitiatorReward + liquidationPenalty + closingReward;
 
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).startLiquidation(accountStack, debt, liquidationIncentives);
+        ILendingPool_NEW(creditor).startLiquidation(accountStack, liquidationIncentives);
 
         // Fill the auction struct
         auctionInformation[accountStack].initiatorRewardWeight = initiatorRewardWeight_;

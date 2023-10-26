@@ -11,5 +11,5 @@ contract LendingPoolMalicious {
 
     uint80 public maxInitiatorFee;
 
-    function startLiquidation(address account, uint256 debt, uint256 liquidationIncentives) external { }
+    function startLiquidation(address account, uint256 liquidationIncentives) external { }
 }
