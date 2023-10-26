@@ -51,12 +51,17 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint256 startPrice; // The open debt, same decimal precision as baseCurrency.
+        uint256 startPrice;
+        uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
+        uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address initiator; // The address of the initiator of the auction.
-        address creditor; // The address of the creditor of the Account.
+        uint8 initiatorRewardWeight; // 2 decimals precision.
+        uint8 penaltyWeight; // 2 decimals precision.
+        uint8 closingRewardWeight; // 2 decimals precision.
+        address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
         uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
@@ -237,7 +242,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
-        auctionInformation[account].creditor = creditor;
+        auctionInformation[account].trustedCreditor = creditor;
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -297,7 +302,7 @@ contract Liquidator_NEW is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        ILendingPool_NEW(auctionInformation_.creditor).auctionRepay(askPrice, account, msg.sender);
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
 
         // Transfer the assets to the bidder.
         IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
