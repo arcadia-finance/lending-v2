@@ -185,7 +185,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertEq(openDebt, amountLoanedStack + 1);
         assertEq(startTime, block.timestamp);
         assertEq(inAuction, true);
-        assertEq(maxInitiatorFee_, pool_new.maxInitiatorFee());
+        assertEq(maxInitiatorFee_, pool_new.getMaxInitiatorFee());
         assertEq(initiatorRewardWeightStack, initiatorRewardWeight_);
         assertEq(penaltyWeightStack, penaltyWeight_);
         assertEq(closingRewardWeightStack, closingRewardWeight_);

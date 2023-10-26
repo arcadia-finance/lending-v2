@@ -237,38 +237,27 @@ contract Liquidator_NEW is Owned {
         uint8 penaltyWeight_ = penaltyWeight;
         uint8 closingRewardWeight_ = closingRewardWeight;
 
-        // Note: to remove later when function complete to address stack too deep
-        address accountStack = account;
-        address baseCurrencyStack = assetAddresses[0];
-
-        uint80 maxInitiatorFee = ILendingPool_NEW(creditor).maxInitiatorFee();
-
-        // Calculate liquidation incentives which should be considered as extra debt for the Account
-        // note: unchecked math ?
-        uint256 liquidationInitiatorReward = debt * initiatorRewardWeight_ / 100;
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        uint256 liquidationPenalty = debt * penaltyWeight_ / 100;
-        uint256 closingReward = debt * closingRewardWeight_ / 100;
-
-        uint256 liquidationIncentives = liquidationInitiatorReward + liquidationPenalty + closingReward;
-
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).startLiquidation(accountStack, liquidationIncentives);
+        uint80 maxInitiatorFee = ILendingPool_NEW(creditor).startLiquidation(
+            account, initiatorRewardWeight_, penaltyWeight_, closingRewardWeight_
+        );
 
         // Fill the auction struct
-        auctionInformation[accountStack].initiatorRewardWeight = initiatorRewardWeight_;
-        auctionInformation[accountStack].penaltyWeight = penaltyWeight_;
-        auctionInformation[accountStack].closingRewardWeight = closingRewardWeight_;
-        auctionInformation[accountStack].startDebt = uint128(debt);
-        auctionInformation[accountStack].maxInitiatorFee = maxInitiatorFee;
-        auctionInformation[accountStack].startPrice = _calculateStartPrice(debt);
-        auctionInformation[accountStack].startTime = uint32(block.timestamp);
-        auctionInformation[accountStack].assetShares = _getAssetDistribution(riskValues);
-        auctionInformation[accountStack].trustedCreditor = creditor;
+        auctionInformation[account].initiatorRewardWeight = initiatorRewardWeight_;
+        auctionInformation[account].penaltyWeight = penaltyWeight_;
+        auctionInformation[account].closingRewardWeight = closingRewardWeight_;
+        auctionInformation[account].startDebt = uint128(debt);
+        auctionInformation[account].maxInitiatorFee = maxInitiatorFee;
+        auctionInformation[account].startPrice = _calculateStartPrice(debt);
+        auctionInformation[account].startTime = uint32(block.timestamp);
+        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        auctionInformation[account].trustedCreditor = creditor;
+        auctionInformation[account].assetAddresses = assetAddresses;
+        auctionInformation[account].assetIds = assetIds;
+        auctionInformation[account].assetAmounts = assetAmounts;
 
         // Emit event
-        emit AuctionStarted(accountStack, creditor, baseCurrencyStack, uint128(debt));
+        emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
     }
 
     /**

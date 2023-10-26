@@ -26,7 +26,10 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address account,
         address unprivilegedAddress,
         uint256 openDebt,
-        uint256 liquidationIncentives
+        uint256 liquidationIncentives,
+        uint8 initiatorRewardWeight,
+        uint8 penaltyWeight,
+        uint8 closingRewardWeight
     ) public {
         // Given: unprivilegedAddress is not the liquidator
         vm.assume(unprivilegedAddress != address(liquidator));
@@ -35,7 +38,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
-        pool.startLiquidation(account, liquidationIncentives);
+        pool.startLiquidation(account, initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         vm.stopPrank();
     }
 }
