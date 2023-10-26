@@ -54,14 +54,18 @@ contract Liquidator_NEW is Owned {
         uint256 startPrice;
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
+        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address initiator; // The address of the initiator of the auction.
-        uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
         uint8 initiatorRewardWeight; // 2 decimals precision.
         uint8 penaltyWeight; // 2 decimals precision.
         uint8 closingRewardWeight; // 2 decimals precision.
         address trustedCreditor; // The creditor that issued the debt.
+        address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
+        uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
+        uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
+        uint256[] assetIds; // The ids of the assets in the Account. The order of the assets is the same as in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
