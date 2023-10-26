@@ -969,15 +969,12 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The function updates the count of ongoing auctions.
      * @dev Liquidations can only be initiated for accounts with non-zero open debt.
      */
-    function startLiquidation(address account, uint256 debt, uint256 liquidationIncentives) external onlyLiquidator {
-        //Only Accounts can have debt, and debtTokens are non-transferable.
-        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
-        //passed as Account is indeed a Account and has debt.
-
-        // Note : is this really needed, as we previously verify in checkAndStartLiquidation() that the account has openDebt > 0
-        uint256 openDebt = maxWithdraw(account);
-        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-
+    function startLiquidation(address account, uint256 liquidationIncentives)
+        external
+        onlyLiquidator
+        whenLiquidationNotPaused
+        processInterests
+    {
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationIncentives, account);
 
