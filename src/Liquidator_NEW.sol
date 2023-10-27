@@ -290,7 +290,7 @@ contract Liquidator_NEW is Owned {
         }
     }
 
-    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds)
+    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, bool endAuction)
         external
         payable
         nonReentrant
@@ -309,6 +309,12 @@ contract Liquidator_NEW is Owned {
 
         // process the bid for later bids
         _processBid(account, assetAmounts, assetIds, askPrice);
+
+        // If the auction is over, end it.
+        if (endAuction) {
+            // This part will be added in the later PR
+            // _endAuction(account);
+        }
     }
 
     function _processBid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, uint256 bidAmount)
