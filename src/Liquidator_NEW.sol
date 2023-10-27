@@ -12,6 +12,7 @@ import { ILendingPool_NEW } from "./interfaces/ILendingPool_NEW.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
 import { ILiquidator_NEW } from "./interfaces/ILiquidator_NEW.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import "./interfaces/ILendingPool.sol";
 
 contract Liquidator_NEW is Owned {
     using SafeTransferLib for ERC20;
@@ -95,6 +96,9 @@ contract Liquidator_NEW is Owned {
 
     // Thrown when the liquidateAccount function is called on an account that is already in an auction.
     error Liquidator_AuctionOngoing();
+
+    // Thrown when the endAuction called and the account is still unhealthy
+    error Liquidator_AccountNotHealthy();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -275,5 +279,24 @@ contract Liquidator_NEW is Owned {
                 ++i;
             }
         }
+    }
+
+    function endAuction(address account) external {
+        // Check if the account is already in an auction.
+        AuctionInformation auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_) revert Liquidator_AuctionOngoing();
+
+        // Check if the account is healthy again after the bids.
+        // TODO: Change isAccountHealthy to different function or alter a bit to disable auction lock
+        (bool success,,) =
+            IAccount_NEW.isAccountHealthy(uint256, auctionInformation_.startDebt - auctionInformation_.totalBids);
+        if (!success) revert Liquidator_AccountNotHealthy();
+
+        // Set the inAuction flag to false.
+        auctionInformation[account].inAuction = false;
+
+        // Call settlement of the debt in the trustedCreditor
+        // TODO: Add necessary function here
+        // ILendingPool(auctionInformation_.trustedCreditor).settleDebt(account, auctionInformation_.startDebt);
     }
 }
