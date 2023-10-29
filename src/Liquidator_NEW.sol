@@ -12,6 +12,7 @@ import { ILendingPool_NEW } from "./interfaces/ILendingPool_NEW.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
 import { ILiquidator_NEW } from "./interfaces/ILiquidator_NEW.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { IMainRegistry } from "./interfaces/IMainRegistry.sol";
 
 contract Liquidator_NEW is Owned {
     using SafeTransferLib for ERC20;
@@ -54,6 +55,7 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
+        address baseCurrency; // The contract address of the baseCurrency.
         address initiator; // The address of the initiator of the auction.
         uint8 initiatorRewardWeight; // 2 decimals precision.
         uint8 penaltyWeight; // 2 decimals precision.
@@ -95,6 +97,10 @@ contract Liquidator_NEW is Owned {
 
     // Thrown when the liquidateAccount function is called on an account that is already in an auction.
     error Liquidator_AuctionOngoing();
+    // Thrown when the Account has no bad debt in currect situation
+    error Liquidator_NoBadDebt();
+    // Thrown when an Account is not for sale.
+    error Liquidator_NotForSale();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -275,5 +281,44 @@ contract Liquidator_NEW is Owned {
                 ++i;
             }
         }
+    }
+
+    /**
+     * @notice Ends an auction in a bad debt situation.
+     * @param account The account to end the liquidation for.
+     */
+    function endAuctionWithBadDebt(address account) external {
+        // Check if the account is already in an auction.
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        // Calculate total remaining amount owed by the Account.
+        (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts) =
+            IAccount_NEW(account).generateAssetData();
+
+        uint256 collateralValue = IMainRegistry(IAccount_NEW(account).registry()).getTotalValue(
+            assetAddresses,
+            assetIds,
+            assetAmounts,
+            // Note: see if baseCurrency should be added in auction struct if used elsewhere
+            IAccount_NEW(account).baseCurrency()
+        );
+
+        // Note: add initiatorReward later to auction struct?
+        uint256 maxInitiatorFee = auctionInformation_.maxInitiatorFee;
+        uint256 initiatorReward = auctionInformation_.startDebt * auctionInformation_.initiatorRewardWeight / 100;
+        initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
+        uint256 amountOwedByAccount =
+            ILendingPool_NEW(auctionInformation_.trustedCreditor).getOpenPosition(account) + initiatorReward;
+
+        // Ensure we're in a bad debt situation
+        if (collateralValue >= amountOwedByAccount) revert Liquidator_NoBadDebt();
+
+        // Set the inAuction flag to false.
+        auctionInformation[account].inAuction = false;
+
+        // Call settlement of the debt in the trustedCreditor
+        // TODO: Add necessary function here
+        // ILendingPool(auctionInformation_.trustedCreditor).settleDebt(account, auctionInformation_.startDebt);
     }
 }
