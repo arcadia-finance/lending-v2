@@ -74,4 +74,6 @@ interface ILendingPool_NEW {
     function startLiquidation(address account, uint256 debt) external;
 
     function getOpenPosition(address account) external view returns (uint256 openPosition);
+
+    function repay(uint256 amount, address account) external;
 }
