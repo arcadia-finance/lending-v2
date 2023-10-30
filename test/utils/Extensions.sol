@@ -369,6 +369,15 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         return initiatorRewardWeight;
     }
 
+    function calculateAskPrice(address account, uint256[] memory askedAssetAmounts, uint256[] memory askedAssetIds)
+        public
+        view
+        returns (uint256)
+    {
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        return _calculateAskPrice(auctionInformation_, askedAssetAmounts, askedAssetIds);
+    }
+
     function calculateAskPrice(
         uint256[] memory askedAssetAmounts,
         uint256[] memory askedAssetIds,
