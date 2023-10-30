@@ -27,14 +27,14 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
-        liquidator_new.endAuctionProtocol(address(proxyAccount));
+        liquidator_new.endAuctionProtocol(address(proxyAccount), account_);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_endAuctionProtocol_NotForSale(address account_) public {
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_NotForSale.selector);
-        liquidator_new.endAuctionProtocol(address(proxyAccount));
+        liquidator_new.endAuctionProtocol(address(proxyAccount), account_);
         vm.stopPrank();
     }
 
@@ -81,7 +81,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         // call to endAuctionProtocol() should revert as the auction is not yet expired.
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_AuctionNotExpired.selector);
-        liquidator_new.endAuctionProtocol(address(proxyAccount));
+        liquidator_new.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
         vm.stopPrank();
     }
 
@@ -130,7 +130,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         // call to endAuctionProtocol() should revert as the liquidation is not exposed to bad debt
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_NoBadDebt.selector);
-        liquidator_new.endAuctionProtocol(address(proxyAccount));
+        liquidator_new.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
         vm.stopPrank();
     }
 

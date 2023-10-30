@@ -331,7 +331,7 @@ contract LiquidatorExtension is Liquidator {
 }
 
 contract LiquidatorExtension_NEW is Liquidator_NEW {
-    constructor() Liquidator_NEW() { }
+    constructor(address factory_) Liquidator_NEW(factory_) { }
 
     function getAuctionInformationPartOne(address account_)
         public
