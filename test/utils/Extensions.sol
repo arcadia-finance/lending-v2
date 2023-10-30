@@ -376,4 +376,8 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
     {
         return _getAssetDistribution(riskValues_);
     }
+
+    function setTotalBidsOnAccount(address account, uint256 totalBids_) public {
+        auctionInformation[account].totalBids = totalBids_;
+    }
 }
