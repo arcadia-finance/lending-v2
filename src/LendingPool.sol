@@ -504,26 +504,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
-     * @notice Repay a portion of a user's debt.
-     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
-     * @param amount The amount to be repaid.
-     * @param account The address of the user whose debt is being repaid.
-     * @param from The address of the caller performing the repayment.
-     * @dev This function transfers tokens from the `from` address to the contract and updates the user's account balance accordingly.
-     * @dev This function does not impose access control restrictions, so it should only be called by trusted contracts and functions.
-     * @notice This function is used to manage debt repayments within the contract's internal logic.
-     * @dev Emits a `Repay` event to log the repayment details.
-     */
-    function _repay(uint256 amount, uint256 shares, address account, address from) internal {
-        // Need to transfer before burning debt or ERC777s could reenter.
-        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
-        asset.safeTransferFrom(from, address(this), amount);
-
-        _withdraw(shares, account, account);
-
-        emit Repay(account, from, amount);
-    }
-    /**
      * @notice Repays a loan.
      * @param amount The amount of underlying ERC-20 tokens to be repaid.
      * @param account The address of the Arcadia Account backing the loan.
@@ -555,6 +535,27 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 shares = accountDebt > amount ? amount : accountDebt;
 
         _repay(amount, shares, account, bidder);
+    }
+
+    /**
+     * @notice Repay a portion of a user's debt.
+     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
+     * @param amount The amount to be repaid.
+     * @param account The address of the user whose debt is being repaid.
+     * @param from The address of the caller performing the repayment.
+     * @dev This function transfers tokens from the `from` address to the contract and updates the user's account balance accordingly.
+     * @dev This function does not impose access control restrictions, so it should only be called by trusted contracts and functions.
+     * @notice This function is used to manage debt repayments within the contract's internal logic.
+     * @dev Emits a `Repay` event to log the repayment details.
+     */
+    function _repay(uint256 amount, uint256 shares, address account, address from) internal {
+        // Need to transfer before burning debt or ERC777s could reenter.
+        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        asset.safeTransferFrom(from, address(this), amount);
+
+        _withdraw(shares, account, account);
+
+        emit Repay(account, from, amount);
     }
 
     /* //////////////////////////////////////////////////////////////
