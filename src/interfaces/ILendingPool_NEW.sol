@@ -71,7 +71,26 @@ interface ILendingPool_NEW {
         uint256 remainder
     ) external;
 
-    function startLiquidation(address account, uint256 debt) external;
+    /**
+     * @notice Start a liquidation for a specific account with debt.
+     * @param account The address of the account with debt to be liquidated.
+     * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
+     * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+     * @param closingRewardWeight Fee paid to the address that is ending an auction.
+     * @return maxInitiatorFee Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+     * @dev This function can only be called by authorized liquidators.
+     * @dev To initiate a liquidation, the function checks if the specified account has open debt.
+     * @dev If the account has no open debt, the function reverts with an error.
+     * @dev If this is the first auction, it hooks to the most junior tranche to inform that auctions are ongoing.
+     * @dev The function updates the count of ongoing auctions.
+     * @dev Liquidations can only be initiated for accounts with non-zero open debt.
+     */
+    function startLiquidation(
+        address account,
+        uint256 initiatorRewardWeight,
+        uint256 penaltyWeight,
+        uint256 closingRewardWeight
+    ) external returns (uint80 maxInitiatorFee);
 
     function getOpenPosition(address account) external view returns (uint256 openPosition);
 

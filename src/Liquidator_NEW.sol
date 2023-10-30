@@ -43,6 +43,9 @@ contract Liquidator_NEW is Owned {
     // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal penaltyWeight;
+    // Fee paid to the address that is ending an auction.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    uint8 internal closingRewardWeight;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -73,7 +76,7 @@ contract Liquidator_NEW is Owned {
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
+    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
     event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
@@ -87,6 +90,8 @@ contract Liquidator_NEW is Owned {
         locked = 1;
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
+        // note: to discuss
+        closingRewardWeight = 1;
         startPriceMultiplier = 150;
         minPriceMultiplier = 60;
         cutoffTime = 14_400; //4 hours
@@ -127,13 +132,17 @@ contract Liquidator_NEW is Owned {
      * @param penaltyWeight_ Penalty paid by the Account owner to the trusted Creditor.
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
-    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_) external onlyOwner {
-        require(initiatorRewardWeight_ + penaltyWeight_ <= 11, "LQ_SW: Weights Too High");
+    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
+        external
+        onlyOwner
+    {
+        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
+        closingRewardWeight = uint8(closingRewardWeight_);
 
-        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_));
+        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
     }
 
     /**
@@ -233,13 +242,29 @@ contract Liquidator_NEW is Owned {
             RiskModule.AssetValueAndRiskVariables[] memory riskValues
         ) = IAccount_NEW(account).checkAndStartLiquidation();
 
+        // Cache weights
+        uint8 initiatorRewardWeight_ = initiatorRewardWeight;
+        uint8 penaltyWeight_ = penaltyWeight;
+        uint8 closingRewardWeight_ = closingRewardWeight;
+
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).startLiquidation(account, debt);
+        uint80 maxInitiatorFee = ILendingPool_NEW(creditor).startLiquidation(
+            account, initiatorRewardWeight_, penaltyWeight_, closingRewardWeight_
+        );
 
         // Fill the auction struct
+        auctionInformation[account].initiatorRewardWeight = initiatorRewardWeight_;
+        auctionInformation[account].penaltyWeight = penaltyWeight_;
+        auctionInformation[account].closingRewardWeight = closingRewardWeight_;
+        auctionInformation[account].startDebt = uint128(debt);
+        auctionInformation[account].maxInitiatorFee = maxInitiatorFee;
         auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        auctionInformation[account].trustedCreditor = creditor;
+        auctionInformation[account].assetAddresses = assetAddresses;
+        auctionInformation[account].assetIds = assetIds;
+        auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
 
         // Emit event

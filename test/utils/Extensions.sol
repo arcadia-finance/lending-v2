@@ -333,6 +333,33 @@ contract LiquidatorExtension is Liquidator {
 contract LiquidatorExtension_NEW is Liquidator_NEW {
     constructor() Liquidator_NEW() { }
 
+    function getAuctionInformationPartOne(address account_)
+        public
+        view
+        returns (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee)
+    {
+        openDebt = auctionInformation[account_].startDebt;
+        startTime = auctionInformation[account_].startTime;
+        inAuction = auctionInformation[account_].inAuction;
+        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
+    }
+
+    function getAuctionInformationPartTwo(address account_)
+        public
+        view
+        returns (
+            uint8 initiatorRewardWeight_,
+            uint8 penaltyWeight_,
+            uint8 closingRewardWeight_,
+            address trustedCreditor
+        )
+    {
+        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
+        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
+        closingRewardWeight_ = auctionInformation[account_].closingRewardWeight;
+        trustedCreditor = auctionInformation[account_].trustedCreditor;
+    }
+
     function getLocked() public view returns (uint256) {
         return locked;
     }
@@ -367,6 +394,10 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function getInitiatorRewardWeight() public view returns (uint8) {
         return initiatorRewardWeight;
+    }
+
+    function getClosingRewardWeight() public view returns (uint8) {
+        return closingRewardWeight;
     }
 
     function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
