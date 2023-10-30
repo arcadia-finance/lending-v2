@@ -43,6 +43,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
         pool.settleLiquidation_NEW(
+            address(proxyAccount),
             users.accountOwner,
             badDebt,
             liquidationInitiator,
@@ -75,7 +76,9 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.expectRevert(stdError.arithmeticError);
         vm.prank(address(liquidator));
-        pool.settleLiquidation_NEW(users.accountOwner, badDebt, liquidationInitiator, 0, auctionTerminator, 0, 0, 0);
+        pool.settleLiquidation_NEW(
+            address(proxyAccount), users.accountOwner, badDebt, liquidationInitiator, 0, auctionTerminator, 0, 0, 0
+        );
     }
 
     function testFuzz_Success_settleLiquidation_NEW_Surplus(
@@ -97,8 +100,6 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        //        pool.setLiquidationInitiator(address(proxyAccount), initiator);
-
         pool.setAuctionsInProgress(1);
         vm.prank(address(pool));
         jrTranche.setAuctionInProgress(true);
@@ -106,6 +107,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
         pool.settleLiquidation_NEW(
+            address(proxyAccount),
             users.accountOwner,
             0,
             liquidationInitiator,
@@ -157,45 +159,5 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.getAuctionsInProgress(), 0);
         assertFalse(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
-    }
-
-    function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
-        uint128 liquidity,
-        uint128 badDebt,
-        uint128 liquidationInitiatorReward,
-        uint128 liquidationPenalty,
-        uint128 remainder,
-        address initiator
-    ) public {
-        vm.assume(uint256(liquidity) + uint256(liquidationInitiatorReward) <= type(uint128).max + uint256(badDebt));
-        // Given: provided liquidity is bigger than the default amount (Should always be true)
-        vm.assume(liquidity >= badDebt);
-        // And: badDebt is bigger than 0
-        vm.assume(badDebt > 0);
-        // And: Liquidity is deposited in Lending Pool
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-
-        pool.setLiquidationInitiator(address(proxyAccount), initiator);
-
-        // When: Liquidator settles a liquidation
-        vm.prank(address(liquidator));
-        pool.settleLiquidation(
-            address(proxyAccount),
-            users.accountOwner,
-            badDebt,
-            liquidationInitiatorReward,
-            liquidationPenalty,
-            remainder
-        );
-
-        // Then: Initiator should be able to claim his rewards for liquidation initiation
-        assertEq(pool.realisedLiquidityOf(initiator), liquidationInitiatorReward);
-
-        // And: The badDebt amount should be discounted from the most junior tranche
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity - badDebt);
-
-        // And: The total realised liquidity should be updated
-        assertEq(pool.totalRealisedLiquidity(), uint256(liquidity) + liquidationInitiatorReward - badDebt);
     }
 }
