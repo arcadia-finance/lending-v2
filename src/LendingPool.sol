@@ -887,6 +887,55 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Event emitted by Liquidator.
     }
 
+    function settleLiquidation_NEW(
+        address originalOwner,
+        uint256 badDebt,
+        address initiator,
+        uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
+        uint256 liquidationFee,
+        uint256 remainder
+    ) external onlyLiquidator processInterests {
+        //Make Initiator rewards claimable for liquidationInitiator[account].
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+
+        if (badDebt > 0) {
+            if (badDebt < liquidationFee + auctionTerminationReward) {
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward);
+            } else {
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
+                _processDefault(badDebt);
+            }
+        } else {
+            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+            //Make termination rewards claimable for terminator
+            realisedLiquidityOf[terminator] += auctionTerminationReward;
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + auctionTerminationReward
+                    + remainder
+            );
+
+            //Any remaining assets after paying off liabilities and the fee go back to the original Account Owner.
+            if (remainder > 0) {
+                //Make remainder claimable by originalOwner.
+                realisedLiquidityOf[originalOwner] += remainder;
+            }
+        }
+
+        unchecked {
+            --auctionsInProgress;
+        }
+        //Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+        }
+
+        //Event emitted by Liquidator.
+    }
+
     /**
      * @notice Handles the bookkeeping in case of bad debt (Account became undercollateralised).
      * @param badDebt The total amount of underlying assets that need to be written off as bad debt.
