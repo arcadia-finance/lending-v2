@@ -52,6 +52,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         vm.assume(timePassed <= cutoffTime);
         startPriceMultiplier = bound(startPriceMultiplier, 101, 300);
         vm.assume(minPriceMultiplier < 91);
+        amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
         vm.startPrank(users.creatorAddress);
         liquidator_new.setAuctionCurveParameters(uint16(halfLifeTime), uint16(cutoffTime));
@@ -60,7 +61,6 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
 
         // Account has debt
         bytes3 emptyBytes3;
-        amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool_new), type(uint256).max);
@@ -96,6 +96,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
         // Set liquidations incentives weights
+        vm.startPrank(users.creatorAddress);
         liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         // Set max initiator fee
         pool_new.setMaxInitiatorFee(maxInitiatorFee);
@@ -103,15 +104,15 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         // Account has debt
         bytes3 emptyBytes3;
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
-        vm.prank(users.liquidityProvider);
+        vm.startPrank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool_new), type(uint256).max);
-        vm.prank(address(srTranche_new));
+        vm.startPrank(address(srTranche_new));
         pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
-        vm.prank(users.accountOwner);
+        vm.startPrank(users.accountOwner);
         pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // Calculate initiator reward
-        uint256 initiatorReward = uint256(amountLoaned) * initiatorRewardWeight / 100;
+        uint256 initiatorReward = amountLoaned * initiatorRewardWeight / 100;
         initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -124,7 +125,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         vm.warp(block.timestamp + liquidator_new.getCutoffTime() + 1);
 
         // Set total bids on Account >= amount owed by the account (debt + initiatorReward)
-        liquidator_new.setTotalBidsOnAccount(address(proxyAccount), amountLoaned + initiatorReward);
+        liquidator_new.setTotalBidsOnAccount(address(proxyAccount), amountLoaned + 1 + initiatorReward);
 
         // call to endAuctionProtocol() should revert as the liquidation is not exposed to bad debt
         vm.startPrank(users.creatorAddress);

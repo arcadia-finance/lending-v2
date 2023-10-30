@@ -24,6 +24,8 @@ contract Liquidator_NEW is Owned {
     // Reentrancy lock.
     uint256 locked;
 
+    // The contract address of the Factory.
+    address internal immutable factory;
     // Sets the begin price of the auction.
     // Defined as a percentage of openDebt, 2 decimals precision -> 150 = 150%.
     uint16 internal startPriceMultiplier;
@@ -53,9 +55,9 @@ contract Liquidator_NEW is Owned {
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
         uint256 startPrice;
+        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
-        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address baseCurrency; // The contract address of the baseCurrency.
@@ -81,12 +83,24 @@ contract Liquidator_NEW is Owned {
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
     event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
+    event AuctionFinished(
+        address indexed account,
+        address indexed creditor,
+        address baseCurrency,
+        uint128 price,
+        uint128 badDebt,
+        uint128 initiatorReward,
+        uint128 closingReward,
+        uint128 liquidationPenalty,
+        uint128 remainder
+    );
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
-    constructor() Owned(msg.sender) {
+    constructor(address factory_) Owned(msg.sender) {
+        factory = factory_;
         locked = 1;
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
@@ -266,6 +280,8 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
+        // note: this could maybe be returned from checkAndStartLiquidation()
+        auctionInformation[account].originalOwner = IAccount_NEW(account).owner();
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -316,8 +332,9 @@ contract Liquidator_NEW is Owned {
     /**
      * @notice Ends an auction when there's still debt remaining after the auction ends.
      * @param account The account to end the liquidation for.
+     * @param to The address to which the Account ownership will be transferred.
      */
-    function endAuctionProtocol(address account) external onlyOwner {
+    function endAuctionProtocol(address account, address to) external onlyOwner {
         // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
@@ -337,7 +354,7 @@ contract Liquidator_NEW is Owned {
         uint256 maxInitiatorFee = auctionInformation_.maxInitiatorFee;
         uint256 badDebt;
 
-        uint256 initiatorReward = auctionInformation_.startDebt * auctionInformation_.initiatorRewardWeight / 100;
+        uint256 initiatorReward = startDebt * auctionInformation_.initiatorRewardWeight / 100;
         initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
 
         if (totalBids >= startDebt + initiatorReward) {
@@ -349,9 +366,23 @@ contract Liquidator_NEW is Owned {
         }
 
         // Call settlement of the debt in the trustedCreditor
-        // Note: add originalOwner to struct
         ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation(
             account, auctionInformation_.originalOwner, badDebt, initiatorReward, 0, 0
+        );
+
+        // Change ownership of the auctioned account to the protocol owner.
+        IFactory(factory).safeTransferFrom(address(this), to, account);
+
+        emit AuctionFinished(
+            account,
+            auctionInformation_.trustedCreditor,
+            auctionInformation_.baseCurrency,
+            0,
+            uint128(badDebt),
+            uint128(initiatorReward),
+            0,
+            0,
+            0
         );
     }
 }
