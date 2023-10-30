@@ -40,7 +40,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
     function testFuzz_Revert_liquidateAccount_NotLiquidatable_NoDebt(address liquidationInitiator) public {
         // Given: Account has no debt
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert("A_CASL, Account not liquidatable");
+        vm.expectRevert("A_CASL: Account not liquidatable");
         liquidator_new.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }
@@ -63,7 +63,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
-        vm.expectRevert("A_CASL, Account not liquidatable");
+        vm.expectRevert("A_CASL: Account not liquidatable");
         liquidator_new.liquidateAccount(address(proxyAccount));
     }
 
