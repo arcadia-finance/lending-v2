@@ -112,7 +112,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     );
     event Repay(address indexed account, address indexed from, uint256 amount);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
 
     /* //////////////////////////////////////////////////////////////
@@ -174,15 +173,16 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
 
     /**
      * @notice The constructor for a lending pool.
+     * @param riskManager_ The address of the new Risk Manager.
      * @param asset_ The underlying ERC-20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
      * @param accountFactory_ The address of the Account Factory.
      * @param liquidator_ The address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
         LendingPoolGuardian()
-        TrustedCreditor()
+        TrustedCreditor(riskManager_)
         DebtToken(asset_)
     {
         treasury = treasury_;
@@ -964,14 +964,20 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     ////////////////////////////////////////////////////////////// */
 
     /**
+     * @notice Sets a new Risk Manager.
+     * @param riskManager_ The address of the new Risk Manager.
+     */
+    function setRiskManager(address riskManager_) external onlyOwner {
+        _setRiskManager(riskManager_);
+    }
+
+    /**
      * @notice Enables or disables a certain Account version to be used as margin account.
      * @param accountVersion the Account version to be enabled/disabled.
      * @param valid The validity of the respective accountVersion.
      */
     function setAccountVersion(uint256 accountVersion, bool valid) external onlyOwner {
         _setAccountVersion(accountVersion, valid);
-
-        emit AccountVersionSet(accountVersion, valid);
     }
 
     /**

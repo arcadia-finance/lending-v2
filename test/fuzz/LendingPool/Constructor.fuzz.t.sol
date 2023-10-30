@@ -26,13 +26,16 @@ contract Constructor_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_deployment(address treasury_, address factory_, address liquidator_) public {
+    function testFuzz_Success_deployment(address riskManager_, address treasury_, address factory_, address liquidator_)
+        public
+    {
         LendingPoolExtension pool_ =
-            new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury_, factory_, liquidator_);
+            new LendingPoolExtension(riskManager_, ERC20(address(mockERC20.stable1)), treasury_, factory_, liquidator_);
 
         assertEq(pool_.name(), string("Arcadia STABLE1 Debt"));
         assertEq(pool_.symbol(), string("darcS1"));
         assertEq(pool_.decimals(), Constants.stableDecimals);
+        assertEq(pool_.riskManager(), riskManager_);
         assertEq(pool_.getTreasury(), treasury_);
         assertEq(pool_.getAccountFactory(), factory_);
         assertEq(pool_.getLiquidator(), liquidator_);

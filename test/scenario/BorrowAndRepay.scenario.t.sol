@@ -25,6 +25,17 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         vm.prank(users.accountOwner);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
+
+        // Set the risk parameters.
+        vm.prank(users.riskManager);
+        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
+            address(pool),
+            address(mockERC20.token1),
+            0,
+            type(uint128).max,
+            Constants.tokenToStableCollFactor,
+            Constants.tokenToStableLiqFactor
+        );
     }
 
     /*//////////////////////////////////////////////////////////////
