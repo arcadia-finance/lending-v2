@@ -888,6 +888,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     function settleLiquidation_NEW(
+        address account,
         address originalOwner,
         uint256 badDebt,
         address initiator,
@@ -907,7 +908,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
             } else {
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
-                _processDefault(badDebt);
+                _withdraw(liquidationFee + auctionTerminationReward, account, account);
+                _processDefault(badDebt - liquidationFee - auctionTerminationReward);
             }
         } else {
             _syncLiquidationFeeToLiquidityProviders(liquidationFee);
