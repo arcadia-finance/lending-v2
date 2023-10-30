@@ -60,6 +60,7 @@ contract Liquidator_NEW is Owned {
         uint8 initiatorRewardWeight; // 2 decimals precision.
         uint8 penaltyWeight; // 2 decimals precision.
         uint8 closingRewardWeight; // 2 decimals precision.
+        uint16 cutoffTime; // Maximum time that the auction declines.
         address originalOwner; // The original owner of the Account.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
@@ -102,6 +103,8 @@ contract Liquidator_NEW is Owned {
     error Liquidator_NoBadDebt();
     // Thrown when an Account is not for sale.
     error Liquidator_NotForSale();
+    // Thrown when the auction has not yet expired.
+    error Liquidator_AuctionNotExpired();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -237,6 +240,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        auctionInformation[account].cutoffTime = cutoffTime;
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -285,57 +289,43 @@ contract Liquidator_NEW is Owned {
     }
 
     /**
-     * @notice Ends an auction in a bad debt situation.
+     * @notice Ends an auction when there's still debt remaining after the auction ends.
      * @param account The account to end the liquidation for.
      */
-    function endAuctionWithBadDebt(address account) external {
+    function endAuctionProtocol(address account) external onlyOwner {
         // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        uint256 timePassed;
+        unchecked {
+            timePassed = block.timestamp - auctionInformation_.startTime;
+        }
+        if (timePassed <= auctionInformation_.cutoffTime) revert Liquidator_AuctionNotExpired();
+
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
+
         // Cache values
-        address trustedCreditor = auctionInformation_.trustedCreditor;
-        uint256 maxInitiatorFee = auctionInformation_.maxInitiatorFee;
         uint256 startDebt = auctionInformation_.startDebt;
+        uint256 totalBids = auctionInformation_.totalBids;
+        uint256 maxInitiatorFee = auctionInformation_.maxInitiatorFee;
+        uint256 badDebt;
 
-        // Calculate total remaining amount owed by the Account.
-        (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts) =
-            IAccount_NEW(account).generateAssetData();
-
-        uint256 collateralValue = IMainRegistry(IAccount_NEW(account).registry()).getTotalValue(
-            assetAddresses,
-            assetIds,
-            assetAmounts,
-            // Note: see if baseCurrency should be added in auction struct if used elsewhere
-            IAccount_NEW(account).baseCurrency()
-        );
-
-        // Note: add initiatorReward later to auction struct?
         uint256 initiatorReward = auctionInformation_.startDebt * auctionInformation_.initiatorRewardWeight / 100;
         initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
-        uint256 liquidationPenalty = startDebt * auctionInformation_.penaltyWeight / 100;
-        uint256 closingReward = startDebt * auctionInformation_.closingRewardWeight / 100;
-        // getOpenPosition() will return the amount with extra debt included (= liquidation incentives).
-        // The liquidation penalty fee and closing rewards are not to be paid in a bad debt situation.
-        uint256 amountOwedByAccount =
-            ILendingPool_NEW(trustedCreditor).getOpenPosition(account) - liquidationPenalty - closingReward;
 
-        // Ensure we're in a bad debt situation
-        uint256 badDebt;
-        if (collateralValue >= amountOwedByAccount) revert Liquidator_NoBadDebt();
-        else badDebt = amountOwedByAccount - collateralValue;
-
-        // Repay the remaining debt of the Account
-        // Note: what happens here as amountOwedByAccount > maxWithdraw ? InitiatorReward should be repaid as well.
-        ILendingPool_NEW(trustedCreditor).auctionRepay(amountOwedByAccount, account, msg.sender);
-
-        // How to transfer the assets of the Account ?
-        // Set the inAuction flag to false.
-        auctionInformation[account].inAuction = false;
+        if (totalBids >= startDebt + initiatorReward) {
+            revert Liquidator_NoBadDebt();
+        } else {
+            unchecked {
+                badDebt = startDebt + initiatorReward - totalBids;
+            }
+        }
 
         // Call settlement of the debt in the trustedCreditor
         // Note: add originalOwner to struct
-        ILendingPool_NEW(trustedCreditor).settleLiquidation(
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation(
             account, auctionInformation_.originalOwner, badDebt, initiatorReward, 0, 0
         );
     }
