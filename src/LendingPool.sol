@@ -101,7 +101,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
     event InterestWeightSet(uint256 indexed index, uint16 weight);
     event LiquidationWeightSet(uint256 indexed index, uint16 weight);
-    event MaxInitiatorFeeSet(uint80 maxInitiatorFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
@@ -779,10 +779,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The liquidator sets the % of the debt that is paid to the initiator of a liquidation.
      * This fee is capped by the maxInitiatorFee.
      */
-    function setMaxInitiatorFee(uint80 maxInitiatorFee_) external onlyOwner {
+    function setMaxLiquidationFees(uint80 maxInitiatorFee_, uint80 maxClosingFee_) external onlyOwner {
         maxInitiatorFee = maxInitiatorFee_;
+        maxClosingFee = maxClosingFee_;
 
-        emit MaxInitiatorFeeSet(maxInitiatorFee_);
+        emit MaxLiquidationFeesSet(maxInitiatorFee_, maxClosingFee_);
     }
 
     /**
