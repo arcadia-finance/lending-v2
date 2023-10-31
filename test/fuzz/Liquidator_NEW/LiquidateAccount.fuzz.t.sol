@@ -167,9 +167,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         uint8 closingRewardWeight,
         uint80 maxInitiatorFee,
         uint80 maxClosingFee
-    )
-        public
-    {
+    ) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
