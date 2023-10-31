@@ -336,7 +336,7 @@ contract Liquidator_NEW is Owned {
 
         // If the auction is over, end it.
         if (endAuction) {
-            _endAuction(account);
+            _knockDown(account);
         }
     }
 
@@ -405,14 +405,14 @@ contract Liquidator_NEW is Owned {
         }
     }
 
-    function endAuction(address account) external {
-        _endAuction(account);
+    function knockDown(address account) external {
+        _knockDown(account);
     }
 
-    function _endAuction(address account) internal {
+    function _knockDown(address account) internal {
         // Check if the account is already in an auction.
-        AuctionInformation auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_.inAuction) revert Liquidator_AuctionOngoing();
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
@@ -422,7 +422,7 @@ contract Liquidator_NEW is Owned {
             auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
 
         // Check if the account is healthy again after the bids.
-        (bool success,,) = IAccount_NEW.isAccountHealthy(uint256, totalOpenDebt);
+        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, totalOpenDebt);
         if (!success) revert Liquidator_AccountNotHealthy();
 
         // Calculate remainder and badDebt if any
