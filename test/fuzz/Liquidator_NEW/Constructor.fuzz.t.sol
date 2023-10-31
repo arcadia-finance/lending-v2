@@ -31,5 +31,8 @@ contract Constructor_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         liquidator_ = new LiquidatorExtension_NEW();
 
         assertEq(liquidator_.getLocked(), 1);
+        assertEq(liquidator_.getPenaltyWeight(), 5);
+        assertEq(liquidator_.getInitiatorRewardWeight(), 1);
+        assertEq(liquidator_.getClosingRewardWeight(), 1);
     }
 }
