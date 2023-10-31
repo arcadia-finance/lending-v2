@@ -45,6 +45,9 @@ contract Liquidator_NEW is Owned {
     // The total amount of shares in the Account.
     // 1_000_000 shares = 100% of the Account.
     uint32 internal constant TotalShares = 1_000_000;
+    // Fee paid to the address that is ending an auction.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    uint8 internal closingRewardWeight;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -56,11 +59,11 @@ contract Liquidator_NEW is Owned {
         uint32 startTime; // The timestamp the auction started.
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address initiator; // The address of the initiator of the auction.
-        uint8 initiatorRewardWeight; // 2 decimals precision.
-        uint8 penaltyWeight; // 2 decimals precision.
-        uint8 closingRewardWeight; // 2 decimals precision.
+        uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
+        uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
+        // TODO: This can be  improved by using penaltyWeight and calculate whereever its necessary - Zeki = 31/10/23
+        uint256 liquidationPenalty; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
@@ -72,7 +75,7 @@ contract Liquidator_NEW is Owned {
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
+    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
     event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
@@ -86,6 +89,8 @@ contract Liquidator_NEW is Owned {
         locked = 1;
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
+        // note: to discuss
+        closingRewardWeight = 1;
         startPriceMultiplier = 150;
         minPriceMultiplier = 60;
         cutoffTime = 14_400; //4 hours
@@ -126,13 +131,17 @@ contract Liquidator_NEW is Owned {
      * @param penaltyWeight_ Penalty paid by the Account owner to the trusted Creditor.
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
-    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_) external onlyOwner {
-        require(initiatorRewardWeight_ + penaltyWeight_ <= 11, "LQ_SW: Weights Too High");
+    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
+        external
+        onlyOwner
+    {
+        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
+        closingRewardWeight = uint8(closingRewardWeight_);
 
-        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_));
+        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
     }
 
     /**
@@ -232,16 +241,27 @@ contract Liquidator_NEW is Owned {
             RiskModule.AssetValueAndRiskVariables[] memory riskValues
         ) = IAccount_NEW(account).checkAndStartLiquidation();
 
+        // Cache weights
+        uint8 initiatorRewardWeight_ = initiatorRewardWeight;
+        uint8 penaltyWeight_ = penaltyWeight;
+        uint8 closingRewardWeight_ = closingRewardWeight;
+
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        ILendingPool_NEW(creditor).startLiquidation(account);
+        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) = ILendingPool_NEW(
+            creditor
+        ).startLiquidation(account, initiatorRewardWeight_, penaltyWeight_, closingRewardWeight_);
 
         // Fill the auction struct
+        auctionInformation[account].liquidationInitiatorReward = uint80(liquidationInitiatorReward); // No risk of down casting since the max fee is uint80
+        auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
+        auctionInformation[account].liquidationPenalty = liquidationPenalty;
+        auctionInformation[account].startDebt = uint128(debt);
         auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
-        auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
+        auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].trustedCreditor = creditor;
 
         // Emit event

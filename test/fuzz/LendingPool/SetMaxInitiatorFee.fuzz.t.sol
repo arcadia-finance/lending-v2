@@ -7,10 +7,10 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the function "setMaxInitiatorFee" of contract "LendingPool".
+ * @notice Fuzz tests for the function "setMaxLiquidationFees" of contract "LendingPool".
  */
 
-contract SetMaxInitiatorFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract SetMaxLiquidationFees_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -22,21 +22,22 @@ contract SetMaxInitiatorFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setMaxInitiatorFee_Unauthorised(address unprivilegedAddress) public {
+    function testFuzz_Revert_setMaxLiquidationFees_Unauthorised(address unprivilegedAddress) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setMaxInitiatorFee(100);
+        pool.setMaxLiquidationFees(100, 0);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setMaxInitiatorFee(uint80 maxFee) public {
+    function testFuzz_Success_setMaxLiquidationFees(uint80 maxFeeInitiation, uint80 maxFeeClosing) public {
         vm.prank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit MaxInitiatorFeeSet(maxFee);
-        pool.setMaxInitiatorFee(maxFee);
+        emit MaxLiquidationFeesSet(maxFeeInitiation, maxFeeClosing);
+        pool.setMaxLiquidationFees(maxFeeInitiation, maxFeeClosing);
 
-        assertEq(pool.getMaxInitiatorFee(), maxFee);
+        assertEq(pool.getMaxInitiatorFee(), maxFeeInitiation);
+        assertEq(pool.getMaxClosingFee(), maxFeeClosing);
     }
 }
