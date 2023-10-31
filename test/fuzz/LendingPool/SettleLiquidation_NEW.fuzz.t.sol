@@ -160,4 +160,61 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
     }
+
+    function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
+        uint128 liquidity,
+        uint128 badDebt,
+        address liquidationInitiator,
+        uint128 liquidationInitiatorReward,
+        address auctionTerminator,
+        uint128 auctionTerminationReward,
+        uint128 liquidationPenalty,
+        uint128 remainder
+    ) public {
+//        vm.assume(badDebt > 0);
+//        vm.assume( badDebt <= type(uint128).max);
+        vm.assume(liquidationInitiatorReward > 0);
+        vm.assume(
+            uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(liquidationPenalty)
+                + uint256(auctionTerminationReward) <= type(uint128).max + uint256(badDebt)
+        );
+        vm.assume(uint256(liquidity) >= uint256(badDebt));
+        vm.assume(uint256(badDebt) > uint256(liquidationPenalty) + uint256(auctionTerminationReward));
+
+        // And: Liquidity is deposited in Lending Pool
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(liquidity, users.liquidityProvider);
+
+        emit log_named_uint("badDebt", badDebt);
+        emit log_named_uint("liquidity", liquidity);
+        emit log_named_uint("init", liquidationInitiatorReward);
+        emit log_named_uint("term", auctionTerminationReward);
+        emit log_named_uint("penalty", liquidationPenalty);
+        emit log_named_uint("remainder", remainder);
+        emit log_named_uint("realised Liqu of", pool.totalRealisedLiquidity());
+
+        // When: Liquidator settles a liquidation
+        vm.prank(address(liquidator));
+        pool.settleLiquidation_NEW(
+            address(proxyAccount),
+            users.accountOwner,
+            uint256(badDebt),
+            liquidationInitiator,
+            uint256(liquidationInitiatorReward),
+            auctionTerminator,
+            uint256(auctionTerminationReward),
+            uint256(liquidationPenalty),
+            uint256(remainder)
+        );
+//
+//        // Then: Initiator should be able to claim his rewards for liquidation initiation
+//        assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
+
+        // And: Terminator should not be able to claim his rewards for liquidation termination
+//        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
+
+
+
+
+    }
 }

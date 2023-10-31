@@ -950,7 +950,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
             realisedLiquidityOf[terminator] += auctionTerminationReward;
             // Update the total realised liquidity.
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealRealisedLiquidity) + liquidationInitiatorReward + liquidationFee
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee
                     + auctionTerminationReward + remainder
             );
 
