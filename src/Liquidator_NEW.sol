@@ -446,13 +446,10 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].inAuction = false;
 
         // Cache values
-        uint256 startDebt = auctionInformation_.startDebt;
         uint256 totalBids = auctionInformation_.totalBids;
-        uint256 maxInitiatorFee = auctionInformation_.maxInitiatorFee;
+        uint256 startDebt = auctionInformation_.startDebt;
+        uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 badDebt;
-
-        uint256 initiatorReward = startDebt * auctionInformation_.initiatorRewardWeight / 100;
-        initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
 
         if (totalBids >= startDebt + initiatorReward) {
             revert Liquidator_NoBadDebt();

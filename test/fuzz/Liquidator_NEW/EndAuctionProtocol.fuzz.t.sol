@@ -99,7 +99,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         vm.startPrank(users.creatorAddress);
         liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         // Set max initiator fee
-        pool_new.setMaxInitiatorFee(maxInitiatorFee);
+        pool_new.setMaxLiquidationFees(maxInitiatorFee, 0);
 
         // Account has debt
         bytes3 emptyBytes3;

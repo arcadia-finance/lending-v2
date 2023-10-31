@@ -222,6 +222,11 @@ contract LendingPoolExtension is LendingPool {
     function setOpenPosition(address account, uint128 amount) public {
         balanceOf[account] = amount;
     }
+
+    function setMaxLiquidationFees_(uint80 maxInitiatorFee_, uint80 maxClosingFee_) public {
+        maxInitiatorFee = maxInitiatorFee_;
+        maxClosingFee = maxClosingFee_;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
