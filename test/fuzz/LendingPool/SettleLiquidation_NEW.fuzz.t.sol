@@ -155,7 +155,6 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
             liquidity + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty + remainder
         );
 
-        //ToDo: check emit Tranche
         assertEq(pool.getAuctionsInProgress(), 0);
         assertFalse(jrTranche.auctionInProgress());
         assertFalse(srTranche.auctionInProgress());
@@ -219,4 +218,19 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: Terminator should not be able to claim his rewards for liquidation termination
         //        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
     }
+
+    function testFuzz_Success_settleLiquidation_NEW_NoBadDebt(
+        uint128 liquidity,
+        address liquidationInitiator,
+        uint128 liquidationInitiatorReward,
+        address auctionTerminator,
+        uint128 auctionTerminationReward,
+        uint128 liquidationPenalty,
+        uint128 remainder
+    ) public {
+        // Given: There is liquidity in Lending Pool
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(liquidity, users.liquidityProvider);
+    }
+
 }
