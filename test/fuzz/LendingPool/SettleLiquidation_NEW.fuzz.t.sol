@@ -161,7 +161,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-    /*     function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
+    function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
         uint128 liquidity,
         uint128 badDebt,
         address liquidationInitiator,
@@ -209,11 +209,13 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
             uint256(liquidationPenalty),
             uint256(remainder)
         );
+
+        // TODO : complete testing
         //
         //        // Then: Initiator should be able to claim his rewards for liquidation initiation
         //        assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
 
         // And: Terminator should not be able to claim his rewards for liquidation termination
         //        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
-    } */
+    }
 }
