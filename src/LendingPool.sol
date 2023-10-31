@@ -63,6 +63,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     uint96 internal fixedLiquidationCost;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
     uint80 internal maxInitiatorFee;
+    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
+    uint80 internal maxClosingFee;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
     // Address of the protocol treasury.
@@ -99,7 +101,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
     event InterestWeightSet(uint256 indexed index, uint16 weight);
     event LiquidationWeightSet(uint256 indexed index, uint16 weight);
-    event MaxInitiatorFeeSet(uint80 maxInitiatorFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
@@ -511,17 +513,51 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * Function will not revert, but transferAmount is always 0.
      * @dev Anyone (EOAs and contracts) can repay debt in the name of a Account.
      */
+
     function repay(uint256 amount, address account) external whenRepayNotPaused processInterests {
         uint256 accountDebt = maxWithdraw(account);
         uint256 transferAmount = accountDebt > amount ? amount : accountDebt;
 
+        _repay(transferAmount, transferAmount, account, msg.sender);
+    }
+
+    /**
+     * @notice Repays a portion of a user's debt in an auction.
+     * @dev This function allows a liquidator to repay a specified amount of debt for a user.
+     * @param amount The amount to be repaid, which can be at most the user's debt.
+     * @param account The address of the user whose debt is being repaid.
+     * @param bidder The address of the liquidator performing the repayment.
+     * @dev This function transfers tokens from the `bidder` to the contract, and then updates the user's account balance accordingly.
+     * @dev The `onlyLiquidator` modifier restricts this function to authorized liquidators.
+     * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
+     * @dev Emits a `Repay` event to log the repayment details.
+     */
+    function auctionRepay(uint256 amount, address account, address bidder) external whenRepayNotPaused onlyLiquidator {
+        uint256 accountDebt = maxWithdraw(account);
+        uint256 shares = accountDebt > amount ? amount : accountDebt;
+
+        _repay(amount, shares, account, bidder);
+    }
+
+    /**
+     * @notice Repay a portion of a user's debt.
+     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
+     * @param amount The amount to be repaid.
+     * @param account The address of the user whose debt is being repaid.
+     * @param from The address of the caller performing the repayment.
+     * @dev This function transfers tokens from the `from` address to the contract and updates the user's account balance accordingly.
+     * @dev This function does not impose access control restrictions, so it should only be called by trusted contracts and functions.
+     * @notice This function is used to manage debt repayments within the contract's internal logic.
+     * @dev Emits a `Repay` event to log the repayment details.
+     */
+    function _repay(uint256 amount, uint256 shares, address account, address from) internal {
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
-        asset.safeTransferFrom(msg.sender, address(this), transferAmount);
+        asset.safeTransferFrom(from, address(this), amount);
 
-        _withdraw(transferAmount, account, account);
+        _withdraw(shares, account, account);
 
-        emit Repay(account, msg.sender, transferAmount);
+        emit Repay(account, from, amount);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -777,10 +813,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The liquidator sets the % of the debt that is paid to the initiator of a liquidation.
      * This fee is capped by the maxInitiatorFee.
      */
-    function setMaxInitiatorFee(uint80 maxInitiatorFee_) external onlyOwner {
+    function setMaxLiquidationFees(uint80 maxInitiatorFee_, uint80 maxClosingFee_) external onlyOwner {
         maxInitiatorFee = maxInitiatorFee_;
+        maxClosingFee = maxClosingFee_;
 
-        emit MaxInitiatorFeeSet(maxInitiatorFee_);
+        emit MaxLiquidationFeesSet(maxInitiatorFee_, maxClosingFee_);
     }
 
     /**
@@ -887,6 +924,92 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
+     * @dev Function to settle a liquidation event.
+     * @param account The account undergoing liquidation.
+     * @param originalOwner The original owner of the liquidated assets.
+     * @param badDebt The amount of bad debt in the liquidation.
+     * @param initiator The address of the liquidation initiator.
+     * @param liquidationInitiatorReward The reward for the liquidation initiator.
+     * @param terminator The address of the liquidation terminator.
+     * @param auctionTerminationReward The reward for auction termination.
+     * @param liquidationFee The fee associated with the liquidation.
+     * @param remainder Any remaining assets after liquidation.
+     * @notice This function is callable only by the liquidator and processes liquidation events.
+     */
+    function settleLiquidation_NEW(
+        address account,
+        address originalOwner,
+        uint256 badDebt,
+        address initiator,
+        uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
+        uint256 liquidationFee,
+        uint256 remainder
+    ) external onlyLiquidator processInterests {
+        // Increase the realised liquidity for the initiator.
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+
+        if (badDebt > 0) {
+            if (badDebt < liquidationFee + auctionTerminationReward) {
+                // Calculate the reward remainder.
+                uint256 rewardRemainder = liquidationFee + auctionTerminationReward - badDebt;
+
+                if (rewardRemainder > auctionTerminationReward) {
+                    // Increase the realised liquidity for the terminator.
+                    realisedLiquidityOf[terminator] += auctionTerminationReward;
+                    // Update the total realised liquidity.
+                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
+                    );
+                    // Synchronize the liquidation fee with liquidity providers.
+                    _syncLiquidationFeeToLiquidityProviders(rewardRemainder - auctionTerminationReward);
+                } else {
+                    // Increase the realised liquidity for the terminator.
+                    realisedLiquidityOf[terminator] += rewardRemainder;
+                    // Update the total realised liquidity.
+                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
+                    );
+                }
+            } else {
+                // Update the total realised liquidity and handle bad debt.
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
+                _withdraw(liquidationFee + auctionTerminationReward, account, account);
+                _processDefault(badDebt - liquidationFee - auctionTerminationReward);
+            }
+        } else {
+            // Synchronize the liquidation fee with liquidity providers.
+            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+            // Increase the realised liquidity for the terminator.
+            realisedLiquidityOf[terminator] += auctionTerminationReward;
+            // Update the total realised liquidity.
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + auctionTerminationReward
+                    + remainder
+            );
+
+            if (remainder > 0) {
+                // If there is any remainder, increase the realised liquidity for the original owner.
+                realisedLiquidityOf[originalOwner] += remainder;
+            }
+        }
+
+        // Decrement the number of auctions in progress.
+        unchecked {
+            --auctionsInProgress;
+        }
+
+        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+        }
+
+        // Event emitted by Liquidator.
+    }
+
+    /**
      * @notice Handles the bookkeeping in case of bad debt (Account became undercollateralised).
      * @param badDebt The total amount of underlying assets that need to be written off as bad debt.
      * @dev The order of the Tranches is important, the most senior tranche is at index 0, the most junior at the last index.
@@ -964,7 +1087,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
      * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
      * @param closingRewardWeight Fee paid to the address that is ending an auction.
-     * @return maxInitiatorFee_ Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
+     * @return closingReward Fee paid to the address that is ending an auction.
+     * @return liquidationPenalty Penalty paid by the account owner to the trusted Creditor on top of the open Debt for being liquidated.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -977,21 +1102,29 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 initiatorRewardWeight,
         uint256 penaltyWeight,
         uint256 closingRewardWeight
-    ) external onlyLiquidator whenLiquidationNotPaused processInterests returns (uint80 maxInitiatorFee_) {
+    )
+        external
+        onlyLiquidator
+        whenLiquidationNotPaused
+        processInterests
+        returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
+    {
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
         uint256 openDebt = maxWithdraw(account);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
-        maxInitiatorFee_ = maxInitiatorFee;
+        uint80 maxInitiatorFee_ = maxInitiatorFee;
+        uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
-        uint256 liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
+        liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        uint256 liquidationPenalty = openDebt * penaltyWeight / 100;
-        uint256 closingReward = openDebt * closingRewardWeight / 100;
+        liquidationPenalty = openDebt * penaltyWeight / 100;
+        closingReward = openDebt * closingRewardWeight / 100;
+        closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
