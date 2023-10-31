@@ -222,6 +222,11 @@ contract LendingPoolExtension is LendingPool {
     function setOpenPosition(address account, uint128 amount) public {
         balanceOf[account] = amount;
     }
+
+    function setMaxLiquidationFees_(uint80 maxInitiatorFee_, uint80 maxClosingFee_) public {
+        maxInitiatorFee = maxInitiatorFee_;
+        maxClosingFee = maxClosingFee_;
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -335,7 +340,7 @@ contract LiquidatorExtension is Liquidator {
 }
 
 contract LiquidatorExtension_NEW is Liquidator_NEW {
-    constructor() Liquidator_NEW() { }
+    constructor(address factory_) Liquidator_NEW(factory_) { }
 
     // TODO: Fix this
     function getAuctionInformationPartOne(address account_)
@@ -441,5 +446,9 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
         return auctionInformation[account].assetAmounts;
+    }
+
+    function setTotalBidsOnAccount(address account, uint256 totalBids_) public {
+        auctionInformation[account].totalBids = totalBids_;
     }
 }

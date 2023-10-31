@@ -106,4 +106,5 @@ interface ILendingPool_NEW {
         uint256 liquidationFee,
         uint256 remainder
     ) external;
+    function getOpenPosition(address account) external view returns (uint256 openPosition);
 }

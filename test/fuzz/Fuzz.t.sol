@@ -63,7 +63,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
         liquidator = new LiquidatorExtension(address(factory));
-        liquidator_new = new LiquidatorExtension_NEW();
+        liquidator_new = new LiquidatorExtension_NEW(address(factory));
         pool = new LendingPoolExtension(asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
@@ -93,7 +93,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         liquidator = new LiquidatorExtension(address(factory));
-        liquidator_new = new LiquidatorExtension_NEW();
+        liquidator_new = new LiquidatorExtension_NEW(address(factory));
         pool =
             new LendingPoolExtension(ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
 

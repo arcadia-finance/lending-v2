@@ -12,6 +12,7 @@ contract AccountV1Malicious {
     uint256 public valueInBaseCurrency;
     uint256 public collateralFactor;
     uint256 public liquidationFactor;
+    address public owner;
 
     constructor(
         address trustedCreditor_,
@@ -25,6 +26,7 @@ contract AccountV1Malicious {
         valueInBaseCurrency = valueInBaseCurrency_;
         collateralFactor = collateralFactor_;
         liquidationFactor = liquidationFactor_;
+        owner = msg.sender;
     }
 
     function checkAndStartLiquidation()

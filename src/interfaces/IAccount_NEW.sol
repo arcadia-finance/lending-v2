@@ -59,4 +59,21 @@ interface IAccount_NEW {
         uint256[] memory assetAmounts,
         address bidder
     ) external;
+
+    /**
+     * @notice Generates three arrays of all the stored assets in the Account.
+     * @return assetAddresses Array of the contract addresses of the assets.
+     * @return assetIds Array of the IDs of the assets.
+     * @return assetAmounts Array with the amounts of the assets.
+     * @dev Balances are stored on the contract to prevent working around the deposit limits.
+     * @dev Loops through the stored asset addresses and fills the arrays.
+     * @dev There is no importance of the order in the arrays, but all indexes of the arrays correspond to the same asset.
+     */
+    function generateAssetData()
+        external
+        view
+        returns (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts);
+
+    function baseCurrency() external view returns (address baseCurrency);
+    function registry() external view returns (address registry);
 }
