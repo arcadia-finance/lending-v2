@@ -41,19 +41,34 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
     }
 
     function bid_fully(address bidder, uint128 amountLoaned) public {
-        // Given: The account auction is initiated
-        //        vm.assume(bidder != address(0));
-        //        vm.assume(amountLoaned > 1);
-        //        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
-        //        initiateLiquidation(amountLoaned);
-        //        bool endAuction = false;
-
         uint256[] memory originalAssetAmounts = liquidator_new.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];
 
         // And: Bidder has enough funds and approved the lending pool for repay
         uint256[] memory bidAssetAmounts = new uint256[](1);
         uint256 bidAssetAmount = originalAmount;
+        bidAssetAmounts[0] = bidAssetAmount;
+        deal(address(mockERC20.stable1), bidder, type(uint128).max);
+        vm.startPrank(bidder);
+        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+
+        // When: Bidder bids for the asset
+        liquidator_new.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
+        vm.stopPrank();
+
+        // Then: The bidder should have the asset, and left assets should be diminished
+        uint256 totalBids = liquidator_new.getAuctionTotalBids(address(proxyAccount));
+        uint256 askPrice = liquidator_new.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        assertEq(totalBids, askPrice);
+    }
+
+    function bid_partially(address bidder, uint128 amountLoaned) public {
+        uint256[] memory originalAssetAmounts = liquidator_new.getAuctionAssetAmounts(address(proxyAccount));
+        uint256 originalAmount = originalAssetAmounts[0];
+
+        // And: Bidder has enough funds and approved the lending pool for repay
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        uint256 bidAssetAmount = originalAmount / 2;
         bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
@@ -99,10 +114,27 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_knockDown_2(address hammer, address bidder, uint128 amountLoaned) public {
+    function testFuzz_Success_knockDown_Partially(address hammer, address bidder, uint128 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
+        initiateLiquidation(amountLoaned);
+
+        // And: There is a bid happened and bought it partially for the account
+        bid_partially(bidder, amountLoaned);
+
+        // When: knockDown is called which account is healthy
+        vm.startPrank(hammer);
+        liquidator_new.knockDown(address(proxyAccount));
+
+        // Then: The account should be healthy
+        assertEq(liquidator_new.getAuctionIsActive(address(proxyAccount)), false);
+    }
+
+    function testFuzz_Success_knockDown_Fully(address hammer, address bidder, uint128 amountLoaned) public {
+        // Given: The account auction is initiated
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint128).max / 500) * 100);
         initiateLiquidation(amountLoaned);
 
         // And: There is a bid happened and bought it partially for the account
