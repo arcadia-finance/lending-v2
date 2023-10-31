@@ -167,6 +167,10 @@ contract LendingPoolExtension is LendingPool {
         return maxInitiatorFee;
     }
 
+    function getMaxClosingFee() public view returns (uint80) {
+        return maxClosingFee;
+    }
+
     function getAuctionsInProgress() public view returns (uint16) {
         return auctionsInProgress;
     }
@@ -333,6 +337,33 @@ contract LiquidatorExtension is Liquidator {
 contract LiquidatorExtension_NEW is Liquidator_NEW {
     constructor() Liquidator_NEW() { }
 
+    // TODO: Fix this
+    function getAuctionInformationPartOne(address account_)
+        public
+        view
+        returns (uint128 openDebt, uint32 startTime, bool inAuction)
+    {
+        openDebt = auctionInformation[account_].startDebt;
+        startTime = auctionInformation[account_].startTime;
+        inAuction = auctionInformation[account_].inAuction;
+    }
+
+    function getAuctionInformationPartTwo(address account_)
+        public
+        view
+        returns (
+            uint8 initiatorRewardWeight_,
+            uint8 penaltyWeight_,
+            uint8 closingRewardWeight_,
+            address trustedCreditor
+        )
+    {
+        initiatorRewardWeight_ = initiatorRewardWeight;
+        penaltyWeight_ = penaltyWeight;
+        closingRewardWeight_ = closingRewardWeight;
+        trustedCreditor = auctionInformation[account_].trustedCreditor;
+    }
+
     function getLocked() public view returns (uint256) {
         return locked;
     }
@@ -369,11 +400,46 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         return initiatorRewardWeight;
     }
 
+    function calculateAskPrice(address account, uint256[] memory askedAssetAmounts, uint256[] memory askedAssetIds)
+        public
+        view
+        returns (uint256)
+    {
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        return _calculateAskPrice(auctionInformation_, askedAssetAmounts, askedAssetIds);
+    }
+
+    function calculateAskPrice(
+        uint256[] memory askedAssetAmounts,
+        uint256[] memory askedAssetIds,
+        uint32[] memory assetShares,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds,
+        uint128 startPrice,
+        uint256 timePassed
+    ) public view returns (uint256) {
+        return _calculateAskPrice(
+            askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
+        );
+    }
+
+    function getClosingRewardWeight() public view returns (uint8) {
+        return closingRewardWeight;
+    }
+
     function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         public
         view
         returns (uint32[] memory assetDistribution)
     {
         return _getAssetDistribution(riskValues_);
+    }
+
+    function getAuctionTotalBids(address account) public view returns (uint256) {
+        return auctionInformation[account].totalBids;
+    }
+
+    function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
+        return auctionInformation[account].assetAmounts;
     }
 }

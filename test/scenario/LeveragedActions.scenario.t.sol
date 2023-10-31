@@ -11,7 +11,7 @@ import { StdStorage, stdStorage } from "../../lib/accounts-v2/lib/forge-std/src/
 import { ActionData } from "../../lib/accounts-v2/src/actions/utils/ActionData.sol";
 import { ActionMultiCallV2 } from "../../lib/accounts-v2/src/actions/MultiCallV2.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
-import { IPermit2 } from "../../lib/accounts-v2/test/utils/Interfaces.sol";
+import { IPermit2 } from "../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
