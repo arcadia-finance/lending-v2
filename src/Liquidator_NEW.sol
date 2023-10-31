@@ -54,6 +54,7 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
+        address originalOwner; // The original owner of the Account.
         uint256 startPrice;
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
@@ -335,8 +336,7 @@ contract Liquidator_NEW is Owned {
 
         // If the auction is over, end it.
         if (endAuction) {
-            // This part will be added in the later PR
-            // _endAuction(account);
+            _endAuction(account);
         }
     }
 
@@ -406,21 +406,48 @@ contract Liquidator_NEW is Owned {
     }
 
     function endAuction(address account) external {
+        _endAuction(account);
+    }
+
+    function _endAuction(address account) internal {
         // Check if the account is already in an auction.
         AuctionInformation auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_) revert Liquidator_AuctionOngoing();
+        if (!auctionInformation_.inAuction) revert Liquidator_AuctionOngoing();
+
+        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
+        uint256 liquidationPenalty = auctionInformation_.liquidationPenalty;
+
+        uint256 totalOpenDebt =
+            auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
 
         // Check if the account is healthy again after the bids.
-        // TODO: Change isAccountHealthy to different function or alter a bit to disable auction lock
-        (bool success,,) =
-            IAccount_NEW.isAccountHealthy(uint256, auctionInformation_.startDebt - auctionInformation_.totalBids);
+        (bool success,,) = IAccount_NEW.isAccountHealthy(uint256, totalOpenDebt);
         if (!success) revert Liquidator_AccountNotHealthy();
+
+        // Calculate remainder and badDebt if any
+        uint256 remainder;
+        uint256 badDebt;
+        // calculate remainder in case of all debt is paid
+        if (auctionInformation_.totalBids > totalOpenDebt) {
+            remainder = auctionInformation_.totalBids - totalOpenDebt;
+        }
+        // if account is healthy and totalBids is less than totalOpenDebt, then this is partial liquidation, there is no remainder and no bad debt
+
+        // Call settlement of the debt in the trustedCreditor
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            auctionInformation_.initiator,
+            liquidationInitiatorReward,
+            msg.sender,
+            auctionClosingReward,
+            liquidationPenalty,
+            remainder
+        );
 
         // Set the inAuction flag to false.
         auctionInformation[account].inAuction = false;
-
-        // Call settlement of the debt in the trustedCreditor
-        // TODO: Add necessary function here
-        // ILendingPool(auctionInformation_.trustedCreditor).settleDebt(account, auctionInformation_.startDebt);
     }
 }
