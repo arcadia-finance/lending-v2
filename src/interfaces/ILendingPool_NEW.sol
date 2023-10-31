@@ -93,4 +93,6 @@ interface ILendingPool_NEW {
         uint256 penaltyWeight,
         uint256 closingRewardWeight
     ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty);
+    function repay(uint256 amount, address account) external;
+    function auctionRepay(uint256 amount, address account, address bidder) external;
 }

@@ -400,6 +400,29 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         return initiatorRewardWeight;
     }
 
+    function calculateAskPrice(address account, uint256[] memory askedAssetAmounts, uint256[] memory askedAssetIds)
+        public
+        view
+        returns (uint256)
+    {
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        return _calculateAskPrice(auctionInformation_, askedAssetAmounts, askedAssetIds);
+    }
+
+    function calculateAskPrice(
+        uint256[] memory askedAssetAmounts,
+        uint256[] memory askedAssetIds,
+        uint32[] memory assetShares,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds,
+        uint128 startPrice,
+        uint256 timePassed
+    ) public view returns (uint256) {
+        return _calculateAskPrice(
+            askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
+        );
+    }
+
     function getClosingRewardWeight() public view returns (uint8) {
         return closingRewardWeight;
     }
@@ -410,5 +433,13 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         returns (uint32[] memory assetDistribution)
     {
         return _getAssetDistribution(riskValues_);
+    }
+
+    function getAuctionTotalBids(address account) public view returns (uint256) {
+        return auctionInformation[account].totalBids;
+    }
+
+    function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
+        return auctionInformation[account].assetAmounts;
     }
 }

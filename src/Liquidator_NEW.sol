@@ -42,6 +42,9 @@ contract Liquidator_NEW is Owned {
     // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal penaltyWeight;
+    // The total amount of shares in the Account.
+    // 1_000_000 shares = 100% of the Account.
+    uint32 internal constant TotalShares = 1_000_000;
     // Fee paid to the address that is ending an auction.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal closingRewardWeight;
@@ -100,6 +103,12 @@ contract Liquidator_NEW is Owned {
 
     // Thrown when the liquidateAccount function is called on an account that is already in an auction.
     error Liquidator_AuctionOngoing();
+
+    // Thrown when the bid function is called on an account that auction does not exist.
+    error Liquidator_NotForSale();
+
+    // Thrown when the bid function with invalid asset amounts or ids.
+    error Liquidator_InvalidBid();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -250,10 +259,10 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
-        auctionInformation[account].trustedCreditor = creditor;
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
+        auctionInformation[account].trustedCreditor = creditor;
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -298,6 +307,98 @@ contract Liquidator_NEW is Owned {
             unchecked {
                 ++i;
             }
+        }
+    }
+
+    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, bool endAuction)
+        external
+        payable
+        nonReentrant
+    {
+        // Check if the account is already in an auction.
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
+
+        // Repay the debt of the account.
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
+
+        // Transfer the assets to the bidder.
+        IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
+
+        // process the bid for later bids
+        _processBid(account, askPrice);
+
+        // If the auction is over, end it.
+        if (endAuction) {
+            // This part will be added in the later PR
+            // _endAuction(account);
+        }
+    }
+
+    function _processBid(address account, uint256 bidAmount) internal {
+        // increase the bid amount
+        auctionInformation[account].totalBids += bidAmount;
+    }
+
+    function _calculateAskPrice(
+        AuctionInformation memory auctionInformation_,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds
+    ) internal view returns (uint256 askPrice) {
+        // Calculate the time passed since the auction started.
+        uint256 timePassed = block.timestamp - auctionInformation_.startTime;
+
+        // Calculate the ask price.
+        askPrice = _calculateAskPrice(
+            assetAmounts,
+            assetIds,
+            auctionInformation_.assetShares,
+            auctionInformation_.assetAmounts,
+            auctionInformation_.assetIds,
+            uint128(auctionInformation_.startPrice),
+            timePassed
+        );
+    }
+
+    function _calculateAskPrice(
+        uint256[] memory askedAssetAmounts,
+        uint256[] memory askedAssetIds,
+        uint32[] memory assetShares,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds,
+        uint128 startPrice,
+        uint256 timePassed
+    ) internal view returns (uint256 askPrice) {
+        if (!(askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length)) {
+            revert Liquidator_InvalidBid();
+        }
+
+        uint256 askedShares;
+        uint256 totalShares;
+
+        for (uint256 i; i < askedAssetAmounts.length;) {
+            unchecked {
+                askedShares += assetShares[i] * askedAssetAmounts[i] / assetAmounts[i];
+                totalShares += assetShares[i];
+                ++i;
+            }
+        }
+
+        unchecked {
+            //Bring to 18 decimals precision for LogExpMath.pow()
+            //No overflow possible: uint32 * uint64.
+            timePassed = timePassed * 1e18;
+
+            //Calculate the price
+            askPrice = (
+                uint256(startPrice)
+                    * (
+                        LogExpMath.pow(base, timePassed) * (startPriceMultiplier - minPriceMultiplier)
+                            + 1e18 * uint256(minPriceMultiplier)
+                    )
+            ) / (1e20 * totalShares / askedShares);
         }
     }
 }
