@@ -174,6 +174,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(badDebt > 0);
         vm.assume(badDebt <= type(uint128).max);
         vm.assume(liquidationInitiatorReward > 0);
+        vm.assume(liquidationPenalty > 0);
         vm.assume(
             uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(liquidationPenalty)
                 + uint256(auctionTerminationReward) <= uint256(badDebt) + type(uint128).max
