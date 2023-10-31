@@ -134,76 +134,63 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         vm.stopPrank();
     }
 
-    /*     function testFuzz_Success_endAuctionProtocol(
-        uint256 openDebt,
-        uint256 realisedLiquidity,
-        uint16 halfLifeTime,
-        uint24 timePassed,
-        uint16 cutoffTime,
-        uint8 startPriceMultiplier,
-        uint8 minPriceMultiplier,
+    function testFuzz_Success_EndAuctionProtocol(
+        uint256 amountLoaned,
+        uint8 initiatorRewardWeight,
+        uint8 penaltyWeight,
+        uint8 closingRewardWeight,
         uint80 maxInitiatorFee
     ) public {
-        // Preprocess: Set up the fuzzed variables
-        vm.assume(halfLifeTime > 10 * 60); // 10 minutes
-        vm.assume(halfLifeTime < 8 * 60 * 60); // 8 hours
-        vm.assume(cutoffTime < 8 * 60 * 60); // 8 hours
-        vm.assume(cutoffTime > 1 * 60 * 60); // 1 hours
-        vm.assume(timePassed > cutoffTime);
-        vm.assume(startPriceMultiplier > 100);
-        vm.assume(startPriceMultiplier < 301);
-        vm.assume(minPriceMultiplier < 91);
-        openDebt = bound(openDebt, 1, type(uint64).max);
-        realisedLiquidity = bound(realisedLiquidity, openDebt, type(uint64).max);
-        address to = address(69); //Cannot fuzz the bidder address, since any existing contract without onERC721Received will revert
+        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
+        // Set liquidations incentives weights
         vm.startPrank(users.creatorAddress);
-        liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
-        liquidator.setStartPriceMultiplier(startPriceMultiplier);
-        liquidator.setMinimumPriceMultiplier(minPriceMultiplier);
-        vm.stopPrank();
+        liquidator_new.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        // Set max initiator fee
+        pool_new.setMaxLiquidationFees(maxInitiatorFee, 0);
 
-        vm.prank(address(pool));
-        liquidator.startAuction(address(proxyAccount), openDebt, maxInitiatorFee);
+        // Account has debt
+        bytes3 emptyBytes3;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.startPrank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+        vm.startPrank(address(srTranche_new));
+        pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.startPrank(users.accountOwner);
+        pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
-        vm.warp(block.timestamp + timePassed);
+        // Calculate initiator reward
+        uint256 initiatorReward = amountLoaned * initiatorRewardWeight / 100;
+        initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
 
-        // Set state LendingPool.
-        pool.setLastSyncedTimestamp(uint32(block.timestamp));
-        pool.setTotalRealisedLiquidity(uint128(realisedLiquidity));
+        // Account becomes Unhealthy (Realised debt grows above Liquidation value)
+        debt_new.setRealisedDebt(uint256(amountLoaned + 1));
 
-        uint256 availableLiquidityBefore = mockERC20.stable1.balanceOf(address(pool));
+        // Initiate liquidation
+        liquidator_new.liquidateAccount(address(proxyAccount));
 
-        // Avoid stack to deep
-        {
-            (,, uint8 initiatorRewardWeight, uint8 penaltyWeight,,,,) =
-                liquidator.getAuctionInformationPartTwo(address(proxyAccount));
-            (uint256 badDebt, uint256 liquidationInitiatorReward,,) = liquidator.calcLiquidationSettlementValues(
-                openDebt, 0, maxInitiatorFee, initiatorRewardWeight, penaltyWeight
-            );
+        // Warp to a timestamp when auction is expired
+        vm.warp(block.timestamp + liquidator_new.getCutoffTime() + 1);
 
-            vm.startPrank(users.creatorAddress);
-            vm.expectEmit(true, true, true, true);
-            emit AuctionFinished(
-                address(proxyAccount),
-                address(pool),
-                address(mockERC20.stable1),
-                0,
-                uint128(badDebt),
-                uint128(liquidationInitiatorReward),
-                0,
-                0
-            );
-            liquidator_new.endAuctionProtocol(address(proxyAccount), to);
-            vm.stopPrank();
-        }
+        // Set total bids on Account < amount owed by the account (no bad debt)
+        uint256 totalBids = amountLoaned + initiatorReward - 1;
+        liquidator_new.setTotalBidsOnAccount(address(proxyAccount), totalBids);
 
-        uint256 availableLiquidityAfter = mockERC20.stable1.balanceOf(address(pool));
-
-        assertEq(realisedLiquidity - pool.totalRealisedLiquidity(), openDebt);
-        assertEq(availableLiquidityAfter - availableLiquidityBefore, 0);
-        uint256 index = factory.accountIndex(address(proxyAccount));
-        assertEq(factory.ownerOf(index), to);
-        assertEq(proxyAccount.owner(), to);
-    } */
+        // TODO: Update once new settleLiquidation() is added in LendingPool
+        /*         vm.startPrank(users.creatorAddress);
+        vm.expectEmit();
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool_new),
+            address(mockERC20.stable1),
+            0,
+            uint128(amountLoaned + initiatorReward - totalBids),
+            uint128(initiatorReward),
+            0,
+            0
+        );
+        liquidator_new.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
+        vm.stopPrank(); */
+    }
 }

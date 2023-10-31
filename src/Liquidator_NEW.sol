@@ -91,7 +91,7 @@ contract Liquidator_NEW is Owned {
         address indexed account,
         address indexed creditor,
         address baseCurrency,
-        uint128 price,
+        uint128 totalBids,
         uint128 badDebt,
         uint128 initiatorReward,
         uint128 closingReward,
@@ -460,18 +460,20 @@ contract Liquidator_NEW is Owned {
         }
 
         // Call settlement of the debt in the trustedCreditor
-        ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation(
+        // TODO: Update here + testing when new settleLiquidation function is done
+        /*         ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation(
             account, auctionInformation_.originalOwner, badDebt, initiatorReward, 0, 0
-        );
+        ); */
 
+        // TODO: Transfer Account to protocol owner
         // Change ownership of the auctioned account to the protocol owner.
-        IFactory(factory).safeTransferFrom(address(this), to, account);
+        //IFactory(factory).safeTransferFrom(address(this), to, account);
 
         emit AuctionFinished(
             account,
             auctionInformation_.trustedCreditor,
             auctionInformation_.baseCurrency,
-            0,
+            uint128(totalBids),
             uint128(badDebt),
             uint128(initiatorReward),
             0,
