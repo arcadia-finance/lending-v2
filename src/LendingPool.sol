@@ -974,9 +974,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
                 }
             } else {
                 // Update the total realised liquidity and handle bad debt.
+                _withdraw(liquidationFee + auctionTerminationReward, account, account);
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
-                _withdraw(liquidationFee + auctionTerminationReward, account, account);
                 _processDefault(badDebt - liquidationFee - auctionTerminationReward);
             }
         } else {

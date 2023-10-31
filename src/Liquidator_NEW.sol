@@ -12,7 +12,7 @@ import { ILendingPool_NEW } from "./interfaces/ILendingPool_NEW.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
 import { ILiquidator_NEW } from "./interfaces/ILiquidator_NEW.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
-import { IMainRegistry } from "./interfaces/IMainRegistry.sol";
+import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 
 contract Liquidator_NEW is Owned {
     using SafeTransferLib for ERC20;
@@ -57,10 +57,11 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
+        address originalOwner; // The original owner of the Account.
         uint256 startPrice;
-        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
+        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address baseCurrency; // The contract address of the baseCurrency.
@@ -130,6 +131,8 @@ contract Liquidator_NEW is Owned {
     error Liquidator_AuctionNotExpired();
     // Thrown when the bid function with invalid asset amounts or ids.
     error Liquidator_InvalidBid();
+    // Thrown when the endAuction called and the account is still unhealthy
+    error Liquidator_AccountNotHealthy();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -356,8 +359,7 @@ contract Liquidator_NEW is Owned {
 
         // If the auction is over, end it.
         if (endAuction) {
-            // This part will be added in the later PR
-            // _endAuction(account);
+            _knockDown(account);
         }
     }
 
@@ -373,6 +375,13 @@ contract Liquidator_NEW is Owned {
     ) internal view returns (uint256 askPrice) {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
+        // Calculate the start price.
+        uint128 startPrice = SafeCastLib.safeCastTo128(
+            _calculateStartPrice(
+                uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
+                    + uint256(auctionInformation_.auctionClosingReward) + uint256(auctionInformation_.liquidationPenalty)
+            )
+        );
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(
@@ -381,7 +390,7 @@ contract Liquidator_NEW is Owned {
             auctionInformation_.assetShares,
             auctionInformation_.assetAmounts,
             auctionInformation_.assetIds,
-            uint128(auctionInformation_.startPrice),
+            startPrice,
             timePassed
         );
     }
@@ -480,5 +489,51 @@ contract Liquidator_NEW is Owned {
             0,
             0
         );
+    }
+
+    function knockDown(address account) external {
+        _knockDown(account);
+    }
+
+    function _knockDown(address account) internal {
+        // Check if the account is already in an auction.
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
+        uint256 liquidationPenalty = auctionInformation_.liquidationPenalty;
+
+        uint256 totalOpenDebt =
+            auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
+
+        // Check if the account is healthy again after the bids.
+        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
+        if (!success) revert Liquidator_AccountNotHealthy();
+
+        // Calculate remainder and badDebt if any
+        uint256 remainder;
+        uint256 badDebt;
+        // calculate remainder in case of all debt is paid
+        if (auctionInformation_.totalBids > totalOpenDebt) {
+            remainder = auctionInformation_.totalBids - totalOpenDebt;
+        }
+        // if account is healthy and totalBids is less than totalOpenDebt, then this is partial liquidation, there is no remainder and no bad debt
+
+        // Call settlement of the debt in the trustedCreditor
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            auctionInformation_.initiator,
+            liquidationInitiatorReward,
+            msg.sender,
+            auctionClosingReward,
+            liquidationPenalty,
+            remainder
+        );
+
+        // Set the inAuction flag to false.
+        auctionInformation[account].inAuction = false;
     }
 }

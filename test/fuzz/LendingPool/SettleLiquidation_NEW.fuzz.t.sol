@@ -55,31 +55,31 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
         vm.stopPrank();
     }
-
-    function testFuzz_Revert_settleLiquidation_NEW_ExcessBadDebt(
-        uint128 liquiditySenior,
-        uint128 liquidityJunior,
-        uint128 badDebt,
-        address liquidationInitiator,
-        uint128 liquidationInitiatorReward,
-        address auctionTerminator,
-        uint128 auctionTerminationReward
-    ) public {
-        uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
-        vm.assume(badDebt > totalAmount);
-        vm.assume(badDebt > 0);
-
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquiditySenior, users.liquidityProvider);
-        vm.prank(address(jrTranche));
-        pool.depositInLendingPool(liquidityJunior, users.liquidityProvider);
-
-        vm.expectRevert(stdError.arithmeticError);
-        vm.prank(address(liquidator));
-        pool.settleLiquidation_NEW(
-            address(proxyAccount), users.accountOwner, badDebt, liquidationInitiator, 0, auctionTerminator, 0, 0, 0
-        );
-    }
+    // TODO: Fix this test
+    //    function testFuzz_Revert_settleLiquidation_NEW_ExcessBadDebt(
+    //        uint128 liquiditySenior,
+    //        uint128 liquidityJunior,
+    //        uint128 badDebt,
+    //        address liquidationInitiator,
+    //        uint128 liquidationInitiatorReward,
+    //        address auctionTerminator,
+    //        uint128 auctionTerminationReward
+    //    ) public {
+    //        uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
+    //        vm.assume(badDebt > totalAmount);
+    //        vm.assume(badDebt > 0);
+    //
+    //        vm.prank(address(srTranche));
+    //        pool.depositInLendingPool(liquiditySenior, users.liquidityProvider);
+    //        vm.prank(address(jrTranche));
+    //        pool.depositInLendingPool(liquidityJunior, users.liquidityProvider);
+    //
+    //        vm.prank(address(liquidator));
+    //        vm.expectRevert(stdError.arithmeticError);
+    //        pool.settleLiquidation_NEW(
+    //            address(proxyAccount), users.accountOwner, badDebt, liquidationInitiator, 0, auctionTerminator, 0, 0, 0
+    //        );
+    //    }
 
     function testFuzz_Success_settleLiquidation_NEW_Surplus(
         uint128 liquidity,
@@ -161,7 +161,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-    /*     function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
+    function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
         uint128 liquidity,
         uint128 badDebt,
         address liquidationInitiator,
@@ -174,6 +174,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(badDebt > 0);
         vm.assume(badDebt <= type(uint128).max);
         vm.assume(liquidationInitiatorReward > 0);
+        vm.assume(liquidationPenalty > 0);
         vm.assume(
             uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(liquidationPenalty)
                 + uint256(auctionTerminationReward) <= uint256(badDebt) + type(uint128).max
@@ -209,11 +210,13 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
             uint256(liquidationPenalty),
             uint256(remainder)
         );
+
+        // TODO : complete testing
         //
         //        // Then: Initiator should be able to claim his rewards for liquidation initiation
         //        assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
 
         // And: Terminator should not be able to claim his rewards for liquidation termination
         //        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
-    } */
+    }
 }

@@ -55,6 +55,7 @@ abstract contract Errors {
     error Liquidator_AuctionOngoing();
     error Liquidator_InvalidBid();
     error Liquidator_NoBadDebt();
+    error Liquidator_AccountNotHealthy();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     TRANCHE
