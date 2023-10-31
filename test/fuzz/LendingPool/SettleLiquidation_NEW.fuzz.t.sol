@@ -161,7 +161,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertFalse(srTranche.auctionInProgress());
     }
 
-/*     function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
+    /*     function testFuzz_Success_settleLiquidation_NEW_ProcessDefault(
         uint128 liquidity,
         uint128 badDebt,
         address liquidationInitiator,
