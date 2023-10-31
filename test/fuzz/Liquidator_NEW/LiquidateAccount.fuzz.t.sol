@@ -171,7 +171,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);

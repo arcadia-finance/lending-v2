@@ -95,4 +95,15 @@ interface ILendingPool_NEW {
     ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty);
     function repay(uint256 amount, address account) external;
     function auctionRepay(uint256 amount, address account, address bidder) external;
+    function settleLiquidation_NEW(
+        address account,
+        address originalOwner,
+        uint256 badDebt,
+        address initiator,
+        uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
+        uint256 liquidationFee,
+        uint256 remainder
+    ) external;
 }
