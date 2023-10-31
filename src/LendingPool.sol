@@ -887,6 +887,19 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Event emitted by Liquidator.
     }
 
+    /**
+     * @dev Function to settle a liquidation event.
+     * @param account The account undergoing liquidation.
+     * @param originalOwner The original owner of the liquidated assets.
+     * @param badDebt The amount of bad debt in the liquidation.
+     * @param initiator The address of the liquidation initiator.
+     * @param liquidationInitiatorReward The reward for the liquidation initiator.
+     * @param terminator The address of the liquidation terminator.
+     * @param auctionTerminationReward The reward for auction termination.
+     * @param liquidationFee The fee associated with the liquidation.
+     * @param remainder Any remaining assets after liquidation.
+     * @notice This function is callable only by the liquidator and processes liquidation events.
+     */
     function settleLiquidation_NEW(
         address account,
         address originalOwner,
@@ -898,44 +911,66 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 liquidationFee,
         uint256 remainder
     ) external onlyLiquidator processInterests {
-        //Make Initiator rewards claimable for liquidationInitiator[account].
+        // Increase the realised liquidity for the initiator.
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
 
         if (badDebt > 0) {
             if (badDebt < liquidationFee + auctionTerminationReward) {
-                totalRealisedLiquidity =
-                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward);
+                // Calculate the reward remainder.
+                uint256 rewardRemainder = liquidationFee + auctionTerminationReward - badDebt;
+
+                if (rewardRemainder > auctionTerminationReward) {
+                    // Increase the realised liquidity for the terminator.
+                    realisedLiquidityOf[terminator] += auctionTerminationReward;
+                    // Update the total realised liquidity.
+                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
+                    );
+                    // Synchronize the liquidation fee with liquidity providers.
+                    _syncLiquidationFeeToLiquidityProviders(rewardRemainder - auctionTerminationReward);
+                } else {
+                    // Increase the realised liquidity for the terminator.
+                    realisedLiquidityOf[terminator] += rewardRemainder;
+                    // Update the total realised liquidity.
+                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
+                    );
+                }
             } else {
+                // Update the total realised liquidity and handle bad debt.
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
                 _withdraw(liquidationFee + auctionTerminationReward, account, account);
                 _processDefault(badDebt - liquidationFee - auctionTerminationReward);
             }
         } else {
+            // Synchronize the liquidation fee with liquidity providers.
             _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-            //Make termination rewards claimable for terminator
+            // Increase the realised liquidity for the terminator.
             realisedLiquidityOf[terminator] += auctionTerminationReward;
+            // Update the total realised liquidity.
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + auctionTerminationReward
-                    + remainder
+                uint256(totalRealRealisedLiquidity) + liquidationInitiatorReward + liquidationFee
+                    + auctionTerminationReward + remainder
             );
 
-            //Any remaining assets after paying off liabilities and the fee go back to the original Account Owner.
             if (remainder > 0) {
-                //Make remainder claimable by originalOwner.
+                // If there is any remainder, increase the realised liquidity for the original owner.
                 realisedLiquidityOf[originalOwner] += remainder;
             }
         }
 
+        // Decrement the number of auctions in progress.
         unchecked {
             --auctionsInProgress;
         }
-        //Hook to the most junior Tranche to inform that there are no ongoing auctions.
+
+        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
         if (auctionsInProgress == 0 && tranches.length > 0) {
             ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
         }
 
-        //Event emitted by Liquidator.
+        // Event emitted by Liquidator.
     }
 
     /**
