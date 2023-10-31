@@ -16,5 +16,5 @@ contract LendingPoolMalicious {
         uint256 initiatorRewardWeight,
         uint256 penaltyWeight,
         uint256 closingRewardWeight
-    ) external returns (uint80 maxInitiatorFee_) { }
+    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) { }
 }
