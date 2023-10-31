@@ -63,6 +63,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     uint96 internal fixedLiquidationCost;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
     uint80 internal maxInitiatorFee;
+    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
+    uint80 internal maxClosingFee;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
     // Address of the protocol treasury.
@@ -964,7 +966,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
      * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
      * @param closingRewardWeight Fee paid to the address that is ending an auction.
-     * @return maxInitiatorFee_ Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
+     * @return closingReward Fee paid to the address that is ending an auction.
+     * @return liquidationPenalty Penalty paid by the account owner to the trusted Creditor on top of the open Debt for being liquidated.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -977,21 +981,29 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 initiatorRewardWeight,
         uint256 penaltyWeight,
         uint256 closingRewardWeight
-    ) external onlyLiquidator whenLiquidationNotPaused processInterests returns (uint80 maxInitiatorFee_) {
+    )
+        external
+        onlyLiquidator
+        whenLiquidationNotPaused
+        processInterests
+        returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
+    {
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
         uint256 openDebt = maxWithdraw(account);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
-        maxInitiatorFee_ = maxInitiatorFee;
+        uint80 maxInitiatorFee_ = maxInitiatorFee;
+        uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
-        uint256 liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
+        liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        uint256 liquidationPenalty = openDebt * penaltyWeight / 100;
-        uint256 closingReward = openDebt * closingRewardWeight / 100;
+        liquidationPenalty = openDebt * penaltyWeight / 100;
+        closingReward = openDebt * closingRewardWeight / 100;
+        closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);

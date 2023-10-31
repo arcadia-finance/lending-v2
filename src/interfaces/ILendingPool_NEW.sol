@@ -77,7 +77,9 @@ interface ILendingPool_NEW {
      * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
      * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
      * @param closingRewardWeight Fee paid to the address that is ending an auction.
-     * @return maxInitiatorFee Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
+     * @return closingReward Fee paid to the address that is ending an auction.
+     * @return liquidationPenalty Penalty paid by the account owner to the trusted Creditor on top of the open Debt for being liquidated.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -90,5 +92,5 @@ interface ILendingPool_NEW {
         uint256 initiatorRewardWeight,
         uint256 penaltyWeight,
         uint256 closingRewardWeight
-    ) external returns (uint80 maxInitiatorFee);
+    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty);
 }

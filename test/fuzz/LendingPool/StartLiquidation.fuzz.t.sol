@@ -94,7 +94,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator calls startLiquidation()
         vm.prank(address(liquidator));
-        uint80 maxInitiatorFee_ =
+        (uint256 liquidationInitiatorReward_, uint256 closingReward_, uint256 liquidationPenalty_) =
             pool.startLiquidation(address(proxyAccount), initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // Avoid stack too deep
@@ -109,7 +109,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(jrTranche.auctionInProgress(), true);
 
         // And: Returned amount should be equal to maxInitiatorFee
-        assertEq(maxInitiatorFee_, maxInitiatorFee);
+        assertEq(liquidationInitiatorReward_, maxInitiatorFee);
 
         // And : Liquidation incentives should have been added to openDebt of Account
         uint256 liquidationInitiatorReward = uint256(amountLoaned) * initiatorRewardWeightStack / 100;

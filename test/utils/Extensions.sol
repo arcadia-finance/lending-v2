@@ -341,7 +341,6 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
         openDebt = auctionInformation[account_].startDebt;
         startTime = auctionInformation[account_].startTime;
         inAuction = auctionInformation[account_].inAuction;
-        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
     }
 
     function getAuctionInformationPartTwo(address account_)
@@ -354,9 +353,9 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
             address trustedCreditor
         )
     {
-        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
-        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
-        closingRewardWeight_ = auctionInformation[account_].closingRewardWeight;
+        //        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
+        //        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
+        //        closingRewardWeight_ = auctionInformation[account_].closingRewardWeight;
         trustedCreditor = auctionInformation[account_].trustedCreditor;
     }
 
