@@ -57,7 +57,6 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        address originalOwner; // The original owner of the Account.
         uint256 startPrice;
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
