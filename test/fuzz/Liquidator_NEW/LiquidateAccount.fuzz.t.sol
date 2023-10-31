@@ -159,7 +159,15 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_liquidateAccount_UnhealthyDebt(address liquidationInitiator, uint128 amountLoaned)
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt(
+        address liquidationInitiator,
+        uint128 amountLoaned,
+        uint8 initiatorRewardWeight,
+        uint8 penaltyWeight,
+        uint8 closingRewardWeight,
+        uint80 maxInitiatorFee,
+        uint80 maxClosingFee
+    )
         public
     {
         // Given: Account has debt
