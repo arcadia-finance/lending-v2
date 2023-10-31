@@ -12,6 +12,7 @@ import { ILendingPool_NEW } from "./interfaces/ILendingPool_NEW.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
 import { ILiquidator_NEW } from "./interfaces/ILiquidator_NEW.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 
 contract Liquidator_NEW is Owned {
     using SafeTransferLib for ERC20;
@@ -352,6 +353,13 @@ contract Liquidator_NEW is Owned {
     ) internal view returns (uint256 askPrice) {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
+        // Calculate the start price.
+        uint128 startPrice = SafeCastLib.safeCastTo128(
+            _calculateStartPrice(
+                uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
+                    + uint256(auctionInformation_.auctionClosingReward) + uint256(auctionInformation_.liquidationPenalty)
+            )
+        );
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(
@@ -360,7 +368,7 @@ contract Liquidator_NEW is Owned {
             auctionInformation_.assetShares,
             auctionInformation_.assetAmounts,
             auctionInformation_.assetIds,
-            uint128(auctionInformation_.startPrice),
+            startPrice,
             timePassed
         );
     }
@@ -422,7 +430,7 @@ contract Liquidator_NEW is Owned {
             auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
 
         // Check if the account is healthy again after the bids.
-        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, totalOpenDebt);
+        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
         // Calculate remainder and badDebt if any
