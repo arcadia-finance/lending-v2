@@ -1022,7 +1022,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     ) external onlyLiquidator processInterests {
         // Increase the realised liquidity for the initiator.
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
-        uint256 remainder;
 
         if (badDebt > 0) {
             // Update the total realised liquidity and handle bad debt.
@@ -1032,6 +1031,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
             _processDefault(badDebt);
         } else {
             if (extraRewardsToDistribute > auctionTerminationReward + liquidationFee) {
+                uint256 remainder;
                 remainder = extraRewardsToDistribute - auctionTerminationReward - liquidationFee;
                 // Synchronize the liquidation fee with liquidity providers.
                 _syncLiquidationFeeToLiquidityProviders(liquidationFee);
