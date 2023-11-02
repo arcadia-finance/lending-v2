@@ -1018,7 +1018,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         address terminator,
         uint256 auctionTerminationReward,
         uint256 liquidationFee,
-        uint256 extraRewardsToDistribute
+        uint256 remainder
     ) external onlyLiquidator processInterests {
         // Increase the realised liquidity for the initiator.
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
@@ -1030,29 +1030,26 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
                 SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
             _processDefault(badDebt);
         } else {
-            if (extraRewardsToDistribute > auctionTerminationReward + liquidationFee) {
-                uint256 remainder;
-                remainder = extraRewardsToDistribute - auctionTerminationReward - liquidationFee;
+            if (remainder > auctionTerminationReward + liquidationFee) {
+                uint256 amountToReturnToUser = remainder - auctionTerminationReward - liquidationFee;
                 // Synchronize the liquidation fee with liquidity providers.
                 _syncLiquidationFeeToLiquidityProviders(liquidationFee);
                 // Increase the realised liquidity for the terminator.
                 realisedLiquidityOf[terminator] += auctionTerminationReward;
                 // Increase the realised liquidity for the original owner.
-                realisedLiquidityOf[originalOwner] += remainder;
-            } else if (extraRewardsToDistribute > auctionTerminationReward) {
+                realisedLiquidityOf[originalOwner] += amountToReturnToUser;
+            } else if (remainder > auctionTerminationReward) {
                 // Increase the realised liquidity for the terminator.
                 realisedLiquidityOf[terminator] += auctionTerminationReward;
                 // Synchronize the liquidation fee with liquidity providers.
-                _syncLiquidationFeeToLiquidityProviders(extraRewardsToDistribute - auctionTerminationReward);
+                _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
             } else {
                 // Increase the realised liquidity for the terminator.
-                realisedLiquidityOf[terminator] += extraRewardsToDistribute;
+                realisedLiquidityOf[terminator] += remainder;
             }
-
             // Update the total realised liquidity.
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + extraRewardsToDistribute
-            );
+            totalRealisedLiquidity =
+                SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
         }
 
         // Decrement the number of auctions in progress.

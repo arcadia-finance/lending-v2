@@ -460,7 +460,7 @@ contract Liquidator_NEW is Owned {
         uint256 badDebt;
 
         if (totalBids >= startDebt + initiatorReward) {
-            uint256 extraRewardsToDistribute = totalBids - startDebt - initiatorReward;
+            uint256 remainder = totalBids - startDebt - initiatorReward;
             ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_Alex(
                 account,
                 auctionInformation_.originalOwner,
@@ -470,7 +470,7 @@ contract Liquidator_NEW is Owned {
                 to,
                 auctionInformation_.auctionClosingReward,
                 auctionInformation_.liquidationPenalty,
-                extraRewardsToDistribute
+                remainder
             );
         } else {
             unchecked {
