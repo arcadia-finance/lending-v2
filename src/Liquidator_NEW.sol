@@ -71,7 +71,6 @@ contract Liquidator_NEW is Owned {
         // TODO: This can be  improved by using penaltyWeight and calculate whereever its necessary - Zeki = 31/10/23
         uint256 liquidationPenalty; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
-        address originalOwner; // The original owner of the Account.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
