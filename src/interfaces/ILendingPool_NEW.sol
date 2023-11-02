@@ -106,5 +106,16 @@ interface ILendingPool_NEW {
         uint256 liquidationFee,
         uint256 remainder
     ) external;
+    function settleLiquidation_Alex(
+        address account,
+        address originalOwner,
+        uint256 badDebt,
+        address initiator,
+        uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
+        uint256 liquidationFee,
+        uint256 remainder
+    ) external;
     function getOpenPosition(address account) external view returns (uint256 openPosition);
 }

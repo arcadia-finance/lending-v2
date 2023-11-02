@@ -1009,6 +1009,64 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         // Event emitted by Liquidator.
     }
 
+    function settleLiquidation_Alex(
+        address account,
+        address originalOwner,
+        uint256 badDebt,
+        address initiator,
+        uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
+        uint256 liquidationFee,
+        uint256 extraRewardsToDistribute
+    ) external onlyLiquidator processInterests {
+        // Increase the realised liquidity for the initiator.
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+        uint256 remainder;
+
+        if (badDebt > 0) {
+            // Update the total realised liquidity and handle bad debt.
+            _withdraw(liquidationFee + auctionTerminationReward, account, account);
+            totalRealisedLiquidity =
+                SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
+            _processDefault(badDebt);
+        } else {
+            if (extraRewardsToDistribute > auctionTerminationReward + liquidationFee) {
+                remainder = extraRewardsToDistribute - auctionTerminationReward - liquidationFee;
+                // Synchronize the liquidation fee with liquidity providers.
+                _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+                // Increase the realised liquidity for the terminator.
+                realisedLiquidityOf[terminator] += auctionTerminationReward;
+                // Increase the realised liquidity for the original owner.
+                realisedLiquidityOf[originalOwner] += remainder;
+            } else if (extraRewardsToDistribute > auctionTerminationReward) {
+                // Increase the realised liquidity for the terminator.
+                realisedLiquidityOf[terminator] += auctionTerminationReward;
+                // Synchronize the liquidation fee with liquidity providers.
+                _syncLiquidationFeeToLiquidityProviders(extraRewardsToDistribute - auctionTerminationReward);
+            } else {
+                // Increase the realised liquidity for the terminator.
+                realisedLiquidityOf[terminator] += extraRewardsToDistribute;
+            }
+
+            // Update the total realised liquidity.
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + extraRewardsToDistribute
+            );
+        }
+
+        // Decrement the number of auctions in progress.
+        unchecked {
+            --auctionsInProgress;
+        }
+
+        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+        }
+        // Event emitted by Liquidator.
+    }
+
     /**
      * @notice Handles the bookkeeping in case of bad debt (Account became undercollateralised).
      * @param badDebt The total amount of underlying assets that need to be written off as bad debt.

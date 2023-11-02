@@ -460,11 +460,33 @@ contract Liquidator_NEW is Owned {
         uint256 badDebt;
 
         if (totalBids >= startDebt + initiatorReward) {
-            revert Liquidator_NoBadDebt();
+            uint256 extraRewardsToDistribute = totalBids - startDebt - initiatorReward;
+            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_Alex(
+                account,
+                auctionInformation_.originalOwner,
+                badDebt,
+                auctionInformation_.initiator,
+                initiatorReward,
+                to,
+                auctionInformation_.auctionClosingReward,
+                auctionInformation_.liquidationPenalty,
+                extraRewardsToDistribute
+            );
         } else {
             unchecked {
                 badDebt = startDebt + initiatorReward - totalBids;
             }
+            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_Alex(
+                account,
+                auctionInformation_.originalOwner,
+                badDebt,
+                auctionInformation_.initiator,
+                initiatorReward,
+                to,
+                0,
+                0,
+                0
+            );
         }
 
         // Call settlement of the debt in the trustedCreditor
