@@ -55,6 +55,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
         vm.stopPrank();
     }
+
     function testFuzz_Revert_settleLiquidation_NEW_ExcessBadDebt(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
@@ -62,6 +63,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address liquidationInitiator,
         address auctionTerminator
     ) public {
+        // Given: There is liquidity and bad debt
         vm.assume(liquidityJunior > 0);
         vm.assume(liquiditySenior > 0);
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
@@ -72,25 +74,22 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquiditySenior, users.liquidityProvider);
         vm.prank(address(jrTranche));
         pool.depositInLendingPool(liquidityJunior, users.liquidityProvider);
-        emit log_named_uint("borrow_ca", debt.getBorrowCap());
 
+        // And: There is an auction in progress
         pool.setAuctionsInProgress(2);
 
-//        uint256 testss = 1;
-//        vm.startPrank(address(proxyAccount));
-//        debt.deposit_(testss, address(proxyAccount));
+        // And:Account has a debt
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
             badDebt
         );
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(badDebt);
         pool.setRealisedDebt(badDebt);
-//        emit log_named_uint("realised debt", pool.getR());
-        emit log_named_uint("bad debt", badDebt);
 
+        // When Then: settleLiquidation should fail if there is more debt than the liquidity
         vm.startPrank(address(liquidator));
         vm.expectRevert(stdError.arithmeticError);
         pool.settleLiquidation_NEW(
-            address(proxyAccount), users.accountOwner, badDebt, liquidationInitiator, 0, auctionTerminator, 0, 0, 0
+            address(proxyAccount), users.accountOwner, badDebt, liquidationInitiator, 1, auctionTerminator, 1, 0, 0
         );
         vm.stopPrank();
     }
