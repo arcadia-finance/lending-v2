@@ -66,7 +66,7 @@ contract Liquidator_NEW is Owned {
         address initiator; // The address of the initiator of the auction.
         uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
-        uint256 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+        uint8 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
@@ -495,12 +495,12 @@ contract Liquidator_NEW is Owned {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        uint256 startDebt = auctionInformation_.startDebt;
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
-        uint256 liquidationPenalty = auctionInformation_.liquidationPenaltyWeight * auctionInformation_.startDebt / 100;
+        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
 
-        uint256 totalOpenDebt =
-            auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
+        uint256 totalOpenDebt = startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
 
         // Check if the account is healthy again after the bids.
         (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
