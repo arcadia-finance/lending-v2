@@ -447,6 +447,8 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids = auctionInformation_.totalBids;
         uint256 startDebt = auctionInformation_.startDebt;
         uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 penalty =
+            uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
         uint256 badDebt;
 
         if (totalBids >= startDebt + initiatorReward) {
@@ -459,7 +461,7 @@ contract Liquidator_NEW is Owned {
                 initiatorReward,
                 to,
                 auctionInformation_.auctionClosingReward,
-                auctionInformation_.liquidationPenalty,
+                penalty,
                 remainder
             );
         } else {
