@@ -447,12 +447,14 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids = auctionInformation_.totalBids;
         uint256 startDebt = auctionInformation_.startDebt;
         uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 closingReward = auctionInformation_.auctionClosingReward;
         uint256 penalty =
             uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
         uint256 badDebt;
+        uint256 remainder;
 
         if (totalBids >= startDebt + initiatorReward) {
-            uint256 remainder = totalBids - startDebt - initiatorReward;
+            remainder = totalBids - startDebt - initiatorReward;
             ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
                 account,
                 auctionInformation_.originalOwner,
@@ -460,7 +462,7 @@ contract Liquidator_NEW is Owned {
                 auctionInformation_.initiator,
                 initiatorReward,
                 to,
-                auctionInformation_.auctionClosingReward,
+                closingReward,
                 penalty,
                 remainder
             );
@@ -492,9 +494,9 @@ contract Liquidator_NEW is Owned {
             uint128(totalBids),
             uint128(badDebt),
             uint128(initiatorReward),
-            0,
-            0,
-            0
+            uint128(closingReward),
+            uint128(penalty),
+            uint128(remainder)
         );
     }
 
