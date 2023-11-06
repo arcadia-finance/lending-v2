@@ -450,18 +450,34 @@ contract Liquidator_NEW is Owned {
         uint256 badDebt;
 
         if (totalBids >= startDebt + initiatorReward) {
-            revert Liquidator_NoBadDebt();
+            uint256 remainder = totalBids - startDebt - initiatorReward;
+            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
+                account,
+                auctionInformation_.originalOwner,
+                badDebt,
+                auctionInformation_.initiator,
+                initiatorReward,
+                to,
+                auctionInformation_.auctionClosingReward,
+                auctionInformation_.liquidationPenalty,
+                remainder
+            );
         } else {
             unchecked {
                 badDebt = startDebt + initiatorReward - totalBids;
             }
+            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
+                account,
+                auctionInformation_.originalOwner,
+                badDebt,
+                auctionInformation_.initiator,
+                initiatorReward,
+                to,
+                0,
+                0,
+                0
+            );
         }
-
-        // Call settlement of the debt in the trustedCreditor
-        // TODO: Update here + testing when new settleLiquidation function is done
-        /*         ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, badDebt, initiatorReward, 0, 0
-        ); */
 
         // TODO: Transfer Account to protocol owner
         // Change ownership of the auctioned account to the protocol owner.
