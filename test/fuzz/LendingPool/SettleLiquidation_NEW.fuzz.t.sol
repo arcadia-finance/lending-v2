@@ -185,13 +185,15 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Here we validate the scenario in which the remaining amount to be distributed after a liquidation is > terminationReward but does not cover all of the liquidation fees.
         vm.assume(liquidationInitiatorReward > 0);
         vm.assume(liquidationPenalty > 0);
-        vm.assume(
-            uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(remainder) < type(uint128).max
+        vm.assume(uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(remainder) < type(uint128).max);
+        remainder = bound(
+            uint256(remainder),
+            uint256(auctionTerminationReward) + 1,
+            uint256(auctionTerminationReward) + uint256(liquidationPenalty) - 1
         );
-       remainder = bound(uint256(remainder), uint256(auctionTerminationReward) + 1, uint256(auctionTerminationReward) + uint256(liquidationPenalty) - 1);
 
-       assert(remainder > auctionTerminationReward);
-       assert(remainder < uint256(auctionTerminationReward) + uint256(liquidationPenalty));
+        assert(remainder > auctionTerminationReward);
+        assert(remainder < uint256(auctionTerminationReward) + uint256(liquidationPenalty));
 
         // Given: Liquidity is deposited in Lending Pool
         vm.prank(address(srTranche));
@@ -248,9 +250,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: treasury will get its part of the liquidationpenalty
         assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remaindershould be claimable by the original owner
-        assertEq(
-            pool.realisedLiquidityOf(users.accountOwner), 0
-        );
+        assertEq(pool.realisedLiquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationInitiatorReward + remainder);
 
