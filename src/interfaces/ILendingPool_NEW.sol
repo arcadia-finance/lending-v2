@@ -79,7 +79,6 @@ interface ILendingPool_NEW {
      * @param closingRewardWeight Fee paid to the address that is ending an auction.
      * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
      * @return closingReward Fee paid to the address that is ending an auction.
-     * @return liquidationPenalty Penalty paid by the account owner to the trusted Creditor on top of the open Debt for being liquidated.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -90,9 +89,9 @@ interface ILendingPool_NEW {
     function startLiquidation(
         address account,
         uint256 initiatorRewardWeight,
-        uint256 penaltyWeight,
-        uint256 closingRewardWeight
-    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty);
+        uint256 closingRewardWeight,
+        uint256 penaltyWeight
+    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward);
     function repay(uint256 amount, address account) external;
     function auctionRepay(uint256 amount, address account, address bidder) external;
     function settleLiquidation_NEW(
