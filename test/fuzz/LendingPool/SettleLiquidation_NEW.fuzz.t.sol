@@ -176,7 +176,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_settleLiquidation_NEW_remainderHigherThanTerminationReward(
         uint128 liquidity,
         address liquidationInitiator,
-        uint128 liquidationInitiatorReward,
+        uint80 liquidationInitiatorReward,
         address auctionTerminator,
         uint80 auctionTerminationReward,
         uint128 liquidationPenalty,
@@ -184,7 +184,9 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Here we validate the scenario in which the remaining amount to be distributed after a liquidation is > terminationReward but does not cover all of the liquidation fees.
         vm.assume(liquidationInitiatorReward > 0);
-        vm.assume(liquidationPenalty > 0);
+        // Otherwise we can have max is less than min value in bound.
+        vm.assume(liquidationPenalty > 1);
+        vm.assume(remainder <= type(uint128).max);
         vm.assume(uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(remainder) < type(uint128).max);
         remainder = bound(
             uint256(remainder),
@@ -218,23 +220,23 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
 
         // As all liquidation penalty can not be distributed
-        liquidationPenalty = uint128(remainder) - auctionTerminationReward;
+        uint256 liquidationFee = remainder - auctionTerminationReward;
 
         // round up
         uint256 liqPenaltyTreasury =
-            liquidationPenalty * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
+            liquidationFee * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
         if (
             uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < liquidationPenalty * pool.getLiquidationWeightTreasury()
+                < liquidationFee * pool.getLiquidationWeightTreasury()
         ) {
             liqPenaltyTreasury++;
         }
 
         uint256 liqPenaltyJunior =
-            liquidationPenalty * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
+            liquidationFee * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
         if (
             uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < liquidationPenalty * pool.getLiquidationWeightTranches(1)
+                < liquidationFee * pool.getLiquidationWeightTranches(1)
         ) {
             liqPenaltyTreasury--;
         }
