@@ -139,6 +139,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 

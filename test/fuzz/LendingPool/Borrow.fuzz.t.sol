@@ -376,6 +376,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(address(srTranche));
