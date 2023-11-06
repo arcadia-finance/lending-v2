@@ -347,19 +347,13 @@ contract Liquidator_NEW is Owned {
         // Transfer the assets to the bidder.
         IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
 
-        // process the bid for later bids
-        _processBid(account, askPrice);
+        // process the bid for later bids, increase the total bids
+        auctionInformation[account].totalBids += askPrice;
 
         // If the auction is over, end it.
         if (endAuction) {
             _knockDown(account);
         }
-    }
-
-    function _processBid(address account, uint256 bidAmount) internal {
-        // TODO: This can be merged with the bid function - Zeki - 06/11/23
-        // increase the bid amount
-        auctionInformation[account].totalBids += bidAmount;
     }
 
     function _calculateAskPrice(
