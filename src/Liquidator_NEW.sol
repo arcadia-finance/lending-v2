@@ -57,19 +57,16 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        address originalOwner; // The original owner of the Account.
-        uint256 startPrice;
+        address originalOwner; // The address of the original owner of the Account.
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address baseCurrency; // The contract address of the baseCurrency.
         address initiator; // The address of the initiator of the auction.
         uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
-        // TODO: This can be  improved by using penaltyWeight and calculate whereever its necessary - Zeki = 31/10/23
-        uint256 liquidationPenalty; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+        uint256 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
@@ -270,24 +267,21 @@ contract Liquidator_NEW is Owned {
         uint8 closingRewardWeight_ = closingRewardWeight;
 
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) = ILendingPool_NEW(
-            creditor
-        ).startLiquidation(account, initiatorRewardWeight_, penaltyWeight_, closingRewardWeight_);
+        (uint256 liquidationInitiatorReward, uint256 closingReward) = ILendingPool_NEW(creditor).startLiquidation(
+            account, initiatorRewardWeight_, closingRewardWeight_, penaltyWeight_
+        );
 
         // Fill the auction struct
         auctionInformation[account].liquidationInitiatorReward = uint80(liquidationInitiatorReward); // No risk of down casting since the max fee is uint80
         auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
-        auctionInformation[account].liquidationPenalty = liquidationPenalty;
+        auctionInformation[account].liquidationPenaltyWeight = penaltyWeight_;
         auctionInformation[account].startDebt = uint128(debt);
-        auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
-        // note: this could maybe be returned from checkAndStartLiquidation()
-        auctionInformation[account].originalOwner = IAccount_NEW(account).owner();
         auctionInformation[account].trustedCreditor = creditor;
 
         // Emit event
@@ -378,7 +372,8 @@ contract Liquidator_NEW is Owned {
         uint128 startPrice = SafeCastLib.safeCastTo128(
             _calculateStartPrice(
                 uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
-                    + uint256(auctionInformation_.auctionClosingReward) + uint256(auctionInformation_.liquidationPenalty)
+                    + uint256(auctionInformation_.auctionClosingReward)
+                    + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
             )
         );
 
@@ -501,7 +496,7 @@ contract Liquidator_NEW is Owned {
 
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
-        uint256 liquidationPenalty = auctionInformation_.liquidationPenalty;
+        uint256 liquidationPenalty = auctionInformation_.liquidationPenaltyWeight * auctionInformation_.startDebt / 100;
 
         uint256 totalOpenDebt =
             auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
