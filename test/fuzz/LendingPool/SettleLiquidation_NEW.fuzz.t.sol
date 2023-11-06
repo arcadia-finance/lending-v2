@@ -67,7 +67,7 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidityJunior > 0);
         vm.assume(liquiditySenior > 0);
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
-        vm.assume(badDebt > totalAmount);
+        vm.assume(badDebt > totalAmount + 2); // Bad debt should be excess since initiator and terminator rewards are 1 and 1 respectively, it should be added to make the baddebt excess
         vm.assume(badDebt > 0);
 
         vm.prank(address(srTranche));
@@ -182,17 +182,22 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidationPenalty,
         uint256 remainder
     ) public {
+        vm.assume(liquidationInitiator != auctionTerminator);
+        vm.assume(liquidationInitiator != address(srTranche));
+        vm.assume(liquidationInitiator != address(jrTranche));
+        vm.assume(liquidationInitiator != address(liquidator));
+        vm.assume(liquidity > 0);
         // Here we validate the scenario in which the remaining amount to be distributed after a liquidation is > terminationReward but does not cover all of the liquidation fees.
         vm.assume(liquidationInitiatorReward > 0);
         // Otherwise we can have max is less than min value in bound.
         vm.assume(liquidationPenalty > 1);
         vm.assume(remainder <= type(uint128).max);
-        vm.assume(uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(remainder) < type(uint128).max);
         remainder = bound(
             uint256(remainder),
             uint256(auctionTerminationReward) + 1,
             uint256(auctionTerminationReward) + uint256(liquidationPenalty) - 1
         );
+        vm.assume(uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(remainder) < type(uint128).max);
 
         assert(remainder > auctionTerminationReward);
         assert(remainder < uint256(auctionTerminationReward) + uint256(liquidationPenalty));
