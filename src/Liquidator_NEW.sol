@@ -450,15 +450,13 @@ contract Liquidator_NEW is Owned {
         uint256 closingReward = auctionInformation_.auctionClosingReward;
         uint256 penalty =
             uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
-        uint256 badDebt;
-        uint256 remainder;
 
         if (totalBids >= startDebt + initiatorReward) {
-            remainder = totalBids - startDebt - initiatorReward;
+            uint256 remainder = totalBids - startDebt - initiatorReward;
             ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
                 account,
                 auctionInformation_.originalOwner,
-                badDebt,
+                0,
                 auctionInformation_.initiator,
                 initiatorReward,
                 to,
@@ -467,6 +465,7 @@ contract Liquidator_NEW is Owned {
                 remainder
             );
         } else {
+            uint256 badDebt;
             unchecked {
                 badDebt = startDebt + initiatorReward - totalBids;
             }
@@ -487,17 +486,17 @@ contract Liquidator_NEW is Owned {
         // Change ownership of the auctioned account to the protocol owner.
         //IFactory(factory).safeTransferFrom(address(this), to, account);
 
-        emit AuctionFinished(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            uint128(totalBids),
-            uint128(badDebt),
-            uint128(initiatorReward),
-            uint128(closingReward),
-            uint128(penalty),
-            uint128(remainder)
-        );
+        //        emit AuctionFinished(
+        //            account,
+        //            auctionInformation_.trustedCreditor,
+        //            auctionInformation_.baseCurrency,
+        //            uint128(totalBids),
+        //            uint128(badDebt),
+        //            uint128(initiatorReward),
+        //            uint128(closingReward),
+        //            uint128(penalty),
+        //            uint128(remainder)
+        //        );
     }
 
     function knockDown(address account) external {
