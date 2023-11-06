@@ -49,6 +49,7 @@ interface IAccount_NEW {
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
+            address owner,
             address creditor,
             uint256 debt,
             RiskModule.AssetValueAndRiskVariables[] memory riskValues
@@ -59,6 +60,7 @@ interface IAccount_NEW {
         uint256[] memory assetAmounts,
         address bidder
     ) external;
+    function auctionBuyIn(address to) external;
 
     /**
      * @notice Generates three arrays of all the stored assets in the Account.

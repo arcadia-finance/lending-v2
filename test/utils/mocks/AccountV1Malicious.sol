@@ -36,6 +36,7 @@ contract AccountV1Malicious {
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
+            address owner_,
             address creditor_,
             uint256 totalOpenDebt_,
             RiskModule.AssetValueAndRiskVariables[] memory assetAndRiskValues
@@ -51,6 +52,7 @@ contract AccountV1Malicious {
         assetAmounts[0] = 0;
 
         creditor_ = trustedCreditor;
+        owner_ = owner;
 
         totalOpenDebt_ = totalOpenDebt;
 

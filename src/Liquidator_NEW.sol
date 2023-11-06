@@ -84,7 +84,7 @@ contract Liquidator_NEW is Owned {
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
     event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
-    event AuctionFinished(
+    event AuctionFinished_NEW(
         address indexed account,
         address indexed creditor,
         address baseCurrency,
@@ -256,6 +256,7 @@ contract Liquidator_NEW is Owned {
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
+            address owner,
             address creditor,
             uint256 debt,
             RiskModule.AssetValueAndRiskVariables[] memory riskValues
@@ -283,6 +284,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
         auctionInformation[account].trustedCreditor = creditor;
+        auctionInformation[account].originalOwner = owner;
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -464,7 +466,7 @@ contract Liquidator_NEW is Owned {
                 penalty,
                 remainder
             );
-            emit AuctionFinished(
+            emit AuctionFinished_NEW(
                 account,
                 auctionInformation_.trustedCreditor,
                 auctionInformation_.baseCurrency,
@@ -487,11 +489,11 @@ contract Liquidator_NEW is Owned {
                 auctionInformation_.initiator,
                 initiatorReward,
                 to,
-                0,
-                0,
+                closingReward,
+                penalty,
                 0
             );
-            emit AuctionFinished(
+            emit AuctionFinished_NEW(
                 account,
                 auctionInformation_.trustedCreditor,
                 auctionInformation_.baseCurrency,
@@ -504,8 +506,8 @@ contract Liquidator_NEW is Owned {
             );
         }
 
-        // Change ownership of the auctioned account to the protocol owner.
-        IFactory(factory).safeTransferFrom(address(auctionInformation_.originalOwner), to, account);
+        // Transfer all the left-over assets to the 'to' address
+        IAccount_NEW(account).auctionBuyIn(to);
     }
 
     function knockDown(address account) external {

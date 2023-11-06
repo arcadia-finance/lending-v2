@@ -451,4 +451,8 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
     function setTotalBidsOnAccount(address account, uint256 totalBids_) public {
         auctionInformation[account].totalBids = totalBids_;
     }
+
+    function getOwner(address account) public view returns (address) {
+        return auctionInformation[account].originalOwner;
+    }
 }

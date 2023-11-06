@@ -68,6 +68,17 @@ abstract contract Events {
         uint128 liquidationPenalty,
         uint128 remainder
     );
+    event AuctionFinished_NEW(
+        address indexed account,
+        address indexed creditor,
+        address baseCurrency,
+        uint128 totalBids,
+        uint128 badDebt,
+        uint128 initiatorReward,
+        uint128 closingReward,
+        uint128 liquidationPenalty,
+        uint128 remainder
+    );
 
     /* //////////////////////////////////////////////////////////////
                             TRANCHE

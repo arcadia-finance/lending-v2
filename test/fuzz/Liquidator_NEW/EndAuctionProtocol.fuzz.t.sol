@@ -5,12 +5,14 @@
 pragma solidity 0.8.19;
 
 import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuctionProtocol" of contract "Liquidator".
  */
 
 contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
+    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -92,8 +94,12 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         uint8 closingRewardWeight,
         uint80 maxInitiatorFee
     ) public {
+        vm.assume(initiatorRewardWeight > 0);
+        vm.assume(penaltyWeight > 0);
+        vm.assume(closingRewardWeight > 0);
+        vm.assume(maxInitiatorFee > 0);
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
-        amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
+        amountLoaned = bound(amountLoaned, 1001, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
         // Set liquidations incentives weights
         vm.startPrank(users.creatorAddress);
@@ -124,24 +130,24 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + liquidator_new.getCutoffTime() + 1);
 
-        // Set total bids on Account < amount owed by the account (no bad debt)
+        // Set total bids on Account < amount owed by the account
         uint256 totalBids = amountLoaned + initiatorReward - 1;
         liquidator_new.setTotalBidsOnAccount(address(proxyAccount), totalBids);
 
-        // TODO: Update once new settleLiquidation() is added in LendingPool
-        /*         vm.startPrank(users.creatorAddress);
-        vm.expectEmit();
-        emit AuctionFinished(
+        vm.startPrank(users.creatorAddress);
+        vm.expectEmit(true, true, true, true);
+        emit AuctionFinished_NEW(
             address(proxyAccount),
             address(pool_new),
-            address(mockERC20.stable1),
-            0,
-            uint128(amountLoaned + initiatorReward - totalBids),
+            address(0),
+            uint128(totalBids),
+            uint128((amountLoaned + 1) + initiatorReward - totalBids),
             uint128(initiatorReward),
+            0,
             0,
             0
         );
         liquidator_new.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
-        vm.stopPrank(); */
+        vm.stopPrank();
     }
 }
