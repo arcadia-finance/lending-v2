@@ -247,11 +247,11 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
         assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
-        // And: The jr tranche will get its part of the liquidationpenalty
+        // And: The jr tranche will get its part of the liquidation penalty
         assertEq(pool.realisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
-        // And: treasury will get its part of the liquidationpenalty
+        // And: treasury will get its part of the liquidation penalty
         assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
-        // And: The remaindershould be claimable by the original owner
+        // And: The remainder should be claimable by the original owner
         assertEq(pool.realisedLiquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationInitiatorReward + remainder);
