@@ -379,12 +379,12 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         //        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
     }
 
-    function testFuzz_Success_settleLiquidation_NEW_NoBadDebt(
+    function testFuzz_Success_settleLiquidation_NEW_NoBadDebt_RemainderIsHigherThanRewards(
         uint128 liquidity,
         address liquidationInitiator,
-        uint128 liquidationInitiatorReward,
+        uint80 liquidationInitiatorReward,
         address auctionTerminator,
-        uint128 auctionTerminationReward,
+        uint80 auctionTerminationReward,
         uint128 liquidationPenalty,
         uint128 remainder
     ) public {
@@ -393,6 +393,8 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
             uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(auctionTerminationReward)
                 + uint256(liquidationPenalty) <= (type(uint128).max / 150) * 100
         );
+        vm.assume(uint256(remainder) > uint256(auctionTerminationReward) + uint256(liquidationPenalty));
+        vm.assume(remainder <= liquidity);
 
         // Given: Account has collateral debt and pool has liquidity
         bytes3 emptyBytes3;
@@ -406,6 +408,11 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(liquidity + 1));
+
+        // Pool is inAuction
+        pool.setAuctionsInProgress(2);
+        vm.prank(address(pool));
+        jrTranche.setAuctionInProgress(true);
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
