@@ -357,6 +357,7 @@ contract Liquidator_NEW is Owned {
     }
 
     function _processBid(address account, uint256 bidAmount) internal {
+        // TODO: This can be merged with the bid function - Zeki - 06/11/23
         // increase the bid amount
         auctionInformation[account].totalBids += bidAmount;
     }
