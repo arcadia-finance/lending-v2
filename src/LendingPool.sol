@@ -951,86 +951,13 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
 
         if (badDebt > 0) {
-            if (badDebt < liquidationFee + auctionTerminationReward) {
-                // Calculate the reward remainder.
-                uint256 rewardRemainder = liquidationFee + auctionTerminationReward - badDebt;
-
-                if (rewardRemainder > auctionTerminationReward) {
-                    // Increase the realised liquidity for the terminator.
-                    realisedLiquidityOf[terminator] += auctionTerminationReward;
-                    // Update the total realised liquidity.
-                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
-                    );
-                    // Synchronize the liquidation fee with liquidity providers.
-                    _syncLiquidationFeeToLiquidityProviders(rewardRemainder - auctionTerminationReward);
-                } else {
-                    // Increase the realised liquidity for the terminator.
-                    realisedLiquidityOf[terminator] += rewardRemainder;
-                    // Update the total realised liquidity.
-                    totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                        uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardRemainder
-                    );
-                }
-            } else {
-                // Update the total realised liquidity and handle bad debt.
-                _withdraw(liquidationFee + auctionTerminationReward, account, account);
-                totalRealisedLiquidity =
-                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
-                _processDefault(badDebt - liquidationFee - auctionTerminationReward);
-            }
-        } else {
-            // Synchronize the liquidation fee with liquidity providers.
-            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-            // Increase the realised liquidity for the terminator.
-            realisedLiquidityOf[terminator] += auctionTerminationReward;
-            // Update the total realised liquidity.
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + auctionTerminationReward
-                    + remainder
-            );
-
-            if (remainder > 0) {
-                // If there is any remainder, increase the realised liquidity for the original owner.
-                realisedLiquidityOf[originalOwner] += remainder;
-            }
-        }
-
-        // Decrement the number of auctions in progress.
-        unchecked {
-            --auctionsInProgress;
-        }
-
-        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
-        if (auctionsInProgress == 0 && tranches.length > 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
-        }
-
-        // Event emitted by Liquidator.
-    }
-
-    function settleLiquidation_Alex(
-        address account,
-        address originalOwner,
-        uint256 badDebt,
-        address initiator,
-        uint256 liquidationInitiatorReward,
-        address terminator,
-        uint256 auctionTerminationReward,
-        uint256 liquidationFee,
-        uint256 remainder
-    ) external onlyLiquidator processInterests {
-        // Increase the realised liquidity for the initiator.
-        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
-
-        if (badDebt > 0) {
             // Update the total realised liquidity and handle bad debt.
             _withdraw(liquidationFee + auctionTerminationReward, account, account);
             totalRealisedLiquidity =
                 SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
             _processDefault(badDebt);
         } else {
-            if (remainder > auctionTerminationReward + liquidationFee) {
+            if (remainder >= auctionTerminationReward + liquidationFee) {
                 uint256 amountToReturnToUser = remainder - auctionTerminationReward - liquidationFee;
                 // Synchronize the liquidation fee with liquidity providers.
                 _syncLiquidationFeeToLiquidityProviders(liquidationFee);
