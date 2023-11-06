@@ -57,20 +57,17 @@ contract Liquidator_NEW is Owned {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint256 startPrice;
+        address originalOwner; // The address of the original owner of the Account.
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
         address baseCurrency; // The contract address of the baseCurrency.
         address initiator; // The address of the initiator of the auction.
         uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
-        // TODO: This can be  improved by using penaltyWeight and calculate whereever its necessary - Zeki = 31/10/23
-        uint256 liquidationPenalty; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+        uint8 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
-        address originalOwner; // The original owner of the Account.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
@@ -270,24 +267,21 @@ contract Liquidator_NEW is Owned {
         uint8 closingRewardWeight_ = closingRewardWeight;
 
         // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) = ILendingPool_NEW(
-            creditor
-        ).startLiquidation(account, initiatorRewardWeight_, penaltyWeight_, closingRewardWeight_);
+        (uint256 liquidationInitiatorReward, uint256 closingReward) = ILendingPool_NEW(creditor).startLiquidation(
+            account, initiatorRewardWeight_, closingRewardWeight_, penaltyWeight_
+        );
 
         // Fill the auction struct
         auctionInformation[account].liquidationInitiatorReward = uint80(liquidationInitiatorReward); // No risk of down casting since the max fee is uint80
         auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
-        auctionInformation[account].liquidationPenalty = liquidationPenalty;
+        auctionInformation[account].liquidationPenaltyWeight = penaltyWeight_;
         auctionInformation[account].startDebt = uint128(debt);
-        auctionInformation[account].startPrice = _calculateStartPrice(debt);
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
-        // note: this could maybe be returned from checkAndStartLiquidation()
-        auctionInformation[account].originalOwner = IAccount_NEW(account).owner();
         auctionInformation[account].trustedCreditor = creditor;
 
         // Emit event
@@ -353,18 +347,13 @@ contract Liquidator_NEW is Owned {
         // Transfer the assets to the bidder.
         IAccount_NEW(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
 
-        // process the bid for later bids
-        _processBid(account, askPrice);
+        // process the bid for later bids, increase the total bids
+        auctionInformation[account].totalBids += askPrice;
 
         // If the auction is over, end it.
         if (endAuction) {
             _knockDown(account);
         }
-    }
-
-    function _processBid(address account, uint256 bidAmount) internal {
-        // increase the bid amount
-        auctionInformation[account].totalBids += bidAmount;
     }
 
     function _calculateAskPrice(
@@ -378,7 +367,8 @@ contract Liquidator_NEW is Owned {
         uint128 startPrice = SafeCastLib.safeCastTo128(
             _calculateStartPrice(
                 uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
-                    + uint256(auctionInformation_.auctionClosingReward) + uint256(auctionInformation_.liquidationPenalty)
+                    + uint256(auctionInformation_.auctionClosingReward)
+                    + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
             )
         );
 
@@ -515,12 +505,12 @@ contract Liquidator_NEW is Owned {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        uint256 startDebt = auctionInformation_.startDebt;
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
-        uint256 liquidationPenalty = auctionInformation_.liquidationPenalty;
+        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
 
-        uint256 totalOpenDebt =
-            auctionInformation_.startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
+        uint256 totalOpenDebt = startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
 
         // Check if the account is healthy again after the bids.
         (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);

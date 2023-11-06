@@ -1071,7 +1071,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @param closingRewardWeight Fee paid to the address that is ending an auction.
      * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
      * @return closingReward Fee paid to the address that is ending an auction.
-     * @return liquidationPenalty Penalty paid by the account owner to the trusted Creditor on top of the open Debt for being liquidated.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
@@ -1082,14 +1081,14 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     function startLiquidation(
         address account,
         uint256 initiatorRewardWeight,
-        uint256 penaltyWeight,
-        uint256 closingRewardWeight
+        uint256 closingRewardWeight,
+        uint256 penaltyWeight
     )
         external
         onlyLiquidator
         whenLiquidationNotPaused
         processInterests
-        returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
+        returns (uint256 liquidationInitiatorReward, uint256 closingReward)
     {
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
@@ -1104,9 +1103,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        liquidationPenalty = openDebt * penaltyWeight / 100;
         closingReward = openDebt * closingRewardWeight / 100;
         closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
+        uint256 liquidationPenalty = openDebt * penaltyWeight / 100;
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
