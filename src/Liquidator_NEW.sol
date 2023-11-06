@@ -447,24 +447,36 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids = auctionInformation_.totalBids;
         uint256 startDebt = auctionInformation_.startDebt;
         uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 closingReward = auctionInformation_.auctionClosingReward;
         uint256 penalty =
             uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
-        uint256 badDebt;
 
         if (totalBids >= startDebt + initiatorReward) {
             uint256 remainder = totalBids - startDebt - initiatorReward;
             ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
                 account,
                 auctionInformation_.originalOwner,
-                badDebt,
+                0,
                 auctionInformation_.initiator,
                 initiatorReward,
                 to,
-                auctionInformation_.auctionClosingReward,
+                closingReward,
                 penalty,
                 remainder
             );
+            emit AuctionFinished(
+                account,
+                auctionInformation_.trustedCreditor,
+                auctionInformation_.baseCurrency,
+                uint128(totalBids),
+                0,
+                uint128(initiatorReward),
+                uint128(closingReward),
+                uint128(penalty),
+                uint128(remainder)
+            );
         } else {
+            uint256 badDebt;
             unchecked {
                 badDebt = startDebt + initiatorReward - totalBids;
             }
@@ -479,23 +491,21 @@ contract Liquidator_NEW is Owned {
                 0,
                 0
             );
+            emit AuctionFinished(
+                account,
+                auctionInformation_.trustedCreditor,
+                auctionInformation_.baseCurrency,
+                uint128(totalBids),
+                uint128(badDebt),
+                uint128(initiatorReward),
+                0,
+                0,
+                0
+            );
         }
 
-        // TODO: Transfer Account to protocol owner
         // Change ownership of the auctioned account to the protocol owner.
-        //IFactory(factory).safeTransferFrom(address(this), to, account);
-
-        emit AuctionFinished(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            uint128(totalBids),
-            uint128(badDebt),
-            uint128(initiatorReward),
-            0,
-            0,
-            0
-        );
+        IFactory(factory).safeTransferFrom(address(auctionInformation_.originalOwner), to, account);
     }
 
     function knockDown(address account) external {
