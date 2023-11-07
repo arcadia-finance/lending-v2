@@ -524,7 +524,8 @@ contract Liquidator_NEW is Owned {
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
         uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
 
-        uint256 totalOpenDebt = startDebt + liquidationInitiatorReward + auctionClosingReward + liquidationPenalty;
+        // The minimum amount that should be recognized as realized liquidity.
+        uint256 minRealisedLiquidity = startDebt + liquidationInitiatorReward;
 
         // Check if the account is healthy again after the bids.
         (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
@@ -532,10 +533,9 @@ contract Liquidator_NEW is Owned {
 
         // Calculate remainder and badDebt if any
         uint256 remainder;
-        uint256 badDebt;
         // calculate remainder in case of all debt is paid
-        if (auctionInformation_.totalBids > totalOpenDebt) {
-            remainder = auctionInformation_.totalBids - totalOpenDebt;
+        if (auctionInformation_.totalBids > minRealisedLiquidity) {
+            remainder = auctionInformation_.totalBids - minRealisedLiquidity;
         }
         // if account is healthy and totalBids is less than totalOpenDebt, then this is partial liquidation, there is no remainder and no bad debt
 
@@ -543,7 +543,7 @@ contract Liquidator_NEW is Owned {
         ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
             account,
             auctionInformation_.originalOwner,
-            badDebt,
+            0,
             auctionInformation_.initiator,
             liquidationInitiatorReward,
             msg.sender,
