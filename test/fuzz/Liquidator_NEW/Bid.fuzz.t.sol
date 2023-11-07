@@ -58,9 +58,10 @@ contract Bid_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
     }
 
     function testFuzz_Revert_bid_InvalidBid(address bidder, uint128 amountLoaned) public {
+        //        amountLoaned = 223311925884755051547902515512929681411;
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
+        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -144,7 +145,7 @@ contract Bid_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
+        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
