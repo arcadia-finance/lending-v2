@@ -8,6 +8,7 @@ import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
+import { AccountV1 } from "accounts-v2/src/AccountV1.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -25,6 +26,42 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
+    function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint128 amountLoaned)
+        public
+    {
+        // Given: Account auction is already started
+        bytes3 emptyBytes3;
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+        vm.prank(address(srTranche_new));
+        pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        debt_new.setRealisedDebt(uint256(amountLoaned + 1));
+
+        vm.prank(liquidationInitiator);
+        liquidator_new.liquidateAccount(address(proxyAccount));
+
+        bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
+        assertEq(isAuctionActive, true);
+
+        uint256 startDebt = liquidator_new.getAuctionStartPrice(address(proxyAccount));
+        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
+
+        assertEq(startDebt, loan);
+
+        assertGe(pool_new.getAuctionsInProgress(), 1);
+
+        // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
+        vm.startPrank(liquidationInitiator);
+        vm.expectRevert(Liquidator_AuctionOngoing.selector);
+        liquidator_new.liquidateAccount(address(proxyAccount));
+        vm.stopPrank();
+    }
+
     function testFuzz_Revert_liquidateAccount_Account_Not_Exist(address liquidationInitiator, address account_)
         public
     {
@@ -34,6 +71,18 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         vm.startPrank(liquidationInitiator);
         vm.expectRevert();
         liquidator_new.liquidateAccount(address(account_));
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_liquidateAccount_NoTrustedCreditorInAccount(address liquidationInitiator) public {
+        // Given: Account is there and no trusted creditor
+        address proxyAddress_NoTrustedCreditor = factory.createAccount(2, 0, address(0), address(0));
+        AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoTrustedCreditor);
+
+        // When Then: Liquidator tries to liquidate, It should revert because there is no trusted creditor to call to get the account debt
+        vm.startPrank(liquidationInitiator);
+        vm.expectRevert();
+        liquidator_new.liquidateAccount(address(proxyAccount_));
         vm.stopPrank();
     }
 
@@ -123,42 +172,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertGe(pool_new.getAuctionsInProgress(), 0);
     }
 
-    function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint128 amountLoaned)
-        public
-    {
-        // Given: Account auction is already started
-        bytes3 emptyBytes3;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
-        vm.prank(users.liquidityProvider);
-        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
-        vm.prank(address(srTranche_new));
-        pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
-        vm.prank(users.accountOwner);
-        pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
-        debt_new.setRealisedDebt(uint256(amountLoaned + 1));
-
-        vm.prank(liquidationInitiator);
-        liquidator_new.liquidateAccount(address(proxyAccount));
-
-        bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
-        assertEq(isAuctionActive, true);
-
-        uint256 startDebt = liquidator_new.getAuctionStartPrice(address(proxyAccount));
-        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
-
-        assertEq(startDebt, loan);
-
-        assertGe(pool_new.getAuctionsInProgress(), 1);
-
-        // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
-        vm.startPrank(liquidationInitiator);
-        vm.expectRevert(Liquidator_AuctionOngoing.selector);
-        liquidator_new.liquidateAccount(address(proxyAccount));
-        vm.stopPrank();
-    }
-
     function testFuzz_Success_liquidateAccount_UnhealthyDebt(
         address liquidationInitiator,
         uint128 amountLoaned,
@@ -219,6 +232,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         (uint8 initiatorRewardWeight_, uint8 penaltyWeight_, uint8 closingRewardWeight_, address trustedCreditor_) =
             liquidator_new.getAuctionInformationPartTwo(address(proxyAccount));
 
+        assertEq(liquidator_new.getOwner(address(proxyAccount)), proxyAccount.owner());
         assertEq(openDebt, amountLoanedStack + 1);
         assertEq(startTime, block.timestamp);
         assertEq(inAuction, true);

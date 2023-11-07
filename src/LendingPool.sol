@@ -484,6 +484,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         }
 
         //Mint debt tokens to the Account.
+        if (borrowCap > 0 && maxWithdraw(account) + amountWithFee > borrowCap) revert DebtToken_BorrowCapExceeded();
         _deposit(amountWithFee, account);
 
         //Add origination fee to the treasury.
@@ -598,6 +599,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         }
 
         //Mint debt tokens to the Account, debt must be minted Before the actions in the Account are performed.
+        if (borrowCap > 0 && maxWithdraw(account) + amountBorrowedWithFee > borrowCap) {
+            revert DebtToken_BorrowCapExceeded();
+        }
         _deposit(amountBorrowedWithFee, account);
 
         //Add origination fee to the treasury.
