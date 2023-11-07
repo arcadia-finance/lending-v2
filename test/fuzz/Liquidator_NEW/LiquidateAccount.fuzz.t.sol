@@ -232,6 +232,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         (uint8 initiatorRewardWeight_, uint8 penaltyWeight_, uint8 closingRewardWeight_, address trustedCreditor_) =
             liquidator_new.getAuctionInformationPartTwo(address(proxyAccount));
 
+        assertEq(liquidator_new.getOwner(address(proxyAccount)), proxyAccount.owner());
         assertEq(openDebt, amountLoanedStack + 1);
         assertEq(startTime, block.timestamp);
         assertEq(inAuction, true);
