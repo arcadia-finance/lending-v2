@@ -148,7 +148,9 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is not successfull -> total debt after transaction should be bigger than the Collateral Value
-        vm.assume(stableMargin + stableDebt > Constants.tokenToStableCollFactor * stableIn / 100);
+        uint256 collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
+            * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
+        vm.assume(stableMargin + stableDebt > collValue);
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
@@ -227,12 +229,15 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint32 stableDebt
     ) public {
         uint256 stableIn;
+        uint256 collValue;
         {
             uint256 tokenRate = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
             uint256 stableRate = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
+            collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
+                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -241,7 +246,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is successfull -> total debt after transaction should be smaller than the Collateral Value
-        vm.assume(stableMargin + stableDebt <= Constants.tokenToStableCollFactor * stableIn / 100);
+        vm.assume(stableMargin + stableDebt <= collValue);
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
@@ -347,12 +352,15 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         public
     {
         uint256 stableIn;
+        uint256 collValue;
         {
             uint256 tokenRate = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
             uint256 stableRate = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
+            collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
+                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -361,7 +369,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is successfull -> total debt after transaction should be smaller than the Collateral Value
-        vm.assume(stableMargin + stableDebt <= Constants.tokenToStableCollFactor * stableIn / 100);
+        vm.assume(stableMargin + stableDebt <= collValue);
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
