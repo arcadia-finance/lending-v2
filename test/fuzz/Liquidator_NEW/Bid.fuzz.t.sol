@@ -44,6 +44,21 @@ contract Bid_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
+    function testFuzz_Revert_bid_Reentrancy(address bidder, address account_) public {
+        // Reentrancy guard is in locked state.
+        liquidator_new.setLocked(2);
+        // Given: Account is not in the auction
+        uint256[] memory assetAmounts = new uint256[](1);
+        uint256[] memory assetIds = new uint256[](1);
+        bool endAuction = false;
+
+        // When Then: Bid is called, It should revert
+        vm.startPrank(bidder);
+        vm.expectRevert("L: REENTRANCY");
+        liquidator_new.bid(address(account_), assetAmounts, assetIds, endAuction);
+        vm.stopPrank();
+    }
+
     function testFuzz_Revert_bid_NotForSale(address bidder, address account_) public {
         // Given: Account is not in the auction
         uint256[] memory assetAmounts = new uint256[](1);

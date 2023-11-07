@@ -455,4 +455,8 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
     function getOwner(address account) public view returns (address) {
         return auctionInformation[account].originalOwner;
     }
+
+    function setLocked(uint256 locked_) external {
+        locked = locked_;
+    }
 }
