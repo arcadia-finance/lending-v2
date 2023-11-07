@@ -519,6 +519,9 @@ contract Liquidator_NEW is Owned {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
+        if (!success) revert Liquidator_AccountNotHealthy();
+
         uint256 startDebt = auctionInformation_.startDebt;
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
@@ -526,10 +529,6 @@ contract Liquidator_NEW is Owned {
 
         // The minimum amount that should be recognized as realized liquidity.
         uint256 minRealisedLiquidity = startDebt + liquidationInitiatorReward;
-
-        // Check if the account is healthy again after the bids.
-        (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
-        if (!success) revert Liquidator_AccountNotHealthy();
 
         // Calculate remainder and badDebt if any
         uint256 remainder;
