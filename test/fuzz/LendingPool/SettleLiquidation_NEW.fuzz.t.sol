@@ -276,6 +276,13 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 remainder
     ) public {
         // Here we validate the scenario in which the remaining amount to be distributed after a liquidation is < terminationReward
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+                && auctionTerminator != pool.getTreasury()
+        );
         vm.assume(liquidationInitiatorReward > 0);
         vm.assume(
             uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(liquidationPenalty)
@@ -398,10 +405,17 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidationPenalty,
         uint128 remainder
     ) public {
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+                && auctionTerminator != pool.getTreasury()
+        );
         vm.assume(liquidity > 1);
         vm.assume(
             uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(auctionTerminationReward)
-                + uint256(liquidationPenalty) <= (type(uint128).max / 150) * 100
+                + uint256(liquidationPenalty) + uint256(remainder) <= (type(uint128).max / 300) * 100
         );
         vm.assume(uint256(remainder) > uint256(auctionTerminationReward) + uint256(liquidationPenalty));
         vm.assume(remainder <= liquidity);
@@ -443,7 +457,6 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: Terminator should be able to claim his rewards for liquidation termination
         assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-
         assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
     }
 }

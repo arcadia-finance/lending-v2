@@ -366,12 +366,11 @@ contract Liquidator_NEW is Owned {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
         // Calculate the start price.
-        uint256 startPrice =
-                        _calculateStartPrice(
-                uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
+        uint256 startPrice = _calculateStartPrice(
+            uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
                 + uint256(auctionInformation_.auctionClosingReward)
                 + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
-            );
+        );
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(
