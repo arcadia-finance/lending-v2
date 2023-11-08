@@ -517,12 +517,7 @@ contract Liquidator_NEW is Owned {
         );
 
         emit AuctionFinished_NEW(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            uint128(startDebt),
-            uint128(totalBids),
-            0
+            account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), 0
         );
 
         // Set the inAuction flag to false.
