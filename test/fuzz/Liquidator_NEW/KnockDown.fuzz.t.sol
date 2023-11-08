@@ -125,8 +125,17 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
+        vm.expectEmit();
+        emit AuctionFinished_NEW(
+            address(proxyAccount),
+            address(pool_new),
+            address(0),
+            uint128(amountLoaned),
+            uint128(liquidator_new.getAuctionTotalBids(address(proxyAccount))),
+            0
+        );
         liquidator_new.knockDown(address(proxyAccount));
-
+        vm.stopPrank();
         // Then: The account should be healthy
         assertEq(liquidator_new.getAuctionIsActive(address(proxyAccount)), false);
     }
@@ -143,7 +152,7 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
         liquidator_new.knockDown(address(proxyAccount));
-
+        vm.stopPrank();
         // Then: The account should be healthy
         assertEq(liquidator_new.getAuctionIsActive(address(proxyAccount)), false);
     }

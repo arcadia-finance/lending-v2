@@ -88,12 +88,9 @@ contract Liquidator_NEW is Owned {
         address indexed account,
         address indexed creditor,
         address baseCurrency,
+        uint128 startDebt,
         uint128 totalBids,
-        uint128 badDebt,
-        uint128 initiatorReward,
-        uint128 closingReward,
-        uint128 liquidationPenalty,
-        uint128 remainder
+        uint128 badDebt
     );
 
     /* //////////////////////////////////////////////////////////////
@@ -256,7 +253,7 @@ contract Liquidator_NEW is Owned {
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
-            address owner,
+            address owner_,
             address creditor,
             uint256 debt,
             RiskModule.AssetValueAndRiskVariables[] memory riskValues
@@ -284,7 +281,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
         auctionInformation[account].trustedCreditor = creditor;
-        auctionInformation[account].originalOwner = owner;
+        auctionInformation[account].originalOwner = owner_;
 
         // Emit event
         emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
@@ -452,62 +449,42 @@ contract Liquidator_NEW is Owned {
         uint256 closingReward = auctionInformation_.auctionClosingReward;
         uint256 penalty =
             uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 remainder;
+        uint256 badDebt;
+        // Cache value to avoid stack too deep TODO: better solution ?
+        address to_ = to;
 
         if (totalBids >= startDebt + initiatorReward) {
-            uint256 remainder = totalBids - startDebt - initiatorReward;
-            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
-                account,
-                auctionInformation_.originalOwner,
-                0,
-                auctionInformation_.initiator,
-                initiatorReward,
-                to,
-                closingReward,
-                penalty,
-                remainder
-            );
-            emit AuctionFinished_NEW(
-                account,
-                auctionInformation_.trustedCreditor,
-                auctionInformation_.baseCurrency,
-                uint128(totalBids),
-                0,
-                uint128(initiatorReward),
-                uint128(closingReward),
-                uint128(penalty),
-                uint128(remainder)
-            );
+            remainder = totalBids - startDebt - initiatorReward;
         } else {
-            uint256 badDebt;
             unchecked {
                 badDebt = startDebt + initiatorReward - totalBids;
             }
-            ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
-                account,
-                auctionInformation_.originalOwner,
-                badDebt,
-                auctionInformation_.initiator,
-                initiatorReward,
-                to,
-                closingReward,
-                penalty,
-                0
-            );
-            emit AuctionFinished_NEW(
-                account,
-                auctionInformation_.trustedCreditor,
-                auctionInformation_.baseCurrency,
-                uint128(totalBids),
-                uint128(badDebt),
-                uint128(initiatorReward),
-                0,
-                0,
-                0
-            );
         }
 
+        ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            auctionInformation_.initiator,
+            initiatorReward,
+            to_,
+            closingReward,
+            penalty,
+            remainder
+        );
+
         // Transfer all the left-over assets to the 'to' address
-        IAccount_NEW(account).auctionBuyIn(to);
+        IAccount_NEW(account).auctionBuyIn(to_);
+
+        emit AuctionFinished_NEW(
+            account,
+            auctionInformation_.trustedCreditor,
+            auctionInformation_.baseCurrency,
+            uint128(startDebt),
+            uint128(totalBids),
+            uint128(badDebt)
+        );
     }
 
     function knockDown(address account) external {
@@ -526,6 +503,7 @@ contract Liquidator_NEW is Owned {
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
         uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 totalBids = auctionInformation_.totalBids;
 
         // The minimum amount that should be recognized as realized liquidity.
         uint256 minRealisedLiquidity = startDebt + liquidationInitiatorReward;
@@ -549,6 +527,15 @@ contract Liquidator_NEW is Owned {
             auctionClosingReward,
             liquidationPenalty,
             remainder
+        );
+
+        emit AuctionFinished_NEW(
+            account,
+            auctionInformation_.trustedCreditor,
+            auctionInformation_.baseCurrency,
+            uint128(startDebt),
+            uint128(totalBids),
+            0
         );
 
         // Set the inAuction flag to false.

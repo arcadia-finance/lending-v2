@@ -72,12 +72,9 @@ abstract contract Events {
         address indexed account,
         address indexed creditor,
         address baseCurrency,
+        uint128 startDebt,
         uint128 totalBids,
-        uint128 badDebt,
-        uint128 initiatorReward,
-        uint128 closingReward,
-        uint128 liquidationPenalty,
-        uint128 remainder
+        uint128 badDebt
     );
 
     /* //////////////////////////////////////////////////////////////
