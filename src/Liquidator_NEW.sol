@@ -296,7 +296,7 @@ contract Liquidator_NEW is Owned {
     /**
      * @notice Calculate asset distribution percentages based on provided risk values.
      * @param riskValues_ An array of risk values for assets.
-     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 10,000 represents 100%).
+     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 1_000_000 represents 100%).
      */
     function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         internal

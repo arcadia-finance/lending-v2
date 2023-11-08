@@ -129,7 +129,6 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         emit AuctionFinished_NEW(
             address(proxyAccount),
             address(pool_new),
-            address(0),
             uint128(amountLoaned),
             uint128(liquidator_new.getAuctionTotalBids(address(proxyAccount))),
             0
