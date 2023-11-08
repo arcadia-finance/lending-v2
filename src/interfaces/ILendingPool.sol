@@ -54,19 +54,36 @@ interface ILendingPool {
     function calcUnrealisedDebt() external view returns (uint256);
 
     /**
-     * @notice Settles the liquidation after the auction is finished and pays out Creditor, Original owner and Service providers.
-     * @param account The contract address of the Account.
-     * @param originalOwner The original owner of the Account before the auction.
-     * @param badDebt The amount of liabilities that was not recouped by the auction.
-     * @param liquidationInitiatorReward The Reward for the Liquidation Initiator.
-     * @param liquidationFee The additional fee the `originalOwner` has to pay to the protocol.
-     * @param remainder Any funds remaining after the auction are returned back to the `originalOwner`.
+     * @notice Start a liquidation for a specific account with debt.
+     * @param account The address of the account with debt to be liquidated.
+     * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
+     * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+     * @param closingRewardWeight Fee paid to the address that is ending an auction.
+     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
+     * @return closingReward Fee paid to the address that is ending an auction.
+     * @dev This function can only be called by authorized liquidators.
+     * @dev To initiate a liquidation, the function checks if the specified account has open debt.
+     * @dev If the account has no open debt, the function reverts with an error.
+     * @dev If this is the first auction, it hooks to the most junior tranche to inform that auctions are ongoing.
+     * @dev The function updates the count of ongoing auctions.
+     * @dev Liquidations can only be initiated for accounts with non-zero open debt.
      */
+    function startLiquidation(
+        address account,
+        uint256 initiatorRewardWeight,
+        uint256 closingRewardWeight,
+        uint256 penaltyWeight
+    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward);
+    function repay(uint256 amount, address account) external;
+    function auctionRepay(uint256 amount, address account, address bidder) external;
     function settleLiquidation(
         address account,
         address originalOwner,
         uint256 badDebt,
+        address initiator,
         uint256 liquidationInitiatorReward,
+        address terminator,
+        uint256 auctionTerminationReward,
         uint256 liquidationFee,
         uint256 remainder
     ) external;

@@ -4,19 +4,19 @@
  */
 pragma solidity 0.8.19;
 
-import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
+import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
-contract CalculateAskPrice_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
+contract CalculateAskPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test_NEW.setUp();
+        Liquidator_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -43,10 +43,10 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW 
 
         uint256 timePassed = 0;
 
-        uint256 askPrice = liquidator_new.calculateAskPrice(
+        uint256 askPrice = liquidator.calculateAskPrice(
             askedAmounts, askedIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
         );
-        uint256 rightSide = uint256(startPrice) * liquidator_new.getStartPriceMultiplier() / 100;
+        uint256 rightSide = uint256(startPrice) * liquidator.getStartPriceMultiplier() / 100;
         assertEq(askPrice, rightSide);
     }
 }
