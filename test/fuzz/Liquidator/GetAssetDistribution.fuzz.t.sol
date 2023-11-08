@@ -26,12 +26,7 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Success_GetAssetDistribution(
-        uint256 totalValue_,
-        uint8 totalAssetNumber,
-        uint256 collateralFactor,
-        uint256 liquidationFactor
-    ) public {
+    function testFuzz_Success_GetAssetDistribution(uint256 totalValue_, uint8 totalAssetNumber) public {
         vm.assume(totalAssetNumber < 16);
         vm.assume(totalAssetNumber > 0);
         vm.assume(totalValue_ > totalAssetNumber);

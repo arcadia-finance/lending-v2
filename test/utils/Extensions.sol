@@ -370,13 +370,10 @@ contract LiquidatorExtension is Liquidator {
         uint256[] memory askedAssetIds,
         uint32[] memory assetShares,
         uint256[] memory assetAmounts,
-        uint256[] memory assetIds,
         uint128 startPrice,
         uint256 timePassed
     ) public view returns (uint256) {
-        return _calculateAskPrice(
-            askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
-        );
+        return _calculateAskPrice(askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, startPrice, timePassed);
     }
 
     function getClosingRewardWeight() public view returns (uint8) {

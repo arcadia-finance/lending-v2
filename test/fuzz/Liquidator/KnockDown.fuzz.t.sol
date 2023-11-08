@@ -40,7 +40,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.liquidateAccount(address(proxyAccount));
     }
 
-    function bid_fully(address bidder, uint128 amountLoaned) public {
+    function bid_fully(address bidder) public {
         uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];
 
@@ -62,7 +62,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(totalBids, askPrice);
     }
 
-    function bid_partially(address bidder, uint128 amountLoaned) public {
+    function bid_partially(address bidder) public {
         uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];
 
@@ -121,7 +121,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         initiateLiquidation(amountLoaned);
 
         // And: There is a bid happened and bought it partially for the account
-        bid_partially(bidder, amountLoaned);
+        bid_partially(bidder);
 
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
@@ -146,7 +146,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         initiateLiquidation(amountLoaned);
 
         // And: There is a bid happened and bought it partially for the account
-        bid_fully(bidder, amountLoaned);
+        bid_fully(bidder);
 
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
