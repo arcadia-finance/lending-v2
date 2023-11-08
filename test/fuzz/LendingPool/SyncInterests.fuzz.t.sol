@@ -29,7 +29,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint120 realisedLiquidity,
         uint256 interestRate
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         // Given: deltaTimestamp than 5 years, realisedDebt than 3402823669209384912995114146594816 and bigger than 0
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //5 year

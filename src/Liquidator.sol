@@ -293,7 +293,7 @@ contract Liquidator is Owned {
      */
     function _calculateStartPrice(uint256 debt, uint256 startPriceMultiplier_)
         internal
-        view
+        pure
         returns (uint256 startPrice)
     {
         startPrice = debt * startPriceMultiplier_ / 100;
@@ -376,7 +376,6 @@ contract Liquidator is Owned {
             assetIds,
             auctionInformation_.assetShares,
             auctionInformation_.assetAmounts,
-            auctionInformation_.assetIds,
             startPrice,
             timePassed
         );
@@ -387,7 +386,6 @@ contract Liquidator is Owned {
         uint256[] memory askedAssetIds,
         uint32[] memory assetShares,
         uint256[] memory assetAmounts,
-        uint256[] memory assetIds,
         uint256 startPrice,
         uint256 timePassed
     ) internal view returns (uint256 askPrice) {

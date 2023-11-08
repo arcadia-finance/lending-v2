@@ -43,6 +43,17 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         vm.prank(users.accountOwner);
         proxyAccount.setAssetManager(address(pool), true);
+
+        // Set the risk parameters.
+        vm.prank(users.riskManager);
+        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
+            address(pool),
+            address(mockERC20.token1),
+            0,
+            type(uint128).max,
+            Constants.tokenToStableCollFactor,
+            Constants.tokenToStableLiqFactor
+        );
     }
 
     /*//////////////////////////////////////////////////////////////

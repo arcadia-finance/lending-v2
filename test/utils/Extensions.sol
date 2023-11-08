@@ -71,8 +71,8 @@ contract InterestRateModuleExtension is InterestRateModule {
 ////////////////////////////////////////////////////////////// */
 
 contract LendingPoolExtension is LendingPool {
-    constructor(ERC20 _asset, address _treasury, address _vaultFactory, address _liquidator)
-        LendingPool(_asset, _treasury, _vaultFactory, _liquidator)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
+        LendingPool(riskManager_, asset_, treasury_, accountFactory_, liquidator_)
     { }
 
     function popTranche(uint256 index, address tranche) public {
@@ -370,13 +370,10 @@ contract LiquidatorExtension is Liquidator {
         uint256[] memory askedAssetIds,
         uint32[] memory assetShares,
         uint256[] memory assetAmounts,
-        uint256[] memory assetIds,
         uint128 startPrice,
         uint256 timePassed
     ) public view returns (uint256) {
-        return _calculateAskPrice(
-            askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
-        );
+        return _calculateAskPrice(askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, startPrice, timePassed);
     }
 
     function getClosingRewardWeight() public view returns (uint8) {

@@ -43,9 +43,8 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         uint256 timePassed = 0;
 
-        uint256 askPrice = liquidator.calculateAskPrice(
-            askedAmounts, askedIds, assetShares, assetAmounts, assetIds, startPrice, timePassed
-        );
+        uint256 askPrice =
+            liquidator.calculateAskPrice(askedAmounts, askedIds, assetShares, assetAmounts, startPrice, timePassed);
         uint256 rightSide = uint256(startPrice) * liquidator.getStartPriceMultiplier() / 100;
         assertEq(askPrice, rightSide);
     }
