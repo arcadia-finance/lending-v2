@@ -438,13 +438,9 @@ contract Liquidator_NEW is Owned {
         uint256 totalBids = auctionInformation_.totalBids;
         uint256 startDebt = auctionInformation_.startDebt;
         uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
-        uint256 closingReward = auctionInformation_.auctionClosingReward;
-        uint256 penalty =
-            uint256(auctionInformation_.startDebt) * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 penalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
         uint256 remainder;
         uint256 badDebt;
-        // Cache value to avoid stack too deep TODO: better solution ?
-        address to_ = to;
 
         if (totalBids >= startDebt + initiatorReward) {
             remainder = totalBids - startDebt - initiatorReward;
@@ -460,14 +456,14 @@ contract Liquidator_NEW is Owned {
             badDebt,
             auctionInformation_.initiator,
             initiatorReward,
-            to_,
-            closingReward,
+            to,
+            auctionInformation_.auctionClosingReward,
             penalty,
             remainder
         );
 
         // Transfer all the left-over assets to the 'to' address
-        IAccount_NEW(account).auctionBuyIn(to_);
+        IAccount_NEW(account).auctionBuyIn(to);
 
         emit AuctionFinished_NEW(
             account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), uint128(badDebt)

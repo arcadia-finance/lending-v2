@@ -118,7 +118,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // Calculate initiator reward
-        uint256 initiatorReward = amountLoaned * initiatorRewardWeight / 100;
+        uint256 initiatorReward = (amountLoaned + 1) * initiatorRewardWeight / 100;
         initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -131,7 +131,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         vm.warp(block.timestamp + liquidator_new.getCutoffTime() + 1);
 
         // Set total bids on Account < amount owed by the account
-        uint256 totalBids = amountLoaned + initiatorReward - 1;
+        uint256 totalBids = (amountLoaned + 1) + initiatorReward - 1;
         liquidator_new.setTotalBidsOnAccount(address(proxyAccount), totalBids);
 
         vm.startPrank(users.creatorAddress);
@@ -139,9 +139,9 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test_NEW {
         emit AuctionFinished_NEW(
             address(proxyAccount),
             address(pool_new),
-            uint128(amountLoaned),
+            uint128(amountLoaned + 1),
             uint128(totalBids),
-            uint128(amountLoaned + initiatorReward - totalBids)
+            uint128(amountLoaned + 1 + initiatorReward - totalBids)
         );
         liquidator_new.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
         vm.stopPrank();
