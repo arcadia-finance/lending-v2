@@ -357,12 +357,10 @@ contract Liquidator_NEW is Owned {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
         // Calculate the start price.
-        uint128 startPrice = SafeCastLib.safeCastTo128(
-            _calculateStartPrice(
-                uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
-                    + uint256(auctionInformation_.auctionClosingReward)
-                    + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
-            )
+        uint256 startPrice = _calculateStartPrice(
+            uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
+                + uint256(auctionInformation_.auctionClosingReward)
+                + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
         );
 
         // Calculate the ask price.
@@ -383,7 +381,7 @@ contract Liquidator_NEW is Owned {
         uint32[] memory assetShares,
         uint256[] memory assetAmounts,
         uint256[] memory assetIds,
-        uint128 startPrice,
+        uint256 startPrice,
         uint256 timePassed
     ) internal view returns (uint256 askPrice) {
         if (!(askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length)) {

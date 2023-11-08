@@ -1104,12 +1104,12 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
-        liquidationInitiatorReward = openDebt * initiatorRewardWeight / 100;
+        liquidationInitiatorReward = (openDebt * initiatorRewardWeight) / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        closingReward = openDebt * closingRewardWeight / 100;
+        closingReward = (openDebt * closingRewardWeight) / 100;
         closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
-        uint256 liquidationPenalty = openDebt * penaltyWeight / 100;
+        uint256 liquidationPenalty = (openDebt * penaltyWeight) / 100;
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
