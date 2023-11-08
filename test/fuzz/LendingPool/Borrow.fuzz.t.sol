@@ -227,6 +227,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -268,6 +269,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -312,6 +314,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
@@ -344,6 +347,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(address(srTranche));
@@ -408,6 +412,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         vm.prank(users.creatorAddress);
         pool.setOriginationFee(originationFee);
@@ -455,6 +460,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
+        vm.assume(to != address(proxyAccount));
 
         uint256 fee = uint256(amountLoaned) * originationFee / 10_000;
 
