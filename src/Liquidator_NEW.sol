@@ -62,7 +62,6 @@ contract Liquidator_NEW is Owned {
         uint32 startTime; // The timestamp the auction started.
         uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        address baseCurrency; // The contract address of the baseCurrency.
         address initiator; // The address of the initiator of the auction.
         uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
@@ -83,14 +82,9 @@ contract Liquidator_NEW is Owned {
     event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
-    event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event AuctionFinished_NEW(
-        address indexed account,
-        address indexed creditor,
-        address baseCurrency,
-        uint128 startDebt,
-        uint128 totalBids,
-        uint128 badDebt
+        address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
 
     /* //////////////////////////////////////////////////////////////
@@ -284,7 +278,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].originalOwner = owner_;
 
         // Emit event
-        emit AuctionStarted(account, creditor, assetAddresses[0], uint128(debt));
+        emit AuctionStarted(account, creditor, uint128(debt));
     }
 
     /**
@@ -478,12 +472,7 @@ contract Liquidator_NEW is Owned {
         IAccount_NEW(account).auctionBuyIn(to_);
 
         emit AuctionFinished_NEW(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            uint128(startDebt),
-            uint128(totalBids),
-            uint128(badDebt)
+            account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), uint128(badDebt)
         );
     }
 

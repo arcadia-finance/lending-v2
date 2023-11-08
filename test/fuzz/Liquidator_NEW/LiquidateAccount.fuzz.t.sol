@@ -208,14 +208,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         liquidator_new.liquidateAccount(address(proxyAccount));
 
         // Avoid stack too deep
-        //        uint8 initiatorRewardWeightStack = initiatorRewardWeight;
-        //        uint8 penaltyWeightStack = penaltyWeight;
-        //        uint8 closingRewardWeightStack = closingRewardWeight;
+        uint8 penaltyWeightStack = penaltyWeight;
         uint128 amountLoanedStack = amountLoaned;
-
-        // Then: Auction should be set and started
-        bool isAuctionActive = liquidator_new.getAuctionIsActive(address(proxyAccount));
-        assertEq(isAuctionActive, true);
+        uint8 closingRewardWeightStack = closingRewardWeight;
+        uint8 initiatorRewardWeightStack = initiatorRewardWeight;
 
         uint256 startPrice = liquidator_new.getAuctionStartPrice(address(proxyAccount));
         uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
@@ -223,38 +219,60 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertEq(startPrice, loan);
         assertGe(pool_new.getAuctionsInProgress(), 1);
 
-        // And : Auction struct should be correct
-        (uint128 openDebt, uint32 startTime, bool inAuction) =
-            liquidator_new.getAuctionInformationPartOne(address(proxyAccount));
-        uint80 maxInitiatorFee_ = pool_new.getMaxInitiatorFee();
-        uint80 maxClosingFee_ = pool_new.getMaxClosingFee();
+        // Then: Auction should be set and started
+        (
+            address originalOwner_,
+            uint128 openDebt_,
+            uint32 startTime_,
+            uint256 totalBids_,
+            bool inAuction_,
+            address initiator_,
+            uint80 liquidationInitiatorReward_,
+            uint80 auctionClosingReward_,
+            uint80 liquidationPenaltyWeight_
+        ) = liquidator_new.getAuctionInformationPartOne(address(proxyAccount));
 
-        (uint8 initiatorRewardWeight_, uint8 penaltyWeight_, uint8 closingRewardWeight_, address trustedCreditor_) =
-            liquidator_new.getAuctionInformationPartTwo(address(proxyAccount));
+        assertEq(initiator_, liquidationInitiator);
+        assertEq(inAuction_, true);
+        assertEq(originalOwner_, users.accountOwner);
 
-        assertEq(liquidator_new.getOwner(address(proxyAccount)), proxyAccount.owner());
-        assertEq(openDebt, amountLoanedStack + 1);
-        assertEq(startTime, block.timestamp);
-        assertEq(inAuction, true);
-        // TODO: Fix this, these checks are not necessary - Zeki - 31/10/23
-        //        assertEq(maxInitiatorFee_, pool_new.getMaxInitiatorFee());
-        //        assertEq(initiatorRewardWeightStack, initiatorRewardWeight_);
-        //        assertEq(penaltyWeightStack, penaltyWeight_);
-        //        assertEq(closingRewardWeightStack, closingRewardWeight_);
-        assertEq(trustedCreditor_, address(pool_new));
-
-        uint256 openDebtStack = openDebt;
-        // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = openDebt * initiatorRewardWeight_ / 100;
+        uint256 liquidationInitiatorReward = openDebt_ * initiatorRewardWeightStack / 100;
         liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        uint256 liquidationPenalty = openDebt * penaltyWeight_ / 100;
-        uint256 closingReward = openDebt * closingRewardWeight_ / 100;
-        closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
+            liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
+
+        assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
+
+        uint256 closingReward = openDebt_ * closingRewardWeightStack / 100;
+        closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
+
+        assertEq(auctionClosingReward_, closingReward);
+        assertEq(penaltyWeightStack, liquidationPenaltyWeight_);
+        assertEq(openDebt_, amountLoanedStack + 1);
+        assertEq(startTime_, block.timestamp);
+        assertEq(inAuction_, true);
+
+        // And : Liquidation incentives should have been added to openDebt of Account
+        uint256 liquidationPenalty = openDebt_ * penaltyWeightStack / 100;
 
         assertEq(
             pool_new.getOpenPosition(address(proxyAccount)),
-            openDebtStack + liquidationInitiatorReward + liquidationPenalty + closingReward
+            openDebt_ + liquidationInitiatorReward + liquidationPenalty + closingReward
         );
+
+        (
+            uint16 cutoffTime_,
+            address trustedCreditor_,
+            address[] memory assetAddresses_,
+            uint32[] memory assetShares_,
+            uint256[] memory assetAmounts_,
+            uint256[] memory assetIds_
+        ) = liquidator_new.getAuctionInformationPartTwo(address(proxyAccount));
+
+        assertEq(trustedCreditor_, address(pool_new));
+        assertEq(cutoffTime_, liquidator_new.getCutoffTime());
+        assertEq(assetAddresses_[0], address(mockERC20.stable1));
+        assertEq(assetShares_[0], 10_000);
+        assertEq(assetAmounts_[0], amountLoanedStack);
+        assertEq(assetIds_[0], 0);
     }
 }

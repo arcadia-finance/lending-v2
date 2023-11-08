@@ -342,31 +342,50 @@ contract LiquidatorExtension is Liquidator {
 contract LiquidatorExtension_NEW is Liquidator_NEW {
     constructor(address factory_) Liquidator_NEW(factory_) { }
 
-    // TODO: Fix this
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (uint128 openDebt, uint32 startTime, bool inAuction)
+        returns (
+            address originalOwner_,
+            uint128 openDebt_,
+            uint32 startTime_,
+            uint256 totalBids_,
+            bool inAuction_,
+            address initiator_,
+            uint80 liquidationInitiatorReward_,
+            uint80 auctionClosingReward_,
+            uint8 liquidationPenaltyWeight_
+        )
     {
-        openDebt = auctionInformation[account_].startDebt;
-        startTime = auctionInformation[account_].startTime;
-        inAuction = auctionInformation[account_].inAuction;
+        originalOwner_ = auctionInformation[account_].originalOwner;
+        openDebt_ = auctionInformation[account_].startDebt;
+        startTime_ = auctionInformation[account_].startTime;
+        totalBids_ = auctionInformation[account_].totalBids;
+        inAuction_ = auctionInformation[account_].inAuction;
+        initiator_ = auctionInformation[account_].initiator;
+        liquidationInitiatorReward_ = auctionInformation[account_].liquidationInitiatorReward;
+        auctionClosingReward_ = auctionInformation[account_].auctionClosingReward;
+        liquidationPenaltyWeight_ = auctionInformation[account_].liquidationPenaltyWeight;
     }
 
     function getAuctionInformationPartTwo(address account_)
         public
         view
         returns (
-            uint8 initiatorRewardWeight_,
-            uint8 penaltyWeight_,
-            uint8 closingRewardWeight_,
-            address trustedCreditor
+            uint16 cutoffTime_,
+            address trustedCreditor_,
+            address[] memory assetAddresses_,
+            uint32[] memory assetShares_,
+            uint256[] memory assetAmounts_,
+            uint256[] memory assetIds_
         )
     {
-        initiatorRewardWeight_ = initiatorRewardWeight;
-        penaltyWeight_ = penaltyWeight;
-        closingRewardWeight_ = closingRewardWeight;
-        trustedCreditor = auctionInformation[account_].trustedCreditor;
+        cutoffTime_ = auctionInformation[account_].cutoffTime;
+        trustedCreditor_ = auctionInformation[account_].trustedCreditor;
+        assetAddresses_ = auctionInformation[account_].assetAddresses;
+        assetShares_ = auctionInformation[account_].assetShares;
+        assetAmounts_ = auctionInformation[account_].assetAmounts;
+        assetIds_ = auctionInformation[account_].assetIds;
     }
 
     function getLocked() public view returns (uint256) {
@@ -434,7 +453,7 @@ contract LiquidatorExtension_NEW is Liquidator_NEW {
 
     function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
         public
-        view
+        pure
         returns (uint32[] memory assetDistribution)
     {
         return _getAssetDistribution(riskValues_);
