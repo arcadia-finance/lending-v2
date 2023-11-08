@@ -28,7 +28,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
@@ -54,7 +54,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_repay_Paused(uint128 amountLoaned, uint256 availableFunds, address sender) public {
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
@@ -103,7 +103,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     {
         vm.assume(amountLoaned > amountRepaid);
         vm.assume(amountRepaid > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -134,11 +134,12 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_Repay_ExactAmount(uint128 amountLoaned, address sender) public {
         vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -168,7 +169,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     {
         vm.assume(availableFunds > amountLoaned);
         vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);

@@ -29,7 +29,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 realisedDebt,
         uint120 initialLiquidity
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_VARIABLES_UNIT); // No overflow Risk Module
+        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
         vm.assume(interestRate > 0);

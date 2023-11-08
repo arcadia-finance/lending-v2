@@ -15,12 +15,45 @@ abstract contract TrustedCreditor {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
+    // The address of the riskManager.
+    address public riskManager;
+
     // Map accountVersion => status.
     mapping(uint256 => bool) public isValidVersion;
 
     /* //////////////////////////////////////////////////////////////
-                            Account LOGIC
+                                EVENTS
     ////////////////////////////////////////////////////////////// */
+
+    event RiskManagerUpdated(address riskManager);
+    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
+
+    /* //////////////////////////////////////////////////////////////
+                                CONSTRUCTOR
+    ////////////////////////////////////////////////////////////// */
+
+    /**
+     * @param riskManager_ The address of the Risk Manager.
+     */
+    constructor(address riskManager_) {
+        riskManager = riskManager_;
+
+        emit RiskManagerUpdated(riskManager_);
+    }
+
+    /* //////////////////////////////////////////////////////////////
+                            ACCOUNT LOGIC
+    ////////////////////////////////////////////////////////////// */
+
+    /**
+     * @notice Sets a new Risk Manager.
+     * @param riskManager_ The address of the new Risk Manager.
+     */
+    function _setRiskManager(address riskManager_) internal {
+        riskManager = riskManager_;
+
+        emit RiskManagerUpdated(riskManager_);
+    }
 
     /**
      * @notice Sets the validity of Account version to valid.
@@ -29,6 +62,8 @@ abstract contract TrustedCreditor {
      */
     function _setAccountVersion(uint256 accountVersion, bool valid) internal {
         isValidVersion[accountVersion] = valid;
+
+        emit AccountVersionSet(accountVersion, valid);
     }
 
     /**
