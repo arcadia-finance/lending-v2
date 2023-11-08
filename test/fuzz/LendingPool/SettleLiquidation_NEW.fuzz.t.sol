@@ -182,10 +182,13 @@ contract SettleLiquidation_NEW_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidationPenalty,
         uint256 remainder
     ) public {
-        vm.assume(liquidationInitiator != auctionTerminator);
-        vm.assume(liquidationInitiator != address(srTranche));
-        vm.assume(liquidationInitiator != address(jrTranche));
-        vm.assume(liquidationInitiator != address(liquidator));
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+            && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+            && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+            && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+            && auctionTerminator != pool.getTreasury()
+        );
         vm.assume(liquidity > 0);
         // Here we validate the scenario in which the remaining amount to be distributed after a liquidation is > terminationReward but does not cover all of the liquidation fees.
         vm.assume(liquidationInitiatorReward > 0);
