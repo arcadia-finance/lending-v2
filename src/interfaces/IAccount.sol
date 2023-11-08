@@ -4,6 +4,8 @@
  */
 pragma solidity 0.8.19;
 
+import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+
 interface IAccount {
     /**
      * @notice Returns the address of the owner of the Account.
@@ -40,4 +42,40 @@ interface IAccount {
     function accountManagementAction(address actionHandler, bytes calldata actionData, bytes calldata signature)
         external
         returns (address, uint256);
+
+    function checkAndStartLiquidation()
+        external
+        returns (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            address owner,
+            address creditor,
+            uint256 debt,
+            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+        );
+    function auctionBuy(
+        address[] memory assetAddresses,
+        uint256[] memory assetIds,
+        uint256[] memory assetAmounts,
+        address bidder
+    ) external;
+    function auctionBuyIn(address to) external;
+
+    /**
+     * @notice Generates three arrays of all the stored assets in the Account.
+     * @return assetAddresses Array of the contract addresses of the assets.
+     * @return assetIds Array of the IDs of the assets.
+     * @return assetAmounts Array with the amounts of the assets.
+     * @dev Balances are stored on the contract to prevent working around the deposit limits.
+     * @dev Loops through the stored asset addresses and fills the arrays.
+     * @dev There is no importance of the order in the arrays, but all indexes of the arrays correspond to the same asset.
+     */
+    function generateAssetData()
+        external
+        view
+        returns (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts);
+
+    function baseCurrency() external view returns (address baseCurrency);
+    function registry() external view returns (address registry);
 }

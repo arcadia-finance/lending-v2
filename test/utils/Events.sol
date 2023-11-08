@@ -59,16 +59,6 @@ abstract contract Events {
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
     event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
     event AuctionFinished(
-        address indexed account,
-        address indexed creditor,
-        address baseCurrency,
-        uint128 price,
-        uint128 badDebt,
-        uint128 initiatorReward,
-        uint128 liquidationPenalty,
-        uint128 remainder
-    );
-    event AuctionFinished_NEW(
         address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
 

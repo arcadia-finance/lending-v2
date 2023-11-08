@@ -838,96 +838,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
-     * @notice Starts liquidation of a Account.
-     * @param account The Account address.
-     * @dev At the start of the liquidation the debt tokens are burned,
-     * as such interests are not accrued during the liquidation.
-     */
-    function liquidateAccount(address account) external whenLiquidationNotPaused processInterests {
-        //Only Accounts can have debt, and debtTokens are non-transferrable.
-        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
-        //passed as Account is indeed a Account and has debt.
-        uint256 openDebt = maxWithdraw(account);
-        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-
-        //Store liquidation initiator to pay out initiator reward when auction is finished.
-        liquidationInitiator[account] = msg.sender;
-
-        //Start the auction of the collateralised assets to repay debt.
-        ILiquidator(liquidator).startAuction(account, openDebt, maxInitiatorFee);
-
-        //Hook to the most junior Tranche, to inform that auctions are ongoing,
-        //already done if there are other auctions in progress (auctionsInProgress > O).
-        if (auctionsInProgress == 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
-        }
-        unchecked {
-            ++auctionsInProgress;
-        }
-
-        //Remove debt from Account (burn DebtTokens).
-        _withdraw(openDebt, account, account);
-
-        //Event emitted by Liquidator.
-    }
-
-    /**
-     * @notice Settles the liquidation after the auction is finished and pays out Creditor, Original owner and Service providers.
-     * @param account The contract address of the Account.
-     * @param originalOwner The original owner of the Account before the auction.
-     * @param badDebt The amount of liabilities that was not recouped by the auction.
-     * @param liquidationInitiatorReward The Reward for the Liquidation Initiator.
-     * @param liquidationFee The additional fee the `originalOwner` has to pay to the protocol.
-     * @param remainder Any funds remaining after the auction are returned back to the `originalOwner`.
-     * @dev This function is called by the Liquidator after a liquidation is finished.
-     * @dev The liquidator will transfer the auction proceeds (the underlying asset)
-     * back to the liquidity pool after liquidation, before calling this function.
-     */
-
-    function settleLiquidation(
-        address account,
-        address originalOwner,
-        uint256 badDebt,
-        uint256 liquidationInitiatorReward,
-        uint256 liquidationFee,
-        uint256 remainder
-    ) external onlyLiquidator processInterests {
-        //Make Initiator rewards claimable for liquidationInitiator[account].
-        realisedLiquidityOf[liquidationInitiator[account]] += liquidationInitiatorReward;
-
-        if (badDebt > 0) {
-            //Collateral was auctioned for less than the liabilities (openDebt + Liquidation Initiator Reward)
-            //-> Default event, deduct badDebt from LPs, starting with most Junior Tranche.
-            totalRealisedLiquidity =
-                SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
-            _processDefault(badDebt);
-        } else {
-            //Collateral was auctioned for more than the liabilities
-            //-> Pay out the Liquidation Fee to treasury and Tranches.
-            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + liquidationFee + remainder
-            );
-
-            //Any remaining assets after paying off liabilities and the fee go back to the original Account Owner.
-            if (remainder > 0) {
-                //Make remainder claimable by originalOwner.
-                realisedLiquidityOf[originalOwner] += remainder;
-            }
-        }
-
-        unchecked {
-            --auctionsInProgress;
-        }
-        //Hook to the most junior Tranche to inform that there are no ongoing auctions.
-        if (auctionsInProgress == 0 && tranches.length > 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
-        }
-
-        //Event emitted by Liquidator.
-    }
-
-    /**
      * @dev Function to settle a liquidation event.
      * @param account The account undergoing liquidation.
      * @param originalOwner The original owner of the liquidated assets.
@@ -940,7 +850,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @param remainder Any remaining assets after liquidation.
      * @notice This function is callable only by the liquidator and processes liquidation events.
      */
-    function settleLiquidation_NEW(
+    function settleLiquidation(
         address account,
         address originalOwner,
         uint256 badDebt,

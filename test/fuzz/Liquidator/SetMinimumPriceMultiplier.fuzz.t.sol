@@ -9,7 +9,6 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "setMinimumPriceMultiplier" of contract "Liquidator".
  */
-
 contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -28,7 +27,7 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the minimum price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Liquidator_MultiplierTooHigh.selector);
+        vm.expectRevert("LQ_SMPM: multiplier too high");
         liquidator.setMinimumPriceMultiplier(priceMultiplier);
         vm.stopPrank();
     }

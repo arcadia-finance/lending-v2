@@ -11,7 +11,7 @@ import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
-import { Liquidator_NEW } from "../../src/Liquidator_NEW.sol";
+import { Liquidator } from "../../src/Liquidator.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 /* //////////////////////////////////////////////////////////////
@@ -273,74 +273,6 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 
 contract LiquidatorExtension is Liquidator {
     constructor(address factory_) Liquidator(factory_) { }
-
-    function getAuctionInformationPartOne(address account_)
-        public
-        view
-        returns (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee, address baseCurrency)
-    {
-        openDebt = auctionInformation[account_].openDebt;
-        startTime = auctionInformation[account_].startTime;
-        inAuction = auctionInformation[account_].inAuction;
-        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
-        baseCurrency = auctionInformation[account_].baseCurrency;
-    }
-
-    function getAuctionInformationPartTwo(address account_)
-        public
-        view
-        returns (
-            uint16 startPriceMultiplier_,
-            uint8 minPriceMultiplier_,
-            uint8 initiatorRewardWeight_,
-            uint8 penaltyWeight_,
-            uint16 cutoffTime_,
-            address originalOwner,
-            address trustedCreditor,
-            uint64 base_
-        )
-    {
-        startPriceMultiplier_ = auctionInformation[account_].startPriceMultiplier;
-        minPriceMultiplier_ = auctionInformation[account_].minPriceMultiplier;
-        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
-        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
-        cutoffTime_ = auctionInformation[account_].cutoffTime;
-        originalOwner = auctionInformation[account_].originalOwner;
-        trustedCreditor = auctionInformation[account_].trustedCreditor;
-        base_ = auctionInformation[account_].base;
-    }
-
-    function getPenaltyWeight() public view returns (uint8) {
-        return penaltyWeight;
-    }
-
-    function getInitiatorRewardWeight() public view returns (uint8) {
-        return initiatorRewardWeight;
-    }
-
-    function getCutoffTime() public view returns (uint16) {
-        return cutoffTime;
-    }
-
-    function getBase() public view returns (uint64) {
-        return base;
-    }
-
-    function getMinPriceMultiplier() public view returns (uint64) {
-        return minPriceMultiplier;
-    }
-
-    function getStartPriceMultiplier() public view returns (uint16) {
-        return startPriceMultiplier;
-    }
-
-    function getFactory() public view returns (address) {
-        return factory;
-    }
-}
-
-contract LiquidatorExtension_NEW is Liquidator_NEW {
-    constructor(address factory_) Liquidator_NEW(factory_) { }
 
     function getAuctionInformationPartOne(address account_)
         public

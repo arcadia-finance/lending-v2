@@ -152,7 +152,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        debt_new.setRealisedDebt(uint256(amountLoaned + 1));
+        debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         //And: an auction is ongoing
         vm.assume(auctionsInProgress > 0);

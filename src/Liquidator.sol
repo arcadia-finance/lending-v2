@@ -10,19 +10,19 @@ import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { Owned } from "lib/solmate/src/auth/Owned.sol";
+import { ILiquidator } from "./interfaces/ILiquidator.sol";
+import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 
-/**
- * @title Liquidator
- * @author Pragma Labs
- * @notice The liquidator holds the execution logic and storage of all things related to liquidating Arcadia Accounts.
- * Ensure your total value denomination remains above the liquidation threshold, or risk being liquidated!
- */
 contract Liquidator is Owned {
     using SafeTransferLib for ERC20;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
+
+    // Reentrancy lock.
+    uint256 locked;
 
     // The contract address of the Factory.
     address internal immutable factory;
@@ -45,73 +45,48 @@ contract Liquidator is Owned {
     // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal penaltyWeight;
+    // The total amount of shares in the Account.
+    // 1_000_000 shares = 100% of the Account.
+    uint32 internal constant TotalShares = 1_000_000;
+    // Fee paid to the address that is ending an auction.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    uint8 internal closingRewardWeight;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint128 openDebt; // The open debt, same decimal precision as baseCurrency.
+        address originalOwner; // The address of the original owner of the Account.
+        uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
+        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint80 maxInitiatorFee; // The max initiation fee, same decimal precision as baseCurrency.
-        address baseCurrency; // The contract address of the baseCurrency.
+        address initiator; // The address of the initiator of the auction.
+        uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint16 startPriceMultiplier; // 2 decimals precision.
-        uint8 minPriceMultiplier; // 2 decimals precision.
-        uint8 initiatorRewardWeight; // 2 decimals precision.
-        uint8 penaltyWeight; // 2 decimals precision.
+        uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
+        uint8 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
-        address originalOwner; // The original owner of the Account.
         address trustedCreditor; // The creditor that issued the debt.
-        uint64 base; // Determines how fast the auction price drops over time.
+        address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
+        uint32[] assetShares; // The distribution of the assets in the Account. it is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
+        uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
+        uint256[] assetIds; // The ids of the assets in the Account. The order of the assets is the same as in the Account.
     }
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
+    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
     event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
-    event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event AuctionFinished(
-        address indexed account,
-        address indexed creditor,
-        address baseCurrency,
-        uint128 price,
-        uint128 badDebt,
-        uint128 initiatorReward,
-        uint128 liquidationPenalty,
-        uint128 remainder
+        address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
-
-    /* //////////////////////////////////////////////////////////////
-                              ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when liquidation weights are above maximum value.
-    error Liquidator_WeightsTooHigh();
-    // Thrown when halfLifeTime is below minimum value.
-    error Liquidator_HalfLifeTimeTooLow();
-    // Thrown when halfLifeTime is above maximum value.
-    error Liquidator_HalfLifeTimeTooHigh();
-    // Thrown when cutOffTime is below minimum value.
-    error Liquidator_CutOffTooLow();
-    // Thrown when cutOffTime is above maximum value.
-    error Liquidator_CutOffTooHigh();
-    // Thrown when the start price multiplier is below minimum value.
-    error Liquidator_MultiplierTooLow();
-    // Thrown when the start price multiplier is above the maximum value.
-    error Liquidator_MultiplierTooHigh();
-    // Thrown when an Account is not for sale.
-    error Liquidator_NotForSale();
-    // Thrown when the auction did not yet expire.
-    error Liquidator_AuctionNotExpired();
-    // Thrown when caller is not valid.
-    error Liquidator_Unauthorized();
-    // Thrown when an auction is in process.
-    error Liquidator_AuctionOngoing();
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -119,12 +94,43 @@ contract Liquidator is Owned {
 
     constructor(address factory_) Owned(msg.sender) {
         factory = factory_;
+        locked = 1;
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
+        // note: to discuss
+        closingRewardWeight = 1;
         startPriceMultiplier = 150;
         minPriceMultiplier = 60;
         cutoffTime = 14_400; //4 hours
         base = 999_807_477_651_317_446; //3600s halflife, 14_400 cutoff
+    }
+
+    /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when the liquidateAccount function is called on an account that is already in an auction.
+    error Liquidator_AuctionOngoing();
+    // Thrown when the Account has no bad debt in currect situation
+    error Liquidator_NoBadDebt();
+    // Thrown when an Account is not for sale.
+    error Liquidator_NotForSale();
+    // Thrown when the auction has not yet expired.
+    error Liquidator_AuctionNotExpired();
+    // Thrown when the bid function with invalid asset amounts or ids.
+    error Liquidator_InvalidBid();
+    // Thrown when the endAuction called and the account is still unhealthy
+    error Liquidator_AccountNotHealthy();
+
+    /* //////////////////////////////////////////////////////////////
+                                MODIFIERS
+    ////////////////////////////////////////////////////////////// */
+
+    modifier nonReentrant() {
+        require(locked == 1, "L: REENTRANCY");
+        locked = 2;
+        _;
+        locked = 1;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -137,13 +143,17 @@ contract Liquidator is Owned {
      * @param penaltyWeight_ Penalty paid by the Account owner to the trusted Creditor.
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
-    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_) external onlyOwner {
-        if (initiatorRewardWeight_ + penaltyWeight_ > 11) revert Liquidator_WeightsTooHigh();
+    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
+        external
+        onlyOwner
+    {
+        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
+        closingRewardWeight = uint8(closingRewardWeight_);
 
-        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_));
+        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
     }
 
     /**
@@ -161,10 +171,10 @@ contract Liquidator is Owned {
      */
     function setAuctionCurveParameters(uint16 halfLifeTime, uint16 cutoffTime_) external onlyOwner {
         //Checks that new parameters are within reasonable boundaries.
-        if (halfLifeTime <= 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
-        if (halfLifeTime >= 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
-        if (cutoffTime_ <= 3600) revert Liquidator_CutOffTooLow(); // 1 hour
-        if (cutoffTime_ >= 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
+        require(halfLifeTime > 120, "LQ_SACP: halfLifeTime too low"); // 2 minutes
+        require(halfLifeTime < 28_800, "LQ_SACP: halfLifeTime too high"); // 8 hours
+        require(cutoffTime_ > 3600, "LQ_SACP: cutoff too low"); // 1 hour
+        require(cutoffTime_ < 64_800, "LQ_SACP: cutoff too high"); // 18 hours
 
         //Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
@@ -190,8 +200,8 @@ contract Liquidator is Owned {
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        if (startPriceMultiplier_ <= 100) revert Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ >= 301) revert Liquidator_MultiplierTooHigh();
+        require(startPriceMultiplier_ > 100, "LQ_SSPM: multiplier too low");
+        require(startPriceMultiplier_ < 301, "LQ_SSPM: multiplier too high");
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -203,7 +213,7 @@ contract Liquidator is Owned {
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        if (minPriceMultiplier_ >= 91) revert Liquidator_MultiplierTooHigh();
+        require(minPriceMultiplier_ < 91, "LQ_SMPM: multiplier too high");
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
@@ -214,173 +224,211 @@ contract Liquidator is Owned {
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Called by a Creditor to start an auction to liquidate collateral of a Account.
-     * @param account The contract address of the Account to liquidate.
-     * @param openDebt The open debt taken by `originalOwner`.
-     * @param maxInitiatorFee The upper limit for the fee paid to the Liquidation Initiator, set by the trusted Creditor.
-     * @dev This function is called by the Creditor who is owed the debt issued against the Account.
+     * @notice Initiate the liquidation of a specific account.
+     * @param account The address of the account to be liquidated.
+     * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
+     * 1. Sets the initiator address to the sender and flags the account as being in an auction.
+     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount_NEW` contract to check if the account is solvent
+     *    and start the liquidation process within the account.
+     * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
+     * 4. Calculates the starting price for the liquidation based on the account's debt.
+     * 5. Records the start time and asset distribution for the auction.
+     * 6. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
      */
-    function startAuction(address account, uint256 openDebt, uint80 maxInitiatorFee) public {
+    function liquidateAccount(address account) external nonReentrant {
+        // Check if the account is already in an auction.
         if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
 
-        //Avoid possible re-entrance with the same Account address.
+        // Store the initiator address and set the inAuction flag to true.
+        auctionInformation[account].initiator = msg.sender;
         auctionInformation[account].inAuction = true;
 
-        //A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account) that returns true on liquidateAccount().
-        //This would successfully start an auction, but as long as no collision with an actual Arcadia-Account contract address is found, this is not an issue.
-        //The malicious non-Account would be in auction indefinitely, but does not block any 'real' auctions of Arcadia-Accounts.
-        //One exception is if an attacker finds a pre-image of his custom contract with the same contract address of an Arcadia-Account (deployed via create2).
-        //The attacker could in theory: start auction of malicious contract, self-destruct and create Arcadia-Account with identical contract address.
-        //This Account could never be auctioned since auctionInformation[account].inAuction would return true.
-        //Finding such a collision requires finding a collision of the keccak256 hash function.
-        (address originalOwner, address baseCurrency, address trustedCreditor) =
-            IAccount(account).liquidateAccount(openDebt);
+        // Call Account to check if account is solvent and if it is solvent start the liquidation in the Account.
+        (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            address owner_,
+            address creditor,
+            uint256 debt,
+            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+        ) = IAccount(account).checkAndStartLiquidation();
 
-        //Check that msg.sender is indeed the Creditor of the Account.
-        if (trustedCreditor != msg.sender) revert Liquidator_Unauthorized();
+        // Cache weights
+        uint8 initiatorRewardWeight_ = initiatorRewardWeight;
+        uint8 penaltyWeight_ = penaltyWeight;
+        uint8 closingRewardWeight_ = closingRewardWeight;
 
-        auctionInformation[account].openDebt = uint128(openDebt);
-        auctionInformation[account].startTime = uint32(block.timestamp);
-        auctionInformation[account].maxInitiatorFee = maxInitiatorFee;
-        auctionInformation[account].baseCurrency = baseCurrency;
+        // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
+        (uint256 liquidationInitiatorReward, uint256 closingReward) = ILendingPool(creditor).startLiquidation(
+            account, initiatorRewardWeight_, closingRewardWeight_, penaltyWeight_
+        );
+
+        // Fill the auction struct
+        auctionInformation[account].liquidationInitiatorReward = uint80(liquidationInitiatorReward); // No risk of down casting since the max fee is uint80
+        auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
+        auctionInformation[account].liquidationPenaltyWeight = penaltyWeight_;
+        auctionInformation[account].startDebt = uint128(debt);
         auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
-        auctionInformation[account].minPriceMultiplier = minPriceMultiplier;
-        auctionInformation[account].initiatorRewardWeight = initiatorRewardWeight;
-        auctionInformation[account].penaltyWeight = penaltyWeight;
+        auctionInformation[account].startTime = uint32(block.timestamp);
+        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        auctionInformation[account].assetAddresses = assetAddresses;
+        auctionInformation[account].assetIds = assetIds;
+        auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
-        auctionInformation[account].originalOwner = originalOwner;
-        auctionInformation[account].trustedCreditor = msg.sender;
-        auctionInformation[account].base = base;
+        auctionInformation[account].trustedCreditor = creditor;
+        auctionInformation[account].originalOwner = owner_;
 
-        emit AuctionStarted(account, trustedCreditor, baseCurrency, uint128(openDebt));
+        // Emit event
+        emit AuctionStarted(account, creditor, uint128(debt));
     }
 
     /**
-     * @notice Function returns the current auction price of a Account.
-     * @param account The contract address of the Account.
-     * @return price the total price for which the Account can be purchased.
-     * @return inAuction returns false when the Account is not being auctioned.
-     * @dev We use a dutch auction: price constantly decreases and the first bidder buys the Account
-     * and immediately ends the auction.
+     * @notice Calculate the starting price for a liquidation based on the specified debt amount.
+     * @param debt The amount of debt for which to calculate the starting price.
+     * @return startPrice The calculated starting price, expressed as a fraction of the debt.
+     * @dev This function is an internal view function, and it calculates the starting price for a liquidation
+     *      based on a given debt amount. The start price is determined by multiplying the debt by the
+     *      `startPriceMultiplier` and dividing the result by 100.
      */
-    function getPriceOfAccount(address account) public view returns (uint256 price, bool inAuction) {
-        inAuction = auctionInformation[account].inAuction;
+    function _calculateStartPrice(uint256 debt, uint256 startPriceMultiplier_)
+        internal
+        view
+        returns (uint256 startPrice)
+    {
+        startPrice = debt * startPriceMultiplier_ / 100;
+    }
 
-        if (!inAuction) {
-            return (0, false);
+    /**
+     * @notice Calculate asset distribution percentages based on provided risk values.
+     * @param riskValues_ An array of risk values for assets.
+     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 1_000_000 represents 100%).
+     */
+    function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+        internal
+        pure
+        returns (uint32[] memory assetDistributions)
+    {
+        uint256 length = riskValues_.length;
+        uint256 totalValue;
+        for (uint256 i; i < length;) {
+            unchecked {
+                totalValue += riskValues_[i].valueInBaseCurrency;
+            }
+            unchecked {
+                ++i;
+            }
         }
-
-        price = _calcPriceOfAccount(auctionInformation[account]);
-    }
-
-    /**
-     * @notice Function returns the current auction price given time passed and the openDebt.
-     * @param auctionInfo The auction information.
-     * @return price The total price for which the Account can be purchased.
-     * @dev We use a dutch auction: price constantly decreases and the first bidder buys the Account and immediately ends the auction.
-     * @dev Price P(t) decreases exponentially over time: P(t) = openDebt * [(SPM - MPM) * base^t + MPM]:
-     * SPM: The startPriceMultiplier defines the initial price: P(0) = openDebt * SPM (2 decimals precision).
-     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = openDebt * MPM (2 decimals precision).
-     * base: defines how fast the exponential curve decreases (18 decimals precision).
-     * t: time passed since start auction (in seconds, 18 decimals precision).
-     * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
-     */
-    function _calcPriceOfAccount(AuctionInformation memory auctionInfo) internal view returns (uint256 price) {
-        //Time passed is a difference of two Uint32 -> can't overflow.
-        uint256 timePassed;
-        unchecked {
-            timePassed = block.timestamp - auctionInfo.startTime; //time duration in seconds.
-
-            if (timePassed > auctionInfo.cutoffTime) {
-                //Cut-off time passed -> return the minimal value defined by minPriceMultiplier (2 decimals precision).
-                //No overflow possible: uint128 * uint8.
-                price = uint256(auctionInfo.openDebt) * auctionInfo.minPriceMultiplier / 1e2;
-            } else {
-                //Bring to 18 decimals precision for LogExpMath.pow()
-                //No overflow possible: uin32 * uint64.
-                timePassed = timePassed * 1e18;
-
-                //pow(base, timePassed) has 18 decimals and is strictly smaller than 1 (-> smaller as 1e18).
-                //No overflow possible: uint128 * uint64 * uint8.
-                //Multipliers have 2 decimals precision and LogExpMath.pow() has 18 decimals precision,
-                //hence we need to divide the result by 1e20.
-                price = auctionInfo.openDebt
-                    * (
-                        LogExpMath.pow(auctionInfo.base, timePassed)
-                            * (auctionInfo.startPriceMultiplier - auctionInfo.minPriceMultiplier)
-                            + 1e18 * uint256(auctionInfo.minPriceMultiplier)
-                    ) / 1e20;
+        assetDistributions = new uint32[](length);
+        for (uint256 i; i < length;) {
+            // The asset distribution is calculated as a percentage of the total value of the assets.
+            assetDistributions[i] = uint32(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
+            unchecked {
+                ++i;
             }
         }
     }
 
-    /**
-     * @notice Function a user (the bidder) calls to buy the Account and end the auction.
-     * @param account The contract address of the Account.
-     * @dev We use a dutch auction: price constantly decreases and the first bidder buys the Account
-     * And immediately ends the auction.
-     */
-    function buyAccount(address account) external {
+    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, bool endAuction)
+        external
+        payable
+        nonReentrant
+    {
+        // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
-        uint256 priceOfAccount = _calcPriceOfAccount(auctionInformation_);
-        //Stop the auction, this will prevent any possible reentrance attacks.
-        auctionInformation[account].inAuction = false;
+        uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
-        //Transfer funds, equal to the current auction price from the bidder to the Creditor contract.
-        //The bidder should have approved the Liquidation contract for at least an amount of priceOfAccount.
-        ERC20(auctionInformation_.baseCurrency).safeTransferFrom(
-            msg.sender, auctionInformation_.trustedCreditor, priceOfAccount
+        // Repay the debt of the account.
+        ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
+
+        // Transfer the assets to the bidder.
+        IAccount(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
+
+        // process the bid for later bids, increase the total bids
+        auctionInformation[account].totalBids += askPrice;
+
+        // If the auction is over, end it.
+        if (endAuction) {
+            _knockDown(account, auctionInformation_);
+        }
+    }
+
+    function _calculateAskPrice(
+        AuctionInformation memory auctionInformation_,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds
+    ) internal view returns (uint256 askPrice) {
+        // Calculate the time passed since the auction started.
+        uint256 timePassed = block.timestamp - auctionInformation_.startTime;
+        // Calculate the start price.
+        uint256 startPrice = _calculateStartPrice(
+            uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
+                + uint256(auctionInformation_.auctionClosingReward)
+                + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100),
+            auctionInformation_.startPriceMultiplier
         );
 
-        (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
-        calcLiquidationSettlementValues(
-            auctionInformation_.openDebt,
-            priceOfAccount,
-            auctionInformation_.maxInitiatorFee,
-            auctionInformation_.initiatorRewardWeight,
-            auctionInformation_.penaltyWeight
-        );
-
-        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account,
-            auctionInformation_.originalOwner,
-            badDebt,
-            liquidationInitiatorReward,
-            liquidationPenalty,
-            remainder
-        );
-
-        //Change ownership of the auctioned Account to the bidder.
-        IFactory(factory).safeTransferFrom(address(this), msg.sender, account);
-
-        emit AuctionFinished(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            uint128(priceOfAccount),
-            uint128(badDebt),
-            uint128(liquidationInitiatorReward),
-            uint128(liquidationPenalty),
-            uint128(remainder)
+        // Calculate the ask price.
+        askPrice = _calculateAskPrice(
+            assetAmounts,
+            assetIds,
+            auctionInformation_.assetShares,
+            auctionInformation_.assetAmounts,
+            auctionInformation_.assetIds,
+            startPrice,
+            timePassed
         );
     }
 
+    function _calculateAskPrice(
+        uint256[] memory askedAssetAmounts,
+        uint256[] memory askedAssetIds,
+        uint32[] memory assetShares,
+        uint256[] memory assetAmounts,
+        uint256[] memory assetIds,
+        uint256 startPrice,
+        uint256 timePassed
+    ) internal view returns (uint256 askPrice) {
+        if (!(askedAssetAmounts.length == askedAssetIds.length && assetAmounts.length == askedAssetAmounts.length)) {
+            revert Liquidator_InvalidBid();
+        }
+
+        uint256 askedShares;
+        uint256 totalShares;
+
+        for (uint256 i; i < askedAssetAmounts.length;) {
+            unchecked {
+                askedShares += assetShares[i] * askedAssetAmounts[i] / assetAmounts[i];
+                totalShares += assetShares[i];
+                ++i;
+            }
+        }
+
+        unchecked {
+            //Bring to 18 decimals precision for LogExpMath.pow()
+            //No overflow possible: uint32 * uint64.
+            timePassed = timePassed * 1e18;
+
+            //Calculate the price
+            askPrice = (
+                uint256(startPrice)
+                    * (
+                        LogExpMath.pow(base, timePassed) * (startPriceMultiplier - minPriceMultiplier)
+                            + 1e18 * uint256(minPriceMultiplier)
+                    )
+            ) / (1e20 * totalShares / askedShares);
+        }
+    }
+
     /**
-     * @notice End an unsuccessful auction after the cutoffTime has passed.
-     * @param account The contract address of the Account.
-     * @param to The address to which the Account will be transferred.
-     * @dev This is an emergency process, and can not be triggered under normal operation.
-     * The auction will be stopped and the Account will be transferred to the provided address.
-     * The junior tranche of the liquidity pool will pay for the bad debt.
-     * The protocol will sell/auction the Account in another way to recover the debt.
-     * The protocol will later "donate" these proceeds back to the junior tranche and/or other
-     * impacted Tranches, this last step is not enforced by the smart contracts.
-     * While this process is not fully trustless, it is the only way to solve an extreme unhappy flow,
-     * where an auction did not end within cutoffTime (due to market or technical reasons).
+     * @notice Ends an auction when there's still debt remaining after the auction ends.
+     * @param account The account to end the liquidation for.
+     * @param to The address to which the Account ownership will be transferred.
      */
-    function endAuction(address account, address to) external onlyOwner {
+    function endAuctionProtocol(address account, address to) external onlyOwner {
+        // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
@@ -388,93 +436,93 @@ contract Liquidator is Owned {
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
         }
-        if (timePassed <= cutoffTime) revert Liquidator_AuctionNotExpired();
+        if (timePassed <= auctionInformation_.cutoffTime) revert Liquidator_AuctionNotExpired();
 
-        //Stop the auction, this will prevent any possible reentrance attacks.
+        // Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;
 
-        (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder) =
-        calcLiquidationSettlementValues(
-            auctionInformation_.openDebt,
-            0,
-            auctionInformation_.maxInitiatorFee,
-            auctionInformation_.initiatorRewardWeight,
-            auctionInformation_.penaltyWeight
-        ); //priceOfAccount is zero.
+        // Cache values
+        uint256 totalBids = auctionInformation_.totalBids;
+        uint256 startDebt = auctionInformation_.startDebt;
+        uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 penalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 remainder;
+        uint256 badDebt;
+
+        if (totalBids >= startDebt + initiatorReward) {
+            remainder = totalBids - startDebt - initiatorReward;
+        } else {
+            unchecked {
+                badDebt = startDebt + initiatorReward - totalBids;
+            }
+        }
 
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
             account,
             auctionInformation_.originalOwner,
             badDebt,
+            auctionInformation_.initiator,
+            initiatorReward,
+            to,
+            auctionInformation_.auctionClosingReward,
+            penalty,
+            remainder
+        );
+
+        // Transfer all the left-over assets to the 'to' address
+        IAccount(account).auctionBuyIn(to);
+
+        emit AuctionFinished(
+            account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), uint128(badDebt)
+        );
+    }
+
+    function knockDown(address account) external {
+        // Check if the account is already in an auction.
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        _knockDown(account, auctionInformation_);
+    }
+
+    function _knockDown(address account, AuctionInformation memory auctionInformation_) internal {
+        (bool success,,) = IAccount(account).isAccountHealthy(0, 0);
+        if (!success) revert Liquidator_AccountNotHealthy();
+
+        uint256 startDebt = auctionInformation_.startDebt;
+        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
+        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 totalBids = auctionInformation_.totalBids;
+
+        // The minimum amount that should be recognized as realized liquidity.
+        uint256 requiredDebt = startDebt + liquidationInitiatorReward;
+
+        // Calculate remainder and badDebt if any
+        uint256 remainder;
+        // calculate remainder in case of all debt is paid
+        if (auctionInformation_.totalBids > requiredDebt) {
+            remainder = auctionInformation_.totalBids - requiredDebt;
+        }
+        // Note: if account is healthy and totalBids is less than totalOpenDebt,
+        // then this is partial liquidation, there is no remainder and no bad debt
+
+        // Call settlement of the debt in the trustedCreditor
+        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
+            account,
+            auctionInformation_.originalOwner,
+            0,
+            auctionInformation_.initiator,
             liquidationInitiatorReward,
+            msg.sender,
+            auctionClosingReward,
             liquidationPenalty,
             remainder
         );
 
-        //Change ownership of the auctioned account to the protocol owner.
-        IFactory(factory).safeTransferFrom(address(this), to, account);
+        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), 0);
 
-        emit AuctionFinished(
-            account,
-            auctionInformation_.trustedCreditor,
-            auctionInformation_.baseCurrency,
-            0,
-            uint128(badDebt),
-            uint128(liquidationInitiatorReward),
-            uint128(liquidationPenalty),
-            uint128(remainder)
-        );
-    }
-
-    /**
-     * @notice Calculates how the liquidation needs to be further settled with the Creditor, Original owner and Service providers.
-     * @param openDebt The open debt taken by `originalOwner`.
-     * @param priceOfAccount The final selling price of the Account.
-     * @return badDebt The amount of liabilities that was not recouped by the auction.
-     * @return liquidationInitiatorReward The Reward for the Liquidation Initiator.
-     * @return liquidationPenalty The additional penalty the `originalOwner` has to pay to the protocol.
-     * @return remainder Any funds remaining after the auction are returned back to the `originalOwner`.
-     * @dev All values are denominated in the baseCurrency of the Account.
-     * @dev We use a dutch auction: price constantly decreases and the first bidder buys the account
-     * And immediately ends the auction.
-     */
-    function calcLiquidationSettlementValues(
-        uint256 openDebt,
-        uint256 priceOfAccount,
-        uint88 maxInitiatorFee,
-        uint8 initiatorRewardWeight_,
-        uint8 penaltyWeight_
-    )
-        public
-        pure
-        returns (uint256 badDebt, uint256 liquidationInitiatorReward, uint256 liquidationPenalty, uint256 remainder)
-    {
-        //openDebt is a uint128 -> all calculations can be unchecked.
-        unchecked {
-            //Liquidation Initiator Reward is always paid out, independent of the final auction price.
-            //The reward is calculated as a fixed percentage of open debt, but capped on the upside (maxInitiatorFee).
-            liquidationInitiatorReward = openDebt * initiatorRewardWeight_ / 100;
-            liquidationInitiatorReward =
-                liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-
-            //Final Auction price should at least cover the original debt and Liquidation Initiator Reward.
-            //Otherwise there is bad debt.
-            if (priceOfAccount < openDebt + liquidationInitiatorReward) {
-                badDebt = openDebt + liquidationInitiatorReward - priceOfAccount;
-            } else {
-                liquidationPenalty = openDebt * penaltyWeight_ / 100;
-                remainder = priceOfAccount - openDebt - liquidationInitiatorReward;
-
-                //Check if the remainder can cover the full liquidation penalty.
-                if (remainder > liquidationPenalty) {
-                    //If yes, calculate the final remainder.
-                    remainder -= liquidationPenalty;
-                } else {
-                    //If not, there is no remainder for the originalOwner.
-                    liquidationPenalty = remainder;
-                    remainder = 0;
-                }
-            }
-        }
+        // Set the inAuction flag to false.
+        auctionInformation[account].inAuction = false;
     }
 }

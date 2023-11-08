@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { Liquidator_Fuzz_Test_NEW } from "./_Liquidator.fuzz.t.sol";
+import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
@@ -12,13 +12,13 @@ import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
-contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
+contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test_NEW.setUp();
+        Liquidator_Fuzz_Test.setUp();
     }
 
     function initiateLiquidation(uint128 amountLoaned) public {
@@ -26,22 +26,22 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bytes3 emptyBytes3;
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
-        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
-        vm.prank(address(srTranche_new));
-        pool_new.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool_new.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        debt_new.setRealisedDebt(uint256(amountLoaned + 1));
+        debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // When: Liquidation Initiator calls liquidateAccount
         vm.prank(address(45));
-        liquidator_new.liquidateAccount(address(proxyAccount));
+        liquidator.liquidateAccount(address(proxyAccount));
     }
 
     function bid_fully(address bidder, uint128 amountLoaned) public {
-        uint256[] memory originalAssetAmounts = liquidator_new.getAuctionAssetAmounts(address(proxyAccount));
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];
 
         // And: Bidder has enough funds and approved the lending pool for repay
@@ -50,20 +50,20 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
-        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator_new.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
-        uint256 totalBids = liquidator_new.getAuctionTotalBids(address(proxyAccount));
-        uint256 askPrice = liquidator_new.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
+        uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
         assertEq(totalBids, askPrice);
     }
 
     function bid_partially(address bidder, uint128 amountLoaned) public {
-        uint256[] memory originalAssetAmounts = liquidator_new.getAuctionAssetAmounts(address(proxyAccount));
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];
 
         // And: Bidder has enough funds and approved the lending pool for repay
@@ -72,15 +72,15 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
-        mockERC20.stable1.approve(address(pool_new), type(uint256).max);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator_new.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
-        uint256 totalBids = liquidator_new.getAuctionTotalBids(address(proxyAccount));
-        uint256 askPrice = liquidator_new.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
+        uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
         assertEq(totalBids, askPrice);
     }
 
@@ -94,7 +94,7 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // When Then: knock down is called, It should revert
         vm.startPrank(hammer);
         vm.expectRevert(Liquidator_NotForSale.selector);
-        liquidator_new.knockDown(address(account_));
+        liquidator.knockDown(address(account_));
         vm.stopPrank();
     }
     //
@@ -110,7 +110,7 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // When Then: knockDown is called which account is still unhealthy, It should revert
         vm.startPrank(hammer);
         vm.expectRevert(Liquidator_AccountNotHealthy.selector);
-        liquidator_new.knockDown(address(proxyAccount));
+        liquidator.knockDown(address(proxyAccount));
         vm.stopPrank();
     }
 
@@ -126,17 +126,17 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
         vm.expectEmit();
-        emit AuctionFinished_NEW(
+        emit AuctionFinished(
             address(proxyAccount),
-            address(pool_new),
+            address(pool),
             uint128(amountLoaned + 1),
-            uint128(liquidator_new.getAuctionTotalBids(address(proxyAccount))),
+            uint128(liquidator.getAuctionTotalBids(address(proxyAccount))),
             0
         );
-        liquidator_new.knockDown(address(proxyAccount));
+        liquidator.knockDown(address(proxyAccount));
         vm.stopPrank();
         // Then: The account should be healthy
-        assertEq(liquidator_new.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
     }
 
     function testFuzz_Success_knockDown_Fully(address hammer, address bidder, uint128 amountLoaned) public {
@@ -150,9 +150,9 @@ contract EndAuction_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
 
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
-        liquidator_new.knockDown(address(proxyAccount));
+        liquidator.knockDown(address(proxyAccount));
         vm.stopPrank();
         // Then: The account should be healthy
-        assertEq(liquidator_new.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
     }
 }
