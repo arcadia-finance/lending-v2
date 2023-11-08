@@ -65,6 +65,7 @@ contract Liquidator_NEW is Owned {
         address baseCurrency; // The contract address of the baseCurrency.
         address initiator; // The address of the initiator of the auction.
         uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
+        uint16 startPriceMultiplier; // 2 decimals precision.
         uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
         uint8 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
@@ -277,6 +278,7 @@ contract Liquidator_NEW is Owned {
         auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
         auctionInformation[account].liquidationPenaltyWeight = penaltyWeight_;
         auctionInformation[account].startDebt = uint128(debt);
+        auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
         auctionInformation[account].startTime = uint32(block.timestamp);
         auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
         auctionInformation[account].assetAddresses = assetAddresses;
@@ -298,8 +300,12 @@ contract Liquidator_NEW is Owned {
      *      based on a given debt amount. The start price is determined by multiplying the debt by the
      *      `startPriceMultiplier` and dividing the result by 100.
      */
-    function _calculateStartPrice(uint256 debt) internal view returns (uint256 startPrice) {
-        startPrice = debt * startPriceMultiplier / 100;
+    function _calculateStartPrice(uint256 debt, uint256 startPriceMultiplier_)
+        internal
+        view
+        returns (uint256 startPrice)
+    {
+        startPrice = debt * startPriceMultiplier_ / 100;
     }
 
     /**
@@ -369,7 +375,8 @@ contract Liquidator_NEW is Owned {
         uint256 startPrice = _calculateStartPrice(
             uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
                 + uint256(auctionInformation_.auctionClosingReward)
-                + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100)
+                + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100),
+            auctionInformation_.startPriceMultiplier
         );
 
         // Calculate the ask price.
