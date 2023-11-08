@@ -91,12 +91,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-        debt_new.setRealisedDebt(uint256(amountLoaned + 2));
+        debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // When: Liquidator calls startLiquidation()
         vm.prank(address(liquidator));
         (uint256 liquidationInitiatorReward_, uint256 closingReward_) =
-            pool.startLiquidation(address(proxyAccount), initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+            pool.startLiquidation(address(proxyAccount), initiatorRewardWeight, closingRewardWeight, penaltyWeight);
 
         // Avoid stack too deep
         uint8 initiatorRewardWeightStack = initiatorRewardWeight;
@@ -110,11 +110,11 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(jrTranche.auctionInProgress(), true);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = uint256(amountLoanedStack) * initiatorRewardWeightStack / 100;
+        uint256 liquidationInitiatorReward = uint256(amountLoanedStack + 1) * initiatorRewardWeightStack / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
         uint256 liquidationPenalty = (uint256(amountLoanedStack + 1) * penaltyWeightStack) / 100;
-        uint256 closingReward = (uint256(amountLoanedStack) * closingRewardWeightStack) / 100;
+        uint256 closingReward = (uint256(amountLoanedStack + 1) * closingRewardWeightStack) / 100;
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
 
         // And: Returned amount should be equal to maxInitiatorFee
@@ -123,7 +123,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            (amountLoanedStack) + liquidationInitiatorReward + liquidationPenalty + closingReward
+            (amountLoanedStack + 1) + liquidationInitiatorReward + liquidationPenalty + closingReward
         );
     }
 
