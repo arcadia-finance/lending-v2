@@ -509,14 +509,14 @@ contract Liquidator_NEW is Owned {
     }
 
     function knockDown(address account) external {
-        _knockDown(account);
-    }
-
-    function _knockDown(address account) internal {
         // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        _knockDown(account);
+    }
+
+    function _knockDown(address account) internal {
         (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
