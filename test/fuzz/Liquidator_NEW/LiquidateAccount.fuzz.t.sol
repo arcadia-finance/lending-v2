@@ -244,14 +244,14 @@ contract LiquidateAccount_Liquidator_Fuzz_Test_NEW is Liquidator_Fuzz_Test_NEW {
         assertEq(trustedCreditor_, address(pool_new));
 
         uint256 openDebtStack = openDebt;
+
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = openDebt * initiatorRewardWeight_ / 100;
+        uint256 liquidationInitiatorReward = openDebtStack * initiatorRewardWeight_ / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        uint256 liquidationPenalty = openDebt * penaltyWeight_ / 100;
-        uint256 closingReward = openDebt * closingRewardWeight_ / 100;
+        uint256 liquidationPenalty = openDebtStack * penaltyWeight_ / 100;
+        uint256 closingReward = openDebtStack * closingRewardWeight_ / 100;
         closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
-
         assertEq(
             pool_new.getOpenPosition(address(proxyAccount)),
             openDebtStack + liquidationInitiatorReward + liquidationPenalty + closingReward
