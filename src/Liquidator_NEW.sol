@@ -354,7 +354,7 @@ contract Liquidator_NEW is Owned {
 
         // If the auction is over, end it.
         if (endAuction) {
-            _knockDown(account);
+            _knockDown(account, auctionInformation_);
         }
     }
 
@@ -513,10 +513,10 @@ contract Liquidator_NEW is Owned {
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
-        _knockDown(account);
+        _knockDown(account, auctionInformation_);
     }
 
-    function _knockDown(address account) internal {
+    function _knockDown(address account, AuctionInformation memory auctionInformation_) internal {
         (bool success,,) = IAccount_NEW(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
@@ -526,15 +526,16 @@ contract Liquidator_NEW is Owned {
         uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
 
         // The minimum amount that should be recognized as realized liquidity.
-        uint256 minRealisedLiquidity = startDebt + liquidationInitiatorReward;
+        uint256 requiredDebt = startDebt + liquidationInitiatorReward;
 
         // Calculate remainder and badDebt if any
         uint256 remainder;
         // calculate remainder in case of all debt is paid
-        if (auctionInformation_.totalBids > minRealisedLiquidity) {
-            remainder = auctionInformation_.totalBids - minRealisedLiquidity;
+        if (auctionInformation_.totalBids > requiredDebt) {
+            remainder = auctionInformation_.totalBids - requiredDebt;
         }
-        // if account is healthy and totalBids is less than totalOpenDebt, then this is partial liquidation, there is no remainder and no bad debt
+        // Note: if account is healthy and totalBids is less than totalOpenDebt,
+        // then this is partial liquidation, there is no remainder and no bad debt
 
         // Call settlement of the debt in the trustedCreditor
         ILendingPool_NEW(auctionInformation_.trustedCreditor).settleLiquidation_NEW(
