@@ -52,7 +52,7 @@ interface IAccount {
             address owner,
             address creditor,
             uint256 debt,
-            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+            RiskModule.AssetValueAndRiskFactors[] memory riskValues
         );
     function auctionBuy(
         address[] memory assetAddresses,

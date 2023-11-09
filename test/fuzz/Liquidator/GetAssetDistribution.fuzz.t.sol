@@ -32,10 +32,10 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(totalValue_ > totalAssetNumber);
         vm.assume(totalValue_ < type(uint256).max / 1e6);
 
-        RiskModule.AssetValueAndRiskVariables[] memory riskValues_ =
-            new RiskModule.AssetValueAndRiskVariables[](totalAssetNumber);
+        RiskModule.AssetValueAndRiskFactors[] memory riskValues_ =
+            new RiskModule.AssetValueAndRiskFactors[](totalAssetNumber);
         for (uint256 i; i < totalAssetNumber;) {
-            riskValues_[i].valueInBaseCurrency = totalValue_ / totalAssetNumber;
+            riskValues_[i].assetValue = totalValue_ / totalAssetNumber;
 
             unchecked {
                 ++i;
