@@ -38,9 +38,6 @@ contract CalculateAskPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256[] memory assetAmounts = new uint256[](1);
         assetAmounts[0] = 1;
 
-        uint256[] memory assetIds = new uint256[](1);
-        askedIds[0] = 1;
-
         uint256 timePassed = 0;
 
         uint256 askPrice =

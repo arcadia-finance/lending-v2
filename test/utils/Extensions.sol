@@ -380,7 +380,7 @@ contract LiquidatorExtension is Liquidator {
         return closingRewardWeight;
     }
 
-    function getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+    function getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
         public
         pure
         returns (uint32[] memory assetDistribution)

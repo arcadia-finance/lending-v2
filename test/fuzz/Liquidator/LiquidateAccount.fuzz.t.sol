@@ -240,6 +240,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(uint256(amountLoaned) * initiatorRewardWeight <= (type(uint256).max));
+        vm.assume(uint256(amountLoaned) * closingRewardWeight <= (type(uint256).max));
+        vm.assume(uint256(amountLoaned) * penaltyWeight <= (type(uint256).max));
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
 
         // Given: Account has debt
@@ -282,16 +285,14 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             liquidationInitiatorReward > maxInitiatorFeeStack ? maxInitiatorFeeStack : liquidationInitiatorReward;
 
         assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
-
-        uint256 closingReward = openDebt_ * closingRewardWeightStack / 100;
+        uint256 closingReward = uint256(openDebt_) * closingRewardWeightStack / 100;
         closingReward = closingReward > maxClosingFeeStack ? maxClosingFeeStack : closingReward;
 
         assertEq(auctionClosingReward_, closingReward);
         assertEq(penaltyWeightStack, liquidationPenaltyWeight_);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationPenalty = openDebt_ * penaltyWeightStack / 100;
-
+        uint256 liquidationPenalty = uint256(openDebt_) * penaltyWeightStack / 100;
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
             openDebt_ + liquidationInitiatorReward + liquidationPenalty + closingReward

@@ -251,7 +251,7 @@ contract Liquidator is Owned {
             address owner_,
             address creditor,
             uint256 debt,
-            RiskModule.AssetValueAndRiskVariables[] memory riskValues
+            RiskModule.AssetValueAndRiskFactors[] memory riskValues
         ) = IAccount(account).checkAndStartLiquidation();
 
         // Cache weights
@@ -304,7 +304,7 @@ contract Liquidator is Owned {
      * @param riskValues_ An array of risk values for assets.
      * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 1_000_000 represents 100%).
      */
-    function _getAssetDistribution(RiskModule.AssetValueAndRiskVariables[] memory riskValues_)
+    function _getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
         internal
         pure
         returns (uint32[] memory assetDistributions)
@@ -313,7 +313,7 @@ contract Liquidator is Owned {
         uint256 totalValue;
         for (uint256 i; i < length;) {
             unchecked {
-                totalValue += riskValues_[i].valueInBaseCurrency;
+                totalValue += riskValues_[i].assetValue;
             }
             unchecked {
                 ++i;
@@ -322,7 +322,7 @@ contract Liquidator is Owned {
         assetDistributions = new uint32[](length);
         for (uint256 i; i < length;) {
             // The asset distribution is calculated as a percentage of the total value of the assets.
-            assetDistributions[i] = uint32(riskValues_[i].valueInBaseCurrency * 1_000_000 / totalValue);
+            assetDistributions[i] = uint32(riskValues_[i].assetValue * 1_000_000 / totalValue);
             unchecked {
                 ++i;
             }

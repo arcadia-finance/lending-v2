@@ -39,7 +39,7 @@ contract AccountV1Malicious {
             address owner_,
             address creditor_,
             uint256 totalOpenDebt_,
-            RiskModule.AssetValueAndRiskVariables[] memory assetAndRiskValues
+            RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
         )
     {
         assetAddresses = new address[](1);
@@ -56,8 +56,8 @@ contract AccountV1Malicious {
 
         totalOpenDebt_ = totalOpenDebt;
 
-        assetAndRiskValues = new RiskModule.AssetValueAndRiskVariables[](1);
-        assetAndRiskValues[0].valueInBaseCurrency = valueInBaseCurrency;
+        assetAndRiskValues = new RiskModule.AssetValueAndRiskFactors[](1);
+        assetAndRiskValues[0].assetValue = valueInBaseCurrency;
         assetAndRiskValues[0].collateralFactor = collateralFactor;
         assetAndRiskValues[0].liquidationFactor = liquidationFactor;
     }
