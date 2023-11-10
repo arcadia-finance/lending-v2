@@ -533,7 +533,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
      * @dev Emits a `Repay` event to log the repayment details.
      */
-    function auctionRepay(uint256 amount, address account, address bidder) external whenLiquidationNotPaused onlyLiquidator {
+    function auctionRepay(uint256 amount, address account, address bidder)
+        external
+        whenLiquidationNotPaused
+        onlyLiquidator
+    {
         uint256 accountDebt = maxWithdraw(account);
         uint256 shares = accountDebt > amount ? amount : accountDebt;
 
