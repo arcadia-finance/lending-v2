@@ -507,17 +507,13 @@ contract Liquidator is Owned {
         uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
         uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
         uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        // NOTE: totalBds to delete later ? Alex - 13/11/23
         uint256 totalBids = auctionInformation_.totalBids;
 
-        // The minimum amount that should be recognized as realized liquidity.
-        uint256 requiredDebt = startDebt + liquidationInitiatorReward;
-
         // Calculate remainder and badDebt if any
-        uint256 remainder;
-        // calculate remainder in case of all debt is paid
-        if (auctionInformation_.totalBids > requiredDebt) {
-            remainder = auctionInformation_.totalBids - requiredDebt;
-        }
+        // NOTE : as in this case both can be paid out fully (account is healthy) - Alex - 13/11/23
+        uint256 remainder = liquidationInitiatorReward + auctionClosingReward;
+
         // TODO: Add else statement where the remainder is closing and penalty rewards - Zeki - 13/11/23
         // Note: if account is healthy and totalBids is less than totalOpenDebt,
         // then this is partial liquidation, there is no remainder and no bad debt
