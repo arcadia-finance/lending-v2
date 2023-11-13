@@ -61,14 +61,25 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     uint128 public supplyCap;
     // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
     uint96 internal fixedLiquidationCost;
-    // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 internal maxInitiatorFee;
-    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
-    uint80 internal maxClosingFee;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
     // Address of the protocol treasury.
     address internal treasury;
+
+    // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+    uint80 internal maxInitiatorFee;
+    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
+    uint80 internal maxClosingFee;
+    // Fee paid to the Liquidation Initiator.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    // Absolute fee can be further capped to a max amount by the creditor.
+    uint8 internal initiatorRewardWeight;
+    // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    uint8 internal penaltyWeight;
+    // Fee paid to the address that is ending an auction.
+    // Defined as a fraction of the openDebt with 2 decimals precision.
+    uint8 internal closingRewardWeight;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
@@ -98,6 +109,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
+    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
     event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
     event InterestWeightSet(uint256 indexed index, uint16 weight);
     event LiquidationWeightSet(uint256 indexed index, uint16 weight);
@@ -190,6 +202,10 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         treasury = treasury_;
         accountFactory = accountFactory_;
         liquidator = liquidator_;
+        initiatorRewardWeight = 1;
+        penaltyWeight = 5;
+        // note: to discuss
+        closingRewardWeight = 1;
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -986,9 +1002,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     /**
      * @notice Start a liquidation for a specific account with debt.
      * @param account The address of the account with debt to be liquidated.
-     * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
-     * @param closingRewardWeight Fee paid to the address that is ending an auction.
+     * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
+     * @param penaltyWeight_ Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+     * @param closingRewardWeight_ Fee paid to the address that is ending an auction.
      * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
      * @return closingReward Fee paid to the address that is ending an auction.
      * @dev This function can only be called by authorized liquidators.
@@ -1000,9 +1016,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      */
     function startLiquidation(
         address account,
-        uint256 initiatorRewardWeight,
-        uint256 closingRewardWeight,
-        uint256 penaltyWeight
+        uint256 initiatorRewardWeight_,
+        uint256 closingRewardWeight_,
+        uint256 penaltyWeight_
     )
         external
         onlyLiquidator
@@ -1020,12 +1036,12 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
-        liquidationInitiatorReward = (openDebt * initiatorRewardWeight) / 100;
+        liquidationInitiatorReward = (openDebt * initiatorRewardWeight_) / 100;
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        closingReward = (openDebt * closingRewardWeight) / 100;
+        closingReward = (openDebt * closingRewardWeight_) / 100;
         closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
-        uint256 liquidationPenalty = (openDebt * penaltyWeight) / 100;
+        uint256 liquidationPenalty = (openDebt * penaltyWeight_) / 100;
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
@@ -1038,6 +1054,29 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         unchecked {
             ++auctionsInProgress;
         }
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        MANAGE AUCTION SETTINGS
+    ///////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Sets the liquidation weights.
+     * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
+     * @param penaltyWeight_ Penalty paid by the Account owner to the trusted Creditor.
+     * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
+     */
+    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
+        external
+        onlyOwner
+    {
+        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
+
+        initiatorRewardWeight = uint8(initiatorRewardWeight_);
+        penaltyWeight = uint8(penaltyWeight_);
+        closingRewardWeight = uint8(closingRewardWeight_);
+
+        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
     }
 
     /* //////////////////////////////////////////////////////////////
