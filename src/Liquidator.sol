@@ -491,6 +491,61 @@ contract Liquidator is Owned {
         );
     }
 
+    /**
+     * @notice Ends an auction when there's still debt remaining after the auction ends.
+     * @param account The account to end the liquidation for.
+     */
+    function endAuction(address account) external {
+        // Check if the account is already in an auction.
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        uint256 timePassed;
+        unchecked {
+            timePassed = block.timestamp - auctionInformation_.startTime;
+        }
+        if (timePassed <= auctionInformation_.cutoffTime) revert Liquidator_AuctionNotExpired();
+
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
+
+        uint256 remainingDebt = ILendingPool(auctionInformation.trustedCreditor).maxWithdraw(account);
+
+        // Cache values
+        // NOTE: "startDebt" to delete ?
+        uint256 startDebt = auctionInformation_.startDebt;
+        uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 closingReward = auctionInformation_.auctionClosingReward;
+        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 remainder;
+        uint256 badDebt;
+
+        if (remainingDebt > closingReward + liquidationPenalty) {
+            badDebt = remainingDebt - closingReward - liquidationPenalty;
+        }
+
+        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation_Alex(
+            account,
+            auctionInformation_.originalOwner,
+            badDebt,
+            auctionInformation_.initiator,
+            initiatorReward,
+            msg.sender,
+            closingReward,
+            liquidationPenalty,
+            remainingDebt,
+            0 // unsure here how to handle surplus
+        );
+
+        // Transfer all the left-over assets to the 'to' address
+        IAccount(account).auctionBuyIn(owner());
+
+        // TODO: adapt auctionFinished
+        emit AuctionFinished(
+            account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), uint128(badDebt)
+        );
+    }
+
     function knockDown(address account) external {
         // Check if the account is already in an auction.
         AuctionInformation memory auctionInformation_ = auctionInformation[account];
