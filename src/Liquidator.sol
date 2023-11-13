@@ -111,16 +111,32 @@ contract Liquidator is Owned {
 
     // Thrown when the liquidateAccount function is called on an account that is already in an auction.
     error Liquidator_AuctionOngoing();
-    // Thrown when the Account has no bad debt in currect situation
+    // Thrown when the Account has no bad debt in current situation
     error Liquidator_NoBadDebt();
     // Thrown when an Account is not for sale.
     error Liquidator_NotForSale();
     // Thrown when the auction has not yet expired.
     error Liquidator_AuctionNotExpired();
-    // Thrown when the bid function with invalid asset amounts or ids.
+    // Thrown when the bid function is called with invalid asset amounts or ids.
     error Liquidator_InvalidBid();
     // Thrown when the endAuction called and the account is still unhealthy
     error Liquidator_AccountNotHealthy();
+    // Thrown when liquidation weights are above maximum value.
+    error Liquidator_WeightsTooHigh();
+    // Thrown when halfLifeTime is below minimum value.
+    error Liquidator_HalfLifeTimeTooLow();
+    // Thrown when halfLifeTime is above maximum value.
+    error Liquidator_HalfLifeTimeTooHigh();
+    // Thrown when cutOffTime is below minimum value.
+    error Liquidator_CutOffTooLow();
+    // Thrown when cutOffTime is above maximum value.
+    error Liquidator_CutOffTooHigh();
+    // Thrown when the start price multiplier is below minimum value.
+    error Liquidator_MultiplierTooLow();
+    // Thrown when the start price multiplier is above the maximum value.
+    error Liquidator_MultiplierTooHigh();
+    // Thrown when caller is not valid.
+    error Liquidator_Unauthorized();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -147,7 +163,7 @@ contract Liquidator is Owned {
         external
         onlyOwner
     {
-        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
+        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 11) revert Liquidator_WeightsTooHigh();
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
@@ -171,10 +187,10 @@ contract Liquidator is Owned {
      */
     function setAuctionCurveParameters(uint16 halfLifeTime, uint16 cutoffTime_) external onlyOwner {
         //Checks that new parameters are within reasonable boundaries.
-        require(halfLifeTime > 120, "LQ_SACP: halfLifeTime too low"); // 2 minutes
-        require(halfLifeTime < 28_800, "LQ_SACP: halfLifeTime too high"); // 8 hours
-        require(cutoffTime_ > 3600, "LQ_SACP: cutoff too low"); // 1 hour
-        require(cutoffTime_ < 64_800, "LQ_SACP: cutoff too high"); // 18 hours
+        if (halfLifeTime <= 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
+        if (halfLifeTime >= 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
+        if (cutoffTime_ <= 3600) revert Liquidator_CutOffTooLow(); // 1 hour
+        if (cutoffTime_ >= 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
 
         //Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
@@ -200,8 +216,8 @@ contract Liquidator is Owned {
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        require(startPriceMultiplier_ > 100, "LQ_SSPM: multiplier too low");
-        require(startPriceMultiplier_ < 301, "LQ_SSPM: multiplier too high");
+        if (startPriceMultiplier_ <= 100) revert Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ >= 301) revert Liquidator_MultiplierTooHigh();
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -213,7 +229,7 @@ contract Liquidator is Owned {
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        require(minPriceMultiplier_ < 91, "LQ_SMPM: multiplier too high");
+        if (minPriceMultiplier_ >= 91) revert Liquidator_MultiplierTooHigh();
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
@@ -228,7 +244,7 @@ contract Liquidator is Owned {
      * @param account The address of the account to be liquidated.
      * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
      * 1. Sets the initiator address to the sender and flags the account as being in an auction.
-     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount_NEW` contract to check if the account is solvent
+     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount` contract to check if the account is solvent
      *    and start the liquidation process within the account.
      * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
      * 4. Calculates the starting price for the liquidation based on the account's debt.
