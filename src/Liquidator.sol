@@ -502,6 +502,7 @@ contract Liquidator is Owned {
         if (auctionInformation_.totalBids > requiredDebt) {
             remainder = auctionInformation_.totalBids - requiredDebt;
         }
+        // TODO: Add else statement where the remainder is closing and penalty rewards - Zeki - 13/11/23
         // Note: if account is healthy and totalBids is less than totalOpenDebt,
         // then this is partial liquidation, there is no remainder and no bad debt
 
