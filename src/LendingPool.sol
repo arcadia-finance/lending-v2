@@ -158,6 +158,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     error LendingPool_Unauthorized();
     // Thrown when an auction is in process.
     error LendingPool_AuctionOngoing();
+    // Thrown when liquidation weights are above maximum value.
+    error LendingPool_WeightsTooHigh();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -1070,7 +1072,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         external
         onlyOwner
     {
-        require(initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ <= 11, "LQ_SW: Weights Too High");
+        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 11) revert LendingPool_WeightsTooHigh();
 
         initiatorRewardWeight = uint8(initiatorRewardWeight_);
         penaltyWeight = uint8(penaltyWeight_);
