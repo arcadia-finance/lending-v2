@@ -341,6 +341,7 @@ contract Liquidator is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
+        // TODO: We can shortcut the auctionBuy and settleLiquidation in the earlyTermination after the rewards calculations are moved to the LendingPool - Zeki - 13/11/23
         bool earlyTerminate_ =
             ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
 
