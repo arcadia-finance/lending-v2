@@ -510,13 +510,10 @@ contract Liquidator is Owned {
         // NOTE: totalBds to delete later ? Alex - 13/11/23
         uint256 totalBids = auctionInformation_.totalBids;
 
-        // Calculate remainder and badDebt if any
         // NOTE : as in this case both can be paid out fully (account is healthy) - Alex - 13/11/23
         uint256 remainder = liquidationInitiatorReward + auctionClosingReward;
 
         // TODO: Add else statement where the remainder is closing and penalty rewards - Zeki - 13/11/23
-        // Note: if account is healthy and totalBids is less than totalOpenDebt,
-        // then this is partial liquidation, there is no remainder and no bad debt
 
         // Call settlement of the debt in the trustedCreditor
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
