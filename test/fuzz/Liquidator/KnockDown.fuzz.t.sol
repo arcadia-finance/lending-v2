@@ -68,7 +68,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Bidder has enough funds and approved the lending pool for repay
         uint256[] memory bidAssetAmounts = new uint256[](1);
-        uint256 bidAssetAmount = originalAmount / 2;
+        uint256 bidAssetAmount = originalAmount / 4;
         bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
@@ -116,7 +116,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_knockDown_Partially(address hammer, address bidder, uint128 amountLoaned) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned > 4);
         vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
         initiateLiquidation(amountLoaned);
 
@@ -139,7 +139,11 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
     }
 
-    function testFuzz_Success_knockDown_Fully(address hammer, address bidder, uint128 amountLoaned) public {
+    function testFuzz_Revert_knockDown_NotForSaleAfterFullyBoughtDebt(
+        address hammer,
+        address bidder,
+        uint128 amountLoaned
+    ) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 500) * 100);
@@ -150,6 +154,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When: knockDown is called which account is healthy
         vm.startPrank(hammer);
+        vm.expectRevert(Liquidator_NotForSale.selector);
         liquidator.knockDown(address(proxyAccount));
         vm.stopPrank();
         // Then: The account should be healthy

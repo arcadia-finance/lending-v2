@@ -407,4 +407,8 @@ contract LiquidatorExtension is Liquidator {
     function setLocked(uint256 locked_) external {
         locked = locked_;
     }
+
+    function getInAuction(address account) external returns (bool) {
+        return auctionInformation[account].inAuction;
+    }
 }

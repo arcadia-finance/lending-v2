@@ -357,7 +357,9 @@ contract Liquidator is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
+        // TODO: We can shortcut the auctionBuy and settleLiquidation in the earlyTermination after the rewards calculations are moved to the LendingPool - Zeki - 13/11/23
+        bool earlyTerminate_ =
+            ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
 
         // Transfer the assets to the bidder.
         IAccount(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
@@ -369,6 +371,35 @@ contract Liquidator is Owned {
         if (endAuction) {
             _knockDown(account, auctionInformation_);
         }
+
+        // If all the debt is paid back, end the auction early, no need to check the health of the account since it will be health because there is no debt
+        if (earlyTerminate_) {
+            earlyTerminate(account);
+        }
+    }
+
+    function earlyTerminate(address account) internal {
+        // Stop the auction
+        auctionInformation[account].inAuction = false;
+        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+
+        uint256 startDebt = auctionInformation_.startDebt;
+        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
+        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
+        uint256 totalBids = auctionInformation_.totalBids;
+        uint256 remainder = totalBids - startDebt - liquidationInitiatorReward;
+
+        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
+            account,
+            auctionInformation_.originalOwner,
+            0,
+            auctionInformation_.initiator,
+            liquidationInitiatorReward,
+            address(0),
+            0,
+            liquidationPenalty,
+            0
+        );
     }
 
     function _calculateAskPrice(

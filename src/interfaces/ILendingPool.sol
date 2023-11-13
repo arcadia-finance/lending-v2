@@ -75,7 +75,7 @@ interface ILendingPool {
         uint256 penaltyWeight
     ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward);
     function repay(uint256 amount, address account) external;
-    function auctionRepay(uint256 amount, address account, address bidder) external;
+    function auctionRepay(uint256 amount, address account, address bidder) external returns (bool);
     function settleLiquidation(
         address account,
         address originalOwner,

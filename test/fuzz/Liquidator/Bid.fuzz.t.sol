@@ -156,10 +156,10 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_bid(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Success_bid_partially(address bidder, uint128 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned > 12);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
@@ -169,7 +169,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Bidder has enough funds and approved the lending pool for repay
         uint256[] memory bidAssetAmounts = new uint256[](1);
-        uint256 bidAssetAmount = originalAmount / 2;
+        uint256 bidAssetAmount = originalAmount / 3;
         bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
@@ -183,5 +183,45 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
         uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
         assertEq(totalBids, askPrice);
+
+        // And: Auction is still going on since the bidder did not choose the end the endAuction
+        bool inAuction = liquidator.getInAuction(address(proxyAccount));
+        assertEq(inAuction, true);
+    }
+
+    function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint128 amountLoaned) public {
+        // Given: The account auction is initiated
+        vm.assume(bidder != address(0));
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
+        initiateLiquidation(amountLoaned);
+        bool endAuction = false;
+
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
+        uint256 originalAmount = originalAssetAmounts[0];
+
+        // And: Bidder has enough funds and approved the lending pool for repay
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        uint256 bidAssetAmount = originalAmount;
+        bidAssetAmounts[0] = (bidAssetAmount * 2 / 3) + 1;
+        deal(address(mockERC20.stable1), bidder, type(uint128).max);
+        vm.startPrank(bidder);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+
+        uint256 askPrice_ = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        assertGt(askPrice_, uint256(amountLoaned));
+
+        // When: Bidder bids for the asset
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), endAuction);
+        vm.stopPrank();
+
+        // Then: The bidder should have the asset, and left assets should be diminished
+        uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
+        uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        assertEq(totalBids, askPrice);
+
+        // And: Auction should be ended since the bidder paid all the debt
+        bool inAuction = liquidator.getInAuction(address(proxyAccount));
+        assertEq(inAuction, false);
     }
 }

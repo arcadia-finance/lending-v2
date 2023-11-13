@@ -537,9 +537,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         external
         whenLiquidationNotPaused
         onlyLiquidator
+        returns (bool earlyTerminate)
     {
         uint256 accountDebt = maxWithdraw(account);
         uint256 shares = accountDebt > amount ? amount : accountDebt;
+        earlyTerminate = accountDebt < amount ? true : false;
 
         _repay(amount, shares, account, bidder);
     }
