@@ -38,7 +38,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SSPM: multiplier too high");
+        vm.expectRevert(Liquidator_MultiplierTooHigh.selector);
         liquidator.setStartPriceMultiplier(priceMultiplier);
         vm.stopPrank();
     }
@@ -49,7 +49,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SSPM: multiplier too low");
+        vm.expectRevert(Liquidator_MultiplierTooLow.selector);
         liquidator.setStartPriceMultiplier(priceMultiplier);
         vm.stopPrank();
     }

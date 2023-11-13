@@ -42,7 +42,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SACP: halfLifeTime too high");
+        vm.expectRevert(Liquidator_HalfLifeTimeTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -53,7 +53,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the discount rate, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SACP: halfLifeTime too low");
+        vm.expectRevert(Liquidator_HalfLifeTimeTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -69,7 +69,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SACP: cutoff too high");
+        vm.expectRevert(Liquidator_CutOffTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }
@@ -85,7 +85,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SACP: cutoff too low");
+        vm.expectRevert(Liquidator_CutOffTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
         vm.stopPrank();
     }

@@ -43,7 +43,7 @@ contract SetWeights_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight > 11);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert("LQ_SW: Weights Too High");
+        vm.expectRevert(Liquidator_WeightsTooHigh.selector);
         liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         vm.stopPrank();
     }
