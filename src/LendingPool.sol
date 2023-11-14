@@ -558,12 +558,12 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 amount,
         address account,
         address bidder
-    ) external whenLiquidationNotPaused onlyLiquidator returns (bool earlyTerminate) {
+    ) external whenLiquidationNotPaused onlyLiquidator processInterests returns (bool earlyTerminate) {
         uint256 accountDebt = maxWithdraw(account);
         uint256 shares = accountDebt > amount ? amount : accountDebt;
         earlyTerminate = accountDebt <= amount ? true : false;
         if (earlyTerminate) {
-            settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
+            _settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
         }
 
         _repay(amount, shares, account, bidder);
@@ -887,6 +887,30 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         address terminator,
         uint256 surplus
     ) external whenLiquidationNotPaused onlyLiquidator processInterests {
+        _settleLiquidation(account, originalOwner, startDebt, initiator, terminator, surplus);
+    }
+
+    /**
+     * @dev Function to settle a liquidation event.
+     * @param account The account undergoing liquidation.
+     * @param originalOwner The original owner of the liquidated assets.
+     * @param badDebt The amount of bad debt in the liquidation.
+     * @param initiator The address of the liquidation initiator.
+     * @param liquidationInitiatorReward The reward for the liquidation initiator.
+     * @param terminator The address of the liquidation terminator.
+     * @param auctionTerminationReward The reward for auction termination.
+     * @param liquidationFee The fee associated with the liquidation.
+     * @param remainder Any remaining assets after liquidation.
+     * @notice This function is callable only by the liquidator and processes liquidation events.
+     */
+    function _settleLiquidation(
+        address account,
+        address originalOwner,
+        uint256 startDebt,
+        address initiator,
+        address terminator,
+        uint256 surplus
+    ) internal {
         // Increase the realised liquidity for the initiator.
         (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationFee) =
             _calculateRewards(startDebt);

@@ -60,13 +60,9 @@ contract Liquidator is Owned {
         address originalOwner; // The address of the original owner of the Account.
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
-        uint256 totalBids; // The total amount of baseCurrency that has been bid on the auction.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint80 liquidationInitiatorReward; // The reward for the Liquidation Initiator.
         uint16 startPriceMultiplier; // 2 decimals precision.
-        uint80 auctionClosingReward; // The reward for the Liquidation Initiator.
-        uint8 liquidationPenaltyWeight; // The penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
         uint16 cutoffTime; // Maximum time that the auction declines.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
@@ -344,14 +340,17 @@ contract Liquidator is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        bool earlyTerminate_ =
-            ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
+        bool earlyTerminate_ = ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(
+            auctionInformation_.startDebt,
+            auctionInformation_.initiator,
+            auctionInformation_.originalOwner,
+            askPrice,
+            account,
+            msg.sender
+        );
 
         // Transfer the assets to the bidder.
         IAccount(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
-
-        // process the bid for later bids, increase the total bids
-        auctionInformation[account].totalBids += askPrice;
 
         // If the auction is over, end it.
         if (endAuction) {
@@ -373,12 +372,8 @@ contract Liquidator is Owned {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
         // Calculate the start price.
-        uint256 startPrice = _calculateStartPrice(
-            uint256(auctionInformation_.startDebt) + uint256(auctionInformation_.liquidationInitiatorReward)
-                + uint256(auctionInformation_.auctionClosingReward)
-                + uint256(uint256(auctionInformation_.startDebt) * auctionInformation_.liquidationPenaltyWeight / 100),
-            auctionInformation_.startPriceMultiplier
-        );
+        uint256 startPrice =
+            _calculateStartPrice(uint256(auctionInformation_.startDebt), auctionInformation_.startPriceMultiplier);
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(
@@ -449,21 +444,16 @@ contract Liquidator is Owned {
         // Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;
 
+        uint256 startDebt = auctionInformation_.startDebt;
+
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account,
-            auctionInformation_.originalOwner,
-            auctionInformation_.startDebt,
-            auctionInformation_.initiator,
-            to,
-            0
+            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, to, 0
         );
 
         // Transfer all the left-over assets to the 'to' address
         IAccount(account).auctionBuyIn(to);
 
-        emit AuctionFinished(
-            account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), uint128(badDebt)
-        );
+        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), 0, 0);
     }
 
     function knockDown(address account) external {
@@ -478,17 +468,14 @@ contract Liquidator is Owned {
         (bool success,,) = IAccount(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
+        uint256 startDebt = uint256(auctionInformation_.startDebt);
+
         // Call settlement of the debt in the trustedCreditor
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account,
-            auctionInformation_.originalOwner,
-            auctionInformation_.startDebt,
-            auctionInformation_.initiator,
-            msg.sender,
-            0
+            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, msg.sender, 0
         );
 
-        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), 0);
+        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), 0, 0);
 
         // Set the inAuction flag to false.
         auctionInformation[account].inAuction = false;
