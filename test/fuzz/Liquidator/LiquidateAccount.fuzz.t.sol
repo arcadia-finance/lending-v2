@@ -339,7 +339,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 amountLoanedStack = amountLoaned;
 
         (
-            uint16 cutoffTime_,
+            uint32 cutoffTime_,
             address trustedCreditor_,
             address[] memory assetAddresses_,
             uint32[] memory assetShares_,

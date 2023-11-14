@@ -52,9 +52,8 @@ abstract contract Events {
     ////////////////////////////////////////////////////////////// */
 
     // note: to delete when removing old liquidator contract
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
     event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
-    event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
+    event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
     event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
