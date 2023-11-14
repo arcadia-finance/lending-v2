@@ -866,19 +866,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         emit FixedLiquidationCostSet(fixedLiquidationCost_);
     }
 
-    /**
-     * @dev Function to settle a liquidation event.
-     * @param account The account undergoing liquidation.
-     * @param originalOwner The original owner of the liquidated assets.
-     * @param badDebt The amount of bad debt in the liquidation.
-     * @param initiator The address of the liquidation initiator.
-     * @param liquidationInitiatorReward The reward for the liquidation initiator.
-     * @param terminator The address of the liquidation terminator.
-     * @param auctionTerminationReward The reward for auction termination.
-     * @param liquidationFee The fee associated with the liquidation.
-     * @param remainder Any remaining assets after liquidation.
-     * @notice This function is callable only by the liquidator and processes liquidation events.
-     */
     function settleLiquidation(
         address account,
         address originalOwner,
@@ -890,19 +877,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         _settleLiquidation(account, originalOwner, startDebt, initiator, terminator, surplus);
     }
 
-    /**
-     * @dev Function to settle a liquidation event.
-     * @param account The account undergoing liquidation.
-     * @param originalOwner The original owner of the liquidated assets.
-     * @param badDebt The amount of bad debt in the liquidation.
-     * @param initiator The address of the liquidation initiator.
-     * @param liquidationInitiatorReward The reward for the liquidation initiator.
-     * @param terminator The address of the liquidation terminator.
-     * @param auctionTerminationReward The reward for auction termination.
-     * @param liquidationFee The fee associated with the liquidation.
-     * @param remainder Any remaining assets after liquidation.
-     * @notice This function is callable only by the liquidator and processes liquidation events.
-     */
     function _settleLiquidation(
         address account,
         address originalOwner,
@@ -1072,9 +1046,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //passed as Account is indeed a Account and has debt.
         openDebt = maxWithdraw(account);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-
-        uint80 maxInitiatorFee_ = maxInitiatorFee;
-        uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
         (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
