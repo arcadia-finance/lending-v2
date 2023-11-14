@@ -899,7 +899,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
             _calculateRewards(startDebt);
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
 
-        // get the open openDebt
+        // get the open openDebt, openDebt = startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
         uint256 openDebt = maxWithdraw(account);
         uint256 badDebt;
         uint256 remainder;
@@ -909,44 +909,37 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
             unchecked {
                 badDebt = openDebt - auctionTerminationReward - liquidationFee;
             }
-        } else {
-            if (openDebt > liquidationFee) {
-                remainder = auctionTerminationReward - (openDebt - liquidationFee);
-            } else {
-                remainder = (liquidationFee - openDebt) + auctionTerminationReward;
-            }
-        }
-
-        remainder = remainder + surplus;
-
-        if (badDebt > 0) {
-            // Update the total realised liquidity and handle bad debt.
-            emit BorrowCapSet(uint128(liquidationFee + auctionTerminationReward));
             _withdraw(liquidationFee + auctionTerminationReward, account, account);
             totalRealisedLiquidity =
                 SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
             _processDefault(badDebt);
         } else {
-            if (remainder >= auctionTerminationReward + liquidationFee) {
-                uint256 amountToReturnToUser = remainder - auctionTerminationReward - liquidationFee;
-                // Synchronize the liquidation fee with liquidity providers.
-                _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-                // Increase the realised liquidity for the terminator.
-                realisedLiquidityOf[terminator] += auctionTerminationReward;
-                // Increase the realised liquidity for the original owner.
-                realisedLiquidityOf[originalOwner] += amountToReturnToUser;
-            } else if (remainder > auctionTerminationReward) {
+            if (openDebt > liquidationFee) {
+                remainder = (liquidationFee + auctionTerminationReward) - openDebt;
+                realisedLiquidityOf[terminator] += remainder;
+            } else if (openDebt <= liquidationFee) {
+                remainder = (liquidationFee - openDebt) + auctionTerminationReward;
                 // Increase the realised liquidity for the terminator.
                 realisedLiquidityOf[terminator] += auctionTerminationReward;
                 // Synchronize the liquidation fee with liquidity providers.
                 _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
-            } else {
-                // Increase the realised liquidity for the terminator.
-                realisedLiquidityOf[terminator] += remainder;
             }
-            // Update the total realised liquidity.
+            // TODO: Should there be withdraw openDebt?
             totalRealisedLiquidity =
                 SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
+        }
+        if (surplus > 0) {
+            uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
+            // Synchronize the liquidation fee with liquidity providers.
+            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+            // Increase the realised liquidity for the terminator.
+            realisedLiquidityOf[terminator] += auctionTerminationReward;
+            // Increase the realised liquidity for the original owner.
+            realisedLiquidityOf[originalOwner] += surplus;
+
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardsAndSurplus
+            );
         }
 
         // Decrement the number of auctions in progress.

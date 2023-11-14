@@ -137,8 +137,8 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
 
         // And: Returned amount should be equal to maxInitiatorFee
-//        assertEq(liquidationInitiatorReward_, liquidationInitiatorReward);
-//        assertEq(closingReward_, closingReward);
+        //        assertEq(liquidationInitiatorReward_, liquidationInitiatorReward);
+        //        assertEq(closingReward_, closingReward);
 
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),

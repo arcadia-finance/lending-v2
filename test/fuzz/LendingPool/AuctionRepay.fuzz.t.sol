@@ -164,7 +164,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(0,0,0);
+        pool.setWeights(0, 0, 0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -196,7 +196,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address sender
     ) public {
         vm.assume(availableFunds > amountLoaned);
-        vm.assume(uint256(availableFunds) + uint256(amountLoaned) < type(uint128).max - 1 );
+        vm.assume(uint256(availableFunds) + uint256(amountLoaned) < type(uint128).max - 1);
         vm.assume(amountLoaned > 0);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
@@ -204,7 +204,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(2,5,2);
+        pool.setWeights(2, 5, 2);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
