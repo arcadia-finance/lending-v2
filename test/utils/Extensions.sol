@@ -289,27 +289,13 @@ contract LiquidatorExtension is Liquidator {
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (
-            address originalOwner_,
-            uint128 openDebt_,
-            uint32 startTime_,
-            uint256 totalBids_,
-            bool inAuction_,
-            address initiator_,
-            uint80 liquidationInitiatorReward_,
-            uint80 auctionClosingReward_,
-            uint8 liquidationPenaltyWeight_
-        )
+        returns (address originalOwner_, uint128 openDebt_, uint32 startTime_, bool inAuction_, address initiator_)
     {
         originalOwner_ = auctionInformation[account_].originalOwner;
         openDebt_ = auctionInformation[account_].startDebt;
         startTime_ = auctionInformation[account_].startTime;
-        totalBids_ = auctionInformation[account_].totalBids;
         inAuction_ = auctionInformation[account_].inAuction;
         initiator_ = auctionInformation[account_].initiator;
-        liquidationInitiatorReward_ = auctionInformation[account_].liquidationInitiatorReward;
-        auctionClosingReward_ = auctionInformation[account_].auctionClosingReward;
-        liquidationPenaltyWeight_ = auctionInformation[account_].liquidationPenaltyWeight;
     }
 
     function getAuctionInformationPartTwo(address account_)
@@ -401,15 +387,11 @@ contract LiquidatorExtension is Liquidator {
     }
 
     function getAuctionTotalBids(address account) public view returns (uint256) {
-        return auctionInformation[account].totalBids;
+        return 0;
     }
 
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
         return auctionInformation[account].assetAmounts;
-    }
-
-    function setTotalBidsOnAccount(address account, uint256 totalBids_) public {
-        auctionInformation[account].totalBids = totalBids_;
     }
 
     function getOwner(address account) public view returns (address) {

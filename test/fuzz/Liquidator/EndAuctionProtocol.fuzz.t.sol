@@ -132,7 +132,6 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set total bids on Account < amount owed by the account
         uint256 totalBids = (amountLoaned + 1) + initiatorReward - 1;
-        liquidator.setTotalBidsOnAccount(address(proxyAccount), totalBids);
 
         vm.startPrank(users.creatorAddress);
         vm.expectEmit();

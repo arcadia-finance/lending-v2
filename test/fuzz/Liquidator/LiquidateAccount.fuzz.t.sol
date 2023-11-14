@@ -277,8 +277,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint128 openDebt_ = amountLoaned + 1;
 
         // Then: Auction should be set and started
-        (,,,,,, uint80 liquidationInitiatorReward_, uint80 auctionClosingReward_, uint80 liquidationPenaltyWeight_) =
-            liquidator.getAuctionInformationPartOne(address(proxyAccount));
+        //        (,,,,,, uint80 liquidationInitiatorReward_, uint80 auctionClosingReward_, uint80 liquidationPenaltyWeight_) =
+        //            liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
         uint256 liquidationInitiatorReward = uint256(openDebt_) * initiatorRewardWeightStack / 100;
         liquidationInitiatorReward =
