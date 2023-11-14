@@ -170,6 +170,15 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         _;
     }
 
+    modifier onlyAccount() {
+        //Only Accounts can have debt, and debtTokens are non-transferrable.
+        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
+        //passed as Account is indeed a Account and has debt.
+        openDebt = maxWithdraw(account);
+        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+        _;
+    }
+
     modifier onlyTranche() {
         if (!isTranche[msg.sender]) revert LendingPool_OnlyTranche();
         _;
@@ -1036,7 +1045,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      */
     function startLiquidation(address account)
         external
-        onlyLiquidator
+        onlyAccount
         whenLiquidationNotPaused
         processInterests
         returns (uint256 openDebt)
