@@ -90,6 +90,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_borrow_InsufficientCollateral(uint128 amountLoaned, uint128 collateralValue, address to)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue < amountLoaned);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
@@ -106,6 +109,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to,
         address trustedCreditor_
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(trustedCreditor_ != address(pool));
 
@@ -131,6 +137,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_borrow_BadAccountVersion(uint128 amountLoaned, uint128 collateralValue, address to)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
@@ -150,6 +159,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity < amountLoaned);
         vm.assume(liquidity > 0);
@@ -168,6 +180,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_borrow_Paused(uint128 amountLoaned, uint128 collateralValue, uint128 liquidity, address to)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue <= amountLoaned);
         vm.assume(liquidity > amountLoaned);
         vm.assume(liquidity > 0);
@@ -194,6 +209,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to,
         uint128 borrowCap
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > 1);
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity > amountLoaned);
@@ -220,6 +238,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > 1);
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity > amountLoaned);
@@ -261,6 +282,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         amountLoaned = bound(amountLoaned, 2, 99);
         vm.assume(amountLoanedToFail > 100);
         vm.assume(collateralValue >= amountLoanedToFail);
@@ -309,6 +333,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
         vm.assume(to != address(0));
@@ -339,6 +366,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address beneficiary,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(amountAllowed >= amountLoaned);
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
@@ -374,6 +404,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address beneficiary,
         address to
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
         vm.assume(beneficiary != users.accountOwner);
@@ -406,6 +439,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 originationFee,
         bytes3 ref
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
         vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
@@ -454,6 +490,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 originationFee,
         bytes3 ref
     ) public {
+        // Given: collateralValue is smaller as maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);

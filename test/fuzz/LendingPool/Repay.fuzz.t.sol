@@ -27,6 +27,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_repay_InsufficientFunds(uint128 amountLoaned, uint256 availableFunds, address sender)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > availableFunds);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(availableFunds > 0);
@@ -53,6 +56,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_repay_Paused(uint128 amountLoaned, uint256 availableFunds, address sender) public {
+        // Given: collateralValue is smaller as maxExposure.
+        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > availableFunds);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(availableFunds > 0);
@@ -101,6 +107,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_repay_AmountInferiorLoan(uint128 amountLoaned, uint256 amountRepaid, address sender)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > amountRepaid);
         vm.assume(amountRepaid > 0);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
@@ -134,6 +143,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_Repay_ExactAmount(uint128 amountLoaned, address sender) public {
+        // Given: collateralValue is smaller as maxExposure.
+        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+
         vm.assume(amountLoaned > 0);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
@@ -168,6 +180,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_repay_AmountExceedingLoan(uint128 amountLoaned, uint128 availableFunds, address sender)
         public
     {
+        // Given: collateralValue is smaller as maxExposure.
+        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+
         vm.assume(availableFunds > amountLoaned);
         vm.assume(amountLoaned > 0);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module

@@ -9,7 +9,8 @@ import { Scenario_Lending_Test } from "./_Scenario.t.sol";
 import { StdStorage, stdStorage } from "../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 import { ActionData } from "../../lib/accounts-v2/src/actions/utils/ActionData.sol";
-import { ActionMultiCallV2 } from "../../lib/accounts-v2/src/actions/MultiCallV2.sol";
+import { ActionMultiCall } from "../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { BitPackingLib } from "../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { IPermit2 } from "../../lib/accounts-v2/test/utils/Interfaces.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
@@ -22,10 +23,17 @@ import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiAct
 contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
+                             VARIABLES
+    /////////////////////////////////////////////////////////////// */
+
+    bytes32 internal oracleToken1ToUsd;
+    bytes32 internal oracleStable1ToUsd;
+
+    /* ///////////////////////////////////////////////////////////////
                            TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCallV2 public action;
+    ActionMultiCall public action;
     MultiActionMock public multiActionMock;
 
     /* ///////////////////////////////////////////////////////////////
@@ -37,7 +45,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         vm.startPrank(users.creatorAddress);
         multiActionMock = new MultiActionMock();
-        action = new ActionMultiCallV2();
+        action = new ActionMultiCall();
         mainRegistryExtension.setAllowedAction(address(action), true);
         vm.stopPrank();
 
@@ -54,6 +62,9 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             Constants.tokenToStableCollFactor,
             Constants.tokenToStableLiqFactor
         );
+
+        oracleToken1ToUsd = BitPackingLib.pack(BA_TO_QA_SINGLE, oracleToken1ToUsdArr);
+        oracleStable1ToUsd = BitPackingLib.pack(BA_TO_QA_SINGLE, oracleStable1ToUsdArr);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -70,15 +81,13 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
-            assetTypes: new uint256[](0),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](0)
         });
         ActionData memory assetDataIn = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
-            assetTypes: new uint256[](0),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](0)
         });
         bytes[] memory data = new bytes[](0);
         address[] memory to = new address[](0);
@@ -105,15 +114,13 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
-            assetTypes: new uint256[](0),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](0)
         });
         ActionData memory assetDataIn = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
-            assetTypes: new uint256[](0),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](0)
         });
         bytes[] memory data = new bytes[](0);
         address[] memory to = new address[](0);
@@ -136,8 +143,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint64 stableCollateral,
         uint64 tokenOut
     ) public {
-        (uint256 tokenRate) = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
-        (uint256 stableRate) = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
+        uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+        uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
         uint256 stableIn =
             uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals / stableRate;
@@ -187,8 +194,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataOut.assets[0] = address(mockERC20.stable1);
@@ -200,8 +206,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataIn.assets[0] = address(mockERC20.token1);
@@ -231,8 +236,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
-            uint256 stableRate = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
+            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
@@ -283,8 +288,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataOut.assets[0] = address(mockERC20.stable1);
@@ -296,8 +300,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataIn.assets[0] = address(mockERC20.token1);
@@ -354,8 +357,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = oracleHub.getRateInUsd(oracleToken1ToUsdArr); //18 decimals
-            uint256 stableRate = oracleHub.getRateInUsd(oracleStable1ToUsdArr); //18 decimals
+            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
@@ -406,8 +409,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataOut.assets[0] = address(mockERC20.stable1);
@@ -419,8 +421,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1),
-            actionBalances: new uint256[](0)
+            assetTypes: new uint256[](1)
         });
 
         assetDataIn.assets[0] = address(mockERC20.token1);
