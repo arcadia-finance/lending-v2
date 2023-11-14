@@ -270,20 +270,8 @@ contract Liquidator is Owned {
             RiskModule.AssetValueAndRiskFactors[] memory riskValues
         ) = IAccount(account).checkAndStartLiquidation();
 
-        // Cache weights
-        uint8 initiatorRewardWeight_ = initiatorRewardWeight;
-        uint8 penaltyWeight_ = penaltyWeight;
-        uint8 closingRewardWeight_ = closingRewardWeight;
+        // Fill the auction structgs
 
-        // Check if the account has debt in the lending pool and if so, increment auction in progress counter.
-        (uint256 liquidationInitiatorReward, uint256 closingReward) = ILendingPool(creditor).startLiquidation(
-            account, initiatorRewardWeight_, closingRewardWeight_, penaltyWeight_
-        );
-
-        // Fill the auction struct
-        auctionInformation[account].liquidationInitiatorReward = uint80(liquidationInitiatorReward); // No risk of down casting since the max fee is uint80
-        auctionInformation[account].auctionClosingReward = uint80(closingReward); // No risk of down casting since the max fee is uint80
-        auctionInformation[account].liquidationPenaltyWeight = penaltyWeight_;
         auctionInformation[account].startDebt = uint128(debt);
         auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
         auctionInformation[account].startTime = uint32(block.timestamp);
@@ -357,7 +345,6 @@ contract Liquidator is Owned {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        // TODO: We can shortcut the auctionBuy and settleLiquidation in the earlyTermination after the rewards calculations are moved to the LendingPool - Zeki - 13/11/23
         bool earlyTerminate_ =
             ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(askPrice, account, msg.sender);
 
@@ -374,32 +361,9 @@ contract Liquidator is Owned {
 
         // If all the debt is paid back, end the auction early, no need to check the health of the account since it will be health because there is no debt
         if (earlyTerminate_) {
-            earlyTerminate(account);
+            // Stop the auction
+            auctionInformation[account].inAuction = false;
         }
-    }
-
-    function earlyTerminate(address account) internal {
-        // Stop the auction
-        auctionInformation[account].inAuction = false;
-        AuctionInformation memory auctionInformation_ = auctionInformation[account];
-
-        uint256 startDebt = auctionInformation_.startDebt;
-        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
-        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
-        uint256 totalBids = auctionInformation_.totalBids;
-        uint256 remainder = totalBids - startDebt - liquidationInitiatorReward;
-
-        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
-            account,
-            auctionInformation_.originalOwner,
-            0,
-            auctionInformation_.initiator,
-            liquidationInitiatorReward,
-            address(0),
-            0,
-            liquidationPenalty,
-            0
-        );
     }
 
     function _calculateAskPrice(
@@ -486,32 +450,13 @@ contract Liquidator is Owned {
         // Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;
 
-        // Cache values
-        uint256 totalBids = auctionInformation_.totalBids;
-        uint256 startDebt = auctionInformation_.startDebt;
-        uint256 initiatorReward = auctionInformation_.liquidationInitiatorReward;
-        uint256 penalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
-        uint256 remainder;
-        uint256 badDebt;
-
-        if (totalBids >= startDebt + initiatorReward) {
-            remainder = totalBids - startDebt - initiatorReward;
-        } else {
-            unchecked {
-                badDebt = startDebt + initiatorReward - totalBids;
-            }
-        }
-
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
             account,
             auctionInformation_.originalOwner,
-            badDebt,
+            auctionInformation_.startDebt,
             auctionInformation_.initiator,
-            initiatorReward,
             to,
-            auctionInformation_.auctionClosingReward,
-            penalty,
-            remainder
+            0
         );
 
         // Transfer all the left-over assets to the 'to' address
@@ -534,36 +479,14 @@ contract Liquidator is Owned {
         (bool success,,) = IAccount(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
-        uint256 startDebt = auctionInformation_.startDebt;
-        uint256 liquidationInitiatorReward = auctionInformation_.liquidationInitiatorReward;
-        uint256 auctionClosingReward = auctionInformation_.auctionClosingReward;
-        uint256 liquidationPenalty = startDebt * uint256(auctionInformation_.liquidationPenaltyWeight) / 100;
-        uint256 totalBids = auctionInformation_.totalBids;
-
-        // The minimum amount that should be recognized as realized liquidity.
-        uint256 requiredDebt = startDebt + liquidationInitiatorReward;
-
-        // Calculate remainder and badDebt if any
-        uint256 remainder;
-        // calculate remainder in case of all debt is paid
-        if (auctionInformation_.totalBids > requiredDebt) {
-            remainder = auctionInformation_.totalBids - requiredDebt;
-        }
-        // TODO: Add else statement where the remainder is closing and penalty rewards - Zeki - 13/11/23
-        // Note: if account is healthy and totalBids is less than totalOpenDebt,
-        // then this is partial liquidation, there is no remainder and no bad debt
-
         // Call settlement of the debt in the trustedCreditor
         ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
             account,
             auctionInformation_.originalOwner,
-            0,
+            auctionInformation_.startDebt,
             auctionInformation_.initiator,
-            liquidationInitiatorReward,
             msg.sender,
-            auctionClosingReward,
-            liquidationPenalty,
-            remainder
+            0
         );
 
         emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), uint128(totalBids), 0);

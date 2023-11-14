@@ -551,15 +551,20 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
      * @dev Emits a `Repay` event to log the repayment details.
      */
-    function auctionRepay(uint256 amount, address account, address bidder)
-        external
-        whenLiquidationNotPaused
-        onlyLiquidator
-        returns (bool earlyTerminate)
-    {
+    function auctionRepay(
+        uint256 startDebt,
+        address initiator,
+        address originalOwner,
+        uint256 amount,
+        address account,
+        address bidder
+    ) external whenLiquidationNotPaused onlyLiquidator returns (bool earlyTerminate) {
         uint256 accountDebt = maxWithdraw(account);
         uint256 shares = accountDebt > amount ? amount : accountDebt;
-        earlyTerminate = accountDebt < amount ? true : false;
+        earlyTerminate = accountDebt <= amount ? true : false;
+        if (earlyTerminate) {
+            settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
+        }
 
         _repay(amount, shares, account, bidder);
     }
@@ -877,16 +882,35 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     function settleLiquidation(
         address account,
         address originalOwner,
-        uint256 badDebt,
+        uint256 startDebt,
         address initiator,
-        uint256 liquidationInitiatorReward,
         address terminator,
-        uint256 auctionTerminationReward,
-        uint256 liquidationFee,
-        uint256 remainder
+        uint256 surplus
     ) external whenLiquidationNotPaused onlyLiquidator processInterests {
         // Increase the realised liquidity for the initiator.
+        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationFee) =
+            _calculateRewards(startDebt);
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+
+        // get the open openDebt
+        uint256 openDebt = maxWithdraw(account);
+        uint256 badDebt;
+        uint256 remainder;
+
+        // Calculate the bad debt.
+        if (openDebt > auctionTerminationReward + liquidationFee) {
+            unchecked {
+                badDebt = openDebt - auctionTerminationReward - liquidationFee;
+            }
+        } else {
+            if (openDebt > liquidationFee) {
+                remainder = auctionTerminationReward - (openDebt - liquidationFee);
+            } else {
+                remainder = (liquidationFee - openDebt) + auctionTerminationReward;
+            }
+        }
+
+        remainder = remainder + surplus;
 
         if (badDebt > 0) {
             // Update the total realised liquidity and handle bad debt.
@@ -1002,48 +1026,35 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
-     * @notice Start a liquidation for a specific account with debt.
+     * @notice Start a liquidation process for a specific account with outstanding debt.
      * @param account The address of the account with debt to be liquidated.
-     * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight_ Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
-     * @param closingRewardWeight_ Fee paid to the address that is ending an auction.
-     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
-     * @return closingReward Fee paid to the address that is ending an auction.
+     * @return openDebt The amount of open debt for the specified account.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
-     * @dev If this is the first auction, it hooks to the most junior tranche to inform that auctions are ongoing.
+     * @dev If this is the first auction, it hooks into the most junior tranche to indicate that auctions are ongoing.
      * @dev The function updates the count of ongoing auctions.
      * @dev Liquidations can only be initiated for accounts with non-zero open debt.
      */
-    function startLiquidation(
-        address account,
-        uint256 initiatorRewardWeight_,
-        uint256 closingRewardWeight_,
-        uint256 penaltyWeight_
-    )
+    function startLiquidation(address account)
         external
         onlyLiquidator
         whenLiquidationNotPaused
         processInterests
-        returns (uint256 liquidationInitiatorReward, uint256 closingReward)
+        returns (uint256 openDebt)
     {
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
-        uint256 openDebt = maxWithdraw(account);
+        openDebt = maxWithdraw(account);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
         uint80 maxInitiatorFee_ = maxInitiatorFee;
         uint80 maxClosingFee_ = maxClosingFee;
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
-        liquidationInitiatorReward = (openDebt * initiatorRewardWeight_) / 100;
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
-        closingReward = (openDebt * closingRewardWeight_) / 100;
-        closingReward = closingReward > maxClosingFee_ ? maxClosingFee_ : closingReward;
-        uint256 liquidationPenalty = (openDebt * penaltyWeight_) / 100;
+        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
+            _calculateRewards(openDebt);
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
@@ -1056,6 +1067,19 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         unchecked {
             ++auctionsInProgress;
         }
+    }
+
+    function _calculateRewards(uint256 debt)
+        internal
+        view
+        returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
+    {
+        liquidationInitiatorReward = (debt * initiatorRewardWeight) / 100;
+        liquidationInitiatorReward =
+            liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
+        closingReward = (debt * closingRewardWeight) / 100;
+        closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
+        liquidationPenalty = (debt * penaltyWeight) / 100;
     }
 
     /*///////////////////////////////////////////////////////////////
