@@ -100,7 +100,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes calldata actionData,
         bytes calldata signature
     ) public {
-        // Given: collateralValue is smaller as maxExposure.
+        // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
@@ -124,7 +124,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 collateralValue,
         uint128 liquidity
     ) public {
-        // Given: collateralValue is smaller as maxExposure.
+        // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
@@ -155,7 +155,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address beneficiary
     ) public {
-        // Given: collateralValue is smaller as maxExposure.
+        // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
@@ -188,7 +188,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         uint8 originationFee
     ) public {
-        // Given: collateralValue is smaller as maxExposure.
+        // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
@@ -238,7 +238,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 originationFee,
         bytes3 ref
     ) public {
-        // Given: collateralValue is smaller as maxExposure.
+        // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
