@@ -270,8 +270,7 @@ contract Liquidator is Owned {
             RiskModule.AssetValueAndRiskFactors[] memory riskValues
         ) = IAccount(account).checkAndStartLiquidation();
 
-        // Fill the auction structgs
-
+        // Fill the auction struct
         auctionInformation[account].startDebt = uint128(debt);
         auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
         auctionInformation[account].startTime = uint32(block.timestamp);
