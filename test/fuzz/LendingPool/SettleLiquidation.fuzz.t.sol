@@ -360,6 +360,9 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
+        // Given: collateralValue is smaller than maxExposure.
+        liquidity = uint128(bound(liquidity, 0, type(uint128).max - 1));
+
         // And : The Account has some debt
         depositTokenInAccount(proxyAccount, mockERC20.stable1, liquidity);
         vm.prank(users.accountOwner);
@@ -423,15 +426,18 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(uint256(remainder) > uint256(auctionTerminationReward) + uint256(liquidationPenalty));
         vm.assume(remainder <= liquidity);
 
+        // Given: collateralValue is smaller than maxExposure.
+        liquidity = uint128(bound(liquidity, 0, type(uint128).max - 1));
+
         // Given: Account has collateral debt and pool has liquidity
-        bytes3 emptyBytes3;
+        bytes3 emptyBytes3_;
         depositTokenInAccount(proxyAccount, mockERC20.stable1, liquidity);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(liquidity, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(liquidity, address(proxyAccount), users.accountOwner, emptyBytes3_);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(liquidity + 1));
