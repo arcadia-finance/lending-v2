@@ -13,6 +13,7 @@ import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { AccountV1 } from "lib/accounts-v2/src/AccountV1.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -239,6 +240,10 @@ contract LendingPoolExtension is LendingPool {
     function getClosingRewardWeight() public view returns (uint8) {
         return closingRewardWeight;
     }
+
+    function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
+        return _calculateRewards(amount);
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -386,10 +391,6 @@ contract LiquidatorExtension is Liquidator {
         return _getAssetDistribution(riskValues_);
     }
 
-    function getAuctionTotalBids(address account) public view returns (uint256) {
-        return 0;
-    }
-
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
         return auctionInformation[account].assetAmounts;
     }
@@ -402,7 +403,7 @@ contract LiquidatorExtension is Liquidator {
         locked = locked_;
     }
 
-    function getInAuction(address account) external returns (bool) {
+    function getInAuction(address account) external view returns (bool) {
         return auctionInformation[account].inAuction;
     }
 }

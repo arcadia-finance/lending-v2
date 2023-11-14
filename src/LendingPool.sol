@@ -174,7 +174,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
-        openDebt = maxWithdraw(account);
+        uint256 openDebt = maxWithdraw(msg.sender);
         if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
         _;
     }
@@ -571,11 +571,11 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         uint256 accountDebt = maxWithdraw(account);
         uint256 shares = accountDebt > amount ? amount : accountDebt;
         earlyTerminate = accountDebt <= amount ? true : false;
+        _repay(amount, shares, account, bidder);
+        // Early terminate if all the debt is paid and possibly there is a surplus
         if (earlyTerminate) {
             _settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
         }
-
-        _repay(amount, shares, account, bidder);
     }
 
     /**
@@ -921,6 +921,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
 
         if (badDebt > 0) {
             // Update the total realised liquidity and handle bad debt.
+            emit BorrowCapSet(uint128(liquidationFee + auctionTerminationReward));
             _withdraw(liquidationFee + auctionTerminationReward, account, account);
             totalRealisedLiquidity =
                 SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
@@ -1043,6 +1044,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      * @dev The function updates the count of ongoing auctions.
      * @dev Liquidations can only be initiated for accounts with non-zero open debt.
      */
+    // TODO: delete address acoount and refactor to the msg.sender
     function startLiquidation(address account)
         external
         onlyAccount
@@ -1054,7 +1056,6 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
         openDebt = maxWithdraw(account);
-        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
         (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
