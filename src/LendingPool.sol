@@ -1064,6 +1064,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
 
+        openDebt += liquidationInitiatorReward + liquidationPenalty + closingReward;
+
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).
         if (auctionsInProgress == 0) {
