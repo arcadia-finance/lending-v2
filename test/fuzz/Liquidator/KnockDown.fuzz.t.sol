@@ -55,11 +55,6 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When: Bidder bids for the asset
         liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
         vm.stopPrank();
-
-        // Then: The bidder should have the asset, and left assets should be diminished
-        //        uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
-        //        uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
-        //        assertEq(totalBids, askPrice);
     }
 
     function bid_partially(address bidder) public {
@@ -77,11 +72,6 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When: Bidder bids for the asset
         liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
         vm.stopPrank();
-
-        // Then: The bidder should have the asset, and left assets should be diminished
-        //        uint256 totalBids = liquidator.getAuctionTotalBids(address(proxyAccount));
-        //        uint256 askPrice = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
-        //        assertEq(totalBids, askPrice);
     }
 
     /*//////////////////////////////////////////////////////////////
