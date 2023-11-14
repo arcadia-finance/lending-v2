@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/actions/utils/ActionData.sol";
-import { ActionMultiCallV2 } from "../../../lib/accounts-v2/src/actions/MultiCallV2.sol";
+import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/test/utils/Interfaces.sol";
 import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
@@ -19,7 +19,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCallV2 internal actionHandler;
+    ActionMultiCall internal actionHandler;
     bytes internal callData;
 
     /* ///////////////////////////////////////////////////////////////
@@ -30,7 +30,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool_Fuzz_Test.setUp();
 
         vm.startPrank(users.creatorAddress);
-        actionHandler = new ActionMultiCallV2();
+        actionHandler = new ActionMultiCall();
         mainRegistryExtension.setAllowedAction(address(actionHandler), true);
         vm.stopPrank();
 
@@ -100,6 +100,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes calldata actionData,
         bytes calldata signature
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity < amountLoaned);
         vm.assume(liquidity > 0);
@@ -121,6 +124,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 collateralValue,
         uint128 liquidity
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
@@ -149,6 +155,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         address beneficiary
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
@@ -179,6 +188,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         uint8 originationFee
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
         vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
@@ -226,6 +238,9 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 originationFee,
         bytes3 ref
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
