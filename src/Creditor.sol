@@ -85,4 +85,11 @@ abstract contract Creditor {
      * @return openPosition The open position of the Account.
      */
     function getOpenPosition(address account) external view virtual returns (uint256 openPosition);
+
+    /**
+     * @notice Starts the liquidation of an account and returns the open position of the Account.
+     * @param account The account address.
+     * @return openPosition the open position of the Account
+     */
+    function startLiquidation(address account) external returns (uint256);
 }
