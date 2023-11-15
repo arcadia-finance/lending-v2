@@ -434,7 +434,7 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         // Transfer all the left-over assets to the protocol owner.
-        IAccount(account).auctionBuyIn(owner_);
+        IAccount(account).auctionBoughtIn(owner_);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
@@ -464,7 +464,7 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         // Transfer all the left-over assets to the 'to' address
-        IAccount(account).auctionBoughtIn(to);
+        IAccount(account).auctionBoughtIn(owner_);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
