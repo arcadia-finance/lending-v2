@@ -168,15 +168,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         _;
     }
 
-    modifier onlyAccount() {
-        //Only Accounts can have debt, and debtTokens are non-transferrable.
-        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
-        //passed as Account is indeed a Account and has debt.
-        uint256 openDebt = maxWithdraw(msg.sender);
-        if (openDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-        _;
-    }
-
     modifier onlyTranche() {
         if (!isTranche[msg.sender]) revert LendingPool_OnlyTranche();
         _;
@@ -1027,26 +1018,25 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         }
     }
 
-    function startLiquidation(address account)
+    function startLiquidation()
         external
         override
-        onlyAccount
         whenLiquidationNotPaused
         processInterests
         returns (uint256 startDebt)
     {
-        // TODO: delete address acoount and refactor to the msg.sender
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
-        startDebt = maxWithdraw(account);
+        startDebt = maxWithdraw(msg.sender);
+        if (startDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
         (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
             _calculateRewards(startDebt);
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
-        _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
+        _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, msg.sender);
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).

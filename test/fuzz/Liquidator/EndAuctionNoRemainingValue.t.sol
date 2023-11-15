@@ -32,7 +32,6 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
     }
 
     function testFuzz_Revert_EndAuctionNoRemainingValue_AccountValueIsNotZero(
-        uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
         uint256 amountLoaned
@@ -69,7 +68,6 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
     }
 
     function testFuzz_Success_EndAuctionNoRemainingValue(
-        uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
         uint256 amountLoaned,
@@ -105,7 +103,6 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
         // Set price of stable1 to 0.
         vm.prank(users.defaultTransmitter);
         mockOracles.stable1ToUsd.transmit(1);
-        vm.stopPrank();
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
