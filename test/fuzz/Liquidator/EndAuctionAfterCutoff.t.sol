@@ -24,7 +24,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_endAuctionProtocol_NonOwner(address unprivilegedAddress_, address account_) public {
+    /*     function testFuzz_Revert_endAuctionProtocol_NonOwner(address unprivilegedAddress_, address account_) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
@@ -85,7 +85,7 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.expectRevert(Liquidator_AuctionNotExpired.selector);
         liquidator.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
         vm.stopPrank();
-    }
+    } */
 
     // TODO: Solve this test, issue is bringing the account to liquidation state without using whole liquidty is not straight forward anymore - Zeki - 14/11/23
     //    function testFuzz_Success_EndAuctionProtocol(

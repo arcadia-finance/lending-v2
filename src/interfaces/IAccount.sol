@@ -75,7 +75,7 @@ interface IAccount {
         external
         view
         returns (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts);
-
     function baseCurrency() external view returns (address baseCurrency);
     function registry() external view returns (address registry);
+    function getAccountValue(address baseCurrency_) external view returns (uint256 accountValue);
 }
