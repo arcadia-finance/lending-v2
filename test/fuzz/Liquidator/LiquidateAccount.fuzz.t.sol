@@ -208,7 +208,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set weights
         vm.prank(users.creatorAddress);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -337,7 +337,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set weights
         vm.prank(users.creatorAddress);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
