@@ -131,6 +131,8 @@ contract Liquidator is Owned, ILiquidator {
     error Liquidator_MultiplierTooHigh();
     // Thrown when caller is not valid.
     error Liquidator_Unauthorized();
+    // Thrown if the Account still has remaining value.
+    error Liquidator_AccountValueIsNotZero();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -406,15 +408,15 @@ contract Liquidator is Owned, ILiquidator {
     }
 
     /**
-     * @notice Ends an auction when there's still debt remaining after the auction ends.
+     * @notice Ends an auction after the cutoff period.
      * @param account The account to end the liquidation for.
-     * @param to The address to which the Account ownership will be transferred.
      */
-    function endAuctionProtocol(address account, address to) external onlyOwner {
+    function endAuctionAfterCutoff(address account) external {
         // Check if the account is already in an auction.
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        address owner_ = owner;
         uint256 timePassed;
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
@@ -425,15 +427,46 @@ contract Liquidator is Owned, ILiquidator {
         auctionInformation[account].inAuction = false;
 
         uint256 startDebt = auctionInformation_.startDebt;
+        address creditor = auctionInformation_.creditor;
 
-        ILendingPool(auctionInformation_.creditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, to, 0
+        ILendingPool(creditor).settleLiquidation(
+            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, owner_, 0
+        );
+
+        // Transfer all the left-over assets to the protocol owner.
+        IAccount(account).auctionBuyIn(owner_);
+
+        emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
+    }
+
+    /**
+     * @notice Ends an auction when the remaining value of assets is zero.
+     * @param account The account to end the liquidation for.
+     */
+    function endAuctionNoRemainingValue(address account) external {
+        // Check if the account is already in an auction.
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+
+        // Check if the Account has no remaining value.
+        uint256 accountValue = IAccount(account).getAccountValue(IAccount(account).baseCurrency());
+        if (accountValue != 0) revert Liquidator_AccountValueIsNotZero();
+
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
+
+        uint256 startDebt = auctionInformation_.startDebt;
+        address owner_ = owner;
+        address creditor = auctionInformation_.creditor;
+
+        ILendingPool(creditor).settleLiquidation(
+            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, owner_, 0
         );
 
         // Transfer all the left-over assets to the 'to' address
         IAccount(account).auctionBoughtIn(to);
 
-        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
+        emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
 
     function knockDown(address account) external {

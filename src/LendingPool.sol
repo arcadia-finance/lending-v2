@@ -908,7 +908,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                 unchecked {
                     badDebt = openDebt - auctionTerminationReward - liquidationFee;
                 }
-                _withdraw(liquidationFee + auctionTerminationReward, account, account);
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
                 _processDefault(badDebt);
@@ -923,12 +922,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                     // Synchronize the liquidation fee with liquidity providers.
                     _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
                 }
-                // TODO: Should there be withdraw openDebt?
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
             }
-        }
-        if (surplus > 0) {
+        } else {
             if (openDebt > 0) revert LendingPool_InvalidSettlement();
             uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
             // Synchronize the liquidation fee with liquidity providers.
@@ -943,6 +940,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             );
         }
 
+        if (openDebt > 0) {
+            _withdraw(openDebt, account, account);
+        }
         // Decrement the number of auctions in progress.
         unchecked {
             --auctionsInProgress;

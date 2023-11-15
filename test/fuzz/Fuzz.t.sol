@@ -37,7 +37,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     // ToDo : move to Types users
     address internal treasury;
-    LendingPool public poolTest;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
