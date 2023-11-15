@@ -1025,7 +1025,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     /**
      * @notice Start a liquidation process for a specific account with outstanding debt.
      * @param account The address of the account with debt to be liquidated.
-     * @return openDebt The amount of open debt for the specified account.
+     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
+     * @return closingReward Fee paid to the address that is ending an auction.
      * @dev This function can only be called by authorized liquidators.
      * @dev To initiate a liquidation, the function checks if the specified account has open debt.
      * @dev If the account has no open debt, the function reverts with an error.
