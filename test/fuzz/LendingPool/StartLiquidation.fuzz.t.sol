@@ -97,8 +97,11 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // When: Liquidator calls startLiquidation()
-        vm.prank(address(proxyAccount));
+        vm.startPrank(address(proxyAccount));
+        vm.expectEmit();
+        emit AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
         pool.startLiquidation();
+        vm.stopPrank();
 
         // Avoid stack too deep
         uint8 initiatorRewardWeightStack = initiatorRewardWeight;

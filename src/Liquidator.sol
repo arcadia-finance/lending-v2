@@ -77,7 +77,6 @@ contract Liquidator is Owned, ILiquidator {
     event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
-    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event AuctionFinished(
         address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
@@ -277,9 +276,6 @@ contract Liquidator is Owned, ILiquidator {
         auctionInformation[account].cutoffTime = cutoffTime;
         auctionInformation[account].creditor = creditor;
         auctionInformation[account].originalOwner = owner_;
-
-        // Emit event
-        emit AuctionStarted(account, creditor, uint128(debt));
     }
 
     /**

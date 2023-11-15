@@ -46,6 +46,7 @@ abstract contract Events {
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
@@ -56,7 +57,6 @@ abstract contract Events {
     event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
-    event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
     event AuctionFinished(
         address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );

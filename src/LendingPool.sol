@@ -123,6 +123,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     event Repay(address indexed account, address indexed from, uint256 amount);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
@@ -1047,6 +1048,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         unchecked {
             ++auctionsInProgress;
         }
+
+        // Emit event
+        emit AuctionStarted(msg.sender, address(this), uint128(startDebt));
     }
 
     function _calculateRewards(uint256 debt)

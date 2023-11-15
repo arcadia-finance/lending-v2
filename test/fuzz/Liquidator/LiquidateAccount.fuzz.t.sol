@@ -124,32 +124,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.liquidateAccount(address(proxyAccount));
     }
 
-    // TODO: Update this malicious scenario - Zeki - 14/11/23
-    //    function testFuzz_Revert_liquidateAccount_MaliciousAccount_NoDebtInCreditor(
-    //        address liquidationInitiator,
-    //        uint128 amountLoaned,
-    //        uint256 totalOpenDebt,
-    //        uint256 valueInBaseCurrency,
-    //        uint256 collateralFactor,
-    //        uint256 liquidationFactor
-    //    ) public {
-    //        // Avoid overflow when calculating the liquidation incentives (penaltyWeight is highest value)
-    //        vm.assume(totalOpenDebt < type(uint256).max / liquidator.getPenaltyWeight());
-    //        // Given: Arcadia Lending pool
-    //        mockERC20.stable1.approve(address(pool), type(uint256).max);
-    //        vm.prank(address(srTranche));
-    //        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
-    //
-    //        // And: AccountV1Malicious is created
-    //        AccountV1Malicious maliciousAccount =
-    //        new AccountV1Malicious(address(pool), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor);
-    //
-    //        // When Then: Liquidation Initiator calls liquidateAccount, It should revert because of malicious account address does not have debt in creditor
-    //        vm.prank(liquidationInitiator);
-    //        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
-    //        liquidator.liquidateAccount(address(maliciousAccount));
-    //    }
-
     function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
         address liquidationInitiator,
         uint128 totalOpenDebt,
