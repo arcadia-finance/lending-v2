@@ -56,8 +56,10 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquiditySenior > 100);
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
         vm.assume(startDebt > totalAmount + 2); // Bad debt should be excess since initiator and terminator rewards are 1 and 1 respectively, it should be added to make the baddebt excess
-        // TODO: Fix this shortcut, why uint128 max fails with different error at maxWithdraw - Zeki - 14/11/23
-        vm.assume(startDebt <= type(uint128).max / 2);
+        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(startDebt);
+        uint256 openDebt = startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty;
+        vm.assume(openDebt <= type(uint128).max);
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquiditySenior, users.liquidityProvider);
@@ -67,17 +69,9 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: There is an auction in progress
         pool.setAuctionsInProgress(2);
 
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
         // And:Account has a debt
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty
-        );
-        stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(
-            startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty
-        );
-
-        pool.setRealisedDebt(startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty);
+        pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
+        debt.setRealisedDebt(openDebt);
 
         // When Then: settleLiquidation should fail if there is more debt than the liquidity
         vm.startPrank(address(liquidator));
@@ -368,6 +362,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And:Account has a debt
         pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
+        debt.setRealisedDebt(openDebt);
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
