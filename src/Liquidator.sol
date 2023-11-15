@@ -43,6 +43,7 @@ contract Liquidator is Owned, ILiquidator {
     // Absolute fee can be further capped to a max amount by the creditor.
     uint8 internal initiatorRewardWeight;
     // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
+    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal penaltyWeight;
     // Fee paid to the address that is ending an auction.
@@ -149,6 +150,7 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Sets the liquidation weights.
      * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
+     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
      * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
