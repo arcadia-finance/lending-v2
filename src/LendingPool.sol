@@ -1029,6 +1029,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     function startLiquidation()
         external
+        override
         onlyAccount
         whenLiquidationNotPaused
         processInterests

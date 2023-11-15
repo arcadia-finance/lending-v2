@@ -46,7 +46,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.startPrank(users.creatorAddress);
         multiActionMock = new MultiActionMock();
         action = new ActionMultiCall();
-        mainRegistryExtension.setAllowedAction(address(action), true);
+        registryExtension.setAllowedAction(address(action), true);
         vm.stopPrank();
 
         vm.prank(users.accountOwner);
@@ -54,7 +54,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
-        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
+        registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.token1),
             0,
@@ -143,8 +143,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint64 stableCollateral,
         uint64 tokenOut
     ) public {
-        uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-        uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+        uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+        uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
         uint256 stableIn =
             uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals / stableRate;
@@ -236,8 +236,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
@@ -357,8 +357,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
