@@ -8,10 +8,10 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "endAuctionProtocol" of contract "Liquidator".
+ * @notice Fuzz tests for the function "endAuctionAfterCutoff" of contract "Liquidator".
  */
 
-contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract EndAuctionAfterCutoff_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -24,23 +24,14 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    /*     function testFuzz_Revert_endAuctionProtocol_NonOwner(address unprivilegedAddress_, address account_) public {
-        vm.assume(unprivilegedAddress_ != users.creatorAddress);
-
-        vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert("UNAUTHORIZED");
-        liquidator.endAuctionProtocol(address(proxyAccount), account_);
-        vm.stopPrank();
-    }
-
-    function testFuzz_Revert_endAuctionProtocol_NotForSale(address account_) public {
+    function testFuzz_Revert_endAuctionAfterCutoff_NotForSale(address account_) public {
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_NotForSale.selector);
-        liquidator.endAuctionProtocol(address(proxyAccount), account_);
+        liquidator.endAuctionAfterCutoff(address(proxyAccount));
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_endAuctionProtocol_AuctionNotExpired(
+    function testFuzz_Revert_endAuctionAfterCutoff_AuctionNotExpired(
         uint32 halfLifeTime,
         uint24 timePassed,
         uint32 cutoffTime,
@@ -80,72 +71,66 @@ contract EndAuctionProtocol_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Warp to a timestamp when auction is not yet expired
         vm.warp(block.timestamp + timePassed);
 
-        // call to endAuctionProtocol() should revert as the auction is not yet expired.
+        // call to endAuctionAfterCutoff() should revert as the auction is not yet expired.
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_AuctionNotExpired.selector);
-        liquidator.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
+        liquidator.endAuctionAfterCutoff(address(proxyAccount));
         vm.stopPrank();
-    } */
+    }
 
-    // TODO: Solve this test, issue is bringing the account to liquidation state without using whole liquidty is not straight forward anymore - Zeki - 14/11/23
-    //    function testFuzz_Success_EndAuctionProtocol(
-    //        uint256 amountLoaned,
-    //        uint8 initiatorRewardWeight,
-    //        uint8 penaltyWeight,
-    //        uint8 closingRewardWeight,
-    //        uint80 maxInitiatorFee
-    //    ) public {
-    //        vm.assume(initiatorRewardWeight > 0);
-    //        vm.assume(penaltyWeight > 0);
-    //        vm.assume(closingRewardWeight > 0);
-    //        vm.assume(maxInitiatorFee > 0);
-    //        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
-    //        amountLoaned = bound(amountLoaned, 1001, (type(uint128).max / 150) * 100); // No overflow when debt is increased
-    //        vm.startPrank(users.creatorAddress);
-    //        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
-    //
-    //        // Set liquidations incentives weights
-    //        vm.startPrank(users.creatorAddress);
-    //        liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
-    //        // Set max initiator fee
-    //        pool.setMaxLiquidationFees(maxInitiatorFee, 0);
-    //
-    //        // Account has debt
-    //        bytes3 emptyBytes3;
-    //        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
-    //        vm.startPrank(users.liquidityProvider);
-    //        mockERC20.stable1.approve(address(pool), type(uint256).max);
-    //        vm.startPrank(address(srTranche));
-    //        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
-    //        vm.startPrank(users.accountOwner);
-    //        pool.borrow(amountLoaned / 3, address(proxyAccount), users.accountOwner, emptyBytes3);
-    //
-    //        // Calculate initiator reward
-    //        uint256 initiatorReward = (amountLoaned + 1) * initiatorRewardWeight / 100;
-    //        initiatorReward = initiatorReward > maxInitiatorFee ? maxInitiatorFee : initiatorReward;
-    //
-    //        // Account becomes Unhealthy (High Fixed cost will resul in account to be considered as unhealthy)
-    //        //        debt.setRealisedDebt()
-    //        //        debt.setRealisedDebt(uint256(amountLoaned - 10));
-    //        //        stdstore.target(address(proxyAccount)).sig(proxyAccount.fixedLiquidationCost.selector).checked_write(
-    //        //            badDebt
-    //        //        );
-    //        //        stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(badDebt);
-    //        proxyAccount.setFixedLiquidationCost(uint96(type(uint96).max - 1 ));
-    //
-    //        // Initiate liquidation
-    //        liquidator.liquidateAccount(address(proxyAccount));
-    //
-    //        // Warp to a timestamp when auction is expired
-    //        vm.warp(block.timestamp + liquidator.getCutoffTime() + 1);
-    //
-    //        // Set total bids on Account < amount owed by the account
-    //        uint256 totalBids = (amountLoaned + 1) + initiatorReward - 1;
-    //
-    //        vm.startPrank(users.creatorAddress);
-    //        vm.expectEmit();
-    //        emit AuctionFinished(address(proxyAccount), address(pool), uint128(amountLoaned + 1), 0, 0);
-    //        liquidator.endAuctionProtocol(address(proxyAccount), users.creatorAddress);
-    //        vm.stopPrank();
-    //    }
+    function testFuzz_Success_endAuctionAfterCutoff(
+        uint32 halfLifeTime,
+        uint24 timePassed,
+        uint32 cutoffTime,
+        uint16 startPriceMultiplier,
+        uint8 minPriceMultiplier,
+        uint256 amountLoaned
+    ) public {
+        // Preprocess: Set up the fuzzed variables
+        halfLifeTime = uint32(bound(halfLifeTime, (10 * 60) + 1, (8 * 60 * 60) - 1)); // > 10 min && < 8 hours
+        cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60) + 1, (8 * 60 * 60) - 1)); // > 1 hour && < 8 hours
+        vm.assume(timePassed > cutoffTime);
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 101, 300));
+        vm.assume(minPriceMultiplier < 91);
+        amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
+
+        vm.startPrank(users.creatorAddress);
+        liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime);
+        liquidator.setStartPriceMultiplier(startPriceMultiplier);
+        liquidator.setMinimumPriceMultiplier(minPriceMultiplier);
+
+        // Account has debt
+        bytes3 emptyBytes3;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+
+        // Account becomes Unhealthy (Realised debt grows above Liquidation value)
+        debt.setRealisedDebt(uint256(amountLoaned + 1));
+
+        // Initiate liquidation
+        liquidator.liquidateAccount(address(proxyAccount));
+
+        // Set debt back to initial debt to have right accounting in settleLiquidation.
+        debt.setRealisedDebt(uint256(amountLoaned));
+
+        // Warp to a timestamp when auction is expired
+        vm.warp(block.timestamp + timePassed);
+
+        // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
+        vm.startPrank(users.creatorAddress);
+        vm.expectEmit();
+        // We use amountLoaned + 1 below as that was the value on the time of liquidateAccount() above.
+        emit AuctionFinished(address(proxyAccount), address(pool), uint128(amountLoaned) + 1, 0, 0);
+        liquidator.endAuctionAfterCutoff(address(proxyAccount));
+        vm.stopPrank();
+
+        // The remaining tokens should be sent to protocol owner
+        assertEq(mockERC20.stable1.balanceOf(liquidator.owner()), amountLoaned);
+        assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
+    }
 }

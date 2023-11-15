@@ -466,7 +466,7 @@ contract Liquidator is Owned, ILiquidator {
         // Transfer all the left-over assets to the 'to' address
         IAccount(account).auctionBuyIn(owner_);
 
-        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
+        emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
 
     function knockDown(address account) external {
