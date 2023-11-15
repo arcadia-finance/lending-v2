@@ -156,6 +156,8 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     error LendingPool_AuctionOngoing();
     // Thrown when liquidation weights are above maximum value.
     error LendingPool_WeightsTooHigh();
+    // Thrown when the settle liquidation has invalid configuration.
+    error LendingPool_InvalidSettlement();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -897,34 +899,37 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
 
         // get the open openDebt, openDebt = startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
         uint256 openDebt = maxWithdraw(account);
-        uint256 badDebt;
-        uint256 remainder;
 
         // Calculate the bad debt.
-        if (openDebt > auctionTerminationReward + liquidationFee) {
-            unchecked {
-                badDebt = openDebt - auctionTerminationReward - liquidationFee;
+        if (surplus == 0) {
+            uint256 badDebt;
+            uint256 remainder;
+            if (openDebt > auctionTerminationReward + liquidationFee) {
+                unchecked {
+                    badDebt = openDebt - auctionTerminationReward - liquidationFee;
+                }
+                _withdraw(liquidationFee + auctionTerminationReward, account, account);
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
+                _processDefault(badDebt);
+            } else {
+                if (openDebt >= liquidationFee) {
+                    remainder = (liquidationFee + auctionTerminationReward) - openDebt;
+                    realisedLiquidityOf[terminator] += remainder;
+                } else if (openDebt < liquidationFee) {
+                    remainder = (liquidationFee - openDebt) + auctionTerminationReward;
+                    // Increase the realised liquidity for the terminator.
+                    realisedLiquidityOf[terminator] += auctionTerminationReward;
+                    // Synchronize the liquidation fee with liquidity providers.
+                    _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
+                }
+                // TODO: Should there be withdraw openDebt?
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
             }
-            _withdraw(liquidationFee + auctionTerminationReward, account, account);
-            totalRealisedLiquidity =
-                SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
-            _processDefault(badDebt);
-        } else {
-            if (openDebt > liquidationFee) {
-                remainder = (liquidationFee + auctionTerminationReward) - openDebt;
-                realisedLiquidityOf[terminator] += remainder;
-            } else if (openDebt <= liquidationFee) {
-                remainder = (liquidationFee - openDebt) + auctionTerminationReward;
-                // Increase the realised liquidity for the terminator.
-                realisedLiquidityOf[terminator] += auctionTerminationReward;
-                // Synchronize the liquidation fee with liquidity providers.
-                _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
-            }
-            // TODO: Should there be withdraw openDebt?
-            totalRealisedLiquidity =
-                SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
         }
         if (surplus > 0) {
+            if (openDebt > 0) revert LendingPool_InvalidSettlement();
             uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
             // Synchronize the liquidation fee with liquidity providers.
             _syncLiquidationFeeToLiquidityProviders(liquidationFee);

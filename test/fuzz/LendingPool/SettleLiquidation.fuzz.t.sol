@@ -89,6 +89,52 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
+    function testFuzz_Revert_settleLiquidation_SurplusWithOpenDebt(
+        uint128 startDebt,
+        uint128 liquidity,
+        address liquidationInitiator,
+        address auctionTerminator,
+        uint128 surplus
+    ) public {
+        vm.assume(startDebt > 0);
+        vm.assume(surplus > 0);
+        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(startDebt);
+        vm.assume(
+            uint256(liquidity) >= startDebt + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+        );
+        vm.assume(
+            uint256(liquidity) + surplus + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+                <= type(uint128).max
+        );
+
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+                && auctionTerminator != pool.getTreasury()
+        );
+
+        // Given: Liquidity is deposited in Lending Pool
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(liquidity, users.liquidityProvider);
+
+        pool.setAuctionsInProgress(1);
+        vm.prank(address(pool));
+        jrTranche.setAuctionInProgress(true);
+
+        // And:Account has a debt
+        pool.setOpenPosition(address(proxyAccount), uint128(startDebt));
+
+        // When: Liquidator settles a liquidation
+        vm.prank(address(liquidator));
+        vm.expectRevert(LendingPool_InvalidSettlement.selector);
+        pool.settleLiquidation(
+            address(proxyAccount), users.accountOwner, startDebt, liquidationInitiator, auctionTerminator, surplus
+        );
+    }
+
     function testFuzz_Success_settleLiquidation_Surplus(
         uint128 startDebt,
         uint128 liquidity,
@@ -97,12 +143,22 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 surplus
     ) public {
         vm.assume(startDebt > 0);
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
+        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
-        vm.assume(uint256(liquidity) >= startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty);
         vm.assume(
-            uint256(liquidity) + surplus + liquidationInitiatorReward + closingReward + liquidationPenalty
+            uint256(liquidity) >= startDebt + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+        );
+        vm.assume(
+            uint256(liquidity) + surplus + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
                 <= type(uint128).max
+        );
+
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+                && auctionTerminator != pool.getTreasury()
         );
 
         // Given: Liquidity is deposited in Lending Pool
@@ -141,7 +197,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: Initiator should be able to claim his rewards for liquidation initiation
         assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
         // Then: Terminator should be able to claim his rewards for liquidation termination
-        assertEq(pool.realisedLiquidityOf(auctionTerminator), closingReward);
+        assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
         assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
         // And: The jr tranche will get its part of the liquidationpenalty
@@ -153,7 +209,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: The total realised liquidity should be updated
         assertEq(
             pool.totalRealisedLiquidity(),
-            liquidity + liquidationInitiatorReward + closingReward + liquidationPenalty + surplus
+            liquidity + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty + surplus
         );
 
         assertEq(pool.getAuctionsInProgress(), 0);
@@ -208,10 +264,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         jrTranche.setAuctionInProgress(true);
 
         // And:Account has a debt
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            openDebt
-        );
-        stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(openDebt);
+        pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
@@ -315,10 +368,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         jrTranche.setAuctionInProgress(true);
 
         // And:Account has a debt
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            openDebt
-        );
-        stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(openDebt);
+        pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
@@ -326,17 +376,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
             address(proxyAccount), users.accountOwner, startDebt, liquidationInitiator, auctionTerminator, 0
         );
 
-        // As all liquidation penalty can not be distributed
-
-        uint256 liqPenaltyTreasury = 0;
-        uint256 liqPenaltyJunior = 0;
-
         uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
-
-        emit log_named_uint("leftAuctionTerminationReward", leftAuctionTerminationReward);
-        emit log_named_uint("liquidationPenalty", liquidationPenalty);
-        emit log_named_uint("auctionTerminationReward", auctionTerminationReward);
-        emit log_named_uint("openDebt", openDebt);
 
         // Then: Initiator should be able to claim his rewards for liquidation initiation
         assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
@@ -344,9 +384,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(auctionTerminator), leftAuctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
         assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
-        //
         // And: The jr tranche will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 1);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
         // And: treasury will get its part of the liquidation penalty
         assertEq(pool.realisedLiquidityOf(address(treasury)), 0);
         // And: The remainder should be claimable by the original owner
@@ -371,6 +410,14 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setWeights(2, 5, 2);
         vm.prank(users.creatorAddress);
         pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
+
+        vm.assume(
+            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
+                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
+                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
+                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
+                && auctionTerminator != pool.getTreasury()
+        );
 
         (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
@@ -424,71 +471,6 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
 
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(
-            pool.realisedLiquidityOf(address(srTranche)),
-            liquidity - openDebt - (liquidationPenalty + auctionTerminationReward)
-        );
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
     }
-    //
-    // TODO: This scenario is no longer valid? - Zeki - 15/11/23
-    //    function testFuzz_Success_settleLiquidation_NoBadDebt_RemainderIsHigherThanRewards(
-    //        uint128 liquidity,
-    //        address liquidationInitiator,
-    //        uint80 liquidationInitiatorReward,
-    //        address auctionTerminator,
-    //        uint80 auctionTerminationReward,
-    //        uint128 liquidationPenalty,
-    //        uint128 remainder
-    //    ) public {
-    //        vm.assume(
-    //            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
-    //                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
-    //                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
-    //                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
-    //                && auctionTerminator != pool.getTreasury()
-    //        );
-    //        vm.assume(liquidity > 1);
-    //        vm.assume(
-    //            uint256(liquidity) + uint256(liquidationInitiatorReward) + uint256(auctionTerminationReward)
-    //                + uint256(liquidationPenalty) + uint256(remainder) <= (type(uint128).max / 300) * 100
-    //        );
-    //        vm.assume(uint256(remainder) > uint256(auctionTerminationReward) + uint256(liquidationPenalty));
-    //        vm.assume(remainder <= liquidity);
-    //
-    //        // Given: Account has collateral debt and pool has liquidity
-    //        bytes3 emptyBytes3;
-    //        depositTokenInAccount(proxyAccount, mockERC20.stable1, liquidity);
-    //        vm.prank(users.liquidityProvider);
-    //        mockERC20.stable1.approve(address(pool), type(uint256).max);
-    //        vm.prank(address(srTranche));
-    //        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-    //        vm.prank(users.accountOwner);
-    //        pool.borrow(liquidity, address(proxyAccount), users.accountOwner, emptyBytes3);
-    //
-    //        // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
-    //        debt.setRealisedDebt(uint256(liquidity + 1));
-    //
-    //        // Pool is inAuction
-    //        pool.setAuctionsInProgress(2);
-    //        vm.prank(address(pool));
-    //        jrTranche.setAuctionInProgress(true);
-    //
-    //        // When: Liquidator settles a liquidation
-    //        vm.prank(address(liquidator));
-    //        pool.settleLiquidation(
-    //            address(proxyAccount),
-    //            users.accountOwner,
-    //            liquidationInitiator,
-    //            auctionTerminator,
-    //            liquidationPenalty,
-    //            0
-    //        );
-    //
-    //        // Then: Initiator should be able to claim his rewards for liquidation initiation
-    //        assertEq(pool.realisedLiquidityOf(liquidationInitiator), liquidationInitiatorReward);
-    //        // And: Terminator should be able to claim his rewards for liquidation termination
-    //        assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
-    //        // And: The liquidity amount from the most senior tranche should remain the same
-    //        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
-    //    }
 }
