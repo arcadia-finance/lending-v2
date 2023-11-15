@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 contract AccountV1Malicious {
-    address public trustedCreditor;
+    address public creditor;
     uint256 public totalOpenDebt;
     uint256 public valueInBaseCurrency;
     uint256 public collateralFactor;
@@ -21,7 +21,7 @@ contract AccountV1Malicious {
         uint256 collateralFactor_,
         uint256 liquidationFactor_
     ) payable {
-        trustedCreditor = trustedCreditor_;
+        creditor = trustedCreditor_;
         totalOpenDebt = totalOpenDebt_;
         valueInBaseCurrency = valueInBaseCurrency_;
         collateralFactor = collateralFactor_;
@@ -51,7 +51,7 @@ contract AccountV1Malicious {
         assetAmounts = new uint256[](1);
         assetAmounts[0] = 0;
 
-        creditor_ = trustedCreditor;
+        creditor_ = creditor;
         owner_ = owner;
 
         totalOpenDebt_ = totalOpenDebt;

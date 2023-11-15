@@ -78,12 +78,12 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_liquidateAccount_NoTrustedCreditorInAccount(address liquidationInitiator) public {
-        // Given: Account is there and no trusted creditor
-        address proxyAddress_NoTrustedCreditor = factory.createAccount(2, 0, address(0), address(0));
-        AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoTrustedCreditor);
+    function testFuzz_Revert_liquidateAccount_NoCreditorInAccount(address liquidationInitiator) public {
+        // Given: Account is there and no creditor
+        address proxyAddress_NoCreditor = factory.createAccount(2, 0, address(0), address(0));
+        AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoCreditor);
 
-        // When Then: Liquidator tries to liquidate, It should revert because there is no trusted creditor to call to get the account debt
+        // When Then: Liquidator tries to liquidate, It should revert because there is no creditor to call to get the account debt
         vm.startPrank(liquidationInitiator);
         vm.expectRevert();
         liquidator.liquidateAccount(address(proxyAccount_));
@@ -208,7 +208,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set weights
         vm.prank(users.creatorAddress);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -337,7 +337,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set weights
         vm.prank(users.creatorAddress);
-        liquidator.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));

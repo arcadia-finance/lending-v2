@@ -42,7 +42,8 @@ contract Liquidator is Owned, ILiquidator {
     // Defined as a fraction of the openDebt with 2 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
     uint8 internal initiatorRewardWeight;
-    // Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
+    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
+    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 2 decimals precision.
     uint8 internal penaltyWeight;
     // Fee paid to the address that is ending an auction.
@@ -61,7 +62,7 @@ contract Liquidator is Owned, ILiquidator {
         address initiator; // The address of the initiator of the auction.
         uint32 startPriceMultiplier; // 2 decimals precision.
         uint32 cutoffTime; // Maximum time that the auction declines.
-        address trustedCreditor; // The creditor that issued the debt.
+        address creditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. It is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
         uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
@@ -149,7 +150,8 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Sets the liquidation weights.
      * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight_ Penalty paid by the Account owner to the trusted Creditor.
+     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
+     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
      * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
      */
     function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
@@ -271,7 +273,7 @@ contract Liquidator is Owned, ILiquidator {
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
         auctionInformation[account].cutoffTime = cutoffTime;
-        auctionInformation[account].trustedCreditor = creditor;
+        auctionInformation[account].creditor = creditor;
         auctionInformation[account].originalOwner = owner_;
 
         // Emit event
@@ -319,7 +321,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256 askPrice = _calculateAskPrice(auctionInformation_, assetAmounts, assetIds);
 
         // Repay the debt of the account.
-        bool earlyTerminate_ = ILendingPool(auctionInformation_.trustedCreditor).auctionRepay(
+        bool earlyTerminate_ = ILendingPool(auctionInformation_.creditor).auctionRepay(
             auctionInformation_.startDebt,
             auctionInformation_.initiator,
             auctionInformation_.originalOwner,
@@ -424,14 +426,14 @@ contract Liquidator is Owned, ILiquidator {
 
         uint256 startDebt = auctionInformation_.startDebt;
 
-        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
+        ILendingPool(auctionInformation_.creditor).settleLiquidation(
             account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, to, 0
         );
 
         // Transfer all the left-over assets to the 'to' address
         IAccount(account).auctionBoughtIn(to);
 
-        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), 0, 0);
+        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
     }
 
     function knockDown(address account) external {
@@ -448,12 +450,12 @@ contract Liquidator is Owned, ILiquidator {
 
         uint256 startDebt = uint256(auctionInformation_.startDebt);
 
-        // Call settlement of the debt in the trustedCreditor
-        ILendingPool(auctionInformation_.trustedCreditor).settleLiquidation(
+        // Call settlement of the debt in the creditor
+        ILendingPool(auctionInformation_.creditor).settleLiquidation(
             account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, msg.sender, 0
         );
 
-        emit AuctionFinished(account, auctionInformation_.trustedCreditor, uint128(startDebt), 0, 0);
+        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
 
         // Set the inAuction flag to false.
         auctionInformation[account].inAuction = false;
