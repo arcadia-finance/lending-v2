@@ -22,7 +22,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_StartLiquidation_NonAccount(address account, address nonAccount) public {
+    function testFuzz_Revert_StartLiquidation_NonAccount(address nonAccount) public {
         // Given: unprivilegedAddress is not the liquidator
         vm.assume(nonAccount != address(liquidator));
         vm.assume(nonAccount != address(proxyAccount));
@@ -31,18 +31,18 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: startLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(nonAccount);
         vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
-        pool.startLiquidation(account);
+        pool.startLiquidation();
         vm.stopPrank();
     }
 
     function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt() public {
         vm.startPrank(address(proxyAccount));
         vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
-        pool.startLiquidation(address(proxyAccount));
+        pool.startLiquidation();
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_StartLiquidation_Paused(address account_, uint128 amountLoaned) public {
+    function testFuzz_Revert_StartLiquidation_Paused(uint128 amountLoaned) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
@@ -62,7 +62,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
         vm.startPrank(address(proxyAccount));
-        pool.startLiquidation(account_);
+        pool.startLiquidation();
         vm.stopPrank();
     }
 
@@ -98,7 +98,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator calls startLiquidation()
         vm.prank(address(proxyAccount));
-        pool.startLiquidation(address(proxyAccount));
+        pool.startLiquidation();
 
         // Avoid stack too deep
         uint8 initiatorRewardWeightStack = initiatorRewardWeight;
@@ -165,7 +165,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator calls startLiquidation()
         vm.prank(address(proxyAccount));
-        pool.startLiquidation(address(proxyAccount));
+        pool.startLiquidation();
 
         // Then: auctionsInProgress should increase
         assertEq(pool.getAuctionsInProgress(), auctionsInProgress + 1);
