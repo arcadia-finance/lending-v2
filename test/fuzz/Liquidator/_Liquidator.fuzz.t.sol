@@ -39,6 +39,6 @@ abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.prank(users.accountOwner);
-        proxyAccount.openTrustedMarginAccount(address(pool));
+        proxyAccount.openMarginAccount(address(pool));
     }
 }

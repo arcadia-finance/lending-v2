@@ -103,7 +103,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_borrow_DifferentTrustedCreditor(
+    function testFuzz_Revert_borrow_DifferentCreditor(
         uint128 amountLoaned,
         uint128 collateralValue,
         address to,
@@ -124,8 +124,8 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         vm.startPrank(users.accountOwner);
-        proxyAccount.closeTrustedMarginAccount();
-        proxyAccount.openTrustedMarginAccount(address(pool_));
+        proxyAccount.closeMarginAccount();
+        proxyAccount.openMarginAccount(address(pool_));
         vm.stopPrank();
 
         vm.startPrank(users.accountOwner);

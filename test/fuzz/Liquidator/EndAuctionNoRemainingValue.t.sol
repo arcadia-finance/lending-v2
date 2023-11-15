@@ -101,7 +101,7 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
 
         // Set price of stable1 to 0.
         vm.prank(users.defaultTransmitter);
-        mockOracles.stable1ToUsd.transmit(0);
+        mockOracles.stable1ToUsd.transmit(1);
         vm.stopPrank();
 
         // endAuctionNoRemainingValue() should succeed.
