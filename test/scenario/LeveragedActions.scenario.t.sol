@@ -70,9 +70,9 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testScenario_Revert_doActionWithLeverage_DifferentTrustedCreditor() public {
+    function testScenario_Revert_doActionWithLeverage_DifferentCreditor() public {
         vm.startPrank(users.accountOwner);
-        proxyAccount.closeTrustedMarginAccount();
+        proxyAccount.closeMarginAccount();
         proxyAccount.setAssetManager(address(pool), true);
         vm.stopPrank();
 

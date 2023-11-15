@@ -15,7 +15,7 @@ import { Liquidator } from "../src/Liquidator.sol";
 import { ERC20, DebtToken } from "../src/DebtToken.sol";
 import { LendingPool, InterestRateModule } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
-import { TrustedCreditor } from "../src/TrustedCreditor.sol";
+import { Creditor } from "../src/Creditor.sol";
 
 contract ArcadiaLendingDeployment is Test {
     Factory public factory;

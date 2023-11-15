@@ -5,12 +5,12 @@
 pragma solidity 0.8.19;
 
 /**
- * @title Trusted Creditor implementation.
+ * @title Creditor implementation.
  * @author Pragma Labs
- * @notice This contract contains the minimum functionality a Trusted Creditor, interacting with Arcadia Accounts, needs to implement.
+ * @notice This contract contains the minimum functionality a Creditor, interacting with Arcadia Accounts, needs to implement.
  * @dev For the implementation of Arcadia Accounts, see: https://github.com/arcadia-finance/accounts-v2.
  */
-abstract contract TrustedCreditor {
+abstract contract Creditor {
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
