@@ -1022,38 +1022,25 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         }
     }
 
-    /**
-     * @notice Start a liquidation process for a specific account with outstanding debt.
-     * @param account The address of the account with debt to be liquidated.
-     * @return openDebt The amount of open debt for the specified account.
-     * @dev This function can only be called by authorized liquidators.
-     * @dev To initiate a liquidation, the function checks if the specified account has open debt.
-     * @dev If the account has no open debt, the function reverts with an error.
-     * @dev If this is the first auction, it hooks into the most junior tranche to indicate that auctions are ongoing.
-     * @dev The function updates the count of ongoing auctions.
-     * @dev Liquidations can only be initiated for accounts with non-zero open debt.
-     */
-    // TODO: delete address acoount and refactor to the msg.sender
     function startLiquidation(address account)
         external
         onlyAccount
         whenLiquidationNotPaused
         processInterests
-        returns (uint256 openDebt)
+        returns (uint256 startDebt)
     {
+        // TODO: delete address acoount and refactor to the msg.sender
         //Only Accounts can have debt, and debtTokens are non-transferrable.
         //Hence by checking that the balance of the address passed as Account is not 0, we know the address
         //passed as Account is indeed a Account and has debt.
-        openDebt = maxWithdraw(account);
+        startDebt = maxWithdraw(account);
 
         // Calculate liquidation incentives which should be considered as extra debt for the Account
         (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
-            _calculateRewards(openDebt);
+            _calculateRewards(startDebt);
 
         // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, account);
-
-        openDebt += liquidationInitiatorReward + liquidationPenalty + closingReward;
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).

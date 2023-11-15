@@ -59,8 +59,8 @@ contract Liquidator is Owned, ILiquidator {
         uint32 startTime; // The timestamp the auction started.
         bool inAuction; // Flag indicating if the auction is still ongoing.
         address initiator; // The address of the initiator of the auction.
-        uint16 startPriceMultiplier; // 2 decimals precision.
-        uint16 cutoffTime; // Maximum time that the auction declines.
+        uint32 startPriceMultiplier; // 2 decimals precision.
+        uint32 cutoffTime; // Maximum time that the auction declines.
         address trustedCreditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
         uint32[] assetShares; // The distribution of the assets in the Account. It is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
@@ -351,8 +351,7 @@ contract Liquidator is Owned, ILiquidator {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
         // Calculate the start price.
-        uint256 startPrice =
-            _calculateStartPrice(uint256(auctionInformation_.startDebt), auctionInformation_.startPriceMultiplier);
+        uint256 startPrice = auctionInformation_.startDebt * auctionInformation_.startPriceMultiplier / 100;
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(

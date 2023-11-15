@@ -365,7 +365,6 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 startDebt,
         address liquidationInitiator,
         address auctionTerminator,
-        uint128 liquidationPenalty,
         uint128 remainder
     ) public {
         vm.prank(users.creatorAddress);

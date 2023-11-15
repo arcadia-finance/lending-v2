@@ -42,6 +42,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
+        // And: Pool rewards are set to zero
+        vm.prank(users.creatorAddress);
+        pool.setWeights(0, 0, 0);
+
         vm.prank(liquidationInitiator);
         liquidator.liquidateAccount(address(proxyAccount));
 
@@ -110,6 +114,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
+        // And: Pool rewards are set to zero
+        vm.prank(users.creatorAddress);
+        pool.setWeights(0, 0, 0);
+
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
         vm.expectRevert("A_CASL: Account not liquidatable");
@@ -173,7 +181,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGe(pool.getAuctionsInProgress(), 0);
     }
 
-    function testFuzz_Success_liquidateAccount_UnhealthyDebt(
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
         uint128 amountLoaned,
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight,
@@ -220,10 +228,10 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
-        (address originalOwner_, uint128 openDebt_, uint32 startTime_, bool inAuction_, address initiator_) =
+        (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_, address initiator_) =
             liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
-        assertEq(openDebt_, amountLoanedStack + 1);
+        assertEq(startDebt_, amountLoanedStack + 1);
         assertEq(initiator_, liquidationInitiatorStack);
         assertEq(inAuction_, true);
         assertEq(originalOwner_, users.accountOwner);
