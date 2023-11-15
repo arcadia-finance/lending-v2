@@ -24,8 +24,6 @@ contract Liquidator is Owned, ILiquidator {
     // The total amount of shares in the Account.
     // 1_000_000 shares = 100% of the Account.
     uint32 internal constant TotalShares = 1_000_000;
-    // Reentrancy lock.
-    uint8 internal locked;
     // Sets the begin price of the auction.
     // Defined as a percentage of openDebt, 2 decimals precision -> 150 = 150%.
     uint16 internal startPriceMultiplier;
@@ -87,7 +85,6 @@ contract Liquidator is Owned, ILiquidator {
 
     constructor(address factory_) Owned(msg.sender) {
         FACTORY = factory_;
-        locked = 1;
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
         // note: to discuss
@@ -132,17 +129,6 @@ contract Liquidator is Owned, ILiquidator {
     error Liquidator_Unauthorized();
     // Thrown if the Account still has remaining value.
     error Liquidator_AccountValueIsNotZero();
-
-    /* //////////////////////////////////////////////////////////////
-                                MODIFIERS
-    ////////////////////////////////////////////////////////////// */
-
-    modifier nonReentrant() {
-        require(locked == 1, "L: REENTRANCY");
-        locked = 2;
-        _;
-        locked = 1;
-    }
 
     /*///////////////////////////////////////////////////////////////
                         MANAGE AUCTION SETTINGS
@@ -246,7 +232,7 @@ contract Liquidator is Owned, ILiquidator {
      * 4. Records the start time and asset distribution for the auction.
      * 5. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
      */
-    function liquidateAccount(address account) external nonReentrant {
+    function liquidateAccount(address account) external {
         // Check if the account is already in an auction.
         if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
 
@@ -307,11 +293,7 @@ contract Liquidator is Owned, ILiquidator {
         }
     }
 
-    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, bool endAuction)
-        external
-        payable
-        nonReentrant
-    {
+    function bid(address account, uint256[] memory assetAmounts, uint256[] memory assetIds, bool endAuction) external {
         // Check if the account is already in an auction.
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
@@ -412,15 +394,15 @@ contract Liquidator is Owned, ILiquidator {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
+
         address owner_ = owner;
         uint256 timePassed;
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
         }
         if (timePassed <= auctionInformation_.cutoffTime) revert Liquidator_AuctionNotExpired();
-
-        // Stop the auction, this will prevent any possible reentrance attacks.
-        auctionInformation[account].inAuction = false;
 
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
@@ -444,12 +426,12 @@ contract Liquidator is Owned, ILiquidator {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
+
         // Check if the Account has no remaining value.
         uint256 accountValue = IAccount(account).getAccountValue(IAccount(account).baseCurrency());
         if (accountValue != 0) revert Liquidator_AccountValueIsNotZero();
-
-        // Stop the auction, this will prevent any possible reentrance attacks.
-        auctionInformation[account].inAuction = false;
 
         uint256 startDebt = auctionInformation_.startDebt;
         address owner_ = owner;
@@ -474,6 +456,9 @@ contract Liquidator is Owned, ILiquidator {
     }
 
     function _knockDown(address account, AuctionInformation storage auctionInformation_) internal {
+        // Set the inAuction flag to false.
+        auctionInformation[account].inAuction = false;
+
         (bool success,,) = IAccount(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
@@ -485,8 +470,5 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
-
-        // Set the inAuction flag to false.
-        auctionInformation[account].inAuction = false;
     }
 }

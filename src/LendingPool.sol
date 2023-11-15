@@ -896,12 +896,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                 uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardsAndSurplus
             );
         } else {
-            // Calculate the bad debt.
-            // get the open openDebt, openDebt = startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
+            // openDebt equals startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
             uint256 openDebt = maxWithdraw(account);
-            uint256 badDebt;
-            uint256 remainder;
             if (openDebt > auctionTerminationReward + liquidationFee) {
+                uint256 badDebt;
                 unchecked {
                     badDebt = openDebt - auctionTerminationReward - liquidationFee;
                 }
@@ -909,10 +907,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
                 _processDefault(badDebt);
             } else {
+                uint256 remainder;
                 if (openDebt >= liquidationFee) {
                     remainder = (liquidationFee + auctionTerminationReward) - openDebt;
                     realisedLiquidityOf[terminator] += remainder;
-                } else if (openDebt < liquidationFee) {
+                } else {
                     remainder = (liquidationFee - openDebt) + auctionTerminationReward;
                     // Increase the realised liquidity for the terminator.
                     realisedLiquidityOf[terminator] += auctionTerminationReward;
@@ -1064,7 +1063,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @notice Sets the liquidation weights.
      * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
      * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
+     * @dev Each weight has 4 decimals precision (50 equals 0,005 or 0,5%).
      */
     function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
         external

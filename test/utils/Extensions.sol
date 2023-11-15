@@ -315,10 +315,6 @@ contract LiquidatorExtension is Liquidator {
         assetIds_ = auctionInformation[account_].assetIds;
     }
 
-    function getLocked() public view returns (uint256) {
-        return locked;
-    }
-
     function getAuctionIsActive(address account) public view returns (bool) {
         return auctionInformation[account].inAuction;
     }
@@ -389,10 +385,6 @@ contract LiquidatorExtension is Liquidator {
 
     function getOwner(address account) public view returns (address) {
         return auctionInformation[account].originalOwner;
-    }
-
-    function setLocked(uint8 locked_) external {
-        locked = locked_;
     }
 
     function getInAuction(address account) external view returns (bool) {
