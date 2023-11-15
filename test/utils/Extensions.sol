@@ -124,10 +124,6 @@ contract LendingPoolExtension is LendingPool {
         auctionsInProgress = amount;
     }
 
-    function setLiquidationInitiator(address account, address initiator) public {
-        liquidationInitiator[account] = initiator;
-    }
-
     function setInterestWeight(address tranche, uint256 interestWeight_) public {
         interestWeight[tranche] = interestWeight_;
     }
@@ -186,10 +182,6 @@ contract LendingPoolExtension is LendingPool {
 
     function getInterestWeight(address tranche) public view returns (uint256) {
         return interestWeight[tranche];
-    }
-
-    function getLiquidationInitiator(address account) public view returns (address inititator) {
-        return liquidationInitiator[account];
     }
 
     function getInterestWeightTranches(uint16 id) public view returns (uint16) {
@@ -307,7 +299,7 @@ contract LiquidatorExtension is Liquidator {
         public
         view
         returns (
-            uint16 cutoffTime_,
+            uint32 cutoffTime_,
             address trustedCreditor_,
             address[] memory assetAddresses_,
             uint32[] memory assetShares_,
@@ -332,14 +324,14 @@ contract LiquidatorExtension is Liquidator {
     }
 
     function getAuctionStartPrice(address account) public view returns (uint256) {
-        return _calculateStartPrice(auctionInformation[account].startDebt, startPriceMultiplier);
+        return (uint256(auctionInformation[account].startDebt) * startPriceMultiplier / 100);
     }
 
     function getBase() public view returns (uint64) {
         return base;
     }
 
-    function getCutoffTime() public view returns (uint16) {
+    function getCutoffTime() public view returns (uint32) {
         return cutoffTime;
     }
 
@@ -364,7 +356,7 @@ contract LiquidatorExtension is Liquidator {
         view
         returns (uint256)
     {
-        AuctionInformation memory auctionInformation_ = auctionInformation[account];
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
         return _calculateAskPrice(auctionInformation_, askedAssetAmounts, askedAssetIds);
     }
 
@@ -399,7 +391,7 @@ contract LiquidatorExtension is Liquidator {
         return auctionInformation[account].originalOwner;
     }
 
-    function setLocked(uint256 locked_) external {
+    function setLocked(uint8 locked_) external {
         locked = locked_;
     }
 

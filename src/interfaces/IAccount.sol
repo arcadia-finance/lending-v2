@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
 
 interface IAccount {
     /**
@@ -51,8 +51,8 @@ interface IAccount {
             uint256[] memory assetAmounts,
             address owner,
             address creditor,
-            uint256 debt,
-            RiskModule.AssetValueAndRiskFactors[] memory riskValues
+            uint256 totalOpenDebt,
+            RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
         );
     function auctionBuy(
         address[] memory assetAddresses,
