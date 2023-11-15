@@ -23,9 +23,9 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setWeights_NonOwner(
         address unprivilegedAddress_,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight
     ) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
@@ -36,11 +36,11 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_setWeights_WeightsTooHigh(
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight
     ) public {
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight > 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight > 1100);
 
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(LendingPool_WeightsTooHigh.selector);
@@ -48,13 +48,13 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setWeights(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight)
+    function testFuzz_Success_setWeights(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight)
         public
     {
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit WeightsSet(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
         vm.stopPrank();

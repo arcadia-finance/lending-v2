@@ -221,15 +221,15 @@ contract LendingPoolExtension is LendingPool {
         maxClosingFee = maxClosingFee_;
     }
 
-    function getPenaltyWeight() public view returns (uint8) {
+    function getPenaltyWeight() public view returns (uint16) {
         return penaltyWeight;
     }
 
-    function getInitiatorRewardWeight() public view returns (uint8) {
+    function getInitiatorRewardWeight() public view returns (uint16) {
         return initiatorRewardWeight;
     }
 
-    function getClosingRewardWeight() public view returns (uint8) {
+    function getClosingRewardWeight() public view returns (uint16) {
         return closingRewardWeight;
     }
 

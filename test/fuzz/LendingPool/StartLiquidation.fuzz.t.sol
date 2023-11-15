@@ -70,9 +70,9 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_startLiquidation_NoOngoingAuctions(
         uint128 amountLoaned,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight,
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight,
         uint80 maxInitiatorFee,
         uint80 maxClosingFee
     ) public {
@@ -80,7 +80,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -106,9 +106,9 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         // Avoid stack too deep
-        uint8 initiatorRewardWeightStack = initiatorRewardWeight;
-        uint8 penaltyWeightStack = penaltyWeight;
-        uint8 closingRewardWeightStack = closingRewardWeight;
+        uint16 initiatorRewardWeightStack = initiatorRewardWeight;
+        uint16 penaltyWeightStack = penaltyWeight;
+        uint16 closingRewardWeightStack = closingRewardWeight;
         uint128 amountLoanedStack = amountLoaned;
 
         // Then: 1 auction should be in progress in LendingPool
@@ -117,11 +117,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(jrTranche.auctionInProgress(), true);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = uint256(amountLoanedStack + 1).mulDivDown(initiatorRewardWeightStack, 100);
+        uint256 liquidationInitiatorReward =
+            uint256(amountLoanedStack + 1).mulDivDown(initiatorRewardWeightStack, 10_000);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 100);
-        uint256 closingReward = (uint256(amountLoanedStack + 1)).mulDivDown(closingRewardWeightStack, 100);
+        uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 10_000);
+        uint256 closingReward = (uint256(amountLoanedStack + 1)).mulDivDown(closingRewardWeightStack, 10_000);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
 
         // And: Returned amount should be equal to maxInitiatorFee
@@ -133,9 +134,9 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_startLiquidation_OngoingAuctions(
         uint128 amountLoaned,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight,
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight,
         uint80 maxInitiatorFee,
         uint80 maxClosingFee,
         uint16 auctionsInProgress
@@ -144,7 +145,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);

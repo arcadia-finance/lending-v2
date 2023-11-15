@@ -159,16 +159,16 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
         uint128 amountLoaned,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight,
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight,
         uint80 maxInitiatorFee,
         uint80 maxClosingFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -216,9 +216,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartTwo(
         uint128 amountLoaned,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight,
+        uint16 initiatorRewardWeight,
+        uint16 penaltyWeight,
+        uint16 closingRewardWeight,
         uint80 maxInitiatorFee,
         uint80 maxClosingFee,
         address liquidationInitiator
@@ -228,7 +228,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(uint256(amountLoaned) * initiatorRewardWeight <= (type(uint256).max));
         vm.assume(uint256(amountLoaned) * closingRewardWeight <= (type(uint256).max));
         vm.assume(uint256(amountLoaned) * penaltyWeight <= (type(uint256).max));
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -254,26 +254,26 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.liquidateAccount(address(proxyAccount));
 
         // Avoid stack too deep
-        uint8 closingRewardWeightStack = closingRewardWeight;
+        uint16 closingRewardWeightStack = closingRewardWeight;
         uint80 maxInitiatorFeeStack = maxInitiatorFee;
         uint80 maxClosingFeeStack = maxClosingFee;
-        uint8 penaltyWeightStack = penaltyWeight;
-        uint8 initiatorRewardWeightStack = initiatorRewardWeight;
+        uint16 penaltyWeightStack = penaltyWeight;
+        uint16 initiatorRewardWeightStack = initiatorRewardWeight;
         uint128 openDebt_ = amountLoaned + 1;
 
         // Then: Auction should be set and started
         (uint256 liquidationInitiatorReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
             pool.getCalculateRewards(openDebt_);
 
-        uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 100);
+        uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 10_000);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFeeStack ? maxInitiatorFeeStack : liquidationInitiatorReward;
 
         assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
-        uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 100);
+        uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 10_000);
         closingReward = closingReward > maxClosingFeeStack ? maxClosingFeeStack : closingReward;
 
-        uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 100);
+        uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 10_000);
 
         assertEq(auctionClosingReward_, closingReward);
         assertEq(liquidationPenaltyReward, liquidationPenaltyReward_);
@@ -296,7 +296,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 11);
+        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;

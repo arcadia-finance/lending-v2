@@ -70,15 +70,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
     uint80 internal maxClosingFee;
     // Fee paid to the Liquidation Initiator.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
+    // Defined as a fraction of the openDebt with 4 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
-    uint8 internal initiatorRewardWeight;
+    uint16 internal initiatorRewardWeight;
     // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
-    uint8 internal penaltyWeight;
+    // Defined as a fraction of the openDebt with 4 decimals precision.
+    uint16 internal penaltyWeight;
     // Fee paid to the address that is ending an auction.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
-    uint8 internal closingRewardWeight;
+    // Defined as a fraction of the openDebt with 4 decimals precision.
+    uint16 internal closingRewardWeight;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
@@ -105,7 +105,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
+    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
     event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
     event InterestWeightSet(uint256 indexed index, uint16 weight);
     event LiquidationWeightSet(uint256 indexed index, uint16 weight);
@@ -203,10 +203,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         treasury = treasury_;
         accountFactory = accountFactory_;
         liquidator = liquidator_;
-        initiatorRewardWeight = 1;
-        penaltyWeight = 5;
+        initiatorRewardWeight = 100;
+        penaltyWeight = 500;
         // note: to discuss
-        closingRewardWeight = 1;
+        closingRewardWeight = 100;
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -1058,12 +1058,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         view
         returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
     {
-        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, 100);
+        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, 10_000);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        closingReward = debt.mulDivDown(closingRewardWeight, 100);
+        closingReward = debt.mulDivDown(closingRewardWeight, 10_000);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
-        liquidationPenalty = debt.mulDivUp(penaltyWeight, 100);
+        liquidationPenalty = debt.mulDivUp(penaltyWeight, 10_000);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -1080,13 +1080,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         external
         onlyOwner
     {
-        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 11) revert LendingPool_WeightsTooHigh();
+        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 1100) revert LendingPool_WeightsTooHigh();
 
-        initiatorRewardWeight = uint8(initiatorRewardWeight_);
-        penaltyWeight = uint8(penaltyWeight_);
-        closingRewardWeight = uint8(closingRewardWeight_);
+        initiatorRewardWeight = uint16(initiatorRewardWeight_);
+        penaltyWeight = uint16(penaltyWeight_);
+        closingRewardWeight = uint16(closingRewardWeight_);
 
-        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
+        emit WeightsSet(uint16(initiatorRewardWeight_), uint16(penaltyWeight_), uint16(closingRewardWeight_));
     }
 
     /* //////////////////////////////////////////////////////////////
