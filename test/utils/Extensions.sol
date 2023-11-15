@@ -305,7 +305,7 @@ contract LiquidatorExtension is Liquidator {
         )
     {
         cutoffTime_ = auctionInformation[account_].cutoffTime;
-        trustedCreditor_ = auctionInformation[account_].trustedCreditor;
+        trustedCreditor_ = auctionInformation[account_].creditor;
         assetAddresses_ = auctionInformation[account_].assetAddresses;
         assetShares_ = auctionInformation[account_].assetShares;
         assetAmounts_ = auctionInformation[account_].assetAmounts;

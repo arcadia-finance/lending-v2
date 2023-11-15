@@ -12,7 +12,7 @@ import { ITranche } from "./interfaces/ITranche.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { TrustedCreditor } from "./TrustedCreditor.sol";
+import { Creditor } from "./Creditor.sol";
 import { ERC20, ERC4626, DebtToken } from "./DebtToken.sol";
 import { InterestRateModule } from "./InterestRateModule.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
@@ -26,7 +26,7 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
  * since totalAssets() cannot be manipulated by the first minter.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
  */
-contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, InterestRateModule, ILendingPool {
+contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateModule, ILendingPool {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
@@ -134,7 +134,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     error LendingPool_AmountExceedsBalance();
     // Thrown when account specified is not an Arcadia Account.
     error LendingPool_IsNotAnAccount();
-    // Thrown when an Account would become unhealthy OR the trusted creditor of the Account is not the specific lending pool OR the Account version would not be valid.
+    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
     error LendingPool_Reverted();
     // Thrown when an account has zero debt.
     error LendingPool_IsNotAnAccountWithDebt();
@@ -180,7 +180,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
      */
     constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
         LendingPoolGuardian()
-        TrustedCreditor(riskManager_)
+        Creditor(riskManager_)
         DebtToken(asset_)
     {
         treasury = treasury_;
@@ -490,9 +490,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         }
 
         //Call Account to check if it is still healthy after the debt is increased with amountWithFee.
-        (bool isHealthy, address trustedCreditor, uint256 accountVersion) =
+        (bool isHealthy, address creditor, uint256 accountVersion) =
             IAccount(account).isAccountHealthy(0, maxWithdraw(account));
-        if (!isHealthy || trustedCreditor != address(this) || !isValidVersion[accountVersion]) {
+        if (!isHealthy || creditor != address(this) || !isValidVersion[accountVersion]) {
             revert LendingPool_Reverted();
         }
 
@@ -617,9 +617,9 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
         //As last step, after all assets are deposited back into the Account a final health check is done:
         //The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the margin taken during this function).
         {
-            (address trustedCreditor, uint256 accountVersion) =
+            (address creditor, uint256 accountVersion) =
                 IAccount(account).accountManagementAction(actionHandler, actionData, signature);
-            if (trustedCreditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
+            if (creditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
         }
 
         emit Borrow(
@@ -1053,7 +1053,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
-     * @inheritdoc TrustedCreditor
+     * @inheritdoc Creditor
      */
     function openMarginAccount(uint256 accountVersion)
         external
@@ -1070,7 +1070,7 @@ contract LendingPool is LendingPoolGuardian, TrustedCreditor, DebtToken, Interes
     }
 
     /**
-     * @inheritdoc TrustedCreditor
+     * @inheritdoc Creditor
      */
     function getOpenPosition(address account) external view override returns (uint256 openPosition) {
         openPosition = maxWithdraw(account);
