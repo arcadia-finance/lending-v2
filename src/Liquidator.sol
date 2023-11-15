@@ -351,7 +351,7 @@ contract Liquidator is Owned, ILiquidator {
         // Calculate the time passed since the auction started.
         uint256 timePassed = block.timestamp - auctionInformation_.startTime;
         // Calculate the start price.
-        uint256 startPrice = auctionInformation_.startDebt * auctionInformation_.startPriceMultiplier / 100;
+        uint256 startPrice = uint256(auctionInformation_.startDebt) * auctionInformation_.startPriceMultiplier / 100;
 
         // Calculate the ask price.
         askPrice = _calculateAskPrice(
