@@ -32,7 +32,6 @@ abstract contract Errors {
     error LendingPool_Unauthorized();
     error LendingPool_AuctionOngoing();
     error LendingPool_WeightsTooHigh();
-    error LendingPool_InvalidSettlement();
 
     /*//////////////////////////////////////////////////////////////////////////
                                   LENDING POOL GUARDIAN

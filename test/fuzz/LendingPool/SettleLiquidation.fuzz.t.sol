@@ -82,52 +82,6 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_settleLiquidation_SurplusWithOpenDebt(
-        uint128 startDebt,
-        uint128 liquidity,
-        address liquidationInitiator,
-        address auctionTerminator,
-        uint128 surplus
-    ) public {
-        vm.assume(startDebt > 0);
-        vm.assume(surplus > 0);
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
-        vm.assume(
-            uint256(liquidity) >= startDebt + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-        );
-        vm.assume(
-            uint256(liquidity) + surplus + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-                <= type(uint128).max
-        );
-
-        vm.assume(
-            liquidationInitiator != auctionTerminator && liquidationInitiator != address(srTranche)
-                && liquidationInitiator != address(jrTranche) && liquidationInitiator != address(liquidator)
-                && liquidationInitiator != pool.getTreasury() && auctionTerminator != address(srTranche)
-                && auctionTerminator != address(jrTranche) && auctionTerminator != address(liquidator)
-                && auctionTerminator != pool.getTreasury()
-        );
-
-        // Given: Liquidity is deposited in Lending Pool
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-
-        pool.setAuctionsInProgress(1);
-        vm.prank(address(pool));
-        jrTranche.setAuctionInProgress(true);
-
-        // And:Account has a debt
-        pool.setOpenPosition(address(proxyAccount), uint128(startDebt));
-
-        // When: Liquidator settles a liquidation
-        vm.prank(address(liquidator));
-        vm.expectRevert(LendingPool_InvalidSettlement.selector);
-        pool.settleLiquidation(
-            address(proxyAccount), users.accountOwner, startDebt, liquidationInitiator, auctionTerminator, surplus
-        );
-    }
-
     function testFuzz_Success_settleLiquidation_Surplus(
         uint128 startDebt,
         uint128 liquidity,
@@ -135,6 +89,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address auctionTerminator,
         uint128 surplus
     ) public {
+        surplus = uint128(bound(surplus, 1, type(uint128).max));
         vm.assume(startDebt > 0);
         (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
@@ -213,6 +168,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_settleLiquidation_remainderHigherThanTerminationReward(
         uint128 liquidity,
         uint128 startDebt,
+        uint128 openDebt,
         address liquidationInitiator,
         address auctionTerminator
     ) public {
@@ -245,8 +201,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // There is still open debt
         vm.assume(auctionTerminationReward > 1);
-        uint256 openDebt;
-        openDebt = bound(uint256(openDebt), uint256(0), uint256(liquidationPenalty - 1));
+        openDebt = uint128(bound(openDebt, 1, liquidationPenalty - 1));
 
         // Given: Liquidity is deposited in Lending Pool
         vm.prank(address(srTranche));
@@ -257,7 +212,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         jrTranche.setAuctionInProgress(true);
 
         // And:Account has a debt
-        pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
+        pool.setOpenPosition(address(proxyAccount), openDebt);
+        debt.setRealisedDebt(openDebt);
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
@@ -314,6 +270,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_settleLiquidation_remainderLowerThanTerminationReward(
         uint128 liquidity,
         uint128 startDebt,
+        uint128 openDebt,
         address liquidationInitiator,
         address auctionTerminator
     ) public {
@@ -347,10 +304,8 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // There is still open debt
         vm.assume(auctionTerminationReward > 1);
         vm.assume(liquidationPenalty > 0);
-        uint256 openDebt;
-        openDebt = bound(
-            uint256(openDebt), uint256(liquidationPenalty), uint256(liquidationPenalty + auctionTerminationReward - 1)
-        );
+
+        openDebt = uint128(bound(openDebt, liquidationPenalty, liquidationPenalty + auctionTerminationReward - 1));
 
         // Given: Liquidity is deposited in Lending Pool
         vm.prank(address(srTranche));
@@ -361,7 +316,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         jrTranche.setAuctionInProgress(true);
 
         // And:Account has a debt
-        pool.setOpenPosition(address(proxyAccount), uint128(openDebt));
+        pool.setOpenPosition(address(proxyAccount), openDebt);
         debt.setRealisedDebt(openDebt);
 
         // When: Liquidator settles a liquidation
@@ -396,6 +351,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_settleLiquidation_BadDebt_ProcessDefault(
         uint128 liquidity,
         uint128 startDebt,
+        uint128 openDebt,
         address liquidationInitiator,
         address auctionTerminator
     ) public {
@@ -428,9 +384,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // There is still open debt
         vm.assume(auctionTerminationReward > 1);
         vm.assume(liquidationPenalty > 0);
-        uint256 openDebt;
-        openDebt =
-            bound(uint256(openDebt), uint256(liquidationPenalty + auctionTerminationReward), uint256(liquidity - 1));
+        openDebt = uint128(bound(openDebt, liquidationPenalty + auctionTerminationReward, liquidity - 1));
 
         // Given: Liquidity is deposited in Lending Pool
         vm.prank(address(srTranche));

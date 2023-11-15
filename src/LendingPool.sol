@@ -157,8 +157,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     error LendingPool_AuctionOngoing();
     // Thrown when liquidation weights are above maximum value.
     error LendingPool_WeightsTooHigh();
-    // Thrown when the settle liquidation has invalid configuration.
-    error LendingPool_InvalidSettlement();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -524,31 +522,37 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
-     * @notice Repays a loan.
+     * @notice Repays debt.
      * @param amount The amount of underlying ERC-20 tokens to be repaid.
-     * @param account The address of the Arcadia Account backing the loan.
+     * @param account The contract address of the Arcadia Account backing the debt.
      * @dev if Account is not an actual address of a Account, maxWithdraw(account) will always return 0.
      * Function will not revert, but transferAmount is always 0.
-     * @dev Anyone (EOAs and contracts) can repay debt in the name of a Account.
+     * @dev Anyone (EOAs and contracts) can repay debt in the name of an Account.
      */
 
     function repay(uint256 amount, address account) external whenRepayNotPaused processInterests {
         uint256 accountDebt = maxWithdraw(account);
-        uint256 transferAmount = accountDebt > amount ? amount : accountDebt;
+        amount = accountDebt > amount ? amount : accountDebt;
 
-        _repay(transferAmount, transferAmount, account, msg.sender);
+        // Need to transfer before burning debt or ERC777s could reenter.
+        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        _withdraw(amount, account, account);
+
+        emit Repay(account, msg.sender, amount);
     }
 
     /**
-     * @notice Repays a portion of a user's debt in an auction.
+     * @notice Repays debt via an auction.
+     * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param initiator The address of the initiator of the liquidation.
+     * @param originalOwner The address of the Account owner.
+     * @param amount The amount of debt repaid by a bidder during the auction.
+     * @param account The contract address of the Arcadia Account backing the loan.
+     * @param bidder The address of the bidder.
+     * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
-     * @param amount The amount to be repaid, which can be at most the user's debt.
-     * @param account The address of the user whose debt is being repaid.
-     * @param bidder The address of the liquidator performing the repayment.
-     * @dev This function transfers tokens from the `bidder` to the contract, and then updates the user's account balance accordingly.
-     * @dev The `onlyLiquidator` modifier restricts this function to authorized liquidators.
-     * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
-     * @dev Emits a `Repay` event to log the repayment details.
      */
     function auctionRepay(
         uint256 startDebt,
@@ -558,34 +562,22 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         address account,
         address bidder
     ) external whenLiquidationNotPaused onlyLiquidator processInterests returns (bool earlyTerminate) {
-        uint256 accountDebt = maxWithdraw(account);
-        uint256 repayAmount = accountDebt > amount ? amount : accountDebt;
-        earlyTerminate = accountDebt <= amount ? true : false;
-        _repay(amount, repayAmount, account, bidder);
-        // Early terminate if all the debt is paid and possibly there is a surplus
-        if (earlyTerminate) {
-            _settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
-        }
-    }
-
-    /**
-     * @notice Repay a portion of a user's debt.
-     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
-     * @param amount The amount to be repaid.
-     * @param repayAmount The amount of assets to be burned.
-     * @param account The address of the user whose debt is being repaid.
-     * @param from The address of the caller performing the repayment.
-     * @dev This function transfers tokens from the `from` address to the contract and updates the user's account balance accordingly.
-     * @notice This function is used to manage debt repayments within the contract's internal logic.
-     */
-    function _repay(uint256 amount, uint256 repayAmount, address account, address from) internal {
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
-        asset.safeTransferFrom(from, address(this), amount);
+        asset.safeTransferFrom(bidder, address(this), amount);
 
-        _withdraw(repayAmount, account, account);
+        uint256 accountDebt = maxWithdraw(account);
+        if (accountDebt < amount) {
+            // The amount recovered by selling assets during the auction is bigger as the total debt of the Account.
+            // -> Terminate the auction and make the surplus available to the Account-Owner.
+            earlyTerminate = true;
+            _settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
+            amount = accountDebt;
+        }
 
-        emit Repay(account, from, amount);
+        _withdraw(amount, account, account);
+
+        emit Repay(account, bidder, amount);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -884,16 +876,29 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         address terminator,
         uint256 surplus
     ) internal {
-        // Increase the realised liquidity for the initiator.
         (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationFee) =
             _calculateRewards(startDebt);
+
+        // Increase the realised liquidity for the initiator.
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
 
-        // get the open openDebt, openDebt = startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
-        uint256 openDebt = maxWithdraw(account);
+        if (surplus > 0) {
+            // If there is surplus, all openDebt is repaid.
+            uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
+            // Synchronize the liquidation fee with liquidity providers.
+            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+            // Increase the realised liquidity for the terminator.
+            realisedLiquidityOf[terminator] += auctionTerminationReward;
+            // Increase the realised liquidity for the original owner.
+            realisedLiquidityOf[originalOwner] += surplus;
 
-        // Calculate the bad debt.
-        if (surplus == 0) {
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardsAndSurplus
+            );
+        } else {
+            // Calculate the bad debt.
+            // get the open openDebt, openDebt = startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
+            uint256 openDebt = maxWithdraw(account);
             uint256 badDebt;
             uint256 remainder;
             if (openDebt > auctionTerminationReward + liquidationFee) {
@@ -917,24 +922,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                 totalRealisedLiquidity =
                     SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
             }
-        } else {
-            if (openDebt > 0) revert LendingPool_InvalidSettlement();
-            uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
-            // Synchronize the liquidation fee with liquidity providers.
-            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-            // Increase the realised liquidity for the terminator.
-            realisedLiquidityOf[terminator] += auctionTerminationReward;
-            // Increase the realised liquidity for the original owner.
-            realisedLiquidityOf[originalOwner] += surplus;
-
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardsAndSurplus
-            );
-        }
-
-        if (openDebt > 0) {
             _withdraw(openDebt, account, account);
         }
+
         // Decrement the number of auctions in progress.
         unchecked {
             --auctionsInProgress;
