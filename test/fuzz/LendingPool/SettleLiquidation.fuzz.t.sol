@@ -29,7 +29,6 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 startDebt,
         address liquidationInitiator,
         address auctionTerminator,
-        uint128 remainder,
         address unprivilegedAddress_
     ) public {
         // Given: unprivilegedAddress is not the liquidator
@@ -403,8 +402,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity,
         uint128 startDebt,
         address liquidationInitiator,
-        address auctionTerminator,
-        uint128 remainder
+        address auctionTerminator
     ) public {
         vm.prank(users.creatorAddress);
         pool.setWeights(2, 5, 2);

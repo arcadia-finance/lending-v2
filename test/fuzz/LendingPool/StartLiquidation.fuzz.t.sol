@@ -22,13 +22,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_StartLiquidation_NonAccount(
-        address account,
-        address nonAccount,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight
-    ) public {
+    function testFuzz_Revert_StartLiquidation_NonAccount(address account, address nonAccount) public {
         // Given: unprivilegedAddress is not the liquidator
         vm.assume(nonAccount != address(liquidator));
         vm.assume(nonAccount != address(proxyAccount));
@@ -41,25 +35,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt(
-        address account_,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight
-    ) public {
+    function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt() public {
         vm.startPrank(address(proxyAccount));
         vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(address(proxyAccount));
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_StartLiquidation_Paused(
-        address account_,
-        uint8 initiatorRewardWeight,
-        uint8 penaltyWeight,
-        uint8 closingRewardWeight,
-        uint128 amountLoaned
-    ) public {
+    function testFuzz_Revert_StartLiquidation_Paused(address account_, uint128 amountLoaned) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
@@ -115,7 +98,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator calls startLiquidation()
         vm.prank(address(proxyAccount));
-        (uint256 openDebt) = pool.startLiquidation(address(proxyAccount));
+        pool.startLiquidation(address(proxyAccount));
 
         // Avoid stack too deep
         uint8 initiatorRewardWeightStack = initiatorRewardWeight;
