@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
 
 contract AccountV1Malicious {
     address public creditor;
