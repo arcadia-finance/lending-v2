@@ -28,7 +28,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
-        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
+        registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.token1),
             0,

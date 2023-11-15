@@ -43,7 +43,7 @@ interface IAccount {
         external
         returns (address, uint256);
 
-    function checkAndStartLiquidation()
+    function startLiquidation()
         external
         returns (
             address[] memory assetAddresses,
@@ -54,13 +54,13 @@ interface IAccount {
             uint256 totalOpenDebt,
             RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
         );
-    function auctionBuy(
+    function auctionBid(
         address[] memory assetAddresses,
         uint256[] memory assetIds,
         uint256[] memory assetAmounts,
         address bidder
     ) external;
-    function auctionBuyIn(address to) external;
+    function auctionBoughtIn(address to) external;
 
     /**
      * @notice Generates three arrays of all the stored assets in the Account.

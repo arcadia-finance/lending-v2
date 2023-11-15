@@ -76,7 +76,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         public
     {
         // Preprocess: limit the fuzzing to acceptable levels
-        halfLifeTime = uint32(bound(halfLifeTime, 2 * 60 + 1, 8 * 60 * 60));
+        halfLifeTime = uint32(bound(halfLifeTime, 2 * 60 + 1, 8 * 60 * 60 - 1));
         cutoffTime = uint32(bound(cutoffTime, 0, 1 * 60 * 60));
 
         // Given When Then: a owner attempts to set the max auction time, but it is not in the limits

@@ -24,7 +24,7 @@ contract EndAuctionAfterCutoff_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_endAuctionAfterCutoff_NotForSale(address account_) public {
+    function testFuzz_Revert_endAuctionAfterCutoff_NotForSale() public {
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_NotForSale.selector);
         liquidator.endAuctionAfterCutoff(address(proxyAccount));

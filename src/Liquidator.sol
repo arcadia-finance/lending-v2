@@ -241,7 +241,7 @@ contract Liquidator is Owned, ILiquidator {
      * @param account The address of the account to be liquidated.
      * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
      * 1. Sets the initiator address to the sender and flags the account as being in an auction.
-     * 2. Calls the `checkAndStartLiquidation` function on the `IAccount` contract to check if the account is solvent
+     * 2. Calls the `startLiquidation` function on the `IAccount` contract to check if the account is solvent
      *    and start the liquidation process within the account.
      * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
      * 4. Records the start time and asset distribution for the auction.
@@ -264,7 +264,7 @@ contract Liquidator is Owned, ILiquidator {
             address creditor,
             uint256 debt,
             RiskModule.AssetValueAndRiskFactors[] memory riskValues
-        ) = IAccount(account).checkAndStartLiquidation();
+        ) = IAccount(account).startLiquidation();
 
         // Fill the auction struct
         auctionInformation[account].startDebt = uint128(debt);
@@ -333,7 +333,7 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         // Transfer the assets to the bidder.
-        IAccount(account).auctionBuy(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
+        IAccount(account).auctionBid(auctionInformation_.assetAddresses, assetIds, assetAmounts, msg.sender);
 
         // If the auction is over, end it.
         if (endAuction) {
@@ -434,7 +434,7 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         // Transfer all the left-over assets to the protocol owner.
-        IAccount(account).auctionBuyIn(owner_);
+        IAccount(account).auctionBoughtIn(owner_);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
@@ -464,7 +464,7 @@ contract Liquidator is Owned, ILiquidator {
         );
 
         // Transfer all the left-over assets to the 'to' address
-        IAccount(account).auctionBuyIn(owner_);
+        IAccount(account).auctionBoughtIn(owner_);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
