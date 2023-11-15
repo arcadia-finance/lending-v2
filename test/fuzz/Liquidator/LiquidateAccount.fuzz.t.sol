@@ -9,11 +9,13 @@ import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 import { AccountV1 } from "accounts-v2/src/AccountV1.sol";
+import { FixedPointMathLib } from "../../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+    using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -263,24 +265,23 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         (uint256 liquidationInitiatorReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
             pool.getCalculateRewards(openDebt_);
 
-        uint256 liquidationInitiatorReward = uint256(openDebt_) * initiatorRewardWeightStack / 100;
+        uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 100);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFeeStack ? maxInitiatorFeeStack : liquidationInitiatorReward;
 
         assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
-        uint256 closingReward = uint256(openDebt_) * closingRewardWeightStack / 100;
+        uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 100);
         closingReward = closingReward > maxClosingFeeStack ? maxClosingFeeStack : closingReward;
 
-        uint256 liquidationPenaltyReward = uint256(openDebt_) * penaltyWeightStack / 100;
+        uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 100);
 
         assertEq(auctionClosingReward_, closingReward);
         assertEq(liquidationPenaltyReward, liquidationPenaltyReward_);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationPenalty = uint256(openDebt_) * penaltyWeightStack / 100;
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            openDebt_ + liquidationInitiatorReward + liquidationPenalty + closingReward
+            openDebt_ + liquidationInitiatorReward + liquidationPenaltyReward + closingReward
         );
     }
 

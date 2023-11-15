@@ -1058,12 +1058,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         view
         returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
     {
-        liquidationInitiatorReward = (debt * initiatorRewardWeight) / 100;
+        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, 100);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        closingReward = (debt * closingRewardWeight) / 100;
+        closingReward = debt.mulDivDown(closingRewardWeight, 100);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
-        liquidationPenalty = (debt * penaltyWeight) / 100;
+        liquidationPenalty = debt.mulDivUp(penaltyWeight, 100);
     }
 
     /*///////////////////////////////////////////////////////////////

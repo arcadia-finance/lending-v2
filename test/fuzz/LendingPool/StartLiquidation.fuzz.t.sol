@@ -5,11 +5,13 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
+import { FixedPointMathLib } from "../../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
  */
 contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+    using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -115,17 +117,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(jrTranche.auctionInProgress(), true);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward = uint256(amountLoanedStack + 1) * initiatorRewardWeightStack / 100;
+        uint256 liquidationInitiatorReward = uint256(amountLoanedStack + 1).mulDivDown(initiatorRewardWeightStack, 100);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        uint256 liquidationPenalty = (uint256(amountLoanedStack + 1) * penaltyWeightStack) / 100;
-        uint256 closingReward = (uint256(amountLoanedStack + 1) * closingRewardWeightStack) / 100;
+        uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 100);
+        uint256 closingReward = (uint256(amountLoanedStack + 1)).mulDivDown(closingRewardWeightStack, 100);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
 
         // And: Returned amount should be equal to maxInitiatorFee
-        //        assertEq(liquidationInitiatorReward_, liquidationInitiatorReward);
-        //        assertEq(closingReward_, closingReward);
-
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
             (amountLoanedStack + 1) + liquidationInitiatorReward + liquidationPenalty + closingReward
