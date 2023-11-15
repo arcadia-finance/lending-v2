@@ -91,5 +91,5 @@ abstract contract Creditor {
      * @param account The account address.
      * @return openPosition the open position of the Account
      */
-    function startLiquidation(address account) external returns (uint256);
+    function startLiquidation(address account) external virtual returns (uint256);
 }

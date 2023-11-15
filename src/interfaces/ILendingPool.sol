@@ -50,7 +50,6 @@ interface ILendingPool {
      * @return unrealisedDebt The unrealised debt.
      */
     function calcUnrealisedDebt() external view returns (uint256);
-    function startLiquidation(address account) external returns (uint256 openDebt);
     function repay(uint256 amount, address account) external;
     function auctionRepay(
         uint256 startDebt,
