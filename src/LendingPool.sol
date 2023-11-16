@@ -548,7 +548,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param amount The amount of debt repaid by a bidder during the auction.
      * @param account The contract address of the Arcadia Account backing the loan.
      * @param bidder The address of the bidder.
-     * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
+     * @return earlyTerminate Bool indicating whether the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
     function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
@@ -564,7 +564,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         uint256 accountDebt = maxWithdraw(account);
         if (accountDebt < amount) {
-            // The amount recovered by selling assets during the auction is bigger as the total debt of the Account.
+            // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
             _settleLiquidation(account, originalOwner, startDebt, bidder, (amount - accountDebt));
@@ -860,10 +860,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
-     * @dev This function is externally callable by the liquidator and is used to settle the liquidation process for a given Account.
-     * @dev The liquidation process involves providing information such as the original owner, initial debt, initiator, terminator, and surplus amount.
-     * @dev The liquidation settlement process includes handling incentives and penalties based on the provided information.
-     * @dev This function can only be called when the liquidation process is not paused and is restricted to the designated liquidator. Additionally, the function processes interests before settling the liquidation.
      */
     function settleLiquidation(
         address account,
@@ -882,10 +878,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the auction terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
-     * @dev This internal function is responsible for processing the settlement of a liquidation process, including the distribution of rewards, penalties, and surplus. It calculates rewards for the liquidation initiator, auction terminator, and the liquidation fee.
-     * @dev The function handles various scenarios, including bad debt, surplus distribution, and synchronization of liquidation fees with liquidity providers.
-     * @dev Additionally, it updates the realized liquidity for the liquidation initiator, terminator, and original owner, and emits relevant events.
-     * @dev This function is not externally callable and should only be invoked within the smart contract.
      */
     function _settleLiquidation(
         address account,
@@ -906,16 +898,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // Increase the realised liquidity for the original owner.
             realisedLiquidityOf[originalOwner] += surplus;
 
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + rewardsAndSurplus);
+            // unsafe cast: sum will revert if it overflows.
+            totalRealisedLiquidity = uint128(totalRealisedLiquidity + rewardsAndSurplus);
         } else {
-            // openDebt equals startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
+            // openDebt equals startDebt + interests + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
             uint256 openDebt = maxWithdraw(account);
             if (openDebt > auctionTerminationReward + liquidationFee) {
                 uint256 badDebt;
                 unchecked {
                     badDebt = openDebt - auctionTerminationReward - liquidationFee;
                 }
-                totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) - badDebt);
+
+                totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
                 _processDefault(badDebt);
             } else {
                 uint256 remainder;
@@ -929,7 +923,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                     // Distribute the liquidation fee with liquidity providers.
                     _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
                 }
-                totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + remainder);
+                // unsafe cast: sum will revert if it overflows.
+                totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
             }
             _withdraw(openDebt, account, account);
         }
@@ -1020,6 +1015,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Initiates the liquidation process for an Account.
+     * @param initiator The address of the liquidation initiator.
      * @return startDebt The initial debt of the liquidated Account.
      * @dev This function is externally callable and triggers the liquidation process for an Account. The liquidation process involves assessing the Account's debt and calculating liquidation incentives, which are considered as extra debt. The extra debt is then minted towards the Account to encourage the liquidation process and bring the Account to a healthy state.
      * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
