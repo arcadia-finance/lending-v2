@@ -424,22 +424,15 @@ contract Liquidator is Owned, ILiquidator {
         // Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;
 
-        address owner_ = owner;
         uint256 timePassed;
         unchecked {
             timePassed = block.timestamp - auctionInformation_.startTime;
         }
         if (timePassed <= auctionInformation_.cutoffTime) revert Liquidator_AuctionNotExpired();
 
-        uint256 startDebt = auctionInformation_.startDebt;
-        address creditor = auctionInformation_.creditor;
-
-        ILendingPool(creditor).settleLiquidation(account, auctionInformation_.originalOwner, startDebt, owner_, 0);
-
-        // Transfer all the left-over assets to the protocol owner.
-        IAccount(account).auctionBoughtIn(owner_);
-
-        emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
+        _endAuction(
+            account, auctionInformation_.originalOwner, auctionInformation_.creditor, auctionInformation_.startDebt
+        );
     }
 
     /**
@@ -458,18 +451,31 @@ contract Liquidator is Owned, ILiquidator {
         uint256 accountValue = IAccount(account).getAccountValue(IAccount(account).baseCurrency());
         if (accountValue != 0) revert Liquidator_AccountValueIsNotZero();
 
-        uint256 startDebt = auctionInformation_.startDebt;
-        address owner_ = owner;
-        address creditor = auctionInformation_.creditor;
+        _endAuction(
+            account, auctionInformation_.originalOwner, auctionInformation_.creditor, auctionInformation_.startDebt
+        );
+    }
 
-        ILendingPool(creditor).settleLiquidation(account, auctionInformation_.originalOwner, startDebt, owner_, 0);
+    /**
+     * @notice Ends an auction, settles the liquidation and transfers all remaining assets of the Account to the procotol owner.
+     * @param account The account to end the liquidation for.
+     */
+    function _endAuction(address account, address originalOwner, address creditor, uint256 startDebt) internal {
+        // Stop the auction, this will prevent any possible reentrance attacks.
+        auctionInformation[account].inAuction = false;
 
-        // Transfer all the left-over assets to the 'to' address
-        IAccount(account).auctionBoughtIn(owner_);
+        ILendingPool(creditor).settleLiquidation(account, originalOwner, startDebt, msg.sender, 0);
+
+        // Transfer all the left-over assets to the protocol owner.
+        IAccount(account).auctionBoughtIn(owner);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
 
+    /**
+     * @notice Ends an auction when an Account has remaining debt and is healthy.
+     * @param account The account to end the liquidation for.
+     */
     function knockDown(address account) external {
         // Check if the account is already in an auction.
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
@@ -478,6 +484,11 @@ contract Liquidator is Owned, ILiquidator {
         _knockDown(account, auctionInformation_);
     }
 
+    /**
+     * @notice Ends an auction when an Account has remaining debt and is healthy.
+     * @param account The account to end the liquidation for.
+     * @param auctionInformation_ The struct containing all the info of that specific auction.
+     */
     function _knockDown(address account, AuctionInformation storage auctionInformation_) internal {
         // Set the inAuction flag to false.
         auctionInformation[account].inAuction = false;
