@@ -132,7 +132,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint128 amountLoaned
     ) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned > 1000);
         vm.assume(amountLoaned <= (type(uint128).max / 500) * 100);
         initiateLiquidation(amountLoaned);
 

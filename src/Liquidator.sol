@@ -348,7 +348,7 @@ contract Liquidator is Owned, ILiquidator {
     {
         uint256[] memory assetAmounts = auctionInformation_.assetAmounts;
         uint32[] memory assetShares = auctionInformation_.assetShares;
-        if (!(assetAmounts.length == askedAssetAmounts.length)) {
+        if (assetAmounts.length != askedAssetAmounts.length) {
             revert Liquidator_InvalidBid();
         }
 
@@ -397,7 +397,7 @@ contract Liquidator is Owned, ILiquidator {
             // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
             // P: price, denominated in the baseCurrency.
             // Debt: The initial debt of the Account, denominated in the baseCurrency.
-            // S: The share of assets being bpught, 6 decimals precision
+            // S: The share of assets being bought, 6 decimals precision
             // SPM and MPM: multipliers to scale the price curve, 2 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e6 + 1e2).
