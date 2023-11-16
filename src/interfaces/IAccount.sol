@@ -43,7 +43,18 @@ interface IAccount {
         external
         returns (address, uint256);
 
-    function checkAndStartLiquidation()
+    /**
+     * @notice Checks if an Account is liquidatable and continues the liquidation flow.
+     * @param initiator The address of the liquidation initiator.
+     * @return assetAddresses Array of the contract addresses of the assets in Account.
+     * @return assetIds Array of the IDs of the assets in Account.
+     * @return assetAmounts Array with the amounts of the assets in Account.
+     * @return owner Owner of the account.
+     * @return creditor The creditor, address 0 if no active Creditor.
+     * @return openDebt The open Debt issued against the Account.
+     * @return assetAndRiskValues Array of asset values and corresponding collateral factors.
+     */
+    function startLiquidation(address initiator)
         external
         returns (
             address[] memory assetAddresses,
@@ -51,16 +62,29 @@ interface IAccount {
             uint256[] memory assetAmounts,
             address owner,
             address creditor,
-            uint256 totalOpenDebt,
+            uint256 openDebt,
             RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
         );
-    function auctionBuy(
+
+    /**
+     * @notice Transfers the asset bought by a bidder during a liquidation event.
+     * @param assetAddresses Array of the contract addresses of the assets.
+     * @param assetIds Array of the IDs of the assets.
+     * @param assetAmounts Array with the amounts of the assets.
+     * @param bidder The address of the bidder.
+     */
+    function auctionBid(
         address[] memory assetAddresses,
         uint256[] memory assetIds,
         uint256[] memory assetAmounts,
         address bidder
     ) external;
-    function auctionBuyIn(address to) external;
+
+    /**
+     * @notice Transfers all assets of the Account in case the auction did not end successful (= Bought In).
+     * @param to The recipient's address to receive the assets, set by the Creditor.
+     */
+    function auctionBoughtIn(address to) external;
 
     /**
      * @notice Generates three arrays of all the stored assets in the Account.
@@ -75,7 +99,7 @@ interface IAccount {
         external
         view
         returns (address[] memory assetAddresses, uint256[] memory assetIds, uint256[] memory assetAmounts);
-
     function baseCurrency() external view returns (address baseCurrency);
     function registry() external view returns (address registry);
+    function getAccountValue(address baseCurrency_) external view returns (uint256 accountValue);
 }

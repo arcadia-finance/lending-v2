@@ -52,37 +52,31 @@ interface ILendingPool {
     function calcUnrealisedDebt() external view returns (uint256);
 
     /**
-     * @notice Start a liquidation for a specific account with debt.
-     * @param account The address of the account with debt to be liquidated.
-     * @param initiatorRewardWeight Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight Penalty the Account owner has to pay to the trusted Creditor on top of the open Debt for being liquidated.
-     * @param closingRewardWeight Fee paid to the address that is ending an auction.
-     * @return liquidationInitiatorReward Fee paid to the Liquidation Initiator.
-     * @return closingReward Fee paid to the address that is ending an auction.
-     * @dev This function can only be called by authorized liquidators.
-     * @dev To initiate a liquidation, the function checks if the specified account has open debt.
-     * @dev If the account has no open debt, the function reverts with an error.
-     * @dev If this is the first auction, it hooks to the most junior tranche to inform that auctions are ongoing.
-     * @dev The function updates the count of ongoing auctions.
-     * @dev Liquidations can only be initiated for accounts with non-zero open debt.
+     * @notice Repays debt via an auction.
+     * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param originalOwner The address of the Account owner.
+     * @param amount The amount of debt repaid by a bidder during the auction.
+     * @param account The contract address of the Arcadia Account backing the loan.
+     * @param bidder The address of the bidder.
+     * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
      */
-    function startLiquidation(
-        address account,
-        uint256 initiatorRewardWeight,
-        uint256 closingRewardWeight,
-        uint256 penaltyWeight
-    ) external returns (uint256 liquidationInitiatorReward, uint256 closingReward);
-    function repay(uint256 amount, address account) external;
-    function auctionRepay(uint256 amount, address account, address bidder) external;
+    function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
+        external
+        returns (bool);
+
+    /**
+     * @notice Settles the liquidation process for a specific Account.
+     * @param account The address of the Account undergoing liquidation settlement.
+     * @param originalOwner The original owner of the liquidated debt.
+     * @param startDebt The initial debt amount of the liquidated Account.
+     * @param terminator The address of the liquidation terminator.
+     * @param surplus The surplus amount obtained from the liquidation process.
+     */
     function settleLiquidation(
         address account,
         address originalOwner,
-        uint256 badDebt,
-        address initiator,
-        uint256 liquidationInitiatorReward,
+        uint256 startDebt,
         address terminator,
-        uint256 auctionTerminationReward,
-        uint256 liquidationFee,
-        uint256 remainder
+        uint256 surplus
     ) external;
 }

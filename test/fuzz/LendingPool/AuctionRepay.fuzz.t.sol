@@ -34,7 +34,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
-        pool.auctionRepay(amount, address(proxyAccount), bidder);
+        pool.auctionRepay(0, address(0), amount, address(proxyAccount), bidder);
         vm.stopPrank();
     }
 
@@ -68,7 +68,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.startPrank(address(liquidator));
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        pool.auctionRepay(amountLoaned, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, users.accountOwner, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
     }
 
@@ -100,7 +100,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.startPrank(address(liquidator));
         vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
-        pool.auctionRepay(amountLoaned, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, users.accountOwner, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
     }
 
@@ -121,7 +121,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(address(liquidator));
         vm.expectRevert(DebtToken_ZeroShares.selector);
-        pool.auctionRepay(amountRepaid, nonAccount, sender);
+        pool.auctionRepay(amountRepaid, users.accountOwner, amountRepaid, nonAccount, sender);
         vm.stopPrank();
     }
 
@@ -157,7 +157,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(address(liquidator));
         vm.expectEmit(true, true, true, true);
         emit Repay(address(proxyAccount), sender, amountRepaid);
-        pool.auctionRepay(amountRepaid, address(proxyAccount), sender);
+        pool.auctionRepay(amountRepaid, users.accountOwner, amountRepaid, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amountRepaid);
@@ -175,6 +175,8 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.startPrank(users.creatorAddress);
+        pool.setWeights(0, 0, 0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -192,7 +194,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(address(liquidator));
         vm.expectEmit(true, true, true, true);
         emit Repay(address(proxyAccount), sender, amountLoaned);
-        pool.auctionRepay(amountLoaned, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, users.accountOwner, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amountLoaned);
@@ -209,12 +211,15 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
 
         vm.assume(availableFunds > amountLoaned);
+        vm.assume(uint256(availableFunds) + uint256(amountLoaned) < type(uint128).max - 1);
         vm.assume(amountLoaned > 0);
         vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.startPrank(users.creatorAddress);
+        pool.setWeights(2, 5, 2);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -231,9 +236,9 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.expectEmit(true, true, true, true);
-        emit Repay(address(proxyAccount), sender, availableFunds);
+        emit Repay(address(proxyAccount), sender, amountLoaned);
         vm.startPrank(address(liquidator));
-        pool.auctionRepay(availableFunds, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, users.accountOwner, availableFunds, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), availableFunds);

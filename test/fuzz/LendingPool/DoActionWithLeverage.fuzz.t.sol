@@ -31,7 +31,7 @@ contract DoActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.creatorAddress);
         actionHandler = new ActionMultiCall();
-        mainRegistryExtension.setAllowedAction(address(actionHandler), true);
+        registryExtension.setAllowedAction(address(actionHandler), true);
         vm.stopPrank();
 
         ActionData memory emptyActionData;
