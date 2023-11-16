@@ -346,24 +346,14 @@ contract LiquidatorExtension is Liquidator {
         return initiatorRewardWeight;
     }
 
-    function calculateAskPrice(address account, uint256[] memory askedAssetAmounts, uint256[] memory askedAssetIds)
-        public
-        view
-        returns (uint256)
-    {
+    function calculateAskedShare(address account, uint256[] memory askedAssetAmounts) public view returns (uint256) {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
-        return _calculateAskPrice(auctionInformation_, askedAssetAmounts, askedAssetIds);
+        return _calculateAskedShare(auctionInformation_, askedAssetAmounts);
     }
 
-    function calculateAskPrice(
-        uint256[] memory askedAssetAmounts,
-        uint256[] memory askedAssetIds,
-        uint32[] memory assetShares,
-        uint256[] memory assetAmounts,
-        uint128 startPrice,
-        uint256 timePassed
-    ) public view returns (uint256) {
-        return _calculateAskPrice(askedAssetAmounts, askedAssetIds, assetShares, assetAmounts, startPrice, timePassed);
+    function calculateBidPrice(address account, uint256 askedShare) public view returns (uint256) {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        return _calculateBidPrice(auctionInformation_, askedShare);
     }
 
     function getClosingRewardWeight() public view returns (uint8) {

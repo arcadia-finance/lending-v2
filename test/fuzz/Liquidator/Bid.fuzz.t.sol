@@ -46,18 +46,16 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_bid_NotForSale(address bidder, address account_) public {
         // Given: Account is not in the auction
         uint256[] memory assetAmounts = new uint256[](1);
-        uint256[] memory assetIds = new uint256[](1);
         bool endAuction = false;
 
         // When Then: Bid is called, It should revert
         vm.startPrank(bidder);
         vm.expectRevert(Liquidator_NotForSale.selector);
-        liquidator.bid(address(account_), assetAmounts, assetIds, endAuction);
+        liquidator.bid(address(account_), assetAmounts, endAuction);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_bid_InvalidBid(address bidder, uint128 amountLoaned) public {
-        //        amountLoaned = 223311925884755051547902515512929681411;
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
@@ -67,13 +65,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         vm.startPrank(bidder);
         vm.expectRevert(Liquidator_InvalidBid.selector);
-        liquidator.bid(address(proxyAccount), new uint256[](2), new uint256[](2), endAuction);
-        vm.stopPrank();
-
-        // When Then: Bid is called with the assetIds that is not the same as auction, It should revert
-        vm.startPrank(bidder);
-        vm.expectRevert(Liquidator_InvalidBid.selector);
-        liquidator.bid(address(proxyAccount), new uint256[](1), new uint256[](3), endAuction);
+        liquidator.bid(address(proxyAccount), new uint256[](2), endAuction);
         vm.stopPrank();
     }
 
@@ -91,7 +83,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         vm.startPrank(bidder);
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
         vm.stopPrank();
     }
 
@@ -111,35 +103,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Then: Bid fails because the bidder has not approved the lending pool
         vm.startPrank(bidder);
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), endAuction);
-        vm.stopPrank();
-    }
-
-    function testFuzz_Revert_bid_BadAssetId(address bidder, uint128 amountLoaned) public {
-        // Given: The account auction is initiated
-        vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
-        initiateLiquidation(amountLoaned);
-        bool endAuction = false;
-        vm.startPrank(users.creatorAddress);
-        pool.setWeights(2, 2, 5);
-
-        // When: Bidder has funds and approves the lending pool for repayment
-        deal(address(mockERC20.stable1), bidder, type(uint128).max);
-        vm.startPrank(bidder);
-        mockERC20.stable1.approve(address(pool), type(uint256).max);
-
-        // And: Bidder bids for the erc20 asset with id 2
-        uint256[] memory bidAssetAmounts = new uint256[](1);
-        uint256[] memory bidAssetIds = new uint256[](1);
-        bidAssetIds[0] = 2;
-        bidAssetAmounts[0] = amountLoaned / 4;
-
-        // Then: Bid should fail since erc20 withdrawals has to be with 0 id
-        vm.startPrank(bidder);
-        vm.expectRevert("A_W: ERC20 Id");
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, bidAssetIds, endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
         vm.stopPrank();
     }
 
@@ -163,7 +127,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
@@ -192,16 +156,17 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: Bidder has enough funds and approved the lending pool for repay
         uint256[] memory bidAssetAmounts = new uint256[](1);
         uint256 bidAssetAmount = originalAmount;
-        bidAssetAmounts[0] = (bidAssetAmount * 2 / 3) + 1;
+        bidAssetAmounts[0] = bidAssetAmount;
         deal(address(mockERC20.stable1), bidder, type(uint128).max);
         vm.startPrank(bidder);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
-        uint256 askPrice_ = liquidator.calculateAskPrice(address(proxyAccount), bidAssetAmounts, new uint256[](1));
+        uint256 askedShare = liquidator.calculateAskedShare(address(proxyAccount), bidAssetAmounts);
+        uint256 askPrice_ = liquidator.calculateBidPrice(address(proxyAccount), askedShare);
         assertGt(askPrice_, uint256(amountLoaned));
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
