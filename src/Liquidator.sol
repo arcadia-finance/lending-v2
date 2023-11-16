@@ -480,8 +480,8 @@ contract Liquidator is Owned, ILiquidator {
         uint256 startDebt = uint256(auctionInformation_.startDebt);
 
         // Call settlement of the debt in the creditor
-        ILendingPool(auctionInformation_.creditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, msg.sender, 0
+        ILendingPool(auctionInformation_.creditor).distributeRewards(
+            startDebt, auctionInformation_.initiator, msg.sender
         );
 
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);

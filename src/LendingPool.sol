@@ -947,6 +947,38 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // Event emitted by Liquidator.
     }
 
+    function distributeRewards(uint256 startDebt, address initiator, address terminator)
+        external
+        whenLiquidationNotPaused
+        onlyLiquidator
+    {
+        // Increase the realised liquidity for the initiator.
+        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationFee) =
+            _calculateRewards(startDebt);
+
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+
+        // Synchronize the liquidation fee with liquidity providers.
+        _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+        // Increase the realised liquidity for the terminator.
+        realisedLiquidityOf[terminator] += auctionTerminationReward;
+
+        totalRealisedLiquidity = SafeCastLib.safeCastTo128(
+            uint256(totalRealisedLiquidity) + liquidationInitiatorReward + auctionTerminationReward + liquidationFee
+        );
+
+        // Decrement the number of auctions in progress.
+        unchecked {
+            --auctionsInProgress;
+        }
+
+        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+        }
+        // Event emitted by Liquidator.
+    }
+
     /**
      * @notice Handles the bookkeeping in case of bad debt (Account became undercollateralised).
      * @param badDebt The total amount of underlying assets that need to be written off as bad debt.

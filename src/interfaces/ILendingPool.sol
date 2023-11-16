@@ -67,4 +67,5 @@ interface ILendingPool {
         address terminator,
         uint256 surplus
     ) external;
+    function distributeRewards(uint256 startDebt, address initiator, address terminator) external;
 }
