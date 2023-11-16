@@ -62,7 +62,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
+        vm.expectRevert(Function_Is_Paused.selector);
         vm.startPrank(address(proxyAccount));
         pool.startLiquidation(liquidationInitiator);
         vm.stopPrank();

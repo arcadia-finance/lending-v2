@@ -44,9 +44,6 @@ abstract contract LendingPoolGuardian is BaseGuardian {
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    // Thrown when the contract is paused for a certain action.
-    error LendingPoolGuardian_FunctionIsPaused();
-
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
@@ -56,7 +53,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if repay is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (repayPaused) revert Function_Is_Paused();
         _;
     }
 
@@ -65,7 +62,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if withdraw is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (withdrawPaused) revert Function_Is_Paused();
         _;
     }
 
@@ -74,7 +71,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if borrow is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (borrowPaused) revert Function_Is_Paused();
         _;
     }
 
@@ -83,7 +80,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if deposit is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (depositPaused) revert Function_Is_Paused();
         _;
     }
 
@@ -92,7 +89,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if liquidation is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (liquidationPaused) revert Function_Is_Paused();
         _;
     }
 

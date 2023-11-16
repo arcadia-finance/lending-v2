@@ -81,7 +81,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
+        vm.expectRevert(Function_Is_Paused.selector);
         pool.repay(amountLoaned, address(proxyAccount));
         vm.stopPrank();
     }

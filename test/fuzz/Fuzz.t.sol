@@ -104,7 +104,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Set the risk parameters.
         vm.prank(users.riskManager);
         registryExtension.setRiskParametersOfPrimaryAsset(
-            address(pool), address(mockERC20.stable1), 0, type(uint128).max, 100, 100
+            address(pool), address(mockERC20.stable1), 0, type(uint128).max, 10_000, 10_000
         );
 
         // For clarity, some contracts have a generalised name in some tests.

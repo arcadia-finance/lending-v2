@@ -197,7 +197,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
+        vm.expectRevert(Function_Is_Paused.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
