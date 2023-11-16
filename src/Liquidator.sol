@@ -461,9 +461,6 @@ contract Liquidator is Owned, ILiquidator {
      * @param account The account to end the liquidation for.
      */
     function _endAuction(address account, address originalOwner, address creditor, uint256 startDebt) internal {
-        // Stop the auction, this will prevent any possible reentrance attacks.
-        auctionInformation[account].inAuction = false;
-
         ILendingPool(creditor).settleLiquidation(account, originalOwner, startDebt, msg.sender, 0);
 
         // Transfer all the left-over assets to the protocol owner.
