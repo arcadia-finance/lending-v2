@@ -459,12 +459,10 @@ contract Liquidator is Owned, ILiquidator {
         // Stop the auction, this will prevent any possible reentrance attacks.
         auctionInformation[account].inAuction = false;
 
-        address owner_ = owner;
-
-        ILendingPool(creditor).settleLiquidation(account, originalOwner, startDebt, initiator, owner_, 0);
+        ILendingPool(creditor).settleLiquidation(account, originalOwner, startDebt, initiator, msg.sender, 0);
 
         // Transfer all the left-over assets to the protocol owner.
-        IAccount(account).auctionBoughtIn(owner_);
+        IAccount(account).auctionBoughtIn(owner);
 
         emit AuctionFinished(account, creditor, uint128(startDebt), 0, 0);
     }
