@@ -11,6 +11,9 @@ import { InterestRateModule } from "../../src/InterestRateModule.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+import { Liquidator } from "../../src/Liquidator.sol";
+import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
+import { AccountV1 } from "lib/accounts-v2/src/AccountV1.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -121,10 +124,6 @@ contract LendingPoolExtension is LendingPool {
         auctionsInProgress = amount;
     }
 
-    function setLiquidationInitiator(address account, address initiator) public {
-        liquidationInitiator[account] = initiator;
-    }
-
     function setInterestWeight(address tranche, uint256 interestWeight_) public {
         interestWeight[tranche] = interestWeight_;
     }
@@ -165,6 +164,10 @@ contract LendingPoolExtension is LendingPool {
         return maxInitiatorFee;
     }
 
+    function getMaxClosingFee() public view returns (uint80) {
+        return maxClosingFee;
+    }
+
     function getAuctionsInProgress() public view returns (uint16) {
         return auctionsInProgress;
     }
@@ -179,10 +182,6 @@ contract LendingPoolExtension is LendingPool {
 
     function getInterestWeight(address tranche) public view returns (uint256) {
         return interestWeight[tranche];
-    }
-
-    function getLiquidationInitiator(address account) public view returns (address inititator) {
-        return liquidationInitiator[account];
     }
 
     function getInterestWeightTranches(uint16 id) public view returns (uint16) {
@@ -211,6 +210,31 @@ contract LendingPoolExtension is LendingPool {
 
     function getYearlySeconds() public pure returns (uint256) {
         return YEARLY_SECONDS;
+    }
+
+    function setOpenPosition(address account, uint128 amount) public {
+        balanceOf[account] = amount;
+    }
+
+    function setMaxLiquidationFees_(uint80 maxInitiatorFee_, uint80 maxClosingFee_) public {
+        maxInitiatorFee = maxInitiatorFee_;
+        maxClosingFee = maxClosingFee_;
+    }
+
+    function getPenaltyWeight() public view returns (uint16) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint16) {
+        return initiatorRewardWeight;
+    }
+
+    function getClosingRewardWeight() public view returns (uint16) {
+        return closingRewardWeight;
+    }
+
+    function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
+        return _calculateRewards(amount);
     }
 }
 
@@ -257,58 +281,53 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 ////////////////////////////////////////////////////////////// */
 
 contract LiquidatorExtension is Liquidator {
-    constructor(address factory_) Liquidator(factory_) { }
+    constructor() Liquidator() { }
 
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (uint128 openDebt, uint32 startTime, bool inAuction, uint80 maxInitiatorFee, address baseCurrency)
+        returns (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_)
     {
-        openDebt = auctionInformation[account_].openDebt;
-        startTime = auctionInformation[account_].startTime;
-        inAuction = auctionInformation[account_].inAuction;
-        maxInitiatorFee = auctionInformation[account_].maxInitiatorFee;
-        baseCurrency = auctionInformation[account_].baseCurrency;
+        originalOwner_ = auctionInformation[account_].originalOwner;
+        startDebt_ = auctionInformation[account_].startDebt;
+        startTime_ = auctionInformation[account_].startTime;
+        inAuction_ = auctionInformation[account_].inAuction;
     }
 
     function getAuctionInformationPartTwo(address account_)
         public
         view
         returns (
-            uint16 startPriceMultiplier_,
-            uint8 minPriceMultiplier_,
-            uint8 initiatorRewardWeight_,
-            uint8 penaltyWeight_,
-            uint16 cutoffTime_,
-            address originalOwner,
-            address trustedCreditor,
-            uint64 base_
+            uint32 cutoffTime_,
+            address trustedCreditor_,
+            address[] memory assetAddresses_,
+            uint32[] memory assetShares_,
+            uint256[] memory assetAmounts_,
+            uint256[] memory assetIds_
         )
     {
-        startPriceMultiplier_ = auctionInformation[account_].startPriceMultiplier;
-        minPriceMultiplier_ = auctionInformation[account_].minPriceMultiplier;
-        initiatorRewardWeight_ = auctionInformation[account_].initiatorRewardWeight;
-        penaltyWeight_ = auctionInformation[account_].penaltyWeight;
         cutoffTime_ = auctionInformation[account_].cutoffTime;
-        originalOwner = auctionInformation[account_].originalOwner;
-        trustedCreditor = auctionInformation[account_].trustedCreditor;
-        base_ = auctionInformation[account_].base;
+        trustedCreditor_ = auctionInformation[account_].creditor;
+        assetAddresses_ = auctionInformation[account_].assetAddresses;
+        assetShares_ = auctionInformation[account_].assetShares;
+        assetAmounts_ = auctionInformation[account_].assetAmounts;
+        assetIds_ = auctionInformation[account_].assetIds;
     }
 
-    function getPenaltyWeight() public view returns (uint8) {
-        return penaltyWeight;
+    function getAuctionIsActive(address account) public view returns (bool) {
+        return auctionInformation[account].inAuction;
     }
 
-    function getInitiatorRewardWeight() public view returns (uint8) {
-        return initiatorRewardWeight;
-    }
-
-    function getCutoffTime() public view returns (uint16) {
-        return cutoffTime;
+    function getAuctionStartPrice(address account) public view returns (uint256) {
+        return (uint256(auctionInformation[account].startDebt) * startPriceMultiplier / 100);
     }
 
     function getBase() public view returns (uint64) {
         return base;
+    }
+
+    function getCutoffTime() public view returns (uint32) {
+        return cutoffTime;
     }
 
     function getMinPriceMultiplier() public view returns (uint64) {
@@ -319,7 +338,45 @@ contract LiquidatorExtension is Liquidator {
         return startPriceMultiplier;
     }
 
-    function getFactory() public view returns (address) {
-        return factory;
+    function getPenaltyWeight() public view returns (uint8) {
+        return penaltyWeight;
+    }
+
+    function getInitiatorRewardWeight() public view returns (uint8) {
+        return initiatorRewardWeight;
+    }
+
+    function calculateAskedShare(address account, uint256[] memory askedAssetAmounts) public view returns (uint256) {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        return _calculateAskedShare(auctionInformation_, askedAssetAmounts);
+    }
+
+    function calculateBidPrice(address account, uint256 askedShare) public view returns (uint256) {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        return _calculateBidPrice(auctionInformation_, askedShare);
+    }
+
+    function getClosingRewardWeight() public view returns (uint8) {
+        return closingRewardWeight;
+    }
+
+    function getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
+        public
+        pure
+        returns (uint32[] memory assetDistribution)
+    {
+        return _getAssetDistribution(riskValues_);
+    }
+
+    function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
+        return auctionInformation[account].assetAmounts;
+    }
+
+    function getOwner(address account) public view returns (address) {
+        return auctionInformation[account].originalOwner;
+    }
+
+    function getInAuction(address account) external view returns (bool) {
+        return auctionInformation[account].inAuction;
     }
 }

@@ -9,7 +9,6 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "setStartPriceMultiplier" of contract "Liquidator".
  */
-
 contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -35,7 +34,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_setStartPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier >= 300);
+        vm.assume(priceMultiplier > 300);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -46,7 +45,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_setStartPriceMultiplier_tooLow(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier <= 100);
+        vm.assume(priceMultiplier < 100);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);

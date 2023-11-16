@@ -42,29 +42,22 @@ abstract contract Events {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event Repay(address indexed account, address indexed from, uint256 amount);
-    event MaxInitiatorFeeSet(uint80 maxInitiatorFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight);
-    event AuctionCurveParametersSet(uint64 base, uint16 cutoffTime);
+    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
+    event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
-    event AuctionStarted(address indexed account, address indexed creditor, address baseCurrency, uint128 openDebt);
     event AuctionFinished(
-        address indexed account,
-        address indexed creditor,
-        address baseCurrency,
-        uint128 price,
-        uint128 badDebt,
-        uint128 initiatorReward,
-        uint128 liquidationPenalty,
-        uint128 remainder
+        address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
 
     /* //////////////////////////////////////////////////////////////

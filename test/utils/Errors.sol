@@ -31,6 +31,7 @@ abstract contract Errors {
     error LendingPool_IsNotAnAccountWithDebt();
     error LendingPool_Unauthorized();
     error LendingPool_AuctionOngoing();
+    error LendingPool_WeightsTooHigh();
 
     /*//////////////////////////////////////////////////////////////////////////
                                   LENDING POOL GUARDIAN
@@ -53,6 +54,10 @@ abstract contract Errors {
     error Liquidator_AuctionNotExpired();
     error Liquidator_Unauthorized();
     error Liquidator_AuctionOngoing();
+    error Liquidator_InvalidBid();
+    error Liquidator_NoBadDebt();
+    error Liquidator_AccountNotHealthy();
+    error Liquidator_AccountValueIsNotZero();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     TRANCHE

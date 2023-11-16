@@ -4,8 +4,6 @@
  */
 pragma solidity 0.8.19;
 
-import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
-
 interface ILendingPool {
     /**
      * @notice returns the supply cap of the Lending Pool.
@@ -54,20 +52,31 @@ interface ILendingPool {
     function calcUnrealisedDebt() external view returns (uint256);
 
     /**
-     * @notice Settles the liquidation after the auction is finished and pays out Creditor, Original owner and Service providers.
-     * @param account The contract address of the Account.
-     * @param originalOwner The original owner of the Account before the auction.
-     * @param badDebt The amount of liabilities that was not recouped by the auction.
-     * @param liquidationInitiatorReward The Reward for the Liquidation Initiator.
-     * @param liquidationFee The additional fee the `originalOwner` has to pay to the protocol.
-     * @param remainder Any funds remaining after the auction are returned back to the `originalOwner`.
+     * @notice Repays debt via an auction.
+     * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param originalOwner The address of the Account owner.
+     * @param amount The amount of debt repaid by a bidder during the auction.
+     * @param account The contract address of the Arcadia Account backing the loan.
+     * @param bidder The address of the bidder.
+     * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
+     */
+    function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
+        external
+        returns (bool);
+
+    /**
+     * @notice Settles the liquidation process for a specific Account.
+     * @param account The address of the Account undergoing liquidation settlement.
+     * @param originalOwner The original owner of the liquidated debt.
+     * @param startDebt The initial debt amount of the liquidated Account.
+     * @param terminator The address of the liquidation terminator.
+     * @param surplus The surplus amount obtained from the liquidation process.
      */
     function settleLiquidation(
         address account,
         address originalOwner,
-        uint256 badDebt,
-        uint256 liquidationInitiatorReward,
-        uint256 liquidationFee,
-        uint256 remainder
+        uint256 startDebt,
+        address terminator,
+        uint256 surplus
     ) external;
 }

@@ -5,12 +5,12 @@
 pragma solidity 0.8.19;
 
 /**
- * @title Trusted Creditor implementation.
+ * @title Creditor implementation.
  * @author Pragma Labs
- * @notice This contract contains the minimum functionality a Trusted Creditor, interacting with Arcadia Accounts, needs to implement.
+ * @notice This contract contains the minimum functionality a Creditor, interacting with Arcadia Accounts, needs to implement.
  * @dev For the implementation of Arcadia Accounts, see: https://github.com/arcadia-finance/accounts-v2.
  */
-abstract contract TrustedCreditor {
+abstract contract Creditor {
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
@@ -85,4 +85,11 @@ abstract contract TrustedCreditor {
      * @return openPosition The open position of the Account.
      */
     function getOpenPosition(address account) external view virtual returns (uint256 openPosition);
+
+    /**
+     * @notice Starts the liquidation of an account and returns the open position of the Account.
+     * @param initiator The address of the liquidation initiator.
+     * @return openPosition the open position of the Account
+     */
+    function startLiquidation(address initiator) external virtual returns (uint256);
 }
