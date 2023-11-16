@@ -865,15 +865,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Settles the liquidation process for a specific Account.
-     * @dev This function is externally callable by the liquidator and is used to settle the liquidation process for a given Account.
-     * @dev The liquidation process involves providing information such as the original owner, initial debt, initiator, terminator, and surplus amount.
-     * @dev The liquidation settlement process includes handling incentives and penalties based on the provided information.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param originalOwner The original owner of the liquidated debt.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param initiator The address of the liquidation initiator.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
+     * @dev This function is externally callable by the liquidator and is used to settle the liquidation process for a given Account.
+     * @dev The liquidation process involves providing information such as the original owner, initial debt, initiator, terminator, and surplus amount.
+     * @dev The liquidation settlement process includes handling incentives and penalties based on the provided information.
      * @dev This function can only be called when the liquidation process is not paused and is restricted to the designated liquidator. Additionally, the function processes interests before settling the liquidation.
      */
     function settleLiquidation(
@@ -889,13 +889,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Handles the settlement of the liquidation process for a specific Account.
-     * @dev This internal function is responsible for processing the settlement of a liquidation process, including the distribution of rewards, penalties, and surplus. It calculates rewards for the liquidation initiator, auction terminator, and the liquidation fee.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param originalOwner The original owner of the liquidated debt.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param initiator The address of the liquidation initiator.
      * @param terminator The address of the auction terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
+     * @dev This internal function is responsible for processing the settlement of a liquidation process, including the distribution of rewards, penalties, and surplus. It calculates rewards for the liquidation initiator, auction terminator, and the liquidation fee.
      * @dev The function handles various scenarios, including bad debt, surplus distribution, and synchronization of liquidation fees with liquidity providers.
      * @dev Additionally, it updates the realized liquidity for the liquidation initiator, terminator, and original owner, and emits relevant events.
      * @dev This function is not externally callable and should only be invoked within the smart contract.
@@ -1045,10 +1045,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Initiates the liquidation process for an Account.
+     * @return startDebt The initial debt of the liquidated Account.
      * @dev This function is externally callable and triggers the liquidation process for an Account. The liquidation process involves assessing the Account's debt and calculating liquidation incentives, which are considered as extra debt. The extra debt is then minted towards the Account to encourage the liquidation process and bring the Account to a healthy state.
      * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
      * @dev If the provided Account has a debt balance of 0, the function reverts with the error "LendingPool_IsNotAnAccountWithDebt."
-     * @return startDebt The initial debt of the liquidated Account.
      */
     function startLiquidation()
         external
@@ -1086,11 +1086,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
-     * @dev This internal function is used to determine the liquidation initiator's reward, closing reward, and liquidation penalty based on the provided debt amount.
      * @param debt The debt amount of the Account undergoing liquidation.
      * @return liquidationInitiatorReward The reward for the liquidation initiator, capped by the maximum initiator fee.
      * @return closingReward The reward for closing the liquidation process, capped by the maximum closing fee.
      * @return liquidationPenalty The penalty for the liquidation process.
+     * @dev This internal function is used to determine the liquidation initiator's reward, closing reward, and liquidation penalty based on the provided debt amount.
      */
     function _calculateRewards(uint256 debt)
         internal
