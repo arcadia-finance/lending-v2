@@ -539,14 +539,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Repays a portion of a user's debt in an auction.
-     * @dev This function allows a liquidator to repay a specified amount of debt for a user.
+     * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
      * @param amount The amount to be repaid, which can be at most the user's debt.
      * @param account The address of the user whose debt is being repaid.
      * @param bidder The address of the liquidator performing the repayment.
+     * @return earlyTerminate Will be set to true if the amount repaid is equal or higher as the remaining debt of the Account.
      * @dev This function transfers tokens from the `bidder` to the contract, and then updates the user's account balance accordingly.
      * @dev The `onlyLiquidator` modifier restricts this function to authorized liquidators.
-     * @notice This function helps maintain the integrity of the auction system by ensuring that user debts are repaid correctly.
      * @dev Emits a `Repay` event to log the repayment details.
+     * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
     function auctionRepay(
         uint256 startDebt,
@@ -568,13 +569,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Repay a portion of a user's debt.
-     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
+     * @notice This function is used to manage debt repayments within the contract's internal logic.
      * @param amount The amount to be repaid.
      * @param repayAmount The amount of assets to be burned.
      * @param account The address of the user whose debt is being repaid.
      * @param from The address of the caller performing the repayment.
      * @dev This function transfers tokens from the `from` address to the contract and updates the user's account balance accordingly.
-     * @notice This function is used to manage debt repayments within the contract's internal logic.
+     * @dev This internal function allows the caller to repay a specified amount of debt for a user.
      */
     function _repay(uint256 amount, uint256 repayAmount, address account, address from) internal {
         // Need to transfer before burning debt or ERC777s could reenter.
