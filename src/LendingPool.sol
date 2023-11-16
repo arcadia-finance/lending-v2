@@ -544,14 +544,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     /**
      * @notice Repays debt via an auction.
      * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
-     * @param originalOwner The address of the Account owner.
      * @param amount The amount of debt repaid by a bidder during the auction.
      * @param account The contract address of the Arcadia Account backing the loan.
      * @param bidder The address of the bidder.
      * @return earlyTerminate Bool indicating whether the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
-    function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
+    function auctionRepay(uint256 startDebt, uint256 amount, address account, address bidder)
         external
         whenLiquidationNotPaused
         onlyLiquidator
@@ -563,11 +562,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         asset.safeTransferFrom(bidder, address(this), amount);
 
         uint256 accountDebt = maxWithdraw(account);
+        if (accountDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
         if (accountDebt < amount) {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
-            _settleLiquidation(account, originalOwner, startDebt, bidder, (amount - accountDebt));
+            _settleLiquidationHappy(account, startDebt, bidder, (amount - accountDebt));
             amount = accountDebt;
         }
 
@@ -856,78 +856,94 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     /**
      * @notice Settles the liquidation process for a specific Account.
      * @param account The address of the Account undergoing liquidation settlement.
-     * @param originalOwner The original owner of the liquidated debt.
+     * @param startDebt The initial debt amount of the liquidated Account.
+     * @param terminator The address of the liquidation terminator.
+     */
+    function settleLiquidationHappy(address account, uint256 startDebt, address terminator)
+        external
+        whenLiquidationNotPaused
+        onlyLiquidator
+        processInterests
+    {
+        _settleLiquidationHappy(account, startDebt, terminator, 0);
+    }
+
+    /**
+     * @notice Settles the liquidation process for a specific Account.
+     * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
      */
-    function settleLiquidation(
-        address account,
-        address originalOwner,
-        uint256 startDebt,
-        address terminator,
-        uint256 surplus
-    ) external whenLiquidationNotPaused onlyLiquidator processInterests {
-        _settleLiquidation(account, originalOwner, startDebt, terminator, surplus);
+    function _settleLiquidationHappy(address account, uint256 startDebt, address terminator, uint256 surplus)
+        internal
+    {
+        (, uint256 auctionTerminationReward, uint256 liquidationFee) = _calculateRewards(startDebt);
+
+        // Increase the realised liquidity for the terminator.
+        realisedLiquidityOf[terminator] += auctionTerminationReward;
+
+        // Synchronize the liquidation fee with liquidity providers.
+        _syncLiquidationFeeToLiquidityProviders(liquidationFee);
+
+        // Increase the realised liquidity for the original owner.
+        if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
+
+        // unsafe cast: sum will revert if it overflows.
+        totalRealisedLiquidity = uint128(totalRealisedLiquidity + auctionTerminationReward + liquidationFee + surplus);
+
+        // Decrement the number of auctions in progress.
+        unchecked {
+            --auctionsInProgress;
+        }
+
+        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+        }
+        // Event emitted by Liquidator.
     }
 
     /**
-     * @notice Handles the settlement of the liquidation process for a specific Account.
+     * @notice Settles the liquidation process for a specific Account.
      * @param account The address of the Account undergoing liquidation settlement.
-     * @param originalOwner The original owner of the liquidated debt.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the auction terminator.
-     * @param surplus The surplus amount obtained from the liquidation process.
      */
-    function _settleLiquidation(
-        address account,
-        address originalOwner,
-        uint256 startDebt,
-        address terminator,
-        uint256 surplus
-    ) internal {
+    function settleLiquidationUnhappy(address account, uint256 startDebt, address terminator)
+        external
+        whenLiquidationNotPaused
+        onlyLiquidator
+        processInterests
+    {
         (, uint256 auctionTerminationReward, uint256 liquidationFee) = _calculateRewards(startDebt);
 
-        if (surplus > 0) {
-            // If there is surplus, all openDebt is repaid.
-            uint256 rewardsAndSurplus = auctionTerminationReward + liquidationFee + surplus;
-            // Synchronize the liquidation fee with liquidity providers.
-            _syncLiquidationFeeToLiquidityProviders(liquidationFee);
-            // Increase the realised liquidity for the terminator.
-            realisedLiquidityOf[terminator] += auctionTerminationReward;
-            // Increase the realised liquidity for the original owner.
-            realisedLiquidityOf[originalOwner] += surplus;
-
-            // unsafe cast: sum will revert if it overflows.
-            totalRealisedLiquidity = uint128(totalRealisedLiquidity + rewardsAndSurplus);
-        } else {
-            // openDebt equals startDebt + interests + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
-            uint256 openDebt = maxWithdraw(account);
-            if (openDebt > auctionTerminationReward + liquidationFee) {
-                uint256 badDebt;
-                unchecked {
-                    badDebt = openDebt - auctionTerminationReward - liquidationFee;
-                }
-
-                totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
-                _processDefault(badDebt);
-            } else {
-                uint256 remainder;
-                if (openDebt >= liquidationFee) {
-                    remainder = (liquidationFee + auctionTerminationReward) - openDebt;
-                    realisedLiquidityOf[terminator] += remainder;
-                } else {
-                    remainder = (liquidationFee - openDebt) + auctionTerminationReward;
-                    // Increase the realised liquidity for the terminator.
-                    realisedLiquidityOf[terminator] += auctionTerminationReward;
-                    // Distribute the liquidation fee with liquidity providers.
-                    _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
-                }
-                // unsafe cast: sum will revert if it overflows.
-                totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
+        // openDebt equals startDebt + interests + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
+        uint256 openDebt = maxWithdraw(account);
+        if (openDebt > auctionTerminationReward + liquidationFee) {
+            uint256 badDebt;
+            unchecked {
+                badDebt = openDebt - auctionTerminationReward - liquidationFee;
             }
-            _withdraw(openDebt, account, account);
+
+            totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
+            _processDefault(badDebt);
+        } else {
+            uint256 remainder;
+            if (openDebt >= liquidationFee) {
+                remainder = (liquidationFee + auctionTerminationReward) - openDebt;
+                realisedLiquidityOf[terminator] += remainder;
+            } else {
+                remainder = (liquidationFee - openDebt) + auctionTerminationReward;
+                // Increase the realised liquidity for the terminator.
+                realisedLiquidityOf[terminator] += auctionTerminationReward;
+                // Distribute the liquidation fee with liquidity providers.
+                _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
+            }
+            // unsafe cast: sum will revert if it overflows.
+            totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
         }
+        _withdraw(openDebt, account, account);
 
         // Decrement the number of auctions in progress.
         unchecked {

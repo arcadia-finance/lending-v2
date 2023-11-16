@@ -236,6 +236,10 @@ contract LendingPoolExtension is LendingPool {
     function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
         return _calculateRewards(amount);
     }
+
+    function settleLiquidationHappy(address account, uint256 startDebt, address terminator, uint256 surplus) external {
+        _settleLiquidationHappy(account, startDebt, terminator, surplus);
+    }
 }
 
 /* //////////////////////////////////////////////////////////////
@@ -286,9 +290,8 @@ contract LiquidatorExtension is Liquidator {
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_)
+        returns (uint128 startDebt_, uint32 startTime_, bool inAuction_)
     {
-        originalOwner_ = auctionInformation[account_].originalOwner;
         startDebt_ = auctionInformation[account_].startDebt;
         startTime_ = auctionInformation[account_].startTime;
         inAuction_ = auctionInformation[account_].inAuction;
@@ -370,10 +373,6 @@ contract LiquidatorExtension is Liquidator {
 
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
         return auctionInformation[account].assetAmounts;
-    }
-
-    function getOwner(address account) public view returns (address) {
-        return auctionInformation[account].originalOwner;
     }
 
     function getInAuction(address account) external view returns (bool) {

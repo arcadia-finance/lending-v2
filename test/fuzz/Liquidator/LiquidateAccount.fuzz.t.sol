@@ -203,12 +203,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
-        (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_) =
+        (uint128 startDebt_, uint32 startTime_, bool inAuction_) =
             liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
         assertEq(startDebt_, amountLoanedStack + 1);
         assertEq(inAuction_, true);
-        assertEq(originalOwner_, users.accountOwner);
         assertEq(startTime_, block.timestamp);
     }
 
