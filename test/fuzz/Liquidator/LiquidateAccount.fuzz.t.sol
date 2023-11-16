@@ -9,7 +9,7 @@ import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 import { AccountV1 } from "accounts-v2/src/AccountV1.sol";
-import { FixedPointMathLib } from "../../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -197,18 +197,16 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
 
         // Avoid stack too deep
-        address liquidationInitiatorStack = liquidationInitiator;
         uint128 amountLoanedStack = amountLoaned;
 
         assertEq(startPrice, loan);
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
-        (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_, address initiator_) =
+        (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_) =
             liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
         assertEq(startDebt_, amountLoanedStack + 1);
-        assertEq(initiator_, liquidationInitiatorStack);
         assertEq(inAuction_, true);
         assertEq(originalOwner_, users.accountOwner);
         assertEq(startTime_, block.timestamp);
