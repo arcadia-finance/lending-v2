@@ -451,7 +451,7 @@ contract Liquidator is Owned, ILiquidator {
         (bool success,,) = IAccount(account).isAccountHealthy(0, 0);
         if (!success) revert Liquidator_AccountNotHealthy();
 
-        uint256 startDebt = uint256(auctionInformation_.startDebt);
+        uint256 startDebt = auctionInformation_.startDebt;
 
         // Call settlement of the debt in the creditor
         ILendingPool(auctionInformation_.creditor).settleLiquidation(
