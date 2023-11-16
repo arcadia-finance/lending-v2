@@ -493,7 +493,7 @@ contract Liquidator is Owned, ILiquidator {
         // Set the inAuction flag to false.
         auctionInformation[account].inAuction = false;
 
-        uint256 startDebt = uint256(auctionInformation_.startDebt);
+        uint256 startDebt = auctionInformation_.startDebt;
 
         // Call settlement of the debt in the creditor
         ILendingPool(auctionInformation_.creditor).settleLiquidation(
