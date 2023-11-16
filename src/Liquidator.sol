@@ -57,7 +57,6 @@ contract Liquidator is Owned, ILiquidator {
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        address initiator; // The address of the initiator of the auction.
         uint32 startPriceMultiplier; // 2 decimals precision.
         uint32 cutoffTime; // Maximum time that the auction declines.
         address creditor; // The creditor that issued the debt.
@@ -236,8 +235,7 @@ contract Liquidator is Owned, ILiquidator {
         // Check if the account is already in an auction.
         if (auctionInformation[account].inAuction) revert Liquidator_AuctionOngoing();
 
-        // Store the initiator address and set the inAuction flag to true.
-        auctionInformation[account].initiator = msg.sender;
+        // Set the inAuction flag to true.
         auctionInformation[account].inAuction = true;
 
         // Call Account to check if account is solvent and if it is solvent start the liquidation in the Account.
@@ -249,7 +247,7 @@ contract Liquidator is Owned, ILiquidator {
             address creditor,
             uint256 debt,
             RiskModule.AssetValueAndRiskFactors[] memory riskValues
-        ) = IAccount(account).startLiquidation();
+        ) = IAccount(account).startLiquidation(msg.sender);
 
         // Fill the auction struct
         auctionInformation[account].startDebt = uint128(debt);
@@ -302,12 +300,7 @@ contract Liquidator is Owned, ILiquidator {
 
         // Repay the debt of the account.
         bool earlyTerminate_ = ILendingPool(auctionInformation_.creditor).auctionRepay(
-            auctionInformation_.startDebt,
-            auctionInformation_.initiator,
-            auctionInformation_.originalOwner,
-            askPrice,
-            account,
-            msg.sender
+            auctionInformation_.startDebt, auctionInformation_.originalOwner, askPrice, account, msg.sender
         );
 
         // Transfer the assets to the bidder.
@@ -407,9 +400,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
 
-        ILendingPool(creditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, owner_, 0
-        );
+        ILendingPool(creditor).settleLiquidation(account, auctionInformation_.originalOwner, startDebt, owner_, 0);
 
         // Transfer all the left-over assets to the protocol owner.
         IAccount(account).auctionBoughtIn(owner_);
@@ -437,9 +428,7 @@ contract Liquidator is Owned, ILiquidator {
         address owner_ = owner;
         address creditor = auctionInformation_.creditor;
 
-        ILendingPool(creditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, owner_, 0
-        );
+        ILendingPool(creditor).settleLiquidation(account, auctionInformation_.originalOwner, startDebt, owner_, 0);
 
         // Transfer all the left-over assets to the 'to' address
         IAccount(account).auctionBoughtIn(owner_);
@@ -466,7 +455,7 @@ contract Liquidator is Owned, ILiquidator {
 
         // Call settlement of the debt in the creditor
         ILendingPool(auctionInformation_.creditor).settleLiquidation(
-            account, auctionInformation_.originalOwner, startDebt, auctionInformation_.initiator, msg.sender, 0
+            account, auctionInformation_.originalOwner, startDebt, msg.sender, 0
         );
 
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);

@@ -43,7 +43,7 @@ interface IAccount {
         external
         returns (address, uint256);
 
-    function startLiquidation()
+    function startLiquidation(address liquidationInitiator)
         external
         returns (
             address[] memory assetAddresses,

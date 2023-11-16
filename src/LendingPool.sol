@@ -546,7 +546,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     /**
      * @notice Repays debt via an auction.
      * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
-     * @param initiator The address of the initiator of the liquidation.
      * @param originalOwner The address of the Account owner.
      * @param amount The amount of debt repaid by a bidder during the auction.
      * @param account The contract address of the Arcadia Account backing the loan.
@@ -554,14 +553,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
-    function auctionRepay(
-        uint256 startDebt,
-        address initiator,
-        address originalOwner,
-        uint256 amount,
-        address account,
-        address bidder
-    ) external whenLiquidationNotPaused onlyLiquidator processInterests returns (bool earlyTerminate) {
+    function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
+        external
+        whenLiquidationNotPaused
+        onlyLiquidator
+        processInterests
+        returns (bool earlyTerminate)
+    {
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(bidder, address(this), amount);
@@ -571,7 +569,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // The amount recovered by selling assets during the auction is bigger as the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
-            _settleLiquidation(account, originalOwner, startDebt, initiator, bidder, (amount - accountDebt));
+            _settleLiquidation(account, originalOwner, startDebt, bidder, (amount - accountDebt));
             amount = accountDebt;
         }
 
@@ -861,26 +859,20 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         address account,
         address originalOwner,
         uint256 startDebt,
-        address initiator,
         address terminator,
         uint256 surplus
     ) external whenLiquidationNotPaused onlyLiquidator processInterests {
-        _settleLiquidation(account, originalOwner, startDebt, initiator, terminator, surplus);
+        _settleLiquidation(account, originalOwner, startDebt, terminator, surplus);
     }
 
     function _settleLiquidation(
         address account,
         address originalOwner,
         uint256 startDebt,
-        address initiator,
         address terminator,
         uint256 surplus
     ) internal {
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationFee) =
-            _calculateRewards(startDebt);
-
-        // Increase the realised liquidity for the initiator.
-        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+        (, uint256 auctionTerminationReward, uint256 liquidationFee) = _calculateRewards(startDebt);
 
         if (surplus > 0) {
             // If there is surplus, all openDebt is repaid.
@@ -892,19 +884,16 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // Increase the realised liquidity for the original owner.
             realisedLiquidityOf[originalOwner] += surplus;
 
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(
-                uint256(totalRealisedLiquidity) + liquidationInitiatorReward + rewardsAndSurplus
-            );
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + rewardsAndSurplus);
         } else {
-            // openDebt equals startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee - bids
+            // openDebt equals startDebt + startDebtInterest + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
             uint256 openDebt = maxWithdraw(account);
             if (openDebt > auctionTerminationReward + liquidationFee) {
                 uint256 badDebt;
                 unchecked {
                     badDebt = openDebt - auctionTerminationReward - liquidationFee;
                 }
-                totalRealisedLiquidity =
-                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward - badDebt);
+                totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) - badDebt);
                 _processDefault(badDebt);
             } else {
                 uint256 remainder;
@@ -915,11 +904,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                     remainder = (liquidationFee - openDebt) + auctionTerminationReward;
                     // Increase the realised liquidity for the terminator.
                     realisedLiquidityOf[terminator] += auctionTerminationReward;
-                    // Synchronize the liquidation fee with liquidity providers.
+                    // Distribute the liquidation fee with liquidity providers.
                     _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
                 }
-                totalRealisedLiquidity =
-                    SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward + remainder);
+                totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + remainder);
             }
             _withdraw(openDebt, account, account);
         }
@@ -1008,25 +996,32 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         }
     }
 
-    function startLiquidation()
+    function startLiquidation(address initiator)
         external
         override
         whenLiquidationNotPaused
         processInterests
         returns (uint256 startDebt)
     {
-        //Only Accounts can have debt, and debtTokens are non-transferrable.
-        //Hence by checking that the balance of the address passed as Account is not 0, we know the address
-        //passed as Account is indeed a Account and has debt.
+        // Only Accounts can have debt, and debtTokens are non-transferrable.
+        // Hence by checking that the balance of the msg.sender is not 0,
+        // we know that the sender is indeed a Account and has debt.
         startDebt = maxWithdraw(msg.sender);
         if (startDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
 
-        // Calculate liquidation incentives which should be considered as extra debt for the Account
+        // Calculate liquidation incentives which have to be paid by the Account owner and are minted
+        // as extra debt for the Account.
         (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
             _calculateRewards(startDebt);
 
-        // Mint extra debt towards the Account (as incentives should be considered in order to bring Account to a healthy state)
+        // Mint the liquidation incentives as extra debt towards the Account.
         _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, msg.sender);
+
+        // Increase the realised liquidity for the initiator.
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+        totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward);
+        // The other incentives will only be added as realised liquidity for the respective actors
+        // After the auction is finished.
 
         //Hook to the most junior Tranche, to inform that auctions are ongoing,
         //already done if there are other auctions in progress (auctionsInProgress > O).

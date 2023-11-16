@@ -286,13 +286,12 @@ contract LiquidatorExtension is Liquidator {
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_, address initiator_)
+        returns (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_)
     {
         originalOwner_ = auctionInformation[account_].originalOwner;
         startDebt_ = auctionInformation[account_].startDebt;
         startTime_ = auctionInformation[account_].startTime;
         inAuction_ = auctionInformation[account_].inAuction;
-        initiator_ = auctionInformation[account_].initiator;
     }
 
     function getAuctionInformationPartTwo(address account_)

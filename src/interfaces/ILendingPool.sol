@@ -51,19 +51,13 @@ interface ILendingPool {
      */
     function calcUnrealisedDebt() external view returns (uint256);
     function repay(uint256 amount, address account) external;
-    function auctionRepay(
-        uint256 startDebt,
-        address initiator,
-        address originalOwner,
-        uint256 amount,
-        address account,
-        address bidder
-    ) external returns (bool);
+    function auctionRepay(uint256 startDebt, address originalOwner, uint256 amount, address account, address bidder)
+        external
+        returns (bool);
     function settleLiquidation(
         address account,
         address originalOwner,
         uint256 startDebt,
-        address initiator,
         address terminator,
         uint256 surplus
     ) external;
