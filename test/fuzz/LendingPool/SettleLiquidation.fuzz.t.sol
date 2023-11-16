@@ -97,6 +97,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)
                 && auctionTerminator != address(liquidator) && auctionTerminator != pool.getTreasury()
+                && auctionTerminator != users.accountOwner
         );
 
         // Given: Liquidity is deposited in Lending Pool
@@ -179,6 +180,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)
                 && auctionTerminator != address(liquidator) && auctionTerminator != pool.getTreasury()
+                && auctionTerminator != users.accountOwner
         );
 
         // There is still open debt
@@ -270,6 +272,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)
                 && auctionTerminator != address(liquidator) && auctionTerminator != pool.getTreasury()
+                && auctionTerminator != users.accountOwner
         );
 
         // There is still open debt
@@ -329,6 +332,7 @@ contract SettleLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)
                 && auctionTerminator != address(liquidator) && auctionTerminator != pool.getTreasury()
+                && auctionTerminator != users.accountOwner
         );
 
         (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
