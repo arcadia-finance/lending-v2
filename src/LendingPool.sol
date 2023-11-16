@@ -1044,7 +1044,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         // Increase the realised liquidity for the initiator.
         realisedLiquidityOf[initiator] += liquidationInitiatorReward;
-        totalRealisedLiquidity = SafeCastLib.safeCastTo128(uint256(totalRealisedLiquidity) + liquidationInitiatorReward);
+        totalRealisedLiquidity = uint128(totalRealisedLiquidity + liquidationInitiatorReward);
         // The other incentives will only be added as realised liquidity for the respective actors
         // After the auction is finished.
 
