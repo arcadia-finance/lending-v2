@@ -30,7 +30,6 @@ contract Constructor_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Success_deployment() public {
         liquidator_ = new LiquidatorExtension(address(factory));
 
-        assertEq(liquidator_.getLocked(), 1);
         assertEq(liquidator_.getPenaltyWeight(), 5);
         assertEq(liquidator_.getInitiatorRewardWeight(), 1);
         assertEq(liquidator_.getClosingRewardWeight(), 1);
