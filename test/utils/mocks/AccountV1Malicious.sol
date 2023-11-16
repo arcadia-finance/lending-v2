@@ -29,7 +29,7 @@ contract AccountV1Malicious {
         owner = msg.sender;
     }
 
-    function startLiquidation(address liquidationInitiator)
+    function startLiquidation(address)
         external
         view
         returns (
