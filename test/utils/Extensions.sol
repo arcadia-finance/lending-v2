@@ -281,7 +281,7 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 ////////////////////////////////////////////////////////////// */
 
 contract LiquidatorExtension is Liquidator {
-    constructor(address factory_) Liquidator(factory_) { }
+    constructor() Liquidator() { }
 
     function getAuctionInformationPartOne(address account_)
         public

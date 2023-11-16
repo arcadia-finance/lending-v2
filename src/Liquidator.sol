@@ -19,8 +19,6 @@ contract Liquidator is Owned, ILiquidator {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // The contract address of the Factory.
-    address internal immutable FACTORY;
     // The total amount of shares in the Account.
     // 1_000_000 shares = 100% of the Account.
     uint32 internal constant TotalShares = 1_000_000;
@@ -83,8 +81,7 @@ contract Liquidator is Owned, ILiquidator {
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
-    constructor(address factory_) Owned(msg.sender) {
-        FACTORY = factory_;
+    constructor() Owned(msg.sender) {
         initiatorRewardWeight = 1;
         penaltyWeight = 5;
         // note: to discuss
