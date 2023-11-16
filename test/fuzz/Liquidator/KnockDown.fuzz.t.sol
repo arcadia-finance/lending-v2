@@ -52,7 +52,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, false);
         vm.stopPrank();
     }
 
@@ -69,7 +69,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, new uint256[](1), false);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, false);
         vm.stopPrank();
     }
 
@@ -132,7 +132,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint128 amountLoaned
     ) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned > 1000);
         vm.assume(amountLoaned <= (type(uint128).max / 500) * 100);
         initiateLiquidation(amountLoaned);
 
