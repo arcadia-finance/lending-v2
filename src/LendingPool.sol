@@ -487,7 +487,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
-        uint256 amountWithFee = amount + (amount * originationFee) / 10_000;
+        uint256 amountWithFee = amount + (amount * originationFee) / ONE_4;
 
         //Check allowances to take debt.
         if (accountOwner != msg.sender) {
@@ -602,7 +602,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
-        uint256 amountBorrowedWithFee = amountBorrowed + (amountBorrowed * originationFee) / 10_000;
+        uint256 amountBorrowedWithFee = amountBorrowed + (amountBorrowed * originationFee) / ONE_4;
 
         //Check allowances to take debt.
         if (accountOwner != msg.sender) {
@@ -1075,12 +1075,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         view
         returns (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty)
     {
-        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, 10_000);
+        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
-        closingReward = debt.mulDivDown(closingRewardWeight, 10_000);
+        closingReward = debt.mulDivDown(closingRewardWeight, ONE_4);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
-        liquidationPenalty = debt.mulDivUp(penaltyWeight, 10_000);
+        liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
     }
 
     /*///////////////////////////////////////////////////////////////
