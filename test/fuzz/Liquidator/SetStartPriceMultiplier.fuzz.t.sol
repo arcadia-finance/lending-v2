@@ -34,7 +34,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_setStartPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier > 300);
+        vm.assume(priceMultiplier > 30_000);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -45,7 +45,7 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_setStartPriceMultiplier_tooLow(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier < 100);
+        vm.assume(priceMultiplier < 10_000);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -56,13 +56,13 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_setStartPriceMultiplier(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier > 100);
-        vm.assume(priceMultiplier < 301);
+        vm.assume(priceMultiplier > 10_000);
+        vm.assume(priceMultiplier < 30_100);
 
         // Given: the owner is the users.creatorAddress
         vm.startPrank(users.creatorAddress);
         // When: the owner sets the start price multiplier
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit StartPriceMultiplierSet(priceMultiplier);
         liquidator.setStartPriceMultiplier(priceMultiplier);
         vm.stopPrank();

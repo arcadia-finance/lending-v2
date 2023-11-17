@@ -43,7 +43,7 @@ contract EndAuctionAfterCutoff_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60) + 1, (8 * 60 * 60) - 1)); // > 10 min && < 8 hours
         cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60) + 1, (8 * 60 * 60) - 1)); // > 1 hour && < 8 hours
         vm.assume(timePassed <= cutoffTime);
-        startPriceMultiplier = uint16(bound(startPriceMultiplier, 101, 300));
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_100, 30_000));
         vm.assume(minPriceMultiplier < 91);
         amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
@@ -90,8 +90,8 @@ contract EndAuctionAfterCutoff_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60) + 1, (8 * 60 * 60) - 1)); // > 10 min && < 8 hours
         cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60) + 1, (8 * 60 * 60) - 1)); // > 1 hour && < 8 hours
         vm.assume(timePassed > cutoffTime);
-        startPriceMultiplier = uint16(bound(startPriceMultiplier, 101, 300));
-        vm.assume(minPriceMultiplier < 91);
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_100, 30_000));
+        vm.assume(minPriceMultiplier < 9100);
         amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
         vm.startPrank(users.creatorAddress);

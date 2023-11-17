@@ -30,6 +30,7 @@ abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     Tranche internal jrTranche;
     Tranche internal srTranche;
     Tranche internal tranche;
+    uint16 internal constant ONE_4 = 10_000;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS

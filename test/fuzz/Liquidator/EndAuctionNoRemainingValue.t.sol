@@ -36,7 +36,7 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
         uint8 minPriceMultiplier,
         uint256 amountLoaned
     ) public {
-        startPriceMultiplier = uint16(bound(startPriceMultiplier, 101, 300));
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_100, 30_000));
         vm.assume(minPriceMultiplier < 91);
         amountLoaned = bound(amountLoaned, 1, (type(uint128).max / 150) * 100); // No overflow when debt is increased
 
@@ -73,9 +73,9 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
         uint256 amountLoaned,
         address randomAddress
     ) public {
-        startPriceMultiplier = uint16(bound(startPriceMultiplier, 101, 300));
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_100, 30_000));
         vm.assume(minPriceMultiplier < 91);
-        amountLoaned = bound(amountLoaned, 1, 1000); // No overflow when debt is increased
+        amountLoaned = bound(amountLoaned, 1, 1000); // As we can't set to oracle to return0, we need to be left with dust amount to test.
 
         vm.startPrank(users.creatorAddress);
         liquidator.setStartPriceMultiplier(startPriceMultiplier);
@@ -100,7 +100,7 @@ contract EndAuctionNoRemainingValue_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test
         // Set debt back to initial debt to have correct accounting in settleLiquidation.
         debt.setRealisedDebt(uint256(amountLoaned));
 
-        // Set price of stable1 to 0.
+        // Set price of stable1 to 1, as this should leave a dust value.
         vm.prank(users.defaultTransmitter);
         mockOracles.stable1ToUsd.transmit(1);
 

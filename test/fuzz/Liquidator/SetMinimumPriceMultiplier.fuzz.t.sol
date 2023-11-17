@@ -21,9 +21,9 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setMinimumPriceMultiplier_tooHigh(uint8 priceMultiplier) public {
+    function testFuzz_Revert_setMinimumPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier >= 91);
+        vm.assume(priceMultiplier >= 9100);
 
         // Given When Then: a owner attempts to set the minimum price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
@@ -32,14 +32,14 @@ contract SetMinimumPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setMinimumPriceMultiplier(uint8 priceMultiplier) public {
+    function testFuzz_Success_setMinimumPriceMultiplier(uint16 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier < 91);
+        vm.assume(priceMultiplier < 9100);
         // Given: the owner is the users.creatorAddress
 
         vm.startPrank(users.creatorAddress);
         // When: the owner sets the minimum price multiplier
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit MinimumPriceMultiplierSet(priceMultiplier);
         liquidator.setMinimumPriceMultiplier(priceMultiplier);
         vm.stopPrank();

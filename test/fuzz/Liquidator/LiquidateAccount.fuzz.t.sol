@@ -55,7 +55,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(isAuctionActive, true);
 
         uint256 startDebt = liquidator.getAuctionStartPrice(address(proxyAccount));
-        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
+        uint256 loan = uint256(amountLoaned + 1) * 150;
 
         assertEq(startDebt, loan);
 
@@ -194,7 +194,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.liquidateAccount(address(proxyAccount));
 
         uint256 startPrice = liquidator.getAuctionStartPrice(address(proxyAccount));
-        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
+        uint256 loan = uint256(amountLoaned + 1) * 150;
 
         // Avoid stack too deep
         uint128 amountLoanedStack = amountLoaned;
@@ -334,7 +334,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(trustedCreditor_, address(pool));
         assertEq(cutoffTime_, liquidator.getCutoffTime());
         assertEq(assetAddresses_[0], address(mockERC20.stable1));
-        assertEq(assetShares_[0], 1_000_000);
+        assertEq(assetShares_[0], ONE_4);
         assertEq(assetAmounts_[0], amountLoanedStack);
         assertEq(assetIds_[0], 0);
     }
