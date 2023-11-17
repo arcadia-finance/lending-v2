@@ -32,39 +32,38 @@ contract SetStartPriceMultiplier_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_setStartPriceMultiplier_tooHigh(uint16 priceMultiplier) public {
+    function testFuzz_Revert_setStartPriceMultiplier_tooHigh(uint256 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier > 30_000);
+        priceMultiplier = bound(priceMultiplier, 30_100, type(uint16).max);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_MultiplierTooHigh.selector);
-        liquidator.setStartPriceMultiplier(priceMultiplier);
+        liquidator.setStartPriceMultiplier(uint16(priceMultiplier));
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_setStartPriceMultiplier_tooLow(uint16 priceMultiplier) public {
+    function testFuzz_Revert_setStartPriceMultiplier_tooLow(uint256 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier < 10_000);
+        priceMultiplier = bound(priceMultiplier, 0, 9999);
 
         // Given When Then: a owner attempts to set the start price multiplier, but it is not in the limits
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(Liquidator_MultiplierTooLow.selector);
-        liquidator.setStartPriceMultiplier(priceMultiplier);
+        liquidator.setStartPriceMultiplier(uint16(priceMultiplier));
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setStartPriceMultiplier(uint16 priceMultiplier) public {
+    function testFuzz_Success_setStartPriceMultiplier(uint256 priceMultiplier) public {
         // Preprocess: limit the fuzzing to acceptable levels
-        vm.assume(priceMultiplier > 10_000);
-        vm.assume(priceMultiplier < 30_100);
+        priceMultiplier = bound(priceMultiplier, 10_001, 30_099);
 
         // Given: the owner is the users.creatorAddress
         vm.startPrank(users.creatorAddress);
         // When: the owner sets the start price multiplier
         vm.expectEmit();
-        emit StartPriceMultiplierSet(priceMultiplier);
-        liquidator.setStartPriceMultiplier(priceMultiplier);
+        emit StartPriceMultiplierSet(uint16(priceMultiplier));
+        liquidator.setStartPriceMultiplier(uint16(priceMultiplier));
         vm.stopPrank();
 
         // Then: multiplier sets correctly
