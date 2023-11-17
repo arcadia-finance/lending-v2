@@ -16,6 +16,8 @@ import { IPermit2 } from "../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
+import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
+import { RiskConstants } from "../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
  * @notice Scenario tests for With Leveraged Actions flows.
@@ -221,7 +223,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert("A_AMA: Account Unhealthy");
+        vm.expectRevert(AccountErrors.Account_Unhealthy.selector);
         pool.doActionWithLeverage(
             stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
         );
@@ -242,7 +244,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / RiskConstants.RISK_FACTOR_UNIT * 10 ** Constants.stableDecimals
+                / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -363,7 +366,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / RiskConstants.RISK_FACTOR_UNIT * 10 ** Constants.stableDecimals
+                / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral

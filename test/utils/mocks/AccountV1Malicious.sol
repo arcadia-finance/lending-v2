@@ -12,7 +12,6 @@ contract AccountV1Malicious {
     uint256 public valueInBaseCurrency;
     uint256 public collateralFactor;
     uint256 public liquidationFactor;
-    address public owner;
 
     constructor(
         address trustedCreditor_,
@@ -26,7 +25,6 @@ contract AccountV1Malicious {
         valueInBaseCurrency = valueInBaseCurrency_;
         collateralFactor = collateralFactor_;
         liquidationFactor = liquidationFactor_;
-        owner = msg.sender;
     }
 
     function startLiquidation(address)
@@ -36,7 +34,6 @@ contract AccountV1Malicious {
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
-            address owner_,
             address creditor_,
             uint256 totalOpenDebt_,
             RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
@@ -52,7 +49,6 @@ contract AccountV1Malicious {
         assetAmounts[0] = 0;
 
         creditor_ = creditor;
-        owner_ = owner;
 
         totalOpenDebt_ = totalOpenDebt;
 

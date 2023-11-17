@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
+import { LendingPoolGuardian_Fuzz_Test, BaseGuardian } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
@@ -25,7 +25,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.assume(nonGuard != users.guardian);
 
         vm.startPrank(nonGuard);
-        vm.expectRevert("Guardian: Only guardian");
+        vm.expectRevert(BaseGuardian.Only_Guardian.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }
