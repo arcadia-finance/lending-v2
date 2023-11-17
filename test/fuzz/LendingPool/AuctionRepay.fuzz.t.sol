@@ -99,7 +99,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.startPrank(address(liquidator));
-        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
+        vm.expectRevert(Function_Is_Paused.selector);
         pool.auctionRepay(amountLoaned, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
     }
