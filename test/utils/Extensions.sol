@@ -351,9 +351,9 @@ contract LiquidatorExtension is Liquidator {
         return initiatorRewardWeight;
     }
 
-    function calculateAskedShare(address account, uint256[] memory askedAssetAmounts) public view returns (uint256) {
+    function calculateTotalShare(address account, uint256[] memory askedAssetAmounts) public view returns (uint256) {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
-        return _calculateAskedShare(auctionInformation_, askedAssetAmounts);
+        return _calculateTotalShare(auctionInformation_, askedAssetAmounts);
     }
 
     function calculateBidPrice(address account, uint256 askedShare) public view returns (uint256) {
@@ -365,12 +365,12 @@ contract LiquidatorExtension is Liquidator {
         return closingRewardWeight;
     }
 
-    function getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
+    function getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
         public
         pure
         returns (uint32[] memory assetDistribution)
     {
-        return _getAssetDistribution(riskValues_);
+        return _getAssetShares(riskValues_);
     }
 
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {

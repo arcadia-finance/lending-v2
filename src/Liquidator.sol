@@ -220,13 +220,10 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Initiate the liquidation of a specific account.
      * @param account The address of the account to be liquidated.
-     * @dev This function is used to start the liquidation process for a given account. It performs the following steps:
-     * 1. Sets the initiator address to the sender and flags the account as being in an auction.
-     * 2. Calls the `startLiquidation` function on the `IAccount` contract to check if the account is solvent
-     *    and start the liquidation process within the account.
-     * 3. Checks if the account has debt in the lending pool and, if so, increments the auction in progress counter.
-     * 4. Records the start time and asset distribution for the auction.
-     * 5. Emits an `AuctionStarted` event to notify observers about the initiation of the liquidation.
+     * @dev We do not check if the address passed is an actual Arcadia Account.
+     * A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account) that implemented startLiquidation().
+     * This would successfully start an auction and the malicious non-Account would be in auction indefinitely,
+     * but this does not block or impact any current or future 'real' auctions of Arcadia-Accounts.
      */
     function liquidateAccount(address account) external {
         // Check if the account is already in an auction.
@@ -235,44 +232,51 @@ contract Liquidator is Owned, ILiquidator {
         // Set the inAuction flag to true.
         auctionInformation[account].inAuction = true;
 
-        // Call Account to check if account is insolvent and if it is insolvent start the liquidation in the Account.
+        // Check if the Account is insolvent and if it is, start the liquidation in the Account.
+        // startLiquidation will revert if the Account is still solvent.
         (
             address[] memory assetAddresses,
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
             address creditor,
             uint256 debt,
-            RiskModule.AssetValueAndRiskFactors[] memory riskValues
+            RiskModule.AssetValueAndRiskFactors[] memory assetValues
         ) = IAccount(account).startLiquidation(msg.sender);
 
-        // Fill the auction struct
-        auctionInformation[account].startDebt = uint128(debt);
-        auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
-        auctionInformation[account].minPriceMultiplier = minPriceMultiplier;
-        auctionInformation[account].startTime = uint32(block.timestamp);
-        auctionInformation[account].assetShares = _getAssetDistribution(riskValues);
+        // Store the Account information.
         auctionInformation[account].assetAddresses = assetAddresses;
         auctionInformation[account].assetIds = assetIds;
         auctionInformation[account].assetAmounts = assetAmounts;
-        auctionInformation[account].cutoffTime = cutoffTime;
         auctionInformation[account].creditor = creditor;
+        auctionInformation[account].startDebt = uint128(debt);
+
+        // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
+        // These will be used to calculate the price of bids to partially liquidate the Account.
+        auctionInformation[account].assetShares = _getAssetShares(assetValues);
+
+        // Store the auction price-curve parameters.
+        // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
+        auctionInformation[account].startPriceMultiplier = startPriceMultiplier;
+        auctionInformation[account].minPriceMultiplier = minPriceMultiplier;
+        auctionInformation[account].startTime = uint32(block.timestamp);
+        auctionInformation[account].cutoffTime = cutoffTime;
     }
 
     /**
-     * @notice Calculate asset distribution percentages based on provided risk values.
-     * @param riskValues_ An array of risk values for assets.
+     * @notice Calculate the relative value of each asset, with respect to the total value of the Account.
+     * @param assetValues An array with the values of each asset in the Account.
      * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 1_000_000 represents 100%).
      */
-    function _getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
+    function _getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory assetValues)
         internal
         pure
         returns (uint32[] memory assetDistributions)
     {
-        uint256 length = riskValues_.length;
+        uint256 length = assetValues.length;
         uint256 totalValue;
         for (uint256 i; i < length;) {
             unchecked {
-                totalValue += riskValues_[i].assetValue;
+                totalValue += assetValues[i].assetValue;
                 ++i;
             }
         }
@@ -280,8 +284,8 @@ contract Liquidator is Owned, ILiquidator {
         for (uint256 i; i < length;) {
             unchecked {
                 // The asset distribution is calculated as a percentage of the total value of the assets.
-                // assetvalue is a uint256 in basecurrency units, will never overflow
-                assetDistributions[i] = uint32(riskValues_[i].assetValue * 1_000_000 / totalValue);
+                // "assetValue" is a uint256 in baseCurrency units, will never overflow
+                assetDistributions[i] = uint32(assetValues[i].assetValue * 1_000_000 / totalValue);
                 ++i;
             }
         }
@@ -291,19 +295,22 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Places a bid.
      * @param account The contract address of the Account being liquidated.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
-     * @param endAuction Bool indicating if the bidder wants to end the auction.
+     * @param endAuction Bool indicating that the Account is healthy after the bid.
      * @dev We use a dutch auction: price of the assets constantly decreases.
+     * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
+     * but they are incentivised to do so by earning an additional "auctionTerminationReward".
      */
     function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction) external {
-        // Check if the account is already in an auction.
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
 
-        // Calculate the current auction price.
-        uint256 askedShare = _calculateAskedShare(auctionInformation_, askedAssetAmounts);
-        uint256 price = _calculateBidPrice(auctionInformation_, askedShare);
+        // Calculate the current auction price of the assets being bought.
+        uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
+        uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
 
-        // Repay the debt of the account.
+        // Transfer an amount of "price" in "baseCurrency" to the LendingPool to repay the Accounts debt.
+        // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
+        // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
             auctionInformation_.startDebt, price, account, msg.sender
         );
@@ -313,10 +320,9 @@ contract Liquidator is Owned, ILiquidator {
             auctionInformation_.assetAddresses, auctionInformation_.assetIds, askedAssetAmounts, msg.sender
         );
 
-        // If all the debt is paid back, end the auction early.
-        // No need to do a health check for the account since it has no debt anymore.
+        // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
         if (earlyTerminate) {
-            // Stop the auction
+            // Stop the auction, no need to do a health check for the account since it has no debt anymore.
             auctionInformation[account].inAuction = false;
         }
         // If not all debt is repaid the bidder can still earn a termination incentive by ending the auction
@@ -328,17 +334,16 @@ contract Liquidator is Owned, ILiquidator {
     }
 
     /**
-     * @notice Calculates the share of total assets the bidder wants to buy.
+     * @notice Calculates the share of the initial assets the bidder wants to buy.
      * @param auctionInformation_ The auction information.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
-     * @return askedShare The share of total assets the bidder wants to buy, 6 decimals precision.
-     * calculated based on the relative value of the assets when the auction was initiated.
-     * @dev We use a dutch auction: price of the assets constantly decreases.
+     * @return totalShare The share of initial assets the bidder wants to buy, 6 decimals precision.
+     * @dev totalShare is calculated based on the relative value of the assets when the auction was initiated.
      */
-    function _calculateAskedShare(AuctionInformation storage auctionInformation_, uint256[] memory askedAssetAmounts)
+    function _calculateTotalShare(AuctionInformation storage auctionInformation_, uint256[] memory askedAssetAmounts)
         internal
         view
-        returns (uint256 askedShare)
+        returns (uint256 totalShare)
     {
         uint256[] memory assetAmounts = auctionInformation_.assetAmounts;
         uint32[] memory assetShares = auctionInformation_.assetShares;
@@ -346,11 +351,10 @@ contract Liquidator is Owned, ILiquidator {
             revert Liquidator_InvalidBid();
         }
 
-        // Calculate the share of total assets the bidder wants to buy.
         for (uint256 i; i < askedAssetAmounts.length;) {
             unchecked {
                 // ToDo: check that there is no way we can get an amount 0 for an asset in an Account.
-                askedShare += assetShares[i] * askedAssetAmounts[i] / assetAmounts[i];
+                totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
                 ++i;
             }
         }
@@ -359,7 +363,7 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Function returns the current auction price given time passed and a bid.
      * @param auctionInformation_ The auction information.
-     * @param askedShare The share of total assets the bidder wants to buy,
+     * @param totalShare The share of initial assets the bidder wants to buy,
      * calculated based on the relative value of the assets when the auction was initiated.
      * @return price The price for which the bid can be purchased, denominated in the baseCurrency.
      * @dev We use a dutch auction: price of the assets constantly decreases.
@@ -372,7 +376,7 @@ contract Liquidator is Owned, ILiquidator {
      * t: time passed since start auction (in seconds, 18 decimals precision).
      * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
      */
-    function _calculateBidPrice(AuctionInformation storage auctionInformation_, uint256 askedShare)
+    function _calculateBidPrice(AuctionInformation storage auctionInformation_, uint256 totalShare)
         internal
         view
         returns (uint256 price)
@@ -397,7 +401,7 @@ contract Liquidator is Owned, ILiquidator {
             // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e6 + 1e2).
             // No overflow possible: uint128 * uint32 * uint18 * uint8.
             price = (
-                auctionInformation_.startDebt * askedShare
+                auctionInformation_.startDebt * totalShare
                     * (
                         LogExpMath.pow(base, timePassed) * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
                             + 1e18 * uint256(minPriceMultiplier_)

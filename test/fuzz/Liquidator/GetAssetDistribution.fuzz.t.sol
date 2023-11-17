@@ -42,7 +42,7 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             }
         }
 
-        uint32[] memory distribution = liquidator.getAssetDistribution(riskValues_);
+        uint32[] memory distribution = liquidator.getAssetShares(riskValues_);
 
         uint256 totalDistribution;
         for (uint256 i; i < totalAssetNumber;) {
