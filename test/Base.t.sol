@@ -20,6 +20,12 @@ import { Errors } from "./utils/Errors.sol";
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
 abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     /*//////////////////////////////////////////////////////////////////////////
+                                     CONSTANTS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    uint8 internal ONE_4 = 10_000;
+
+    /*//////////////////////////////////////////////////////////////////////////
                                      VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -30,7 +36,6 @@ abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     Tranche internal jrTranche;
     Tranche internal srTranche;
     Tranche internal tranche;
-    uint16 internal constant ONE_4 = 10_000;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
