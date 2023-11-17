@@ -132,7 +132,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
 
         // Given: collateralValue is smaller than maxExposure.
-        // And: amountLoaned is bigger as as 0.
+        // And: amountLoaned is bigger than as 0.
         amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
@@ -159,7 +159,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
 
         // Given: collateralValue is smaller than maxExposure.
-        // And: amountLoaned is bigger as amountRepaid, which is bigger as 0.
+        // And: amountLoaned is bigger than amountRepaid, which is bigger than 0.
         amountLoaned = uint128(bound(amountLoaned, 2, type(uint128).max - 1));
         amountRepaid = bound(amountRepaid, 1, amountLoaned - 1);
 
@@ -196,7 +196,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
 
         // Given: collateralValue is smaller than maxExposure.
-        // And: amountLoaned is bigger as 0
+        // And: amountLoaned is bigger than 0
         amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
 
         vm.startPrank(users.creatorAddress);
@@ -238,10 +238,10 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
 
         // Given: collateralValue is smaller than maxExposure.
-        // And: amountLoaned is bigger as 0.
+        // And: amountLoaned is bigger than 0.
         amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
 
-        // And: "amountRepaid" is bigger as "amountLoaned".
+        // And: "amountRepaid" is bigger than "amountLoaned".
         // And: "balanceOf" the "liquidityProvider" does not underflow.
         amountRepaid = bound(amountRepaid, amountLoaned + 1, type(uint256).max - amountLoaned);
 

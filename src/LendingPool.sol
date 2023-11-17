@@ -922,9 +922,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param terminator The address of the auction terminator.
      * @dev In the unhappy flow, the auction proceeds are not sufficient to pay out all liquidation incentives
      *  and maybe not even to pay off all debt.
-     * @dev The order in which incentives are not payed out/ bad debt is settles is fixed:
-     *   - First, the "liquidationFee", going towards LPs and the Treasury is not payed out.
-     *   - Next, the "auctionTerminationReward", going towards the terminator of the auction is not payed out.
+     * @dev The order in which incentives are not paid out/ bad debt is settles is fixed:
+     *   - First, the "liquidationFee", going towards LPs and the Treasury is not paid out.
+     *   - Next, the "auctionTerminationReward", going towards the terminator of the auction is not paid out.
      *   - Next, the underlying assets of LPs in the most junior Tranche are written off pro rata.
      *   - Next, the underlying assets of LPs in the second most junior Tranche are written off pro rata.
      *   - etc.
@@ -941,8 +941,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
         uint256 openDebt = maxWithdraw(account);
         if (openDebt > auctionTerminationReward + liquidationFee) {
-            // "openDebt" is bigger as pending liquidation incentives.
-            // No incentives will be payed out, and a default event is triggered.
+            // "openDebt" is bigger than pending liquidation incentives.
+            // No incentives will be paid out, and a default event is triggered.
             uint256 badDebt;
             unchecked {
                 badDebt = openDebt - auctionTerminationReward - liquidationFee;
@@ -953,12 +953,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         } else {
             uint256 remainder;
             if (openDebt >= liquidationFee) {
-                // "openDebt" is bigger as the "liquidationFee" but smaller as the pending liquidation incentives.
+                // "openDebt" is bigger than the "liquidationFee" but smaller than the pending liquidation incentives.
                 // Don't pay out the "liquidationFee" to Lps, partially pay out the "terminator".
                 remainder = (liquidationFee + auctionTerminationReward) - openDebt;
                 realisedLiquidityOf[terminator] += remainder;
             } else {
-                // "openDebt" is smaller as the "liquidationFee" but smaller as the pending liquidation incentives.
+                // "openDebt" is smaller than the "liquidationFee" but smaller than the pending liquidation incentives.
                 // Fully pay out the "terminator" and partially pay out the "liquidationFee" to Lps.
                 remainder = (liquidationFee - openDebt) + auctionTerminationReward;
                 realisedLiquidityOf[terminator] += auctionTerminationReward;
@@ -1005,7 +1005,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                 break;
             } else {
                 // Unhappy flow, should never occur in practice!
-                // badDebt is bigger than balance most junior Tranche -> tranche is completely wiped out
+                // badDebt is bigger than the balance of most junior Tranche -> tranche is completely wiped out
                 // and temporarily locked (no new deposits or withdraws possible).
                 // DAO or insurance might refund (Part of) the losses, and add Tranche back.
                 realisedLiquidityOf[tranche] = 0;
