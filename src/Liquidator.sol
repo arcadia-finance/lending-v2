@@ -19,7 +19,7 @@ contract Liquidator is Owned, ILiquidator {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // Precision used is 4 decimals
+    // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
     // Sets the begin price of the auction.
     // Defined as a percentage of openDebt, 4 decimals precision -> 15_000 = 150%.
@@ -359,7 +359,7 @@ contract Liquidator is Owned, ILiquidator {
             // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
-            // No overflow possible: uint128 * uint32 * uint18 * uint8.
+            // No overflow possible: uint128 * uint32 * uint18 * uint18.
             price = (
                 auctionInformation_.startDebt * askedShare
                     * (

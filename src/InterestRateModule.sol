@@ -14,7 +14,7 @@ contract InterestRateModule {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // Precision used is 4 decimals
+    // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
     // The current interest rate, 18 decimals precision.
     uint256 public interestRate;
