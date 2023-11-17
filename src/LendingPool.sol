@@ -563,7 +563,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         uint256 accountDebt = maxWithdraw(account);
         if (accountDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-        if (accountDebt < amount) {
+        if (accountDebt <= amount) {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
@@ -883,7 +883,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev The following pending incentives are made claimable:
      *   - The "auctionTerminationReward", going towards the terminator of the auction.
      *   - The "liquidationFee", going towards LPs and the Treasury.
-     *   - If there are still remaining assets after paying off all debt and incentives, 
+     *   - If there are still remaining assets after paying off all debt and incentives,
      *   the surplus goes towards the owner of the account.
      */
     function _settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
@@ -921,7 +921,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the auction terminator.
      * @dev In the unhappy flow, the auction proceeds are not sufficient to pay out all liquidation incentives
-     *  and maybe not even to pay off all debt. 
+     *  and maybe not even to pay off all debt.
      * @dev The order in which incentives are not payed out/ bad debt is settles is fixed:
      *   - First, the "liquidationFee", going towards LPs and the Treasury is not payed out.
      *   - Next, the "auctionTerminationReward", going towards the terminator of the auction is not payed out.
