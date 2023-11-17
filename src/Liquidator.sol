@@ -295,7 +295,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Calculates the share of total assets the bidder wants to buy.
      * @param auctionInformation_ The auction information.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
-     * @return askedShare The share of total assets the bidder wants to buy, 6 decimals precision.
+     * @return askedShare The share of total assets the bidder wants to buy, 4 decimals precision.
      * calculated based on the relative value of the assets when the auction was initiated.
      * @dev We use a dutch auction: price of the assets constantly decreases.
      */
@@ -355,7 +355,7 @@ contract Liquidator is Owned, ILiquidator {
             // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
             // P: price, denominated in the baseCurrency.
             // Debt: The initial debt of the Account, denominated in the baseCurrency.
-            // S: The share of assets being bought, 6 decimals precision
+            // S: The share of assets being bought, 4 decimals precision
             // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
