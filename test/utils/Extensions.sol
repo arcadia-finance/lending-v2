@@ -318,10 +318,6 @@ contract LiquidatorExtension is Liquidator {
         return auctionInformation[account].inAuction;
     }
 
-    function getAuctionStartPrice(address account) public view returns (uint256) {
-        return (uint256(auctionInformation[account].startDebt) * startPriceMultiplier / 100);
-    }
-
     function getBase() public view returns (uint64) {
         return base;
     }
