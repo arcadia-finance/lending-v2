@@ -29,13 +29,13 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
         uint72 baseRate_,
         uint72 highSlope_,
         uint72 lowSlope_,
-        uint40 utilisationThreshold_
+        uint16 utilisationThreshold_
     ) public {
         // Given: totalRealisedLiquidity_ is more than equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
         vm.assume(totalRealisedLiquidity_ > 0);
-        vm.assume(realisedDebt_ <= type(uint128).max / (10 ** 5));
+        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4);
         vm.assume(realisedDebt_ <= totalRealisedLiquidity_);
-        vm.assume(utilisationThreshold_ <= 100_000);
+        vm.assume(utilisationThreshold_ <= ONE_4);
 
         InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
             baseRatePerYear: baseRate_,
@@ -47,27 +47,27 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
         // When: The InterestConfiguration is set
         interestRateModule.setInterestConfig(config);
 
-        // And: utilisation is 100_000 multiplied by realisedDebt_ and divided by totalRealisedLiquidity_
-        uint256 utilisation = (100_000 * realisedDebt_) / totalRealisedLiquidity_;
+        // And: utilisation is 10_000 multiplied by realisedDebt_ and divided by totalRealisedLiquidity_
+        uint256 utilisation = (ONE_4 * realisedDebt_) / totalRealisedLiquidity_;
 
         uint256 expectedInterestRate;
 
         if (utilisation <= utilisationThreshold_) {
-            // And: expectedInterestRate is lowSlope multiplied by utilisation, divided by 100000 and added to baseRate
-            expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / 100_000;
+            // And: expectedInterestRate is lowSlope multiplied by utilisation, divided by 10_000 and added to baseRate
+            expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
         } else {
             // And: lowSlopeInterest is utilisationThreshold multiplied by lowSlope,
             // highSlopeInterest is utilisation minus utilisationThreshold multiplied by highSlope
             uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
             uint256 highSlopeInterest = uint256(utilisation - config.utilisationThreshold) * highSlope_;
 
-            // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by 100000
-            expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / 100_000;
+            // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by 10_000
+            expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
         }
 
         assertTrue(expectedInterestRate <= type(uint80).max);
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit InterestRate(uint80(expectedInterestRate));
         interestRateModule.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = interestRateModule.interestRate();
@@ -81,12 +81,12 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
         uint72 baseRate_,
         uint72 highSlope_,
         uint72 lowSlope_,
-        uint40 utilisationThreshold_
+        uint16 utilisationThreshold_
     ) public {
         // Given: totalRealisedLiquidity_ is equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
         uint256 totalRealisedLiquidity_ = 0;
-        vm.assume(realisedDebt_ <= type(uint128).max / (10 ** 5)); //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
-        vm.assume(utilisationThreshold_ <= 100_000);
+        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4); //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
+        vm.assume(utilisationThreshold_ <= ONE_4);
 
         // And: a certain InterestRateConfiguration
         InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
@@ -103,7 +103,7 @@ contract UpdateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_F
 
         uint256 expectedInterestRate = baseRate_;
 
-        vm.expectEmit(true, true, true, true);
+        vm.expectEmit();
         emit InterestRate(uint80(expectedInterestRate));
         interestRateModule.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = interestRateModule.interestRate();

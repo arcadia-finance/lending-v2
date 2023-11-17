@@ -14,6 +14,8 @@ contract InterestRateModule {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
+    // The unit for fixed point numbers with 4 decimals precision.
+    uint16 internal constant ONE_4 = 10_000;
     // The current interest rate, 18 decimals precision.
     uint256 public interestRate;
 
@@ -32,7 +34,7 @@ contract InterestRateModule {
         uint72 baseRatePerYear; //18 decimals precision.
         uint72 lowSlopePerYear; //18 decimals precision.
         uint72 highSlopePerYear; //18 decimals precision.
-        uint40 utilisationThreshold; //5 decimal precision.
+        uint16 utilisationThreshold; //4 decimal precision.
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -54,7 +56,7 @@ contract InterestRateModule {
      * - highSlopePerYear The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%,
      *   18 decimals precision.
      * - utilisationThreshold the optimal utilisation, where we go from the flat first curve to the steeper second curve,
-     *   5 decimal precision.
+     *   4 decimal precision.
      */
     function _setInterestConfig(InterestRateConfiguration calldata newConfig) internal {
         interestRateConfig = newConfig;
@@ -70,19 +72,19 @@ contract InterestRateModule {
     function _calculateInterestRate(uint256 utilisation) internal view returns (uint256) {
         unchecked {
             if (utilisation >= interestRateConfig.utilisationThreshold) {
-                // 1e23 = uT (1e5) * ls (1e18).
+                // 1e22 = uT (1e4) * ls (1e18).
                 uint256 lowSlopeInterest =
                     uint256(interestRateConfig.utilisationThreshold) * interestRateConfig.lowSlopePerYear;
-                // 1e23 = (uT - u) (1e5) * hs (e18).
+                // 1e22 = (uT - u) (1e4) * hs (e18).
                 uint256 highSlopeInterest = uint256((utilisation - interestRateConfig.utilisationThreshold))
                     * interestRateConfig.highSlopePerYear;
-                // 1e18 = bs (1e18) + (lsIR (e23) + hsIR (1e23)) / 1e5.
-                return uint256(interestRateConfig.baseRatePerYear) + ((lowSlopeInterest + highSlopeInterest) / 100_000);
+                // 1e18 = bs (1e18) + (lsIR (e22) + hsIR (1e22)) / 1e4.
+                return uint256(interestRateConfig.baseRatePerYear) + ((lowSlopeInterest + highSlopeInterest) / ONE_4);
             } else {
-                // 1e18 = br (1e18) + (ls (1e18) * u (1e5)) / 1e5.
+                // 1e18 = br (1e18) + (ls (1e18) * u (1e4)) / 1e4.
                 return uint256(
                     uint256(interestRateConfig.baseRatePerYear)
-                        + ((uint256(interestRateConfig.lowSlopePerYear) * utilisation) / 100_000)
+                        + ((uint256(interestRateConfig.lowSlopePerYear) * utilisation) / ONE_4)
                 );
             }
         }
@@ -96,9 +98,9 @@ contract InterestRateModule {
      * calculates the interest rate, if the totalRealisedLiquidity_ is zero then utilisation is zero.
      */
     function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
-        uint256 utilisation; // 5 decimals precision
+        uint256 utilisation; // 4 decimals precision
         if (totalLiquidity > 0) {
-            utilisation = (100_000 * totalDebt) / totalLiquidity;
+            utilisation = (ONE_4 * totalDebt) / totalLiquidity;
         }
 
         //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).

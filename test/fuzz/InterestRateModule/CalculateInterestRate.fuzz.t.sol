@@ -28,10 +28,10 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         uint72 baseRate_,
         uint72 highSlope_,
         uint72 lowSlope_,
-        uint40 utilisationThreshold_
+        uint16 utilisationThreshold_
     ) public {
-        // Given: utilisation is between 0 and 80000, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
-        vm.assume(utilisationThreshold_ <= 100_000);
+        // Given: utilisation is between 0 and 80000, baseRate_ is less than 10_000, highSlope_ is bigger than lowSlope_
+        vm.assume(utilisationThreshold_ <= ONE_4);
         vm.assume(utilisation <= utilisationThreshold_);
 
         // And: a certain InterestRateConfiguration
@@ -48,8 +48,8 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         // And: actualInterestRate is calculateInterestRate with utilisation
         uint256 actualInterestRate = interestRateModule.calculateInterestRate(utilisation);
 
-        // And: expectedInterestRate is lowSlope multiplied by utilisation divided by 100000 and added to baseRate
-        uint256 expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / 100_000;
+        // And: expectedInterestRate is lowSlope multiplied by utilisation divided by 10_000 and added to baseRate
+        uint256 expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
 
         // Then: actualInterestRate should be equal to expectedInterestRate
         assertEq(actualInterestRate, expectedInterestRate);
@@ -60,10 +60,10 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         uint72 baseRate_,
         uint72 highSlope_,
         uint72 lowSlope_,
-        uint40 utilisationThreshold_
+        uint16 utilisationThreshold_
     ) public {
         // Given: utilisation is between 80000 and 100000, highSlope_ is bigger than lowSlope_
-        vm.assume(utilisationThreshold_ <= 100_000);
+        vm.assume(utilisationThreshold_ <= ONE_4);
         vm.assume(utilisation > utilisationThreshold_);
 
         // And: a certain InterestRateConfiguration
@@ -81,8 +81,8 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
         uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold_) * highSlope_;
 
-        // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by divided by 100000
-        uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / 100_000;
+        // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by divided by 10_000
+        uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
 
         // And: actualInterestRate is calculateInterestRate with utilisation
         uint256 actualInterestRate = interestRateModule.calculateInterestRate(utilisation);

@@ -19,32 +19,20 @@ contract Liquidator is Owned, ILiquidator {
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // The total amount of shares in the Account.
-    // 1_000_000 shares = 100% of the Account.
-    uint32 internal constant TotalShares = 1_000_000;
+    // The unit for fixed point numbers with 4 decimals precision.
+    uint16 internal constant ONE_4 = 10_000;
     // Sets the begin price of the auction.
-    // Defined as a percentage of openDebt, 2 decimals precision -> 150 = 150%.
+    // Defined as a percentage of openDebt, 4 decimals precision -> 15_000 = 150%.
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to.
-    // Defined as a percentage of openDebt, 2 decimals precision -> 60 = 60%.
-    uint8 internal minPriceMultiplier;
+    // Defined as a percentage of openDebt, 4 decimals precision -> 6000 = 60%.
+    uint16 internal minPriceMultiplier;
     // The base of the auction price curve (exponential).
     // Determines how fast the auction price drops per second, 18 decimals precision.
     uint64 internal base;
     // Maximum time that the auction declines, after which price is equal to the minimum price set by minPriceMultiplier.
     // Time in seconds, with 0 decimals precision.
     uint32 internal cutoffTime;
-    // Fee paid to the Liquidation Initiator.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
-    // Absolute fee can be further capped to a max amount by the creditor.
-    uint8 internal initiatorRewardWeight;
-    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
-    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
-    uint8 internal penaltyWeight;
-    // Fee paid to the address that is ending an auction.
-    // Defined as a fraction of the openDebt with 2 decimals precision.
-    uint8 internal closingRewardWeight;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -54,8 +42,8 @@ contract Liquidator is Owned, ILiquidator {
         uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
         uint32 startTime; // The timestamp the auction started.
         bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint16 startPriceMultiplier; // 2 decimals precision.
-        uint8 minPriceMultiplier; // 2 decimals precision.
+        uint16 startPriceMultiplier; // 4 decimals precision.
+        uint16 minPriceMultiplier; // 4 decimals precision.
         uint32 cutoffTime; // Maximum time that the auction declines.
         address creditor; // The creditor that issued the debt.
         address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
@@ -68,10 +56,9 @@ contract Liquidator is Owned, ILiquidator {
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint8 initiatorRewardWeight, uint8 penaltyWeight, uint8 closingRewardWeight);
     event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
-    event MinimumPriceMultiplierSet(uint8 minPriceMultiplier);
+    event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
     event AuctionFinished(
         address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
     );
@@ -81,12 +68,8 @@ contract Liquidator is Owned, ILiquidator {
     ////////////////////////////////////////////////////////////// */
 
     constructor() Owned(msg.sender) {
-        initiatorRewardWeight = 1;
-        penaltyWeight = 5;
-        // note: to discuss
-        closingRewardWeight = 1;
-        startPriceMultiplier = 150;
-        minPriceMultiplier = 60;
+        startPriceMultiplier = 15_000;
+        minPriceMultiplier = 6000;
         cutoffTime = 14_400; //4 hours
         base = 999_807_477_651_317_446; //3600s halflife, 14_400 cutoff
     }
@@ -107,8 +90,6 @@ contract Liquidator is Owned, ILiquidator {
     error Liquidator_InvalidBid();
     // Thrown when the endAuction called and the account is still unhealthy
     error Liquidator_AccountNotHealthy();
-    // Thrown when liquidation weights are above maximum value.
-    error Liquidator_WeightsTooHigh();
     // Thrown when halfLifeTime is below minimum value.
     error Liquidator_HalfLifeTimeTooLow();
     // Thrown when halfLifeTime is above maximum value.
@@ -129,26 +110,6 @@ contract Liquidator is Owned, ILiquidator {
     /*///////////////////////////////////////////////////////////////
                         MANAGE AUCTION SETTINGS
     ///////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Sets the liquidation weights.
-     * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @dev Each weight has 2 decimals precision (50 equals 0,5 or 50%).
-     */
-    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
-        external
-        onlyOwner
-    {
-        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 11) revert Liquidator_WeightsTooHigh();
-
-        initiatorRewardWeight = uint8(initiatorRewardWeight_);
-        penaltyWeight = uint8(penaltyWeight_);
-        closingRewardWeight = uint8(closingRewardWeight_);
-
-        emit WeightsSet(uint8(initiatorRewardWeight_), uint8(penaltyWeight_), uint8(closingRewardWeight_));
-    }
 
     /**
      * @notice Sets the parameters (base and cutOffTime) of the auction price curve (decreasing power function).
@@ -187,15 +148,15 @@ contract Liquidator is Owned, ILiquidator {
 
     /**
      * @notice Sets the start price multiplier for the liquidator.
-     * @param startPriceMultiplier_ The new start price multiplier, with 2 decimals precision.
+     * @param startPriceMultiplier_ The new start price multiplier, with 4 decimals precision.
      * @dev The start price multiplier is a multiplier that is used to increase the initial price of the auction.
      * Since the value of all assets are discounted with the liquidation factor, and because pricing modules will take a conservative
      * approach to price assets (eg. floor-prices for NFTs), the actual value of the assets being auctioned might be substantially higher
      * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      */
     function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        if (startPriceMultiplier_ <= 100) revert Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ >= 301) revert Liquidator_MultiplierTooHigh();
+        if (startPriceMultiplier_ <= 10_000) revert Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ >= 30_100) revert Liquidator_MultiplierTooHigh();
         startPriceMultiplier = startPriceMultiplier_;
 
         emit StartPriceMultiplierSet(startPriceMultiplier_);
@@ -203,11 +164,11 @@ contract Liquidator is Owned, ILiquidator {
 
     /**
      * @notice Sets the minimum price multiplier for the liquidator.
-     * @param minPriceMultiplier_ The new minimum price multiplier, with 2 decimals precision.
+     * @param minPriceMultiplier_ The new minimum price multiplier, with 4 decimals precision.
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
-    function setMinimumPriceMultiplier(uint8 minPriceMultiplier_) external onlyOwner {
-        if (minPriceMultiplier_ >= 91) revert Liquidator_MultiplierTooHigh();
+    function setMinimumPriceMultiplier(uint16 minPriceMultiplier_) external onlyOwner {
+        if (minPriceMultiplier_ >= 9100) revert Liquidator_MultiplierTooHigh();
         minPriceMultiplier = minPriceMultiplier_;
 
         emit MinimumPriceMultiplierSet(minPriceMultiplier_);
@@ -261,7 +222,7 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Calculate asset distribution percentages based on provided risk values.
      * @param riskValues_ An array of risk values for assets.
-     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 1_000_000 represents 100%).
+     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 10_000 represents 100%).
      */
     function _getAssetDistribution(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
         internal
@@ -281,7 +242,7 @@ contract Liquidator is Owned, ILiquidator {
             unchecked {
                 // The asset distribution is calculated as a percentage of the total value of the assets.
                 // assetvalue is a uint256 in basecurrency units, will never overflow
-                assetDistributions[i] = uint32(riskValues_[i].assetValue * 1_000_000 / totalValue);
+                assetDistributions[i] = uint32(riskValues_[i].assetValue * ONE_4 / totalValue);
                 ++i;
             }
         }
@@ -331,7 +292,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Calculates the share of total assets the bidder wants to buy.
      * @param auctionInformation_ The auction information.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
-     * @return askedShare The share of total assets the bidder wants to buy, 6 decimals precision.
+     * @return askedShare The share of total assets the bidder wants to buy, 4 decimals precision.
      * calculated based on the relative value of the assets when the auction was initiated.
      * @dev We use a dutch auction: price of the assets constantly decreases.
      */
@@ -366,8 +327,8 @@ contract Liquidator is Owned, ILiquidator {
      * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
      * Debt: The total debt of the Account at the moment the auction was initiated.
      * S: The share of the assets being bought in the bid.
-     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (2 decimals precision).
-     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (2 decimals precision).
+     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (4 decimals precision).
+     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (4 decimals precision).
      * base: defines how fast the exponential curve decreases (18 decimals precision).
      * t: time passed since start auction (in seconds, 18 decimals precision).
      * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
@@ -391,11 +352,11 @@ contract Liquidator is Owned, ILiquidator {
             // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
             // P: price, denominated in the baseCurrency.
             // Debt: The initial debt of the Account, denominated in the baseCurrency.
-            // S: The share of assets being bought, 6 decimals precision
-            // SPM and MPM: multipliers to scale the price curve, 2 decimals precision.
+            // S: The share of assets being bought, 4 decimals precision
+            // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
-            // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e6 + 1e2).
-            // No overflow possible: uint128 * uint32 * uint18 * uint8.
+            // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
+            // No overflow possible: uint128 * uint32 * uint18 * uint18.
             price = (
                 auctionInformation_.startDebt * askedShare
                     * (

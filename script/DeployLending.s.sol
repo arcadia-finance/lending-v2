@@ -59,7 +59,7 @@ contract ArcadiaLendingDeployment is Test {
                 baseRatePerYear: 15_000_000_000_000_000,
                 lowSlopePerYear: 70_000_000_000_000_000,
                 highSlopePerYear: 1_250_000_000_000_000_000,
-                utilisationThreshold: 70_000
+                utilisationThreshold: 7000
             })
         );
         pool_weth.changeGuardian(vm.addr(deployerPrivateKey));
@@ -81,7 +81,7 @@ contract ArcadiaLendingDeployment is Test {
                 baseRatePerYear: 10_000_000_000_000_000,
                 lowSlopePerYear: 55_000_000_000_000_000,
                 highSlopePerYear: 1_000_000_000_000_000_000,
-                utilisationThreshold: 80_000
+                utilisationThreshold: 8000
             })
         );
         pool_usdc.changeGuardian(vm.addr(deployerPrivateKey));
