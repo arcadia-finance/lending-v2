@@ -237,8 +237,10 @@ contract LendingPoolExtension is LendingPool {
         return _calculateRewards(amount);
     }
 
-    function settleLiquidationHappy(address account, uint256 startDebt, address terminator, uint256 surplus) external {
-        _settleLiquidationHappy(account, startDebt, terminator, surplus);
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
+        external
+    {
+        _settleLiquidationHappyFlow(account, startDebt, terminator, surplus);
     }
 }
 

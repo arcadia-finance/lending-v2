@@ -451,7 +451,7 @@ contract Liquidator is Owned, ILiquidator {
      * @param account The account to end the liquidation for.
      */
     function _endAuction(address account, address creditor, uint256 startDebt) internal {
-        ILendingPool(creditor).settleLiquidationUnhappy(account, startDebt, msg.sender);
+        ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
 
         // Transfer all the left-over assets to the protocol owner.
         IAccount(account).auctionBoughtIn(owner);
@@ -486,7 +486,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256 startDebt = auctionInformation_.startDebt;
 
         // Call settlement of the debt in the creditor
-        ILendingPool(auctionInformation_.creditor).settleLiquidationHappy(account, startDebt, msg.sender);
+        ILendingPool(auctionInformation_.creditor).settleLiquidationHappyFlow(account, startDebt, msg.sender);
 
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt), 0, 0);
     }

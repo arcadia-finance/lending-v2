@@ -10,7 +10,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "settleLiquidationUnhappy" of contract "LendingPool".
+ * @notice Fuzz tests for the function "settleLiquidationUnhappyFlow" of contract "LendingPool".
  */
 contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
@@ -25,7 +25,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_settleLiquidationUnhappy_Unauthorised(
+    function testFuzz_Revert_settleLiquidationUnhappyFlow_Unauthorised(
         uint128 startDebt,
         address auctionTerminator,
         address unprivilegedAddress_
@@ -37,11 +37,11 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
-        pool.settleLiquidationUnhappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_settleLiquidationUnhappy_ExcessBadDebt(
+    function testFuzz_Revert_settleLiquidationUnhappyFlow_ExcessBadDebt(
         uint128 liquiditySenior,
         uint128 liquidityJunior,
         uint128 startDebt,
@@ -72,11 +72,11 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // When Then: settleLiquidation should fail if there is more debt than the liquidity
         vm.startPrank(address(liquidator));
         vm.expectRevert(stdError.arithmeticError);
-        pool.settleLiquidationUnhappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_settleLiquidationUnhappy_remainderHigherThanTerminationReward(
+    function testFuzz_Success_settleLiquidationUnhappyFlow_remainderHigherThanTerminationReward(
         uint128 liquidity,
         uint128 startDebt,
         uint128 openDebt,
@@ -125,7 +125,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
 
         // As all liquidation penalty can not be distributed
         uint256 liquidationFee = liquidationPenalty - openDebt;
@@ -168,7 +168,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         assertFalse(srTranche.auctionInProgress());
     }
 
-    function testFuzz_Success_settleLiquidationUnhappy_remainderLowerThanTerminationReward(
+    function testFuzz_Success_settleLiquidationUnhappyFlow_remainderLowerThanTerminationReward(
         uint128 liquidity,
         uint128 startDebt,
         uint128 openDebt,
@@ -219,7 +219,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
 
         uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
 
@@ -242,7 +242,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     }
 
     //
-    function testFuzz_Success_settleLiquidationUnhappy_BadDebt_ProcessDefault(
+    function testFuzz_Success_settleLiquidationUnhappyFlow_BadDebt_ProcessDefault(
         uint128 liquidity,
         uint128 startDebt,
         uint128 openDebt,
@@ -298,7 +298,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
 
         // And: Terminator should not be able to claim his rewards for liquidation termination
         assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);

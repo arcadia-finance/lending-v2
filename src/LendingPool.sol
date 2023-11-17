@@ -567,7 +567,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
-            _settleLiquidationHappy(account, startDebt, bidder, (amount - accountDebt));
+            _settleLiquidationHappyFlow(account, startDebt, bidder, (amount - accountDebt));
             amount = accountDebt;
         }
 
@@ -854,42 +854,53 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
-     * @notice Settles the liquidation process for a specific Account.
+     * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
+     * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
+     *  to bring the Account in a healthy position, and pay out all liquidation incentives to the
+     *  relevant actors.
      */
-    function settleLiquidationHappy(address account, uint256 startDebt, address terminator)
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator)
         external
         whenLiquidationNotPaused
         onlyLiquidator
         processInterests
     {
-        _settleLiquidationHappy(account, startDebt, terminator, 0);
+        _settleLiquidationHappyFlow(account, startDebt, terminator, 0);
     }
 
     /**
-     * @notice Settles the liquidation process for a specific Account.
+     * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
+     * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
+     *  to bring the Account in a healthy position, and pay out all liquidation incentives to the
+     *  relevant actors.
+     * @dev The following pending incentives are made claimable:
+     *   - The "auctionTerminationReward", going towards the terminator of the auction.
+     *   - The "liquidationFee", going towards LPs and the Treasury.
+     *   - If there are still remaining assets after paying off all debt and incentives, 
+     *   the surplus goes towards the owner of the account.
      */
-    function _settleLiquidationHappy(address account, uint256 startDebt, address terminator, uint256 surplus)
+    function _settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
         internal
     {
         (, uint256 auctionTerminationReward, uint256 liquidationFee) = _calculateRewards(startDebt);
 
-        // Increase the realised liquidity for the terminator.
+        // Pay out the "auctionTerminationReward" to the "terminator".
         realisedLiquidityOf[terminator] += auctionTerminationReward;
 
-        // Synchronize the liquidation fee with liquidity providers.
+        // Pay out the "liquidationFee" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationFee);
 
-        // Increase the realised liquidity for the current owner.
+        // Pay out any surplus to the current Account Owner.
         if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
 
-        // unsafe cast: sum will revert if it overflows.
+        // Unsafe cast: sum will revert if it overflows.
         totalRealisedLiquidity = uint128(totalRealisedLiquidity + auctionTerminationReward + liquidationFee + surplus);
 
         // Decrement the number of auctions in progress.
@@ -905,12 +916,20 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
-     * @notice Settles the liquidation process for a specific Account.
+     * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives/bad debt.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the auction terminator.
+     * @dev In the unhappy flow, the auction proceeds are not sufficient to pay out all liquidation incentives
+     *  and maybe not even to pay off all debt. 
+     * @dev The order in which incentives are not payed out/ bad debt is settles is fixed:
+     *   - First, the "liquidationFee", going towards LPs and the Treasury is not payed out.
+     *   - Next, the "auctionTerminationReward", going towards the terminator of the auction is not payed out.
+     *   - Next, the underlying assets of LPs in the most junior Tranche are written off pro rata.
+     *   - Next, the underlying assets of LPs in the second most junior Tranche are written off pro rata.
+     *   - etc.
      */
-    function settleLiquidationUnhappy(address account, uint256 startDebt, address terminator)
+    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, address terminator)
         external
         whenLiquidationNotPaused
         onlyLiquidator
@@ -918,9 +937,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     {
         (, uint256 auctionTerminationReward, uint256 liquidationFee) = _calculateRewards(startDebt);
 
-        // openDebt equals startDebt + interests + liquidationInitiatorReward + auctionTerminationReward + liquidationFee + interests - bids.
+        // Any remaining debt that was not recovered during the auction must be written off.
+        // Depending on the size of the remaining debt, different stakeholders will be impacted.
         uint256 openDebt = maxWithdraw(account);
         if (openDebt > auctionTerminationReward + liquidationFee) {
+            // "openDebt" is bigger as pending liquidation incentives.
+            // No incentives will be payed out, and a default event is triggered.
             uint256 badDebt;
             unchecked {
                 badDebt = openDebt - auctionTerminationReward - liquidationFee;
@@ -931,16 +953,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         } else {
             uint256 remainder;
             if (openDebt >= liquidationFee) {
+                // "openDebt" is bigger as the "liquidationFee" but smaller as the pending liquidation incentives.
+                // Don't pay out the "liquidationFee" to Lps, partially pay out the "terminator".
                 remainder = (liquidationFee + auctionTerminationReward) - openDebt;
                 realisedLiquidityOf[terminator] += remainder;
             } else {
+                // "openDebt" is smaller as the "liquidationFee" but smaller as the pending liquidation incentives.
+                // Fully pay out the "terminator" and partially pay out the "liquidationFee" to Lps.
                 remainder = (liquidationFee - openDebt) + auctionTerminationReward;
-                // Increase the realised liquidity for the terminator.
                 realisedLiquidityOf[terminator] += auctionTerminationReward;
-                // Distribute the liquidation fee with liquidity providers.
                 _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
             }
-            // unsafe cast: sum will revert if it overflows.
+            // Unsafe cast: sum will revert if it overflows.
             totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
         }
         _withdraw(openDebt, account, account);
@@ -974,23 +998,23 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             tranche = tranches[i];
             maxBurnable = realisedLiquidityOf[tranche];
             if (badDebt < maxBurnable) {
-                //Deduct badDebt from the balance of the most junior Tranche.
+                // Deduct badDebt from the balance of the most junior Tranche.
                 unchecked {
                     realisedLiquidityOf[tranche] -= badDebt;
                 }
                 break;
             } else {
-                //Unhappy flow, should never occur in practice!
-                //badDebt is bigger than balance most junior Tranche -> tranche is completely wiped out
-                //and temporarily locked (no new deposits or withdraws possible).
-                //DAO or insurance might refund (Part of) the losses, and add Tranche back.
+                // Unhappy flow, should never occur in practice!
+                // badDebt is bigger than balance most junior Tranche -> tranche is completely wiped out
+                // and temporarily locked (no new deposits or withdraws possible).
+                // DAO or insurance might refund (Part of) the losses, and add Tranche back.
                 realisedLiquidityOf[tranche] = 0;
                 _popTranche(i, tranche);
                 unchecked {
                     badDebt -= maxBurnable;
                 }
                 ITranche(tranche).lock();
-                //Hook to the new most junior Tranche to inform that auctions are ongoing.
+                // Hook to the new most junior Tranche to inform that auctions are ongoing.
                 if (i != 0) ITranche(tranches[i - 1]).setAuctionInProgress(true);
             }
         }
@@ -1010,7 +1034,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             weightOfTranche = liquidationWeightTranches[i];
 
             if (weightOfTranche != 0) {
-                //skip if weight is zero, which is the case for Sr tranche.
+                // skip if weight is zero, which is the case for Sr tranche.
                 trancheShare = assets.mulDivDown(weightOfTranche, totalLiquidationWeight);
                 unchecked {
                     realisedLiquidityOf[tranches[i]] += trancheShare;

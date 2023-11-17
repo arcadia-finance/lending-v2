@@ -10,7 +10,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "settleLiquidationHappy" of contract "LendingPool".
+ * @notice Fuzz tests for the function "settleLiquidationHappyFlow" of contract "LendingPool".
  */
 contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
@@ -25,7 +25,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_settleLiquidationHappy_Unauthorised(
+    function testFuzz_Revert_settleLiquidationHappyFlow_Unauthorised(
         uint128 startDebt,
         address auctionTerminator,
         address unprivilegedAddress_
@@ -37,7 +37,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(LendingPool_OnlyLiquidator.selector);
-        pool.settleLiquidationHappy(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -75,7 +75,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationHappy(address(proxyAccount), startDebt, auctionTerminator, surplus);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator, surplus);
 
         // round up
         uint256 liqPenaltyTreasury =

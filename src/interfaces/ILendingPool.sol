@@ -67,7 +67,7 @@ interface ILendingPool {
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
      */
-    function settleLiquidationHappy(address account, uint256 startDebt, address terminator) external;
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator) external;
 
     /**
      * @notice Settles the liquidation process for a specific Account.
@@ -75,5 +75,5 @@ interface ILendingPool {
      * @param startDebt The initial debt amount of the liquidated Account.
      * @param terminator The address of the liquidation terminator.
      */
-    function settleLiquidationUnhappy(address account, uint256 startDebt, address terminator) external;
+    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, address terminator) external;
 }
