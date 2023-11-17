@@ -16,6 +16,7 @@ import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
+import { RiskConstants } from "../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 
 /**
  * @notice Common logic needed by all fuzz tests.
@@ -104,7 +105,12 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Set the risk parameters.
         vm.prank(users.riskManager);
         registryExtension.setRiskParametersOfPrimaryAsset(
-            address(pool), address(mockERC20.stable1), 0, type(uint128).max, 100, 100
+            address(pool),
+            address(mockERC20.stable1),
+            0,
+            type(uint128).max,
+            RiskConstants.RISK_FACTOR_UNIT,
+            RiskConstants.RISK_FACTOR_UNIT
         );
 
         // For clarity, some contracts have a generalised name in some tests.

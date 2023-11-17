@@ -10,6 +10,7 @@ import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 import { AccountV1 } from "accounts-v2/src/AccountV1.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -122,7 +123,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
-        vm.expectRevert("A_CASL: Account not liquidatable");
+        vm.expectRevert(AccountErrors.Account_Not_Liquidatable.selector);
         liquidator.liquidateAccount(address(proxyAccount));
     }
 
@@ -203,12 +204,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
-        (address originalOwner_, uint128 startDebt_, uint32 startTime_, bool inAuction_) =
+        (uint128 startDebt_, uint32 startTime_, bool inAuction_) =
             liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
         assertEq(startDebt_, amountLoanedStack + 1);
         assertEq(inAuction_, true);
-        assertEq(originalOwner_, users.accountOwner);
         assertEq(startTime_, block.timestamp);
     }
 
