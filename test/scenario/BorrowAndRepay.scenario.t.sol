@@ -289,11 +289,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
 
-        vm.assume(
-            proxyAccount.getFreeMargin()
-                >= ((amountTokenWithdrawal * valueOfOneToken) / 10 ** Constants.tokenDecimals) * collFactor_
-                    / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals) + amountCredit
-        );
+        uint256 maxCredit = ((valueOfOneToken * (amountToken - amountTokenWithdrawal)) / 10 ** Constants.tokenDecimals)
+            * collFactor_ / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+
+        vm.assume(amountCredit <= maxCredit);
 
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
@@ -304,7 +303,6 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assets[0] = address(mockERC20.token1);
         amounts[0] = amountTokenWithdrawal;
         vm.startPrank(users.accountOwner);
-        proxyAccount.getFreeMargin();
         proxyAccount.withdraw(assets, ids, amounts);
         vm.stopPrank();
     }
