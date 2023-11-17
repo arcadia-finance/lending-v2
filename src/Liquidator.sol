@@ -149,7 +149,7 @@ contract Liquidator is Owned, ILiquidator {
 
     /**
      * @notice Sets the start price multiplier for the liquidator.
-     * @param startPriceMultiplier_ The new start price multiplier, with 2 decimals precision.
+     * @param startPriceMultiplier_ The new start price multiplier, with 4 decimals precision.
      * @dev The start price multiplier is a multiplier that is used to increase the initial price of the auction.
      * Since the value of all assets are discounted with the liquidation factor, and because pricing modules will take a conservative
      * approach to price assets (eg. floor-prices for NFTs), the actual value of the assets being auctioned might be substantially higher
@@ -165,7 +165,7 @@ contract Liquidator is Owned, ILiquidator {
 
     /**
      * @notice Sets the minimum price multiplier for the liquidator.
-     * @param minPriceMultiplier_ The new minimum price multiplier, with 2 decimals precision.
+     * @param minPriceMultiplier_ The new minimum price multiplier, with 4 decimals precision.
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
      */
     function setMinimumPriceMultiplier(uint16 minPriceMultiplier_) external onlyOwner {
@@ -330,8 +330,8 @@ contract Liquidator is Owned, ILiquidator {
      * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
      * Debt: The total debt of the Account at the moment the auction was initiated.
      * S: The share of the assets being bought in the bid.
-     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (2 decimals precision).
-     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (2 decimals precision).
+     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (4 decimals precision).
+     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (4 decimals precision).
      * base: defines how fast the exponential curve decreases (18 decimals precision).
      * t: time passed since start auction (in seconds, 18 decimals precision).
      * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
@@ -356,7 +356,7 @@ contract Liquidator is Owned, ILiquidator {
             // P: price, denominated in the baseCurrency.
             // Debt: The initial debt of the Account, denominated in the baseCurrency.
             // S: The share of assets being bought, 6 decimals precision
-            // SPM and MPM: multipliers to scale the price curve, 2 decimals precision.
+            // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
             // No overflow possible: uint128 * uint32 * uint18 * uint8.
