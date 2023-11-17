@@ -886,7 +886,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // Synchronize the liquidation fee with liquidity providers.
         _syncLiquidationFeeToLiquidityProviders(liquidationFee);
 
-        // Increase the realised liquidity for the original owner.
+        // Increase the realised liquidity for the current owner.
         if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
 
         // unsafe cast: sum will revert if it overflows.
