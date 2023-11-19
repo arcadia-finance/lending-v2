@@ -56,9 +56,7 @@ abstract contract Events {
     event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
-    event AuctionFinished(
-        address indexed account, address indexed creditor, uint128 startDebt, uint128 totalBids, uint128 badDebt
-    );
+    event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////
                             TRANCHE
