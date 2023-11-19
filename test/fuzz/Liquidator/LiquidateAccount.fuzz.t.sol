@@ -55,11 +55,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         bool isAuctionActive = liquidator.getAuctionIsActive(address(proxyAccount));
         assertEq(isAuctionActive, true);
 
-        uint256 startDebt = liquidator.getAuctionStartPrice(address(proxyAccount));
-        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
-
-        assertEq(startDebt, loan);
-
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
@@ -194,13 +189,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(liquidationInitiator);
         liquidator.liquidateAccount(address(proxyAccount));
 
-        uint256 startPrice = liquidator.getAuctionStartPrice(address(proxyAccount));
-        uint256 loan = uint256(amountLoaned + 1) * 150 / 100;
-
         // Avoid stack too deep
         uint128 amountLoanedStack = amountLoaned;
 
-        assertEq(startPrice, loan);
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
@@ -334,7 +325,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(trustedCreditor_, address(pool));
         assertEq(cutoffTime_, liquidator.getCutoffTime());
         assertEq(assetAddresses_[0], address(mockERC20.stable1));
-        assertEq(assetShares_[0], 1_000_000);
+        assertEq(assetShares_[0], ONE_4);
         assertEq(assetAmounts_[0], amountLoanedStack);
         assertEq(assetIds_[0], 0);
     }

@@ -30,8 +30,9 @@ contract Constructor_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Success_deployment() public {
         liquidator_ = new LiquidatorExtension();
 
-        assertEq(liquidator_.getPenaltyWeight(), 5);
-        assertEq(liquidator_.getInitiatorRewardWeight(), 1);
-        assertEq(liquidator_.getClosingRewardWeight(), 1);
+        assertEq(liquidator_.getStartPriceMultiplier(), 15_000);
+        assertEq(liquidator_.getMinPriceMultiplier(), 6000);
+        assertEq(liquidator_.getCutoffTime(), 14_400);
+        assertEq(liquidator_.getBase(), 999_807_477_651_317_446);
     }
 }

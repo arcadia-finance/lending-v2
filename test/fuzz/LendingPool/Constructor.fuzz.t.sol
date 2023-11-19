@@ -39,5 +39,8 @@ contract Constructor_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool_.getTreasury(), treasury_);
         assertEq(pool_.getAccountFactory(), factory_);
         assertEq(pool_.getLiquidator(), liquidator_);
+        assertEq(pool_.getPenaltyWeight(), 500);
+        assertEq(pool_.getInitiatorRewardWeight(), 100);
+        assertEq(pool_.getClosingRewardWeight(), 100);
     }
 }

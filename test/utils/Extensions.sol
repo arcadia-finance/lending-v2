@@ -323,10 +323,6 @@ contract LiquidatorExtension is Liquidator {
         return auctionInformation[account].inAuction;
     }
 
-    function getAuctionStartPrice(address account) public view returns (uint256) {
-        return (uint256(auctionInformation[account].startDebt) * startPriceMultiplier / 100);
-    }
-
     function getBase() public view returns (uint64) {
         return base;
     }
@@ -335,20 +331,12 @@ contract LiquidatorExtension is Liquidator {
         return cutoffTime;
     }
 
-    function getMinPriceMultiplier() public view returns (uint64) {
+    function getMinPriceMultiplier() public view returns (uint16) {
         return minPriceMultiplier;
     }
 
     function getStartPriceMultiplier() public view returns (uint16) {
         return startPriceMultiplier;
-    }
-
-    function getPenaltyWeight() public view returns (uint8) {
-        return penaltyWeight;
-    }
-
-    function getInitiatorRewardWeight() public view returns (uint8) {
-        return initiatorRewardWeight;
     }
 
     function calculateTotalShare(address account, uint256[] memory askedAssetAmounts) public view returns (uint256) {
@@ -359,10 +347,6 @@ contract LiquidatorExtension is Liquidator {
     function calculateBidPrice(address account, uint256 askedShare) public view returns (uint256) {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         return _calculateBidPrice(auctionInformation_, askedShare);
-    }
-
-    function getClosingRewardWeight() public view returns (uint8) {
-        return closingRewardWeight;
     }
 
     function getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)

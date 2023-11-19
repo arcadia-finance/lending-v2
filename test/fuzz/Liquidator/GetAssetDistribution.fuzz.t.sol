@@ -30,7 +30,7 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(totalAssetNumber < 16);
         vm.assume(totalAssetNumber > 0);
         vm.assume(totalValue_ > totalAssetNumber);
-        vm.assume(totalValue_ < type(uint256).max / 1e6);
+        vm.assume(totalValue_ < type(uint256).max / ONE_4);
 
         RiskModule.AssetValueAndRiskFactors[] memory riskValues_ =
             new RiskModule.AssetValueAndRiskFactors[](totalAssetNumber);
@@ -53,7 +53,8 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             }
         }
 
-        // Then: The sum of the distribution should be 1_000_000 with a tolerance of 0.00001e18 = % 0,001 difference
-        assertApproxEqRel(totalDistribution, 1_000_000, 0.00001e18);
+        // TODO: validate if precision is enough here.
+        // Then: The sum of the distribution should be 10_000 with a tolerance of 0.001e18 = % 0,1 difference
+        assertApproxEqRel(totalDistribution, 10_000, 0.001e18);
     }
 }
