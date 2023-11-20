@@ -64,7 +64,7 @@ contract InterestRateModule {
 
     /**
      * @notice Calculates the interest rate.
-     * @param utilisation Utilisation rate, 5 decimal precision.
+     * @param utilisation Utilisation rate, 4 decimal precision.
      * @return interestRate The current interest rate, 18 decimal precision.
      * @dev The interest rate is a function of the utilisation of the Lending Pool.
      * We use two linear curves: a flat one below the optimal utilisation and a steep one above.
