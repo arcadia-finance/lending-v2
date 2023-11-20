@@ -94,8 +94,8 @@ contract InterestRateModule {
      * @notice Updates the interest rate.
      * @param totalDebt Total amount of debt.
      * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
-     * @dev This function is only be called by the function _updateInterestRate(uint256 realisedDebt_, uint256 totalRealisedLiquidity_),
-     * calculates the interest rate, if the totalRealisedLiquidity_ is zero then utilisation is zero.
+     * @dev This function is only be called by the function _processInterests modifier to update the interest rate,
+     * if the totalRealisedLiquidity_ is zero then utilisation is zero.
      */
     function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
         uint256 utilisation; // 4 decimals precision
