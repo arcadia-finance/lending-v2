@@ -60,45 +60,6 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amount1, users.liquidityProvider);
     }
 
-    function testFuzz_Revert_depositInLendingPool_SupplyCap(uint256 amount, uint128 supplyCap) public {
-        vm.assume(pool.totalRealisedLiquidity() + amount > supplyCap);
-        vm.assume(supplyCap > 0);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-
-        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(amount, users.liquidityProvider);
-    }
-
-    function testFuzz_Success_depositInLendingPool_SupplyCapBackToZero(uint256 amount) public {
-        vm.assume(pool.totalRealisedLiquidity() + amount > 1);
-        vm.assume(amount <= type(uint128).max);
-
-        // When: supply cap is set to 1
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(1);
-
-        // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(amount, users.liquidityProvider);
-
-        // When: supply cap is set to 0
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(0);
-
-        // Then: depositInLendingPool is succeeded
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(amount, users.liquidityProvider);
-
-        // And: supplyBalances srTranche should be amount, totalSupply should be amount, supplyBalances pool should be amount
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), amount);
-        assertEq(pool.totalRealisedLiquidity(), amount);
-        assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
-    }
-
     function testFuzz_Success_depositInLendingPool_FirstDepositByTranche(uint256 amount) public {
         vm.assume(amount <= type(uint128).max);
         vm.prank(address(srTranche));

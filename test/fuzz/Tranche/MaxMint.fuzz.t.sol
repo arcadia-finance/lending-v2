@@ -41,66 +41,6 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxMint(receiver), 0);
     }
 
-    function testFuzz_Success_maxMint_SupplyCapExceeded(address receiver, uint128 supplyCap, uint128 totalLiquidity)
-        public
-    {
-        vm.assume(supplyCap > 0);
-        vm.assume(supplyCap < totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-        pool.setTotalRealisedLiquidity(totalLiquidity);
-
-        assertEq(tranche.maxMint(receiver), 0);
-    }
-
-    function testFuzz_Success_maxMint_WithSupplyCapZeroSupply(
-        address receiver,
-        uint128 supplyCap,
-        uint128 totalLiquidity,
-        uint128 liquidityOf
-    ) public {
-        vm.assume(supplyCap > 0);
-        vm.assume(liquidityOf > 0);
-        vm.assume(supplyCap >= totalLiquidity);
-        vm.assume(liquidityOf <= totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-        pool.setTotalRealisedLiquidity(totalLiquidity);
-        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
-
-        uint256 maxAssets = supplyCap - totalLiquidity;
-        uint256 maxShares = maxAssets;
-
-        assertEq(tranche.maxMint(receiver), maxShares);
-    }
-
-    function testFuzz_Success_maxMint_WithSupplyCapNonZeroShares(
-        address receiver,
-        uint128 supplyCap,
-        uint128 totalLiquidity,
-        uint128 liquidityOf,
-        uint128 totalShares
-    ) public {
-        vm.assume(supplyCap > 0);
-        vm.assume(liquidityOf > 0);
-        vm.assume(totalShares > 0);
-        vm.assume(supplyCap >= totalLiquidity);
-        vm.assume(liquidityOf <= totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-        pool.setTotalRealisedLiquidity(totalLiquidity);
-        pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
-        stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
-
-        uint256 maxAssets = supplyCap - totalLiquidity;
-        uint256 maxShares = maxAssets * totalShares / liquidityOf;
-
-        assertEq(tranche.maxMint(receiver), maxShares);
-    }
-
     function testFuzz_Success_maxMint_WithoutSupplyCapZeroSupply(
         address receiver,
         uint128 totalLiquidity,

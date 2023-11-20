@@ -52,8 +52,6 @@ contract ArcadiaLendingDeployment is Test {
         pool_weth.addTranche(address(srTranche_weth), 85, 10);
         pool_weth.setTreasuryInterestWeight(15);
         pool_weth.setTreasuryLiquidationWeight(90);
-        pool_weth.setSupplyCap(10_000 * 10 ** 18);
-        pool_weth.setBorrowCap(1000 * 10 ** 18);
         pool_weth.setInterestConfig(
             InterestRateModule.InterestRateConfiguration({
                 baseRatePerYear: 15_000_000_000_000_000,
@@ -74,8 +72,6 @@ contract ArcadiaLendingDeployment is Test {
         pool_usdc.addTranche(address(srTranche_usdc), 85, 10);
         pool_usdc.setTreasuryInterestWeight(15);
         pool_usdc.setTreasuryLiquidationWeight(90);
-        pool_usdc.setSupplyCap(15_000_000 * 10 ** 6);
-        pool_usdc.setBorrowCap(1_000_000 * 10 ** 6);
         pool_usdc.setInterestConfig(
             InterestRateModule.InterestRateConfiguration({
                 baseRatePerYear: 10_000_000_000_000_000,
