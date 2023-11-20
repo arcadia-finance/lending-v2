@@ -99,9 +99,7 @@ contract InterestRateModule {
      */
     function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
         uint256 utilisation; // 4 decimals precision
-        if (totalLiquidity > 0) {
-            utilisation = (ONE_4 * totalDebt) / totalLiquidity;
-        }
+        if (totalLiquidity > 0) utilisation = (ONE_4 * totalDebt) / totalLiquidity;
 
         //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
         //_updateInterestRate() will be called a lot, saves a read from from storage or a write+read from memory.
