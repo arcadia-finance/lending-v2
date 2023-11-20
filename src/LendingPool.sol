@@ -854,6 +854,55 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
+     * @notice Initiates the liquidation process for an Account.
+     * @param initiator The address of the liquidation initiator.
+     * @return startDebt The initial debt of the liquidated Account.
+     * @dev This function is externally callable and triggers the liquidation process for an Account. The liquidation process involves assessing the Account's debt and calculating liquidation incentives, which are considered as extra debt. The extra debt is then minted towards the Account to encourage the liquidation process and bring the Account to a healthy state.
+     * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
+     * @dev If the provided Account has a debt balance of 0, the function reverts with the error "LendingPool_IsNotAnAccountWithDebt."
+     */
+    function startLiquidation(address initiator)
+        external
+        override
+        whenLiquidationNotPaused
+        processInterests
+        returns (uint256 startDebt)
+    {
+        // Only Accounts can have debt, and debtTokens are non-transferrable.
+        // Hence by checking that the balance of the msg.sender is not 0,
+        // we know that the sender is indeed a Account and has debt.
+        startDebt = maxWithdraw(msg.sender);
+        if (startDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+
+        // Calculate liquidation incentives which have to be paid by the Account owner and are minted
+        // as extra debt for the Account.
+        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt);
+
+        // Mint the liquidation incentives as extra debt towards the Account.
+        _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, msg.sender);
+
+        // Increase the realised liquidity for the initiator.
+        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
+        totalRealisedLiquidity = uint128(totalRealisedLiquidity + liquidationInitiatorReward);
+        // The other incentives will only be added as realised liquidity for the respective actors
+        // After the auction is finished.
+
+        //Hook to the most junior Tranche, to inform that auctions are ongoing,
+        //already done if there are other auctions in progress (auctionsInProgress > O).
+        // If only ongoing auction, inform most Jr tranche that auctions are ongoing,
+        if (auctionsInProgress == 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
+        }
+        unchecked {
+            ++auctionsInProgress;
+        }
+
+        // Emit event
+        emit AuctionStarted(msg.sender, address(this), uint128(startDebt));
+    }
+
+    /**
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
@@ -1054,61 +1103,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
-     * @notice Initiates the liquidation process for an Account.
-     * @param initiator The address of the liquidation initiator.
-     * @return startDebt The initial debt of the liquidated Account.
-     * @dev This function is externally callable and triggers the liquidation process for an Account. The liquidation process involves assessing the Account's debt and calculating liquidation incentives, which are considered as extra debt. The extra debt is then minted towards the Account to encourage the liquidation process and bring the Account to a healthy state.
-     * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
-     * @dev If the provided Account has a debt balance of 0, the function reverts with the error "LendingPool_IsNotAnAccountWithDebt."
-     */
-    function startLiquidation(address initiator)
-        external
-        override
-        whenLiquidationNotPaused
-        processInterests
-        returns (uint256 startDebt)
-    {
-        // Only Accounts can have debt, and debtTokens are non-transferrable.
-        // Hence by checking that the balance of the msg.sender is not 0,
-        // we know that the sender is indeed a Account and has debt.
-        startDebt = maxWithdraw(msg.sender);
-        if (startDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
-
-        // Calculate liquidation incentives which have to be paid by the Account owner and are minted
-        // as extra debt for the Account.
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
-            _calculateRewards(startDebt);
-
-        // Mint the liquidation incentives as extra debt towards the Account.
-        _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, msg.sender);
-
-        // Increase the realised liquidity for the initiator.
-        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
-        totalRealisedLiquidity = uint128(totalRealisedLiquidity + liquidationInitiatorReward);
-        // The other incentives will only be added as realised liquidity for the respective actors
-        // After the auction is finished.
-
-        //Hook to the most junior Tranche, to inform that auctions are ongoing,
-        //already done if there are other auctions in progress (auctionsInProgress > O).
-        // If only ongoing auction, inform most Jr tranche that auctions are ongoing,
-        if (auctionsInProgress == 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
-        }
-        unchecked {
-            ++auctionsInProgress;
-        }
-
-        // Emit event
-        emit AuctionStarted(msg.sender, address(this), uint128(startDebt));
-    }
-
-    /**
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
      * @param debt The debt amount of the Account undergoing liquidation.
      * @return liquidationInitiatorReward The reward for the liquidation initiator, capped by the maximum initiator fee.
      * @return closingReward The reward for closing the liquidation process, capped by the maximum closing fee.
      * @return liquidationPenalty The penalty for the liquidation process.
-     * @dev This internal function is used to determine the liquidation initiator's reward, closing reward, and liquidation penalty based on the provided debt amount.
      */
     function _calculateRewards(uint256 debt)
         internal
@@ -1118,8 +1117,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
         liquidationInitiatorReward =
             liquidationInitiatorReward > maxInitiatorFee ? maxInitiatorFee : liquidationInitiatorReward;
+
         closingReward = debt.mulDivDown(closingRewardWeight, ONE_4);
         closingReward = closingReward > maxClosingFee ? maxClosingFee : closingReward;
+
         liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
     }
 

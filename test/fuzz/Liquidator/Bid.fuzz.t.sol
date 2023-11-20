@@ -161,7 +161,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(bidder);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
-        uint256 askedShare = liquidator.calculateAskedShare(address(proxyAccount), bidAssetAmounts);
+        uint256 askedShare = liquidator.calculateTotalShare(address(proxyAccount), bidAssetAmounts);
         uint256 askPrice_ = liquidator.calculateBidPrice(address(proxyAccount), askedShare);
         assertGt(askPrice_, uint256(amountLoaned));
 
