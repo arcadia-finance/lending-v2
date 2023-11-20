@@ -23,18 +23,19 @@ contract InterestRateModule {
     // which give the interest rate in function of the utilisation of the Lending Pool.
     InterestRateConfiguration public interestRateConfig;
 
-    /**
-     * A struct with the set of interest rate configuration parameters:
-     * - baseRatePerYear The interest rate when utilisation is 0.
-     * - lowSlopePerYear The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
-     * - highSlopePerYear The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
-     * - utilisationThreshold the optimal capital utilisation, where we go from the first curve to the steeper second curve.
-     */
     struct InterestRateConfiguration {
-        uint72 baseRatePerYear; //18 decimals precision.
-        uint72 lowSlopePerYear; //18 decimals precision.
-        uint72 highSlopePerYear; //18 decimals precision.
-        uint16 utilisationThreshold; //4 decimal precision.
+        // The interest rate when utilisation is 0.
+        // 18 decimals precision.
+        uint72 baseRatePerYear;
+        // The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+        // 18 decimals precision.
+        uint72 lowSlopePerYear;
+        // The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+        // 18 decimals precision.
+        uint72 highSlopePerYear;
+        // The optimal capital utilisation, where we go from the first curve to the steeper second curve.
+        // 4 decimal precision.
+        uint16 utilisationThreshold;
     }
 
     /* //////////////////////////////////////////////////////////////
