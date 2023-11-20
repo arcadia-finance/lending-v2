@@ -23,7 +23,7 @@ contract Approve_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_approve(address spender, uint256 amount, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
+        vm.expectRevert(FunctionNotImplemented.selector);
         debt_.approve(spender, amount);
         vm.stopPrank();
     }
