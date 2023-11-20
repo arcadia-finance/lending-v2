@@ -47,15 +47,15 @@ abstract contract Events {
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
+    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
-    event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
-    event StartPriceMultiplierSet(uint16 startPriceMultiplier);
-    event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
+    event AuctionCurveParametersSet(
+        uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
+    );
     event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////
