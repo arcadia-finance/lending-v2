@@ -28,7 +28,7 @@ contract InterestRateModule {
      * - baseRatePerYear The interest rate when utilisation is 0.
      * - lowSlopePerYear The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
      * - highSlopePerYear The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
-     * - utilisationThreshold the optimal utilisation, where we go from the flat first curve to the steeper second curve.
+     * - utilisationThreshold the optimal capital utilisation, where we go from the first curve to the steeper second curve.
      */
     struct InterestRateConfiguration {
         uint72 baseRatePerYear; //18 decimals precision.
@@ -67,7 +67,7 @@ contract InterestRateModule {
      * @param utilisation Utilisation rate, 4 decimal precision.
      * @return interestRate The current interest rate, 18 decimal precision.
      * @dev The interest rate is a function of the utilisation of the Lending Pool.
-     * We use two linear curves: a flat one below the optimal utilisation and a steep one above.
+     * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
      */
     function _calculateInterestRate(uint256 utilisation) internal view returns (uint256) {
         uint256 utilisationThreshold = interestRateConfig.utilisationThreshold;
