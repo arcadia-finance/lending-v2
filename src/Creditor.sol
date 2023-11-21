@@ -45,8 +45,8 @@ abstract contract Creditor {
 
     /**
      * @notice Sets a new Risk Manager. A Risk Manager can:
-     * -Set risk parameters for collateral assets, including: max exposures, collateral factors and liquidation factors.
-     * -Set minimum usd value taken into account to avoid dust attacks.
+     * - Set risk parameters for collateral assets, including: max exposures, collateral factors and liquidation factors.
+     * - Set minimum usd values for assets in order to be taken into account, to prevent dust attacks.
      * @param riskManager_ The address of the new Risk Manager.
      */
     function _setRiskManager(address riskManager_) internal {
@@ -56,8 +56,8 @@ abstract contract Creditor {
     }
 
     /**
-     * @notice Sets the validity of Account version to valid.
-     * @param accountVersion The current version of the Account.
+     * @notice Updates the validity of an Account version.
+     * @param accountVersion The Account version.
      * @param isValid Will be "true" if respective Account version is valid, "false" if not.
      */
     function _setAccountVersion(uint256 accountVersion, bool isValid) internal {
@@ -70,8 +70,8 @@ abstract contract Creditor {
      * @notice Checks if Account fulfils all requirements and returns Creditor parameters.
      * @param accountVersion The version of the Arcadia Account.
      * @return success Bool indicating if all requirements are met.
-     * @return baseCurrency The base currency of the creditor.
-     * @return liquidator The liquidator of the creditor.
+     * @return baseCurrency The base currency of the Creditor.
+     * @return liquidator The liquidator of the Creditor.
      * @return fixedLiquidationCost Estimated fixed costs (independent of size of debt) to liquidate a position.
      */
     function openMarginAccount(uint256 accountVersion)

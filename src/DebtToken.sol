@@ -73,7 +73,7 @@ abstract contract DebtToken is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Modification of the standard ERC-4626 deposit implementation.
+     * @notice Modification of the standard ERC4626 deposit implementation.
      * @dev No public deposit allowed.
      */
     function deposit(uint256, address) public pure override returns (uint256) {
@@ -81,8 +81,8 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 deposit implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being loaned out.
+     * @notice Modification of the standard ERC4626 deposit implementation.
+     * @param assets The amount of assets of the underlying ERC20 token being loaned out.
      * @param receiver The Arcadia Account with collateral covering the debt.
      * @return shares The corresponding amount of debt shares minted.
      * @dev Only the Lending Pool (which inherits this contract) can issue debt.
@@ -99,7 +99,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 deposit implementation.
+     * @notice Modification of the standard ERC4626 deposit implementation.
      * @dev No public mint allowed.
      */
     function mint(uint256, address) public pure override returns (uint256) {
@@ -107,7 +107,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 withdraw implementation.
+     * @notice Modification of the standard ERC4626 withdraw implementation.
      * @dev No public withdraw allowed.
      */
     function withdraw(uint256, address, address) public pure override returns (uint256) {
@@ -115,8 +115,8 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 withdraw implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being paid back.
+     * @notice Modification of the standard ERC4626 withdraw implementation.
+     * @param assets The amount of assets of the underlying ERC20 token being paid back.
      * @param receiver Will always be the Lending Pool.
      * @param account The Arcadia Account with collateral covering the debt.
      * @return shares The corresponding amount of debt shares redeemed.
@@ -134,7 +134,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 redeem implementation.
+     * @notice Modification of the standard ERC4626 redeem implementation.
      * @dev No public redeem allowed.
      */
     function redeem(uint256, address, address) public pure override returns (uint256) {
@@ -146,44 +146,44 @@ abstract contract DebtToken is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Modification of the standard ERC-4626 convertToShares implementation.
+     * @notice Modification of the standard ERC4626 convertToShares implementation.
      * @dev Since debt is a liability instead of an asset, roundUp and roundDown are inverted compared to the standard implementation.
      */
     function convertToShares(uint256 assets) public view override returns (uint256) {
-        // Cache totalSupply
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivUp(supply, totalAssets());
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 convertToShares implementation.
+     * @notice Modification of the standard ERC4626 convertToShares implementation.
      * @dev Since debt is a liability instead of an asset, roundUp and roundDown are inverted compared to the standard implementation.
      */
     function convertToAssets(uint256 shares) public view override returns (uint256) {
-        // Cache totalSupply
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivUp(totalAssets(), supply);
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 previewMint implementation.
+     * @notice Modification of the standard ERC4626 previewMint implementation.
      * @dev Since debt is a liability instead of an asset, roundUp and roundDown are inverted compared to the standard implementation.
      */
     function previewMint(uint256 shares) public view override returns (uint256) {
-        // Cache totalSupply
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivDown(totalAssets(), supply);
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 previewWithdraw implementation.
+     * @notice Modification of the standard ERC4626 previewWithdraw implementation.
      * @dev Since debt is a liability instead of an asset, roundUp and roundDown are inverted compared to the standard implementation.
      */
     function previewWithdraw(uint256 assets) public view override returns (uint256) {
-        // Cache totalSupply
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivDown(supply, totalAssets());
@@ -194,7 +194,7 @@ abstract contract DebtToken is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Modification of the standard ERC-4626 approve implementation.
+     * @notice Modification of the standard ERC4626 approve implementation.
      * @dev No public approve allowed.
      */
     function approve(address, uint256) public pure override returns (bool) {
@@ -202,7 +202,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 transfer implementation.
+     * @notice Modification of the standard ERC4626 transfer implementation.
      * @dev No public transfer allowed.
      */
     function transfer(address, uint256) public pure override returns (bool) {
@@ -210,7 +210,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 transferFrom implementation.
+     * @notice Modification of the standard ERC4626 transferFrom implementation.
      * @dev No public transferFrom allowed.
      */
     function transferFrom(address, address, uint256) public pure override returns (bool) {
@@ -218,7 +218,7 @@ abstract contract DebtToken is ERC4626 {
     }
 
     /**
-     * @notice Modification of the standard ERC-4626 permit implementation.
+     * @notice Modification of the standard ERC4626 permit implementation.
      * @dev No public permit allowed.
      */
     function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) public pure override {
