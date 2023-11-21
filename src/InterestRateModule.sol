@@ -72,20 +72,21 @@ contract InterestRateModule {
      */
     function _calculateInterestRate(uint256 utilisation) internal view returns (uint256) {
         uint256 utilisationThreshold = interestRateConfig.utilisationThreshold;
-        uint256 lowSlopePerYear = interestRateConfig.lowSlopePerYear;
-        uint256 highSlopePerYear = interestRateConfig.highSlopePerYear;
-        uint256 baseRatePerYear = interestRateConfig.baseRatePerYear;
         unchecked {
             if (utilisation >= utilisationThreshold) {
                 // 1e22 = uT (1e4) * ls (1e18).
-                uint256 lowSlopeInterest = uint256(utilisationThreshold) * lowSlopePerYear;
+                uint256 lowSlopeInterest = uint256(utilisationThreshold) * interestRateConfig.lowSlopePerYear;
                 // 1e22 = (uT - u) (1e4) * hs (e18).
-                uint256 highSlopeInterest = uint256((utilisation - utilisationThreshold)) * highSlopePerYear;
+                uint256 highSlopeInterest =
+                    uint256((utilisation - utilisationThreshold)) * interestRateConfig.highSlopePerYear;
                 // 1e18 = bs (1e18) + (lsIR (e22) + hsIR (1e22)) / 1e4.
-                return uint256(baseRatePerYear) + ((lowSlopeInterest + highSlopeInterest) / ONE_4);
+                return uint256(interestRateConfig.baseRatePerYear) + ((lowSlopeInterest + highSlopeInterest) / ONE_4);
             } else {
                 // 1e18 = br (1e18) + (ls (1e18) * u (1e4)) / 1e4.
-                return uint256(uint256(baseRatePerYear) + ((uint256(lowSlopePerYear) * utilisation) / ONE_4));
+                return uint256(
+                    uint256(interestRateConfig.baseRatePerYear)
+                        + ((uint256(interestRateConfig.lowSlopePerYear) * utilisation) / ONE_4)
+                );
             }
         }
     }
