@@ -223,9 +223,9 @@ contract Tranche is ITranche, ERC4626, Owned {
 
         _burn(owner_, shares);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
-
         lendingPool.withdrawFromLendingPool(assets, receiver);
+
+        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
 
     /**
@@ -255,9 +255,9 @@ contract Tranche is ITranche, ERC4626, Owned {
 
         _burn(owner_, shares);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
-
         lendingPool.withdrawFromLendingPool(assets, receiver);
+
+        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
 
     /*//////////////////////////////////////////////////////////////
