@@ -29,7 +29,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         public
     {
         vm.startPrank(sender);
-        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
+        vm.expectRevert(FunctionNotImplemented.selector);
         debt_.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -50,7 +50,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         debt_.setRealisedDebt(totalDebt);
 
-        vm.expectRevert(DebtToken_ZeroShares.selector);
+        vm.expectRevert(ZeroShares.selector);
         debt_.withdraw_(assets, owner, owner);
     }
 

@@ -113,8 +113,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
     event OriginationFeeSet(uint8 originationFee);
-    event BorrowCapSet(uint128 borrowCap);
-    event SupplyCapSet(uint128 supplyCap);
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event Borrow(
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
@@ -589,7 +587,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         // Mint debt tokens to the Account, debt must be minted before the actions in the Account are performed.
         if (borrowCap > 0 && maxWithdraw(account) + amountBorrowedWithFee > borrowCap) {
-            revert DebtToken_BorrowCapExceeded();
+            revert BorrowCapExceeded();
         }
         _deposit(amountBorrowedWithFee, account);
 

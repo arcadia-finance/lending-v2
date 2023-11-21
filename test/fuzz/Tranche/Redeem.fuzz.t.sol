@@ -29,14 +29,14 @@ contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Tranche_Locked.selector);
+        vm.expectRevert(Locked.selector);
         tranche.redeem(shares, receiver, owner);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_redeem_ZeroAssets(address receiver, address owner) public {
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Tranche_ZeroAssets.selector);
+        vm.expectRevert(ZeroAssets.selector);
         tranche.redeem(0, receiver, owner);
         vm.stopPrank();
     }

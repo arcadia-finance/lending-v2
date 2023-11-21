@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
+import { LendingPoolGuardian_Fuzz_Test, BaseGuardian } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "unPause" of contract "LendingPoolGuardian".
@@ -37,9 +37,9 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         vm.warp(lastPauseTimestamp + timePassed);
 
         // When: A sender un-pauses within 30 days passed from the last pause.
-        // Then: The transaction reverts with "G_UP: Cannot unPause".
+        // Then: The transaction reverts.
         vm.startPrank(sender);
-        vm.expectRevert("G_UP: Cannot unPause");
+        vm.expectRevert(BaseGuardian.Cannot_UnPause.selector);
         lendingPoolGuardian.unPause();
         vm.stopPrank();
     }
@@ -67,7 +67,7 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         // When: A "sender" un-pauses.
         vm.startPrank(sender);
         vm.expectEmit(true, true, true, true);
-        emit PauseUpdate(false, false, false, false, false);
+        emit PauseFlagsUpdated(false, false, false, false, false);
         lendingPoolGuardian.unPause();
         vm.stopPrank();
 

@@ -27,7 +27,7 @@ contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Tranche_Locked.selector);
+        vm.expectRevert(Locked.selector);
         tranche.mint(shares, receiver);
         vm.stopPrank();
     }

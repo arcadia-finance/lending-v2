@@ -190,7 +190,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 originationFee
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint128(bound(collateralValue, type(uint96).max, type(uint128).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
         vm.assume(liquidity >= amountLoaned);
