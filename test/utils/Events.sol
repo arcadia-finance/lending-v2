@@ -63,5 +63,5 @@ abstract contract Events {
     ////////////////////////////////////////////////////////////// */
 
     event LockSet(bool status);
-    event AuctionsInProgressSet(bool status);
+    event AuctionInProgressSet(bool status);
 }

@@ -34,7 +34,7 @@ contract SetAuctionInProgress_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     function testFuzz_Success_setAuctionInProgress(bool set) public {
         vm.startPrank(address(pool));
         vm.expectEmit(true, true, true, true);
-        emit AuctionsInProgressSet(set);
+        emit AuctionInProgressSet(set);
         tranche.setAuctionInProgress(set);
         vm.stopPrank();
 

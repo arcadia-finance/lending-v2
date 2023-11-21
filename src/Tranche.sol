@@ -15,7 +15,7 @@ import { IGuardian } from "./interfaces/IGuardian.sol";
  * @title Tranche
  * @author Pragma Labs
  * @notice The Tranche contract allows for lending of a specified ERC20 token, managed by a lending pool.
- * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying asset
+ * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying asset.
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
@@ -35,7 +35,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     // Flag indicating if the Tranche is locked or not.
     bool public locked;
-    // Flag indicating if there are ongoing auction or not.
+    // Flag indicating if there is at least one ongoing auction or none.
     bool public auctionInProgress;
 
     /* //////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     event LockSet(bool status);
-    event AuctionsInProgressSet(bool status);
+    event AuctionInProgressSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
@@ -65,7 +65,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @dev Modifier to ensure that the tranche is not locked before allowing a function to proceed.
+     * @dev Functions with this modifier can only be called when the Tranche is not locked.
      */
     modifier notLocked() {
         if (locked) revert Locked();
@@ -117,7 +117,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if (msg.sender != address(LENDING_POOL)) revert Unauthorized();
 
         emit LockSet(locked = true);
-        emit AuctionsInProgressSet(auctionInProgress = false);
+        emit AuctionInProgressSet(auctionInProgress = false);
     }
 
     /**
@@ -139,7 +139,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     function setAuctionInProgress(bool auctionInProgress_) external {
         if (msg.sender != address(LENDING_POOL)) revert Unauthorized();
 
-        emit AuctionsInProgressSet(auctionInProgress = auctionInProgress_);
+        emit AuctionInProgressSet(auctionInProgress = auctionInProgress_);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -268,7 +268,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
-     * @return assets The total amount of underlying assets
+     * @return assets The total amount of underlying assets.
      * @dev The Liquidity Pool does the accounting of the outstanding claim on liquidity per tranche.
      */
     function totalAssets() public view override returns (uint256 assets) {
@@ -277,7 +277,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
-     * @return assets The total amount of underlying assets
+     * @return assets The total amount of underlying assets.
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
@@ -286,7 +286,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
-     * @return assets The amount of underlying assets
+     * @return assets The amount of underlying assets.
      * @dev This function is a modification of convertToShares() where interests are realized (state modification).
      */
     function convertToSharesAndSync(uint256 assets) public returns (uint256) {
@@ -298,7 +298,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
-     * @return assets The amount of underlying assets
+     * @return assets The amount of underlying assets.
      * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
     function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
