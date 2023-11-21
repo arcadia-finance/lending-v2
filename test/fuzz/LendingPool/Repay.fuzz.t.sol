@@ -99,7 +99,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
-        vm.expectRevert(DebtToken_ZeroShares.selector);
+        vm.expectRevert(ZeroShares.selector);
         pool.repay(amountRepaid, nonAccount);
         vm.stopPrank();
     }

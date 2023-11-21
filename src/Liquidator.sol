@@ -4,166 +4,181 @@
  */
 pragma solidity 0.8.19;
 
-import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { Owned } from "../lib/solmate/src/auth/Owned.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
+import { LogExpMath } from "./libraries/LogExpMath.sol";
+import { Owned } from "../lib/solmate/src/auth/Owned.sol";
 import { RiskModule } from "../lib/accounts-v2/src/RiskModule.sol";
 
+/**
+ * @title Liquidator.
+ * @author Pragma Labs
+ * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
+ */
 contract Liquidator is Owned, ILiquidator {
     using SafeTransferLib for ERC20;
+    /* //////////////////////////////////////////////////////////////
+                               CONSTANTS
+    ////////////////////////////////////////////////////////////// */
+
+    // The unit for fixed point numbers with 4 decimals precision.
+    uint16 internal constant ONE_4 = 10_000;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
-    // The unit for fixed point numbers with 4 decimals precision.
-    uint16 internal constant ONE_4 = 10_000;
-    // Sets the begin price of the auction.
-    // Defined as a percentage of openDebt, 4 decimals precision -> 15_000 = 150%.
-    uint16 internal startPriceMultiplier;
-    // Sets the minimum price the auction converges to.
-    // Defined as a percentage of openDebt, 4 decimals precision -> 6000 = 60%.
-    uint16 internal minPriceMultiplier;
-    // The base of the auction price curve (exponential).
-    // Determines how fast the auction price drops per second, 18 decimals precision.
+    // The base of the auction price curve (decreasing power function).
+    // Determines in what time the auction price halves, 18 decimals precision.
     uint64 internal base;
-    // Maximum time that the auction declines, after which price is equal to the minimum price set by minPriceMultiplier.
-    // Time in seconds, with 0 decimals precision.
+    // The time after which the auction is considered not successful, in seconds.
     uint32 internal cutoffTime;
+    // Sets the begin price of the auction, 4 decimals precision.
+    uint16 internal startPriceMultiplier;
+    // Sets the minimum price the auction converges to, 4 decimals precision.
+    uint16 internal minPriceMultiplier;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        uint128 startDebt; // The open debt, same decimal precision as baseCurrency.
-        uint32 startTime; // The timestamp the auction started.
-        bool inAuction; // Flag indicating if the auction is still ongoing.
-        uint16 startPriceMultiplier; // 4 decimals precision.
-        uint16 minPriceMultiplier; // 4 decimals precision.
-        uint32 cutoffTime; // Maximum time that the auction declines.
-        address creditor; // The creditor that issued the debt.
-        address[] assetAddresses; // The addresses of the assets in the Account. The order of the assets is the same as in the Account.
-        uint32[] assetShares; // The distribution of the assets in the Account. It is in 6 decimal precision -> 1000000 = 100%, 100000 = 10% . The order of the assets is the same as in the Account.
-        uint256[] assetAmounts; // The amount of assets in the Account. The order of the assets is the same as in the Account.
-        uint256[] assetIds; // The ids of the assets in the Account. The order of the assets is the same as in the Account.
+        // The open debt, denominated in the Creditor's baseCurrency.
+        uint128 startDebt;
+        // The base of the auction price curve.
+        uint64 base;
+        // The timestamp the auction started.
+        uint32 startTime;
+        // Sets the begin price of the auction, 4 decimals precision.
+        uint16 startPriceMultiplier;
+        // Sets the minimum price the auction converges to, 4 decimals precision.
+        uint16 minPriceMultiplier;
+        // Flag indicating if the auction is still ongoing.
+        bool inAuction;
+        // The time after which the auction is considered not successful, in seconds.
+        uint32 cutoffTime;
+        // The contract address of the Creditor that issued the debt.
+        address creditor;
+        // The contract address of each asset in the Account, at the moment the liquidation was initiated.
+        address[] assetAddresses;
+        // The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
+        // at the moment the liquidation was initiated, 4 decimals precision.
+        uint32[] assetShares;
+        // The amount of each asset in the Account, at the moment the liquidation was initiated.
+        uint256[] assetAmounts;
+        // The ids of each asset in the Account, at the moment the liquidation was initiated.
+        uint256[] assetIds;
     }
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
+    event AuctionCurveParametersSet(
+        uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
+    );
     event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
-    event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
-    event StartPriceMultiplierSet(uint16 startPriceMultiplier);
+
+    /* //////////////////////////////////////////////////////////////
+                                ERRORS
+    ////////////////////////////////////////////////////////////// */
+
+    // Thrown when the liquidateAccount function is called on an Account that is already in an auction.
+    error Liquidator_AuctionOngoing();
+    // Thrown when cutOffTime is above the maximum value.
+    error Liquidator_CutOffTooHigh();
+    // Thrown when cutOffTime is below the minimum value.
+    error Liquidator_CutOffTooLow();
+    // Thrown if the auction was not successfully ended.
+    error Liquidator_EndAuctionFailed();
+    // Thrown when halfLifeTime is above the maximum value.
+    error Liquidator_HalfLifeTimeTooHigh();
+    // Thrown when halfLifeTime is below the minimum value.
+    error Liquidator_HalfLifeTimeTooLow();
+    // Thrown when the auction has not yet expired.
+    error Liquidator_InvalidBid();
+    // Thrown when the start price multiplier is above the maximum value.
+    error Liquidator_MultiplierTooHigh();
+    // Thrown when the start price multiplier is below the minimum value.
+    error Liquidator_MultiplierTooLow();
+    // Thrown when an Account is not for sale.
+    error Liquidator_NotForSale();
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
     constructor() Owned(msg.sender) {
+        // Half life of 3600s.
+        base = 999_807_477_651_317_446;
+        // 4 hours.
+        cutoffTime = 14_400;
+        // 150%.
         startPriceMultiplier = 15_000;
+        // 60%.
         minPriceMultiplier = 6000;
-        cutoffTime = 14_400; //4 hours
-        base = 999_807_477_651_317_446; //3600s halflife, 14_400 cutoff
+
+        emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
     }
-
-    /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when the liquidateAccount function is called on an account that is already in an auction.
-    error Liquidator_AuctionOngoing();
-    // Thrown when cutOffTime is above maximum value.
-    error Liquidator_CutOffTooHigh();
-    // Thrown when cutOffTime is below minimum value.
-    error Liquidator_CutOffTooLow();
-    // Thrown if the auction was not successfully ended.
-    error Liquidator_EndAuctionFailed();
-    // Thrown when halfLifeTime is above maximum value.
-    error Liquidator_HalfLifeTimeTooHigh();
-    // Thrown when halfLifeTime is below minimum value.
-    error Liquidator_HalfLifeTimeTooLow();
-    // Thrown when the auction has not yet expired.
-    error Liquidator_InvalidBid();
-    // Thrown when the start price multiplier is above the maximum value.
-    error Liquidator_MultiplierTooHigh();
-    // Thrown when the start price multiplier is below minimum value.
-    error Liquidator_MultiplierTooLow();
-    // Thrown when an Account is not for sale.
-    error Liquidator_NotForSale();
-    // Thrown when caller is not valid.
-    error Liquidator_Unauthorized();
 
     /*///////////////////////////////////////////////////////////////
                     AUCTION PRICE CURVE PARAMETERS
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Sets the parameters (base and cutOffTime) of the auction price curve (decreasing power function).
+     * @notice Sets the parameters of the auction price curve (decreasing power function).
      * @param halfLifeTime The base is not set directly, but it's derived from a more intuitive parameter, the halfLifeTime:
      * The time ΔT_hl (in seconds with 0 decimals) it takes for the power function to halve in value.
+     * @param cutoffTime_ The time after which the auction is considered not successful.
+     * After the cutoffTime, the remaining assets are transferred to the protocol owner to be sold manually.
+     * @param startPriceMultiplier_ The start price multiplier, with 4 decimals precision.
+     * @param minPriceMultiplier_ The minimum price multiplier, with 4 decimals precision.
      * @dev The relation between the base and the halfLife time (ΔT_hl):
      * The power function is defined as: N(t) = N(0) * (1/2)^(t/ΔT_hl).
      * Or simplified: N(t) = N(O) * base^t => base = 1/[2^(1/ΔT_hl)].
-     * @param cutoffTime_ The Maximum time that the auction declines,
-     * after which price is equal to the minimum price set by minPriceMultiplier.
-     * @dev Setting a very short cutoffTime can be used by rogue owners to rug the junior tranche!!
+     * @dev Setting a very short cutoffTime can be used by rogue owners to rug the most junior tranche(s)!!
      * Therefore the cutoffTime has hardcoded constraints.
-     * @dev All calculations are done with 18 decimals precision.
-     */
-    function setAuctionCurveParameters(uint32 halfLifeTime, uint32 cutoffTime_) external onlyOwner {
-        //Checks that new parameters are within reasonable boundaries.
-        if (halfLifeTime <= 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes
-        if (halfLifeTime >= 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours
-        if (cutoffTime_ <= 3600) revert Liquidator_CutOffTooLow(); // 1 hour
-        if (cutoffTime_ >= 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours
-
-        //Derive base from the halfLifeTime.
-        uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
-
-        //Check that LogExpMath.pow(base, timePassed) does not error at cutoffTime (due to numbers smaller than minimum precision).
-        //Since LogExpMath.pow is a strictly decreasing function checking the power function at cutoffTime
-        //guarantees that the function does not revert on all timestamps between start of the auction and the cutoffTime.
-        LogExpMath.pow(base_, uint256(cutoffTime_) * 1e18);
-
-        //Store the new parameters.
-        base = base_;
-        cutoffTime = cutoffTime_;
-
-        emit AuctionCurveParametersSet(base_, cutoffTime_);
-    }
-
-    /**
-     * @notice Sets the start price multiplier for the liquidator.
-     * @param startPriceMultiplier_ The new start price multiplier, with 4 decimals precision.
      * @dev The start price multiplier is a multiplier that is used to increase the initial price of the auction.
      * Since the value of all assets are discounted with the liquidation factor, and because pricing modules will take a conservative
      * approach to price assets (eg. floor-prices for NFTs), the actual value of the assets being auctioned might be substantially higher
-     * as the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
-     */
-    function setStartPriceMultiplier(uint16 startPriceMultiplier_) external onlyOwner {
-        if (startPriceMultiplier_ <= 10_000) revert Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ >= 30_100) revert Liquidator_MultiplierTooHigh();
-        startPriceMultiplier = startPriceMultiplier_;
-
-        emit StartPriceMultiplierSet(startPriceMultiplier_);
-    }
-
-    /**
-     * @notice Sets the minimum price multiplier for the liquidator.
-     * @param minPriceMultiplier_ The new minimum price multiplier, with 4 decimals precision.
+     * than the open debt. Hence the auction starts at a multiplier of the openDebt, but decreases rapidly (exponential decay).
      * @dev The minimum price multiplier sets a lower bound to which the auction price converges.
+     * @dev All calculations are done with 18 decimals precision.
      */
-    function setMinimumPriceMultiplier(uint16 minPriceMultiplier_) external onlyOwner {
-        if (minPriceMultiplier_ >= 9100) revert Liquidator_MultiplierTooHigh();
-        minPriceMultiplier = minPriceMultiplier_;
+    function setAuctionCurveParameters(
+        uint32 halfLifeTime,
+        uint32 cutoffTime_,
+        uint16 startPriceMultiplier_,
+        uint16 minPriceMultiplier_
+    ) external onlyOwner {
+        // Checks that halfLifeTime and cutoffTime_ are within reasonable boundaries.
+        if (halfLifeTime < 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes.
+        if (halfLifeTime > 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours.
+        if (cutoffTime_ < 3600) revert Liquidator_CutOffTooLow(); // 1 hour.
+        if (cutoffTime_ > 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours.
 
-        emit MinimumPriceMultiplierSet(minPriceMultiplier_);
+        // Derive base from the halfLifeTime.
+        uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
+
+        // Check that LogExpMath.pow(base, timePassed) does not error at cutoffTime (due to numbers smaller than minimum precision).
+        // Since LogExpMath.pow is a strictly decreasing function checking the power function at cutoffTime
+        // guarantees that the function does not revert on all timestamps between start of the auction and the cutoffTime.
+        LogExpMath.pow(base_, uint256(cutoffTime_) * 1e18);
+
+        // Checks that startPriceMultiplier_ and minPriceMultiplier_ are within reasonable boundaries.
+        if (startPriceMultiplier_ < 10_000) revert Liquidator_MultiplierTooLow();
+        if (startPriceMultiplier_ > 30_000) revert Liquidator_MultiplierTooHigh();
+        if (minPriceMultiplier_ > 9000) revert Liquidator_MultiplierTooHigh();
+
+        // Store the new parameters.
+        emit AuctionCurveParametersSet(
+            base = base_,
+            cutoffTime = cutoffTime_,
+            startPriceMultiplier = startPriceMultiplier_,
+            minPriceMultiplier = minPriceMultiplier_
+        );
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -171,17 +186,18 @@ contract Liquidator is Owned, ILiquidator {
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Initiate the liquidation of a specific account.
-     * @param account The address of the account to be liquidated.
+     * @notice Initiate the liquidation of an Account.
+     * @param account The contract address of the Account to be liquidated.
      * @dev We do not check if the address passed is an actual Arcadia Account.
-     * A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account) that implemented startLiquidation().
-     * This would successfully start an auction and the malicious non-Account would be in auction indefinitely,
+     * A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account),
+     * that implemented startLiquidation().
+     * This would successfully start an auction and the malicious non-Account might be in auction indefinitely,
      * but this does not block or impact any current or future 'real' auctions of Arcadia-Accounts.
      */
     function liquidateAccount(address account) external {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
-        // Check if the account is already in an auction.
+        // Check if the account is already being auctioned.
         if (auctionInformation_.inAuction) revert Liquidator_AuctionOngoing();
 
         // Set the inAuction flag to true.
@@ -211,21 +227,22 @@ contract Liquidator is Owned, ILiquidator {
 
         // Store the auction price-curve parameters.
         // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
-        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
-        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
+        auctionInformation_.base = base;
         auctionInformation_.startTime = uint32(block.timestamp);
         auctionInformation_.cutoffTime = cutoffTime;
+        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
+        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
     }
 
     /**
      * @notice Calculate the relative value of each asset, with respect to the total value of the Account.
      * @param assetValues An array with the values of each asset in the Account.
-     * @return assetDistributions An array of asset distribution percentages (in tenths of a percent, e.g., 10_000 represents 100%).
+     * @return assetShares An array of asset shares, with 4 decimals precision.
      */
     function _getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory assetValues)
         internal
         pure
-        returns (uint32[] memory assetDistributions)
+        returns (uint32[] memory assetShares)
     {
         uint256 length = assetValues.length;
         uint256 totalValue;
@@ -235,12 +252,12 @@ contract Liquidator is Owned, ILiquidator {
                 ++i;
             }
         }
-        assetDistributions = new uint32[](length);
+        assetShares = new uint32[](length);
         for (uint256 i; i < length;) {
             unchecked {
-                // The asset distribution is calculated as a percentage of the total value of the assets.
-                // "assetValue" is a uint256 in baseCurrency units, will never overflow
-                assetDistributions[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
+                // The asset shares are calculated relative to the total value of the Account.
+                // "assetValue" is a uint256 in baseCurrency units, will never overflow.
+                assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
                 ++i;
             }
         }
@@ -254,8 +271,10 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Places a bid.
      * @param account The contract address of the Account being liquidated.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
-     * @param endAuction_ Bool indicating that the auction can be ended after the bid..
-     * @dev We use a dutch auction: price of the assets constantly decreases.
+     * @param endAuction_ Bool indicating that the auction can be ended after the bid.
+     * @dev We use a Dutch auction: price of the assets constantly decreases.
+     * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
+     * An amount 0 should be passed for assets the bidder does not want to buy.
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
      */
@@ -281,14 +300,13 @@ contract Liquidator is Owned, ILiquidator {
 
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
         if (earlyTerminate) {
-            // Happy flow: All debt is repaid.
             // Stop the auction, no need to do a health check for the account since it has no debt anymore.
             auctionInformation_.inAuction = false;
 
             emit AuctionFinished(account, auctionInformation_.creditor, startDebt);
         }
-        // If not all debt is repaid the bidder can still earn a termination incentive by ending the auction
-        // if the Account is in a healthy state after the bid.
+        // If not all debt is repaid, the bidder can still earn a termination incentive by ending the auction
+        // if one of the conditions to end the auction is met.
         // "_endAuction()" will silently fail without reverting, if the auction was not successfully ended.
         else if (endAuction_) {
             _endAuction(account, auctionInformation_);
@@ -328,7 +346,7 @@ contract Liquidator is Owned, ILiquidator {
      * @param totalShare The share of initial assets the bidder wants to buy,
      * calculated based on the relative value of the assets when the auction was initiated.
      * @return price The price for which the bid can be purchased, denominated in the baseCurrency.
-     * @dev We use a dutch auction: price of the assets constantly decreases.
+     * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
      * Debt: The total debt of the Account at the moment the auction was initiated.
      * S: The share of the assets being bought in the bid.
@@ -344,12 +362,10 @@ contract Liquidator is Owned, ILiquidator {
         returns (uint256 price)
     {
         unchecked {
-            // Calculate the time passed since the auction started.
-            uint256 timePassed = block.timestamp - auctionInformation_.startTime;
-
-            // Bring to 18 decimals precision, as required by LogExpMath.pow()
+            // Calculate the time passed since the auction started and bring to 18 decimals precision,
+            // as required by LogExpMath.pow()
             // No overflow possible: uint32 * uint64.
-            timePassed = timePassed * 1e18;
+            uint256 timePassed = (block.timestamp - auctionInformation_.startTime) * 1e18;
 
             // Cache minPriceMultiplier.
             uint256 minPriceMultiplier_ = auctionInformation_.minPriceMultiplier;
@@ -365,7 +381,8 @@ contract Liquidator is Owned, ILiquidator {
             price = (
                 auctionInformation_.startDebt * totalShare
                     * (
-                        LogExpMath.pow(base, timePassed) * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
+                        LogExpMath.pow(auctionInformation_.base, timePassed)
+                            * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
                             + 1e18 * uint256(minPriceMultiplier_)
                     )
             ) / 1e26;
@@ -402,7 +419,7 @@ contract Liquidator is Owned, ILiquidator {
      *  4) All open debt was repaid (not checked within this function).
      * @dev If the third condition is met, an emergency process is triggered.
      * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
-     * The tranches of the liquidity pool will pay for the bad debt.
+     * The Tranches of the liquidity pool will pay for the bad debt.
      * The protocol will sell/auction the assets manually to recover the debt.
      * The protocol will later "donate" these proceeds back to the
      * impacted Tranches, this last step is not enforced by the smart contracts.
@@ -413,7 +430,7 @@ contract Liquidator is Owned, ILiquidator {
         internal
         returns (bool success)
     {
-        // Stop the auction, this will prevent any possible reentrance attacks.
+        // Stop the auction.
         auctionInformation_.inAuction = false;
 
         // Cache variables.

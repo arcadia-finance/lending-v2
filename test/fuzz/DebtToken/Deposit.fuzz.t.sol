@@ -27,7 +27,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_deposit_External(uint256 assets, address receiver, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
+        vm.expectRevert(FunctionNotImplemented.selector);
         debt_.deposit(assets, receiver);
         vm.stopPrank();
     }

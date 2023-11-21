@@ -144,7 +144,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         vm.prank(address(liquidator));
-        vm.expectRevert(DebtToken_ZeroShares.selector);
+        vm.expectRevert(ZeroShares.selector);
         pool.auctionRepay(amountLoaned, 0, address(proxyAccount), sender);
     }
 

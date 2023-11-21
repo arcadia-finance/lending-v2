@@ -36,7 +36,7 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_setAccountVersion_setValid(uint256 accountVersion) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit AccountVersionSet(accountVersion, true);
+        emit ValidAccountVersionsUpdated(accountVersion, true);
         pool.setAccountVersion(accountVersion, true);
         vm.stopPrank();
 

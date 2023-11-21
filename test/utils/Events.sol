@@ -16,12 +16,12 @@ abstract contract Events {
                         LENDING POOL GUARDIAN
     ////////////////////////////////////////////////////////////// */
 
-    event PauseUpdate(
-        bool repayPauseUpdate,
-        bool withdrawPauseUpdate,
-        bool borrowPauseUpdate,
-        bool PauseUpdate,
-        bool liquidationPauseUpdate
+    event PauseFlagsUpdated(
+        bool repayPauseFlagsUpdated,
+        bool withdrawPauseFlagsUpdated,
+        bool borrowPauseFlagsUpdated,
+        bool PauseFlagsUpdated,
+        bool liquidationPauseFlagsUpdated
     );
 
     /* //////////////////////////////////////////////////////////////
@@ -44,18 +44,18 @@ abstract contract Events {
     event Repay(address indexed account, address indexed from, uint256 amount);
     event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
+    event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
+    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
-    event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
-    event StartPriceMultiplierSet(uint16 startPriceMultiplier);
-    event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
+    event AuctionCurveParametersSet(
+        uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
+    );
     event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////

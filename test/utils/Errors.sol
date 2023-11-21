@@ -10,9 +10,8 @@ abstract contract Errors {
                                     DEBT TOKEN
     //////////////////////////////////////////////////////////////////////////*/
 
-    error DebtToken_BorrowCapExceeded();
-    error DebtToken_FunctionNotImplemented();
-    error DebtToken_ZeroShares();
+    error BorrowCapExceeded();
+    error FunctionNotImplemented();
 
     /*//////////////////////////////////////////////////////////////////////////
                                   LENDING POOL

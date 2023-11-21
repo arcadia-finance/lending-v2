@@ -43,9 +43,9 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.warp(lastPauseTimestamp + timePassed);
 
         // When: Guardian pauses again within 32 days passed from the last pause.
-        // Then: The transaction reverts with "G_P: Cannot pause".
+        // Then: The transaction reverts.
         vm.startPrank(users.guardian);
-        vm.expectRevert("G_P: Cannot pause");
+        vm.expectRevert(BaseGuardian.Cannot_Pause.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }
@@ -68,7 +68,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         // When: the Guardian pauses.
         vm.startPrank(users.guardian);
         vm.expectEmit(true, true, true, true);
-        emit PauseUpdate(true, true, true, true, true);
+        emit PauseFlagsUpdated(true, true, true, true, true);
         lendingPoolGuardian.pause();
         vm.stopPrank();
 

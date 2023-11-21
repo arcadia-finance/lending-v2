@@ -33,7 +33,7 @@ contract Permit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         address sender
     ) public {
         vm.startPrank(sender);
-        vm.expectRevert(DebtToken_FunctionNotImplemented.selector);
+        vm.expectRevert(FunctionNotImplemented.selector);
         debt_.permit(owner, spender, value, deadline, v, r, s);
         vm.stopPrank();
     }
