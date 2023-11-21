@@ -60,6 +60,9 @@ contract Tranche is ITranche, ERC4626, Owned {
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
+    /**
+     * @dev Modifier to ensure that the tranche is not locked before allowing a function to proceed.
+     */
     modifier notLocked() {
         if (locked) revert Tranche_Locked();
         _;
