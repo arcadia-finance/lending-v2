@@ -8,13 +8,14 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/actions/utils/ActionData.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
-import { IPermit2 } from "../../../lib/accounts-v2/test/utils/Interfaces.sol";
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "doActionWithLeverage" of contract "LendingPool".
  */
 contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+    using FixedPointMathLib for uint256;
+
     /* ///////////////////////////////////////////////////////////////
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
@@ -191,9 +192,9 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
 
-        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
         vm.assume(liquidity >= amountLoaned);
-        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
         vm.assume(amountLoaned > 0);
 
         vm.prank(users.creatorAddress);
@@ -223,11 +224,12 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
         assertEq(
             debt.balanceOf(address(proxyAccount)),
-            uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000)
+            uint256(amountLoaned) + (uint256(amountLoaned).mulDivUp(originationFee, 10_000))
         );
-        assertEq(treasuryBalancePre + (uint256(amountLoaned) * originationFee / 10_000), treasuryBalancePost);
+        assertEq(treasuryBalancePre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)), treasuryBalancePost);
         assertEq(
-            totalRealisedLiquidityPre + (uint256(amountLoaned) * originationFee / 10_000), totalRealisedLiquidityPost
+            totalRealisedLiquidityPre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)),
+            totalRealisedLiquidityPost
         );
     }
 
@@ -245,10 +247,8 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        uint256 fee = uint256(amountLoaned) * originationFee / 10_000;
-
         vm.prank(users.creatorAddress);
-        pool.setOriginationFee(originationFee);
+        pool.setOriginationFee(0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
 
@@ -260,7 +260,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, fee, ref);
+        emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
         pool.doActionWithLeverage(
             amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), ref
         );

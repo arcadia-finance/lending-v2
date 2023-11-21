@@ -318,9 +318,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint128(bound(collateralValue, type(uint96).max, type(uint128).max - 1));
 
-        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
         vm.assume(liquidity >= amountLoaned);
-        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
@@ -350,11 +350,12 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(
             debt.balanceOf(address(proxyAccount)),
-            uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000)
+            uint256(amountLoaned) + (uint256(amountLoaned).mulDivUp(originationFee, 10_000))
         );
-        assertEq(treasuryBalancePre + (uint256(amountLoaned) * originationFee / 10_000), treasuryBalancePost);
+        assertEq(treasuryBalancePre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)), treasuryBalancePost);
         assertEq(
-            totalRealisedLiquidityPre + (uint256(amountLoaned) * originationFee / 10_000), totalRealisedLiquidityPost
+            totalRealisedLiquidityPre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)),
+            totalRealisedLiquidityPost
         );
     }
 
@@ -377,10 +378,8 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(proxyAccount));
 
-        uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
-
         vm.prank(users.creatorAddress);
-        pool.setOriginationFee(originationFee);
+        pool.setOriginationFee(0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
@@ -390,7 +389,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, fee, ref);
+        emit Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, 0, ref);
         pool.borrow(amountLoaned, address(proxyAccount), to, ref);
         vm.stopPrank();
     }

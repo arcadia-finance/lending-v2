@@ -692,7 +692,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         // Add difference to the treasury.
         unchecked {
-            totalRealisedLiquidity += SafeCastLib.safeCastTo128(delta + totalRealisedLiquidity);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(delta + totalRealisedLiquidity);
             realisedLiquidityOf[treasury] += delta;
         }
     }
