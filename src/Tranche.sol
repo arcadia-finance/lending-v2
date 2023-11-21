@@ -176,7 +176,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @param shares The amount of shares minted.
      * @param receiver The address that receives the minted shares.
      * @return assets The corresponding amount of assets of the underlying ERC-20 token being deposited.
-     * @dev This contract does not directly transfers the underlying assets from the sender to the receiver.
+     * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
      * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
      */
@@ -187,7 +187,8 @@ contract Tranche is ITranche, ERC4626, Owned {
         notDuringAuction
         returns (uint256 assets)
     {
-        assets = previewMintAndSync(shares); // No need to check for rounding error, previewMint rounds up.
+        // No need to check for rounding error, previewMint rounds up.
+        assets = previewMintAndSync(shares);
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
         lendingPool.depositInLendingPool(assets, msg.sender);
@@ -211,10 +212,12 @@ contract Tranche is ITranche, ERC4626, Owned {
         notDuringAuction
         returns (uint256 shares)
     {
-        shares = previewWithdrawAndSync(assets); // No need to check for rounding error, previewWithdraw rounds up.
+        // No need to check for rounding error, previewWithdraw rounds up.
+        shares = previewWithdrawAndSync(assets);
 
         if (msg.sender != owner_) {
-            uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
+            // Saves gas for limited approvals.
+            uint256 allowed = allowance[owner_][msg.sender];
 
             if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
@@ -241,7 +244,8 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 assets)
     {
         if (msg.sender != owner_) {
-            uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
+            // Saves gas for limited approvals.
+            uint256 allowed = allowance[owner_][msg.sender];
 
             if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
