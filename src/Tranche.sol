@@ -39,7 +39,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     event LockSet(bool status);
-    event AuctionInProgressSet(bool status);
+    event AuctionFlagSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
@@ -115,7 +115,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         auctionInProgress = false;
 
         emit LockSet(true);
-        emit AuctionInProgressSet(false);
+        emit AuctionFlagSet(false);
     }
 
     /**
@@ -140,7 +140,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
         auctionInProgress = auctionInProgress_;
 
-        emit AuctionInProgressSet(auctionInProgress_);
+        emit AuctionFlagSet(auctionInProgress_);
     }
 
     /*//////////////////////////////////////////////////////////////
