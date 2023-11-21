@@ -26,7 +26,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(pool));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(Tranche_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         tranche.lock();
         vm.stopPrank();
     }
@@ -39,7 +39,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.expectEmit(true, true, true, true);
         emit LockSet(true);
         vm.expectEmit(true, true, true, true);
-        emit AuctionFlagSet(false);
+        emit AuctionInProgressSet(false);
         tranche.lock();
         vm.stopPrank();
 

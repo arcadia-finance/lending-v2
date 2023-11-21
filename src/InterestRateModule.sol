@@ -11,11 +11,16 @@ pragma solidity 0.8.19;
  */
 contract InterestRateModule {
     /* //////////////////////////////////////////////////////////////
-                                STORAGE
+                                CONSTANTS
     ////////////////////////////////////////////////////////////// */
 
     // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
+
+    /* //////////////////////////////////////////////////////////////
+                                STORAGE
+    ////////////////////////////////////////////////////////////// */
+
     // The current interest rate, 18 decimals precision.
     uint256 public interestRate;
 
@@ -23,18 +28,19 @@ contract InterestRateModule {
     // which give the interest rate in function of the utilisation of the Lending Pool.
     InterestRateConfiguration public interestRateConfig;
 
-    /**
-     * A struct with the set of interest rate configuration parameters:
-     * - baseRatePerYear The interest rate when utilisation is 0.
-     * - lowSlopePerYear The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
-     * - highSlopePerYear The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
-     * - utilisationThreshold the optimal utilisation, where we go from the flat first curve to the steeper second curve.
-     */
     struct InterestRateConfiguration {
-        uint72 baseRatePerYear; //18 decimals precision.
-        uint72 lowSlopePerYear; //18 decimals precision.
-        uint72 highSlopePerYear; //18 decimals precision.
-        uint16 utilisationThreshold; //4 decimal precision.
+        // The interest rate when utilisation is 0.
+        // 18 decimals precision.
+        uint72 baseRatePerYear;
+        // The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+        // 18 decimals precision.
+        uint72 lowSlopePerYear;
+        // The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+        // 18 decimals precision.
+        uint72 highSlopePerYear;
+        // The optimal capital utilisation, where we go from the first curve to the steeper second curve.
+        // 4 decimal precision.
+        uint16 utilisationThreshold;
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -64,28 +70,26 @@ contract InterestRateModule {
 
     /**
      * @notice Calculates the interest rate.
-     * @param utilisation Utilisation rate, 5 decimal precision.
-     * @return interestRate The current interest rate, 18 decimal precision.
+     * @param utilisation Utilisation rate, 4 decimal precision.
+     * @return interestRate_ The current interest rate, 18 decimal precision.
      * @dev The interest rate is a function of the utilisation of the Lending Pool.
-     * We use two linear curves: a flat one below the optimal utilisation and a steep one above.
+     * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
      */
-    function _calculateInterestRate(uint256 utilisation) internal view returns (uint256) {
+    function _calculateInterestRate(uint256 utilisation) internal view returns (uint256 interestRate_) {
+        // Cache utilisationThreshold.
+        uint256 utilisationThreshold = interestRateConfig.utilisationThreshold;
         unchecked {
-            if (utilisation >= interestRateConfig.utilisationThreshold) {
-                // 1e22 = uT (1e4) * ls (1e18).
-                uint256 lowSlopeInterest =
-                    uint256(interestRateConfig.utilisationThreshold) * interestRateConfig.lowSlopePerYear;
-                // 1e22 = (uT - u) (1e4) * hs (e18).
-                uint256 highSlopeInterest = uint256((utilisation - interestRateConfig.utilisationThreshold))
-                    * interestRateConfig.highSlopePerYear;
-                // 1e18 = bs (1e18) + (lsIR (e22) + hsIR (1e22)) / 1e4.
-                return uint256(interestRateConfig.baseRatePerYear) + ((lowSlopeInterest + highSlopeInterest) / ONE_4);
+            if (utilisation >= utilisationThreshold) {
+                // lsIR (1e22) = uT (1e4) * ls (1e18).
+                uint256 lowSlopeInterest = utilisationThreshold * interestRateConfig.lowSlopePerYear;
+                // hsIR (1e22) = (u - uT) (1e4) * hs (e18).
+                uint256 highSlopeInterest = (utilisation - utilisationThreshold) * interestRateConfig.highSlopePerYear;
+                // i (1e18) =  (lsIR (e22) + hsIR (1e22)) / 1e4 + bs (1e18).
+                interestRate_ = (lowSlopeInterest + highSlopeInterest) / ONE_4 + interestRateConfig.baseRatePerYear;
             } else {
-                // 1e18 = br (1e18) + (ls (1e18) * u (1e4)) / 1e4.
-                return uint256(
-                    uint256(interestRateConfig.baseRatePerYear)
-                        + ((uint256(interestRateConfig.lowSlopePerYear) * utilisation) / ONE_4)
-                );
+                // i (1e18) = (u (1e4) * ls (1e18)) / 1e4 + br (1e18).
+                interestRate_ =
+                    utilisation * interestRateConfig.lowSlopePerYear / ONE_4 + interestRateConfig.baseRatePerYear;
             }
         }
     }
@@ -94,13 +98,12 @@ contract InterestRateModule {
      * @notice Updates the interest rate.
      * @param totalDebt Total amount of debt.
      * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
-     * @dev This function is only be called by the function _updateInterestRate(uint256 realisedDebt_, uint256 totalRealisedLiquidity_),
-     * calculates the interest rate, if the totalRealisedLiquidity_ is zero then utilisation is zero.
      */
     function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
         uint256 utilisation; // 4 decimals precision
-        if (totalLiquidity > 0) {
-            utilisation = (ONE_4 * totalDebt) / totalLiquidity;
+        unchecked {
+            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
+            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
         }
 
         //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
