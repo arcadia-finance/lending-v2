@@ -26,8 +26,8 @@ contract Constructor_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     function testFuzz_Success_deployment() public {
         debt_ = new DebtTokenExtension(asset);
 
-        assertEq(debt_.name(), string("Arcadia V2 Asset Debt"));
-        assertEq(debt_.symbol(), string("darcASSET"));
+        assertEq(debt_.name(), string("ArcadiaV2 Asset Debt"));
+        assertEq(debt_.symbol(), string("darcV2ASSET"));
         assertEq(debt_.decimals(), 18);
     }
 }
