@@ -72,8 +72,8 @@ contract InterestRateModuleExtension is InterestRateModule {
 ////////////////////////////////////////////////////////////// */
 
 contract LendingPoolExtension is LendingPool {
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
-        LendingPool(riskManager_, asset_, treasury_, accountFactory_, liquidator_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address ACCOUNT_FACTORY_, address liquidator_)
+        LendingPool(riskManager_, asset_, treasury_, ACCOUNT_FACTORY_, liquidator_)
     { }
 
     function popTranche(uint256 index, address tranche) public {
@@ -160,12 +160,12 @@ contract LendingPoolExtension is LendingPool {
         return fixedLiquidationCost;
     }
 
-    function getMaxInitiatorFee() public view returns (uint80) {
-        return maxInitiatorFee;
+    function getmaxInitiationFee() public view returns (uint80) {
+        return maxInitiationFee;
     }
 
-    function getMaxClosingFee() public view returns (uint80) {
-        return maxClosingFee;
+    function getmaxTerminationFee() public view returns (uint80) {
+        return maxTerminationFee;
     }
 
     function getAuctionsInProgress() public view returns (uint16) {
@@ -196,8 +196,8 @@ contract LendingPoolExtension is LendingPool {
         return tranches[id];
     }
 
-    function getAccountFactory() public view returns (address) {
-        return accountFactory;
+    function getACCOUNT_FACTORY() public view returns (address) {
+        return ACCOUNT_FACTORY;
     }
 
     function getLiquidator() public view returns (address) {
@@ -216,9 +216,9 @@ contract LendingPoolExtension is LendingPool {
         balanceOf[account] = amount;
     }
 
-    function setMaxLiquidationFees_(uint80 maxInitiatorFee_, uint80 maxClosingFee_) public {
-        maxInitiatorFee = maxInitiatorFee_;
-        maxClosingFee = maxClosingFee_;
+    function setMaxLiquidationFees_(uint80 maxInitiationFee_, uint80 maxTerminationFee_) public {
+        maxInitiationFee = maxInitiationFee_;
+        maxTerminationFee = maxTerminationFee_;
     }
 
     function getPenaltyWeight() public view returns (uint16) {

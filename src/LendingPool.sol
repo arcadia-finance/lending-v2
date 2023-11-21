@@ -24,7 +24,7 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
  * and does the accounting of the debtTokens (ERC4626).
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by the first minter.
- * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
+ * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
 contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateModule, ILendingPool {
     using SafeTransferLib for ERC20;
@@ -37,9 +37,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Seconds per year, leap years ignored.
     uint256 internal constant YEARLY_SECONDS = 31_536_000;
     // Contract address of the Arcadia Account Factory.
-    address internal immutable accountFactory;
+    address internal immutable ACCOUNT_FACTORY;
     // Contract address of the Liquidator contract.
-    address internal immutable liquidator;
+    address internal immutable LIQUIDATOR;
 
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
@@ -56,19 +56,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
     uint128 public totalRealisedLiquidity;
-    // Maximum amount of `underlying asset` that can be supplied to the pool.
-    // uint128 public supplyCap;
     // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
     uint96 internal fixedLiquidationCost;
-    // Number of auctions that are currently in progress.
-    uint16 internal auctionsInProgress;
+
     // Address of the protocol treasury.
     address internal treasury;
-
+    // Number of auctions that are currently in progress.
+    uint16 internal auctionsInProgress;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 internal maxInitiatorFee;
+    uint80 internal maxInitiationFee;
     // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
-    uint80 internal maxClosingFee;
+    uint80 internal maxTerminationFee;
     // Fee paid to the Liquidation Initiator.
     // Defined as a fraction of the openDebt with 4 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
@@ -95,7 +93,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
     mapping(address => uint256) internal interestWeight;
     // Map tranche => realisedLiquidity.
-    // Amount of `underlying asset` that is claimable by the Tranche. Does not take into account pending interests.
+    // Amount of `underlying asset` that is claimable by the liquidity providers.
+    // Does not take into account pending interests.
     mapping(address => uint256) public realisedLiquidityOf;
     // Map Account => owner => beneficiary => amount.
     // Stores the credit allowances for a beneficiary per Account and per Owner.
@@ -109,7 +108,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     event TrancheAdded(address indexed tranche, uint8 indexed index);
     event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
     event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
-    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
@@ -162,7 +161,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @notice Checks if caller is the Liquidator.
      */
     modifier onlyLiquidator() {
-        if (liquidator != msg.sender) revert LendingPool_Unauthorized();
+        if (LIQUIDATOR != msg.sender) revert LendingPool_Unauthorized();
         _;
     }
 
@@ -194,18 +193,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param riskManager_ The address of the new Risk Manager.
      * @param asset_ The underlying ERC20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
-     * @param accountFactory_ The address of the Account Factory.
-     * @param liquidator_ The address of the Liquidator.
+     * @param ACCOUNT_FACTORY_ The address of the Account Factory.
+     * @param LIQUIDATOR_ The address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory_, address liquidator_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address ACCOUNT_FACTORY_, address LIQUIDATOR_)
         LendingPoolGuardian()
         Creditor(riskManager_)
         DebtToken(asset_)
     {
         treasury = treasury_;
-        accountFactory = accountFactory_;
-        liquidator = liquidator_;
+        ACCOUNT_FACTORY = ACCOUNT_FACTORY_;
+        LIQUIDATOR = LIQUIDATOR_;
         initiatorRewardWeight = 100;
         penaltyWeight = 500;
         // note: to discuss
@@ -437,7 +436,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      */
     function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
         //If Account is not an actual address of an Arcadia Account, ownerOfAccount(address) will return the zero address.
-        if (IFactory(accountFactory).ownerOfAccount(account) != msg.sender) revert LendingPool_Unauthorized();
+        if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert LendingPool_Unauthorized();
 
         creditAllowance[account][msg.sender][beneficiary] = amount;
 
@@ -458,7 +457,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         processInterests
     {
         //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
-        address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
+        address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
         uint256 amountWithFee = amount + amount.mulDivUp(originationFee, ONE_4);
@@ -574,7 +573,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         bytes3 referrer
     ) external whenBorrowNotPaused processInterests {
         // If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
-        address accountOwner = IFactory(accountFactory).ownerOfAccount(account);
+        address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
 
         uint256 amountBorrowedWithFee = amountBorrowed + amountBorrowed.mulDivUp(originationFee, ONE_4);
@@ -804,14 +803,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets the maxInitiatorFee and maxClosingFee.
-     * @param maxInitiatorFee_ The maximum fee that is paid to the initiator of a liquidation.
-     * @param maxClosingFee_ The maximum fee that is paid to the closer of a liquidation.
+     * @notice Sets the maxInitiationFee and maxTerminationFee.
+     * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
+     * @param maxTerminationFee_ The maximum fee that is paid to the closer of a liquidation.
      * @dev The liquidator sets the % of the debt that is paid to the initiator and terminator of a liquidation.
-     * This fee is capped by the maxInitiatorFee respectively maxClosingFee.
+     * This fee is capped by the maxInitiationFee respectively maxTerminationFee.
      */
-    function setMaxLiquidationFees(uint80 maxInitiatorFee_, uint80 maxClosingFee_) external onlyOwner {
-        emit MaxLiquidationFeesSet(maxInitiatorFee = maxInitiatorFee_, maxClosingFee = maxClosingFee_);
+    function setMaxLiquidationFees(uint80 maxInitiationFee_, uint80 maxTerminationFee_) external onlyOwner {
+        emit MaxLiquidationFeesSet(maxInitiationFee = maxInitiationFee_, maxTerminationFee = maxTerminationFee_);
     }
 
     /**
@@ -1084,15 +1083,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         view
         returns (uint256 liquidationInitiatorReward, uint256 liquidationTerminationReward, uint256 liquidationPenalty)
     {
-        uint256 maxInitiatorFee_ = maxInitiatorFee;
-        uint256 maxClosingFee_ = maxClosingFee;
+        uint256 maxInitiationFee_ = maxInitiationFee;
+        uint256 maxTerminationFee_ = maxTerminationFee;
         liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
         liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFee_ ? maxInitiatorFee_ : liquidationInitiatorReward;
+            liquidationInitiatorReward > maxInitiationFee_ ? maxInitiationFee_ : liquidationInitiatorReward;
 
         liquidationTerminationReward = debt.mulDivDown(closingRewardWeight, ONE_4);
         liquidationTerminationReward =
-            liquidationTerminationReward > maxClosingFee_ ? maxClosingFee_ : liquidationTerminationReward;
+            liquidationTerminationReward > maxTerminationFee_ ? maxTerminationFee_ : liquidationTerminationReward;
 
         liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
     }
@@ -1154,7 +1153,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         if (isValidVersion[accountVersion]) {
             success = true;
             baseCurrency = address(asset);
-            liquidator_ = liquidator;
+            liquidator_ = LIQUIDATOR;
             fixedLiquidationCost_ = fixedLiquidationCost;
         }
     }

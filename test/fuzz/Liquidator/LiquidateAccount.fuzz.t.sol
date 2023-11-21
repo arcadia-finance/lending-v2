@@ -158,8 +158,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint16 initiatorRewardWeight,
         uint16 penaltyWeight,
         uint16 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -176,7 +176,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);
@@ -208,8 +208,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint16 initiatorRewardWeight,
         uint16 penaltyWeight,
         uint16 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -229,7 +229,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);
@@ -244,8 +244,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Avoid stack too deep
         uint16 closingRewardWeightStack = closingRewardWeight;
-        uint80 maxInitiatorFeeStack = maxInitiatorFee;
-        uint80 maxClosingFeeStack = maxClosingFee;
+        uint80 maxInitiationFeeStack = maxInitiationFee;
+        uint80 maxTerminationFeeStack = maxTerminationFee;
         uint16 penaltyWeightStack = penaltyWeight;
         uint16 initiatorRewardWeightStack = initiatorRewardWeight;
         uint128 openDebt_ = amountLoaned + 1;
@@ -256,11 +256,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 10_000);
         liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFeeStack ? maxInitiatorFeeStack : liquidationInitiatorReward;
+            liquidationInitiatorReward > maxInitiationFeeStack ? maxInitiationFeeStack : liquidationInitiatorReward;
 
         assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
         uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 10_000);
-        closingReward = closingReward > maxClosingFeeStack ? maxClosingFeeStack : closingReward;
+        closingReward = closingReward > maxTerminationFeeStack ? maxTerminationFeeStack : closingReward;
 
         uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 10_000);
 
@@ -279,8 +279,8 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint8 initiatorRewardWeight,
         uint8 penaltyWeight,
         uint8 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -297,7 +297,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);

@@ -42,7 +42,7 @@ abstract contract Events {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event Repay(address indexed account, address indexed from, uint256 amount);
-    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event AccountVersionSet(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
