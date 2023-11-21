@@ -8,9 +8,9 @@ pragma solidity 0.8.19;
 import { BaseGuardian } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
- * @title LendingPool Guardian
+ * @title LendingPool Guardian.
  * @author Pragma Labs
- * @notice This module provides the logic for the LendingPool that allows authorized accounts to trigger an emergency stop.
+ * @notice Logic inherited by the LendingPool that allows an authorized guardian to trigger an emergency stop.
  */
 abstract contract LendingPoolGuardian is BaseGuardian {
     /* //////////////////////////////////////////////////////////////
@@ -32,17 +32,13 @@ abstract contract LendingPoolGuardian is BaseGuardian {
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event PauseUpdate(
-        bool repayPauseUpdate,
-        bool withdrawPauseUpdate,
-        bool borrowPauseUpdate,
-        bool depositPauseUpdate,
-        bool liquidationPauseUpdate
+    event PauseFlagsUpdated(
+        bool repayPauseFlagsUpdated,
+        bool withdrawPauseFlagsUpdated,
+        bool borrowPauseFlagsUpdated,
+        bool depositPauseFlagsUpdated,
+        bool liquidationPauseFlagsUpdated
     );
-
-    /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -107,7 +103,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @inheritdoc BaseGuardian
      */
     function pause() external override onlyGuardian {
-        require(block.timestamp > pauseTimestamp + 32 days, "G_P: Cannot pause");
+        if (block.timestamp <= pauseTimestamp + 32 days) revert Cannot_Pause();
         repayPaused = true;
         withdrawPaused = true;
         borrowPaused = true;
@@ -115,16 +111,16 @@ abstract contract LendingPoolGuardian is BaseGuardian {
         liquidationPaused = true;
         pauseTimestamp = block.timestamp;
 
-        emit PauseUpdate(true, true, true, true, true);
+        emit PauseFlagsUpdated(true, true, true, true, true);
     }
 
     /**
      * @notice This function is used to unpause one or more flags.
-     * @param repayPaused_ false when repay functionality should be unPaused.
-     * @param withdrawPaused_ false when withdraw functionality should be unPaused.
-     * @param borrowPaused_ false when borrow functionality should be unPaused.
-     * @param depositPaused_ false when deposit functionality should be unPaused.
-     * @param liquidationPaused_ false when liquidation functionality should be unPaused.
+     * @param repayPaused_ False when repay functionality should be unPaused.
+     * @param withdrawPaused_ False when withdraw functionality should be unPaused.
+     * @param borrowPaused_ False when borrow functionality should be unPaused.
+     * @param depositPaused_ False when deposit functionality should be unPaused.
+     * @param liquidationPaused_ False when liquidation functionality should be unPaused.
      * @dev This function can unPause repay, withdraw, borrow, and deposit individually.
      * @dev Can only update flags from paused (true) to unPaused (false), cannot be used the other way around
      * (to set unPaused flags to paused).
@@ -142,20 +138,20 @@ abstract contract LendingPoolGuardian is BaseGuardian {
         depositPaused = depositPaused && depositPaused_;
         liquidationPaused = liquidationPaused && liquidationPaused_;
 
-        emit PauseUpdate(repayPaused, withdrawPaused, borrowPaused, depositPaused, liquidationPaused);
+        emit PauseFlagsUpdated(repayPaused, withdrawPaused, borrowPaused, depositPaused, liquidationPaused);
     }
 
     /**
      * @inheritdoc BaseGuardian
      */
     function unPause() external override {
-        require(block.timestamp > pauseTimestamp + 30 days, "G_UP: Cannot unPause");
+        if (block.timestamp <= pauseTimestamp + 30 days) revert Cannot_UnPause();
         repayPaused = false;
         withdrawPaused = false;
         borrowPaused = false;
         depositPaused = false;
         liquidationPaused = false;
 
-        emit PauseUpdate(false, false, false, false, false);
+        emit PauseFlagsUpdated(false, false, false, false, false);
     }
 }

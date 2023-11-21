@@ -16,12 +16,12 @@ abstract contract Events {
                         LENDING POOL GUARDIAN
     ////////////////////////////////////////////////////////////// */
 
-    event PauseUpdate(
-        bool repayPauseUpdate,
-        bool withdrawPauseUpdate,
-        bool borrowPauseUpdate,
-        bool PauseUpdate,
-        bool liquidationPauseUpdate
+    event PauseFlagsUpdated(
+        bool repayPauseFlagsUpdated,
+        bool withdrawPauseFlagsUpdated,
+        bool borrowPauseFlagsUpdated,
+        bool PauseFlagsUpdated,
+        bool liquidationPauseFlagsUpdated
     );
 
     /* //////////////////////////////////////////////////////////////
