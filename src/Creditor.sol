@@ -44,7 +44,7 @@ abstract contract Creditor {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets a new Risk Manager. A risk manager can:
+     * @notice Sets a new Risk Manager. A Risk Manager can:
      * -Set risk parameters for collateral assets, including: max exposures, collateral factors and liquidation factors.
      * -Set minimum usd value taken into account to avoid dust attacks.
      * @param riskManager_ The address of the new Risk Manager.
@@ -67,7 +67,7 @@ abstract contract Creditor {
     }
 
     /**
-     * @notice Checks if Account fulfills all requirements and returns creditor settings.
+     * @notice Checks if Account fulfils all requirements and returns Creditor parameters.
      * @param accountVersion The version of the Arcadia Account.
      * @return success Bool indicating if all requirements are met.
      * @return baseCurrency The base currency of the creditor.
@@ -76,7 +76,6 @@ abstract contract Creditor {
      */
     function openMarginAccount(uint256 accountVersion)
         external
-        view
         virtual
         returns (bool success, address baseCurrency, address liquidator, uint256 fixedLiquidationCost);
 
@@ -92,5 +91,5 @@ abstract contract Creditor {
      * @param initiator The address of the liquidation initiator.
      * @return openPosition the open position of the Account.
      */
-    function startLiquidation(address initiator) external virtual returns (uint256);
+    function startLiquidation(address initiator) external virtual returns (uint256 openPosition);
 }

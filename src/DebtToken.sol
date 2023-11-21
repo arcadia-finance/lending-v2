@@ -50,8 +50,8 @@ abstract contract DebtToken is ERC4626 {
     constructor(ERC20 asset_)
         ERC4626(
             asset_,
-            string(abi.encodePacked("Arcadia V2 ", asset_.name(), " Debt")),
-            string(abi.encodePacked("darc", asset_.symbol()))
+            string(abi.encodePacked("ArcadiaV2 ", asset_.name(), " Debt")),
+            string(abi.encodePacked("darcV2", asset_.symbol()))
         )
     { }
 
