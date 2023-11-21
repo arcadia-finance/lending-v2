@@ -266,7 +266,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
-     * @return assets The total amount of underlying assets, to which liquidity providers have a claim.
+     * @return assets The total amount of underlying assets
      * @dev The Liquidity Pool does the accounting of the outstanding claim on liquidity per tranche.
      */
     function totalAssets() public view override returns (uint256 assets) {
@@ -275,7 +275,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
-     * @return assets The total amount of underlying assets, to which liquidity providers have a claim.
+     * @return assets The total amount of underlying assets
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
@@ -284,7 +284,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
-     * @return assets The amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets
      * @dev This function is a modification of convertToShares() where interests are realized (state modification).
      */
     function convertToSharesAndSync(uint256 assets) public returns (uint256) {
@@ -296,7 +296,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
-     * @return assets The amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets
      * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
     function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
@@ -307,7 +307,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @notice Modification of previewDeposit() where interests are realized (state modification).
+     * @notice Returns the amount of shares that correspond to a certain amount of underlying assets.
      * @return shares The amount of shares minted.
      * @dev This function is a modification of previewDeposit() where interests are realized (state modification).
      */
@@ -317,7 +317,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of previewMint() where interests are realized (state modification).
-     * @return assets The corresponding amount of assets of the underlying ERC-20 token being deposited.
+     * @return assets The corresponding amount of assets of the underlying ERC20 token being deposited.
      * @dev This function is a modification of previewMint() where interests are realized (state modification).
      */
     function previewMintAndSync(uint256 shares) public returns (uint256) {
