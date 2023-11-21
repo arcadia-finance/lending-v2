@@ -26,7 +26,7 @@ contract SetAuctionInProgress_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(pool));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(Tranche_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         tranche.setAuctionInProgress(true);
         vm.stopPrank();
     }

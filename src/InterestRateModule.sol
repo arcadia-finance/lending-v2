@@ -11,11 +11,16 @@ pragma solidity 0.8.19;
  */
 contract InterestRateModule {
     /* //////////////////////////////////////////////////////////////
-                                STORAGE
+                                CONSTANTS
     ////////////////////////////////////////////////////////////// */
 
     // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
+
+    /* //////////////////////////////////////////////////////////////
+                                STORAGE
+    ////////////////////////////////////////////////////////////// */
+
     // The current interest rate, 18 decimals precision.
     uint256 public interestRate;
 

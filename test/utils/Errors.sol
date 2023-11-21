@@ -53,9 +53,9 @@ abstract contract Errors {
                                     TRANCHE
     //////////////////////////////////////////////////////////////////////////*/
 
-    error Tranche_Locked();
-    error Tranche_ZeroAssets();
-    error Tranche_AuctionOngoing();
-    error Tranche_Unauthorized();
-    error Tranche_ZeroShares();
+    error Locked();
+    error ZeroAssets();
+    error AuctionOngoing();
+    error Unauthorized();
+    error ZeroShares();
 }

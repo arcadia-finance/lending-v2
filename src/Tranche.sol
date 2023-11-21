@@ -50,15 +50,15 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     // Thrown when a tranche is locked.
-    error Tranche_Locked();
+    error Locked();
     // Thrown when amount of shares would represent zero assets.
-    error Tranche_ZeroAssets();
+    error ZeroAssets();
     // Thrown when an auction is in process.
-    error Tranche_AuctionOngoing();
+    error AuctionOngoing();
     // Thrown when caller is not valid.
-    error Tranche_Unauthorized();
+    error Unauthorized();
     // Thrown when amount of asset would represent zero shares.
-    error Tranche_ZeroShares();
+    error ZeroShares();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -68,7 +68,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Modifier to ensure that the tranche is not locked before allowing a function to proceed.
      */
     modifier notLocked() {
-        if (locked) revert Tranche_Locked();
+        if (locked) revert Locked();
         _;
     }
 
@@ -79,7 +79,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
     modifier notDuringAuction() {
-        if (auctionInProgress) revert Tranche_AuctionOngoing();
+        if (auctionInProgress) revert AuctionOngoing();
         _;
     }
 
@@ -114,7 +114,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function can only be called by the Lending Pool and is triggered exclusively during a severe default event.
      */
     function lock() external {
-        if (msg.sender != address(LENDING_POOL)) revert Tranche_Unauthorized();
+        if (msg.sender != address(LENDING_POOL)) revert Unauthorized();
 
         emit LockSet(locked = true);
         emit AuctionsInProgressSet(auctionInProgress = false);
@@ -137,7 +137,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        if (msg.sender != address(LENDING_POOL)) revert Tranche_Unauthorized();
+        if (msg.sender != address(LENDING_POOL)) revert Unauthorized();
 
         emit AuctionsInProgressSet(auctionInProgress = auctionInProgress_);
     }
@@ -163,7 +163,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
-        if ((shares = previewDepositAndSync(assets)) == 0) revert Tranche_ZeroShares();
+        if ((shares = previewDepositAndSync(assets)) == 0) revert ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
         LENDING_POOL.depositInLendingPool(assets, msg.sender);
@@ -253,7 +253,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         }
 
         // Check for rounding error since we round down in previewRedeem.
-        if ((assets = previewRedeemAndSync(shares)) == 0) revert Tranche_ZeroAssets();
+        if ((assets = previewRedeemAndSync(shares)) == 0) revert ZeroAssets();
 
         _burn(owner_, shares);
 
