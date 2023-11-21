@@ -39,7 +39,7 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.expectEmit(true, true, true, true);
         emit LockSet(true);
         vm.expectEmit(true, true, true, true);
-        emit AuctionFlagSet(false);
+        emit AuctionsInProgressSet(false);
         tranche.lock();
         vm.stopPrank();
 

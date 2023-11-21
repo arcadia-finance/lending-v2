@@ -29,6 +29,6 @@ contract Constructor_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.name(), string("Senior Arcadia Asset"));
         assertEq(tranche.symbol(), string("SRarcASSET"));
         assertEq(tranche.decimals(), 18);
-        assertEq(address(tranche.lendingPool()), address(pool));
+        assertEq(address(tranche.LENDING_POOL()), address(pool));
     }
 }

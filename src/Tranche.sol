@@ -15,7 +15,7 @@ import { IGuardian } from "./interfaces/IGuardian.sol";
  * @title Tranche
  * @author Pragma Labs
  * @notice The Tranche contract allows for lending of a specified ERC20 token, managed by a lending pool.
- * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying
+ * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying asset
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
@@ -23,7 +23,11 @@ import { IGuardian } from "./interfaces/IGuardian.sol";
 contract Tranche is ITranche, ERC4626, Owned {
     using FixedPointMathLib for uint256;
 
-    ILendingPool public immutable lendingPool;
+    /* //////////////////////////////////////////////////////////////
+                                CONSTANTS
+    ////////////////////////////////////////////////////////////// */
+
+    ILendingPool public immutable LENDING_POOL;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
@@ -39,7 +43,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     event LockSet(bool status);
-    event AuctionFlagSet(bool status);
+    event AuctionsInProgressSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
@@ -98,7 +102,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         )
         Owned(msg.sender)
     {
-        lendingPool = ILendingPool(lendingPool_);
+        LENDING_POOL = ILendingPool(lendingPool_);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -110,12 +114,10 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function can only be called by the Lending Pool and is triggered exclusively during a severe default event.
      */
     function lock() external {
-        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
-        locked = true;
-        auctionInProgress = false;
+        if (msg.sender != address(LENDING_POOL)) revert Tranche_Unauthorized();
 
-        emit LockSet(true);
-        emit AuctionFlagSet(false);
+        emit LockSet(locked = true);
+        emit AuctionsInProgressSet(auctionInProgress = false);
     }
 
     /**
@@ -124,9 +126,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * This function will only be called to partially refund existing share-holders after a default.
      */
     function unLock() external onlyOwner {
-        locked = false;
-
-        emit LockSet(false);
+        emit LockSet(locked = false);
     }
 
     /**
@@ -137,10 +137,9 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
-        auctionInProgress = auctionInProgress_;
+        if (msg.sender != address(LENDING_POOL)) revert Tranche_Unauthorized();
 
-        emit AuctionFlagSet(auctionInProgress_);
+        emit AuctionsInProgressSet(auctionInProgress = auctionInProgress_);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -167,7 +166,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if ((shares = previewDepositAndSync(assets)) == 0) revert Tranche_ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
-        lendingPool.depositInLendingPool(assets, msg.sender);
+        LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
 
@@ -194,7 +193,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         assets = previewMintAndSync(shares);
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
-        lendingPool.depositInLendingPool(assets, msg.sender);
+        LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
 
@@ -227,7 +226,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
         _burn(owner_, shares);
 
-        lendingPool.withdrawFromLendingPool(assets, receiver);
+        LENDING_POOL.withdrawFromLendingPool(assets, receiver);
 
         emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
@@ -258,7 +257,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
         _burn(owner_, shares);
 
-        lendingPool.withdrawFromLendingPool(assets, receiver);
+        LENDING_POOL.withdrawFromLendingPool(assets, receiver);
 
         emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
@@ -273,7 +272,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev The Liquidity Pool does the accounting of the outstanding claim on liquidity per tranche.
      */
     function totalAssets() public view override returns (uint256 assets) {
-        assets = lendingPool.liquidityOf(address(this));
+        assets = LENDING_POOL.liquidityOf(address(this));
     }
 
     /**
@@ -282,7 +281,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
-        assets = lendingPool.liquidityOfAndSync(address(this));
+        assets = LENDING_POOL.liquidityOfAndSync(address(this));
     }
 
     /**
@@ -359,11 +358,11 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxDeposit() according the EIP-4626 specification.
      */
     function maxDeposit(address) public view override returns (uint256 maxAssets) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).depositPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = lendingPool.supplyCap();
-        uint256 realisedLiquidity = lendingPool.totalRealisedLiquidity();
-        uint256 interests = lendingPool.calcUnrealisedDebt();
+        uint256 supplyCap = LENDING_POOL.supplyCap();
+        uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
+        uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
         if (supplyCap > 0) {
             if (realisedLiquidity + interests > supplyCap) return 0;
@@ -377,11 +376,11 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxMint() according the EIP-4626 specification.
      */
     function maxMint(address) public view override returns (uint256 maxShares) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).depositPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = lendingPool.supplyCap();
-        uint256 realisedLiquidity = lendingPool.totalRealisedLiquidity();
-        uint256 interests = lendingPool.calcUnrealisedDebt();
+        uint256 supplyCap = LENDING_POOL.supplyCap();
+        uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
+        uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
         if (supplyCap > 0) {
             if (realisedLiquidity + interests > supplyCap) return 0;
@@ -395,9 +394,9 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxWithdraw() according the EIP-4626 specification.
      */
     function maxWithdraw(address owner_) public view override returns (uint256 maxAssets) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).withdrawPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).withdrawPaused()) return 0;
 
-        uint256 availableAssets = asset.balanceOf(address(lendingPool));
+        uint256 availableAssets = asset.balanceOf(address(LENDING_POOL));
         uint256 claimableAssets = convertToAssets(balanceOf[owner_]);
 
         maxAssets = availableAssets < claimableAssets ? availableAssets : claimableAssets;
@@ -407,11 +406,11 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxRedeem() according the EIP-4626 specification.
      */
     function maxRedeem(address owner_) public view override returns (uint256 maxShares) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).withdrawPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).withdrawPaused()) return 0;
 
         uint256 claimableShares = balanceOf[owner_];
         if (claimableShares == 0) return 0;
-        uint256 availableShares = convertToShares(asset.balanceOf(address(lendingPool)));
+        uint256 availableShares = convertToShares(asset.balanceOf(address(LENDING_POOL)));
 
         maxShares = availableShares < claimableShares ? availableShares : claimableShares;
     }
