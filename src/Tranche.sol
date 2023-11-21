@@ -104,7 +104,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Locks the tranche in case all liquidity of the tranche is written off due to bad debt.
-     * @dev Only the Lending Pool can call this function, only trigger is a severe default event.
+     * @dev This function can only be called by the Lending Pool and is triggered exclusively during a severe default event.
      */
     function lock() external {
         if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
