@@ -274,6 +274,8 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
+     * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
+     * @return assets The total amount of underlying assets, to which liquidity providers have a claim.
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
@@ -281,7 +283,9 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @dev Modification of convertToShares() where interests are realised (state modification).
+     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets, to which a certain amount of shares have a claim.
+     * @dev This function is a modification of convertToShares() where interests are realized (state modification).
      */
     function convertToSharesAndSync(uint256 assets) public returns (uint256) {
         uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
@@ -290,7 +294,9 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @dev Modification of convertToAssets() where interests are realised (state modification).
+     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets, to which a certain amount of shares have a claim.
+     * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
     function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
         uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
@@ -299,14 +305,18 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @dev Modification of previewDeposit() where interests are realised (state modification).
+     * @notice Modification of previewDeposit() where interests are realized (state modification).
+     * @return shares The amount of shares minted.
+     * @dev This function is a modification of previewDeposit() where interests are realized (state modification).
      */
     function previewDepositAndSync(uint256 assets) public returns (uint256) {
         return convertToSharesAndSync(assets);
     }
 
     /**
-     * @dev Modification of previewMint() where interests are realised (state modification).
+     * @notice Modification of previewMint() where interests are realized (state modification).
+     * @return assets The corresponding amount of assets of the underlying ERC-20 token being deposited.
+     * @dev This function is a modification of previewMint() where interests are realized (state modification).
      */
     function previewMintAndSync(uint256 shares) public returns (uint256) {
         uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
@@ -315,7 +325,9 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @dev Modification of previewWithdraw() where interests are realised (state modification).
+     * @notice Modification of previewWithdraw() where interests are realized (state modification).
+     * @return assets The amount of assets of the underlying ERC-20 token being withdrawn.
+     * @dev This function is a modification of previewWithdraw() where interests are realized (state modification).
      */
     function previewWithdrawAndSync(uint256 assets) public returns (uint256) {
         uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
@@ -324,7 +336,9 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @dev Modification of previewRedeem() where interests are realised (state modification).
+     * @notice Modification of previewRedeem() where interests are realized (state modification).
+     * @return shares The amount of shares being redeemed.
+     * @dev This function is a modification of previewRedeem() where interests are realized (state modification).
      */
     function previewRedeemAndSync(uint256 shares) public returns (uint256) {
         return convertToAssetsAndSync(shares);
