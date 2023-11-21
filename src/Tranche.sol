@@ -151,7 +151,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @return shares The amount of shares minted.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
+     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function deposit(uint256 assets, address receiver)
         public
@@ -178,7 +178,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @return assets The amount of assets of the underlying ERC-20 token being deposited.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
+     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function mint(uint256 shares, address receiver)
         public
