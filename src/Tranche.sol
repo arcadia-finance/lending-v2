@@ -117,7 +117,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Unlocks the tranche.
-     * @dev Only the Owner can call this function, since tranches are locked due to complete defaults,
+     * @dev Only the Owner can call this function, since tranches are locked due to complete defaults.
      * This function will only be called to partially refund existing share-holders after a default.
      */
     function unLock() external onlyOwner {
