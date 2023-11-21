@@ -67,7 +67,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @dev Certain actions (depositing and withdrawing) can be halted on the most junior tranche while auctions are in progress.
-     * This prevents frontrunning both in the case there is bad debt (by pulling out the tranche before the bad debt is settled),
+     * This prevents front running both in the case there is bad debt (by pulling out the tranche before the bad debt is settled),
      * as in the case there are big payouts to the LPs (mitigate Just In Time attacks, where MEV bots front-run the payout of
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
