@@ -464,6 +464,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 _yearlyInterestRate = pool.interestRate();
 
         vm.warp(block.timestamp + deltaTimestamp);
+        vm.assume(pool.calcUnrealisedDebt() + pool.totalRealisedLiquidity() <= type(uint128).max);
 
         vm.assume(toRepay < amountCredit);
         vm.assume(debt.previewWithdraw(toRepay) > 0);

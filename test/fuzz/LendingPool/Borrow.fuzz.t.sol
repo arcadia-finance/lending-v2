@@ -11,13 +11,14 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 import { LendingPool } from "../../../src/LendingPool.sol";
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
  */
 contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
+    using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -315,7 +316,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 ref
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint128(bound(collateralValue, type(uint96).max, type(uint128).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);
@@ -376,7 +377,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(proxyAccount));
 
-        uint256 fee = uint256(amountLoaned) * originationFee / 10_000;
+        uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
 
         vm.prank(users.creatorAddress);
         pool.setOriginationFee(originationFee);

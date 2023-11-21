@@ -201,7 +201,7 @@ contract LendingPoolExtension is LendingPool {
     }
 
     function getLiquidator() public view returns (address) {
-        return liquidator;
+        return LIQUIDATOR;
     }
 
     function getBorrowCap() public view returns (uint256) {

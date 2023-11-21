@@ -564,7 +564,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev The sender might be different than the owner if they have the proper allowances.
      * @dev accountManagementAction() works similar to flash loans, this function optimistically calls external logic and checks for the Account state at the very end.
      */
-    function flashAction(
+    function doActionWithLeverage(
         uint256 amountBorrowed,
         address account,
         address actionHandler,
@@ -581,7 +581,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // Check allowances to take debt.
         if (accountOwner != msg.sender) {
             // Since calling accountManagementAction() gives the sender full control over all assets in the Account,
-            // Only Beneficiaries with maximum allowance can call the flashAction function.
+            // Only Beneficiaries with maximum allowance can call the doActionWithLeverage function.
             if (creditAllowance[account][accountOwner][msg.sender] != type(uint256).max) {
                 revert LendingPool_Unauthorized();
             }
@@ -773,7 +773,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             }
         }
         unchecked {
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(assets + totalRealisedLiquidity);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + assets);
 
             // Add the remainingAssets to the treasury balance.
             realisedLiquidityOf[treasury] += remainingAssets;

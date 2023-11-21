@@ -28,9 +28,10 @@ abstract contract Events {
                             LENDING POOL
     ////////////////////////////////////////////////////////////// */
 
-    event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
-    event InterestWeightSet(uint256 indexed index, uint16 weight);
-    event LiquidationWeightSet(uint256 indexed index, uint16 weight);
+    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
+    event TrancheAdded(address indexed tranche, uint8 indexed index);
+    event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
+    event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
@@ -52,7 +53,6 @@ abstract contract Events {
                             LIQUIDATOR
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
     event AuctionCurveParametersSet(uint64 base, uint32 cutoffTime);
     event StartPriceMultiplierSet(uint16 startPriceMultiplier);
     event MinimumPriceMultiplierSet(uint16 minPriceMultiplier);
