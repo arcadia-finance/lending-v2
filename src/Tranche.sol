@@ -230,7 +230,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of the standard ERC-4626 redeem implementation.
-     * @param shares the amount of shares being redeemed.
+     * @param shares The amount of shares being redeemed.
      * @param receiver The address of the receiver of the underlying ERC-20 tokens.
      * @param owner_ The address of the owner of the shares being redeemed.
      * @return assets The corresponding amount of assets withdrawn.
