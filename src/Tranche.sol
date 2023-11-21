@@ -216,9 +216,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if (msg.sender != owner_) {
             uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
 
-            if (allowed != type(uint256).max) {
-                allowance[owner_][msg.sender] = allowed - shares;
-            }
+            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
 
         _burn(owner_, shares);
@@ -245,9 +243,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if (msg.sender != owner_) {
             uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
 
-            if (allowed != type(uint256).max) {
-                allowance[owner_][msg.sender] = allowed - shares;
-            }
+            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
 
         // Check for rounding error since we round down in previewRedeem.
