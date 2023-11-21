@@ -288,7 +288,8 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function is a modification of convertToShares() where interests are realized (state modification).
      */
     function convertToSharesAndSync(uint256 assets) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivDown(supply, totalAssetsAndSync());
     }
@@ -299,7 +300,8 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
     function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivDown(totalAssetsAndSync(), supply);
     }
@@ -319,7 +321,8 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function is a modification of previewMint() where interests are realized (state modification).
      */
     function previewMintAndSync(uint256 shares) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivUp(totalAssetsAndSync(), supply);
     }
@@ -330,7 +333,8 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev This function is a modification of previewWithdraw() where interests are realized (state modification).
      */
     function previewWithdrawAndSync(uint256 assets) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivUp(supply, totalAssetsAndSync());
     }
