@@ -175,7 +175,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @notice Modification of the standard ERC-4626 mint implementation.
      * @param shares The amount of shares minted.
      * @param receiver The address that receives the minted shares.
-     * @return assets The corresponding amount of assets of the underlying ERC-20 token being deposited.
+     * @return assets The amount of assets of the underlying ERC-20 token being deposited.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
      * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
