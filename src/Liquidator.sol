@@ -111,10 +111,14 @@ contract Liquidator is Owned, ILiquidator {
     ////////////////////////////////////////////////////////////// */
 
     constructor() Owned(msg.sender) {
-        base = 999_807_477_651_317_446; // 3600s half life.
-        cutoffTime = 14_400; // 4 hours.
-        startPriceMultiplier = 15_000; // 150%.
-        minPriceMultiplier = 6000; // 60%.
+        // Half life of 3600s.
+        base = 999_807_477_651_317_446;
+        // 4 hours.
+        cutoffTime = 14_400;
+        // 150%.
+        startPriceMultiplier = 15_000;
+        // 60%.
+        minPriceMultiplier = 6000;
 
         emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
     }
