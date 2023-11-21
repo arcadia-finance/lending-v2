@@ -31,7 +31,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     // Flag indicating if the Tranche is locked or not.
     bool public locked;
-    // Flag indicating if there are ongoing auctions or not.
+    // Flag indicating if there are ongoing auction or not.
     bool public auctionInProgress;
 
     /* //////////////////////////////////////////////////////////////
