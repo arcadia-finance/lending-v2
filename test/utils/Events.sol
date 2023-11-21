@@ -44,7 +44,7 @@ abstract contract Events {
     event Repay(address indexed account, address indexed from, uint256 amount);
     event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
+    event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
 

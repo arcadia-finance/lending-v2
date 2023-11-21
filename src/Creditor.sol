@@ -26,7 +26,7 @@ abstract contract Creditor {
     ////////////////////////////////////////////////////////////// */
 
     event RiskManagerUpdated(address riskManager);
-    event AccountVersionSet(uint256 indexed accountVersion, bool valid);
+    event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -36,9 +36,7 @@ abstract contract Creditor {
      * @param riskManager_ The address of the Risk Manager.
      */
     constructor(address riskManager_) {
-        riskManager = riskManager_;
-
-        emit RiskManagerUpdated(riskManager_);
+        _setRiskManager(riskManager_);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -46,7 +44,9 @@ abstract contract Creditor {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets a new Risk Manager.
+     * @notice Sets a new Risk Manager. A risk manager can:
+     * -Set risk parameters for collateral assets, including: max exposures, collateral factors and liquidation factors.
+     * -Set minimum usd value taken into account to avoid dust attacks.
      * @param riskManager_ The address of the new Risk Manager.
      */
     function _setRiskManager(address riskManager_) internal {
@@ -57,25 +57,26 @@ abstract contract Creditor {
 
     /**
      * @notice Sets the validity of Account version to valid.
-     * @param accountVersion The version current version of the Account.
-     * @param valid The validity of the respective accountVersion.
+     * @param accountVersion The current version of the Account.
+     * @param isValid Will be "true" if respective Account version is valid, "false" if not.
      */
-    function _setAccountVersion(uint256 accountVersion, bool valid) internal {
-        isValidVersion[accountVersion] = valid;
+    function _setAccountVersion(uint256 accountVersion, bool isValid) internal {
+        isValidVersion[accountVersion] = isValid;
 
-        emit AccountVersionSet(accountVersion, valid);
+        emit ValidAccountVersionsUpdated(accountVersion, isValid);
     }
 
     /**
-     * @notice Checks if Account fulfills all requirements and returns application settings.
-     * @param accountVersion The current version of the Account.
+     * @notice Checks if Account fulfills all requirements and returns creditor settings.
+     * @param accountVersion The version of the Arcadia Account.
      * @return success Bool indicating if all requirements are met.
-     * @return baseCurrency The base currency of the application.
-     * @return liquidator The liquidator of the application.
+     * @return baseCurrency The base currency of the creditor.
+     * @return liquidator The liquidator of the creditor.
      * @return fixedLiquidationCost Estimated fixed costs (independent of size of debt) to liquidate a position.
      */
     function openMarginAccount(uint256 accountVersion)
         external
+        view
         virtual
         returns (bool success, address baseCurrency, address liquidator, uint256 fixedLiquidationCost);
 
@@ -89,7 +90,7 @@ abstract contract Creditor {
     /**
      * @notice Starts the liquidation of an account and returns the open position of the Account.
      * @param initiator The address of the liquidation initiator.
-     * @return openPosition the open position of the Account
+     * @return openPosition the open position of the Account.
      */
     function startLiquidation(address initiator) external virtual returns (uint256);
 }

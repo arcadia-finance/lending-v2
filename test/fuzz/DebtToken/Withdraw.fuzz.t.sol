@@ -50,7 +50,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         debt_.setRealisedDebt(totalDebt);
 
-        vm.expectRevert(DebtToken_ZeroShares.selector);
+        vm.expectRevert(ZeroShares.selector);
         debt_.withdraw_(assets, owner, owner);
     }
 
