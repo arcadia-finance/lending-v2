@@ -418,7 +418,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
         }
-        totalRealisedLiquidity -= assets;
+        totalRealisedLiquidity -= SafeCastLib.safeCastTo128(assets);
 
         asset.safeTransfer(receiver, assets);
 
