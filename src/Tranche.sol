@@ -360,16 +360,10 @@ contract Tranche is ITranche, ERC4626, Owned {
     function maxDeposit(address) public view override returns (uint256 maxAssets) {
         if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = LENDING_POOL.supplyCap();
         uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
         uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
-        if (supplyCap > 0) {
-            if (realisedLiquidity + interests > supplyCap) return 0;
-            maxAssets = supplyCap - realisedLiquidity - interests;
-        } else {
-            maxAssets = type(uint128).max - realisedLiquidity - interests;
-        }
+        maxAssets = type(uint128).max - realisedLiquidity - interests;
     }
 
     /**
@@ -378,16 +372,10 @@ contract Tranche is ITranche, ERC4626, Owned {
     function maxMint(address) public view override returns (uint256 maxShares) {
         if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = LENDING_POOL.supplyCap();
         uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
         uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
-        if (supplyCap > 0) {
-            if (realisedLiquidity + interests > supplyCap) return 0;
-            maxShares = convertToShares(supplyCap - realisedLiquidity - interests);
-        } else {
-            maxShares = convertToShares(type(uint128).max - realisedLiquidity - interests);
-        }
+        maxShares = convertToShares(type(uint128).max - realisedLiquidity - interests);
     }
 
     /**

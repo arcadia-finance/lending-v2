@@ -37,30 +37,12 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.donateToTranche(1, 0);
     }
 
-    function testFuzz_Revert_donateToTranche_SupplyCap(uint256 amount, uint128 supplyCap) public {
-        // Given: amount should be greater than 1
-        vm.assume(amount > 1);
-        vm.assume(pool.totalRealisedLiquidity() + amount > supplyCap);
-        vm.assume(supplyCap > 0);
-
-        // When: supply cap is set to 1
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-
-        // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
-        pool.donateToTranche(1, amount);
-    }
-
     function testFuzz_Revert_donateToTranche_InsufficientShares(uint32 initialShares, uint128 assets, address donator)
         public
     {
         vm.assume(assets > 0);
         vm.assume(assets < type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
         vm.assume(initialShares < 10 ** pool.decimals());
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(type(uint128).max);
 
         vm.startPrank(users.liquidityProvider);
         srTranche.mint(initialShares, users.liquidityProvider);
@@ -81,9 +63,6 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(assets <= type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
         vm.assume(index < pool.numberOfTranches());
         vm.assume(initialShares >= 10 ** pool.decimals());
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(type(uint128).max);
 
         address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);

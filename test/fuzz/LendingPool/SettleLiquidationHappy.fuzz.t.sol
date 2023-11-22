@@ -36,7 +36,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert(LendingPool_OnlyLiquidator.selector);
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator);
         vm.stopPrank();
     }
@@ -49,13 +49,11 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         surplus = uint128(bound(surplus, 1, type(uint128).max));
         vm.assume(startDebt > 0);
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
+        vm.assume(uint256(liquidity) >= startDebt + initiationReward + auctionTerminationReward + liquidationPenalty);
         vm.assume(
-            uint256(liquidity) >= startDebt + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-        );
-        vm.assume(
-            uint256(liquidity) + surplus + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+            uint256(liquidity) + surplus + initiationReward + auctionTerminationReward + liquidationPenalty
                 <= type(uint128).max
         );
 
@@ -109,7 +107,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: The total realised liquidity should be updated
         assertEq(
             pool.totalRealisedLiquidity(),
-            liquidity + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty + surplus
+            liquidity + initiationReward + auctionTerminationReward + liquidationPenalty + surplus
         );
 
         assertEq(pool.getAuctionsInProgress(), 0);

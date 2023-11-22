@@ -155,16 +155,16 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
         uint128 amountLoaned,
-        uint16 initiatorRewardWeight,
+        uint16 initiationWeight,
         uint16 penaltyWeight,
-        uint16 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint16 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -176,11 +176,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -205,19 +205,19 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartTwo(
         uint128 amountLoaned,
-        uint16 initiatorRewardWeight,
+        uint16 initiationWeight,
         uint16 penaltyWeight,
-        uint16 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint16 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint256(amountLoaned) * initiatorRewardWeight <= (type(uint256).max));
-        vm.assume(uint256(amountLoaned) * closingRewardWeight <= (type(uint256).max));
+        vm.assume(uint256(amountLoaned) * initiationWeight <= (type(uint256).max));
+        vm.assume(uint256(amountLoaned) * terminationWeight <= (type(uint256).max));
         vm.assume(uint256(amountLoaned) * penaltyWeight <= (type(uint256).max));
-        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -229,11 +229,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -243,24 +243,23 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.liquidateAccount(address(proxyAccount));
 
         // Avoid stack too deep
-        uint16 closingRewardWeightStack = closingRewardWeight;
-        uint80 maxInitiatorFeeStack = maxInitiatorFee;
-        uint80 maxClosingFeeStack = maxClosingFee;
+        uint16 terminationWeightStack = terminationWeight;
+        uint80 maxInitiationFeeStack = maxInitiationFee;
+        uint80 maxTerminationFeeStack = maxTerminationFee;
         uint16 penaltyWeightStack = penaltyWeight;
-        uint16 initiatorRewardWeightStack = initiatorRewardWeight;
+        uint16 initiationWeightStack = initiationWeight;
         uint128 openDebt_ = amountLoaned + 1;
 
         // Then: Auction should be set and started
-        (uint256 liquidationInitiatorReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
+        (uint256 initiationReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
             pool.getCalculateRewards(openDebt_);
 
-        uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 10_000);
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiatorFeeStack ? maxInitiatorFeeStack : liquidationInitiatorReward;
+        uint256 initiationReward = uint256(openDebt_).mulDivDown(initiationWeightStack, 10_000);
+        initiationReward = initiationReward > maxInitiationFeeStack ? maxInitiationFeeStack : initiationReward;
 
-        assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
-        uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 10_000);
-        closingReward = closingReward > maxClosingFeeStack ? maxClosingFeeStack : closingReward;
+        assertEq(initiationReward, initiationReward_);
+        uint256 closingReward = uint256(openDebt_).mulDivDown(terminationWeightStack, 10_000);
+        closingReward = closingReward > maxTerminationFeeStack ? maxTerminationFeeStack : closingReward;
 
         uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 10_000);
 
@@ -270,22 +269,22 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And : Liquidation incentives should have been added to openDebt of Account
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            openDebt_ + liquidationInitiatorReward + liquidationPenaltyReward + closingReward
+            openDebt_ + initiationReward + liquidationPenaltyReward + closingReward
         );
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartThree(
         uint128 amountLoaned,
-        uint8 initiatorRewardWeight,
+        uint8 initiationWeight,
         uint8 penaltyWeight,
-        uint8 closingRewardWeight,
-        uint80 maxInitiatorFee,
-        uint80 maxClosingFee,
+        uint8 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
+        vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -297,11 +296,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiatorFee, maxClosingFee);
+        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
         // Set weights
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));

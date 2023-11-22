@@ -45,37 +45,8 @@ contract MaxDeposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         assertEq(tranche.maxDeposit(receiver), 0);
     }
 
-    function testFuzz_Success_maxDeposit_SupplyCapExceeded(address receiver, uint128 supplyCap, uint128 totalLiquidity)
-        public
-    {
-        vm.assume(supplyCap > 0);
-        vm.assume(supplyCap < totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
+    function testFuzz_Success_maxDeposit(address receiver, uint128 totalLiquidity) public {
         pool.setTotalRealisedLiquidity(totalLiquidity);
-
-        assertEq(tranche.maxDeposit(receiver), 0);
-    }
-
-    function testFuzz_Success_maxDeposit_WithSupplyCap(address receiver, uint128 supplyCap, uint128 totalLiquidity)
-        public
-    {
-        vm.assume(supplyCap > 0);
-        vm.assume(supplyCap >= totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-        pool.setTotalRealisedLiquidity(totalLiquidity);
-
-        assertEq(tranche.maxDeposit(receiver), supplyCap - totalLiquidity);
-    }
-
-    function testFuzz_Success_maxDeposit_WithoutSupplyCap(address receiver, uint128 totalLiquidity) public {
-        pool.setTotalRealisedLiquidity(totalLiquidity);
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(0);
 
         assertEq(tranche.maxDeposit(receiver), type(uint128).max - totalLiquidity);
     }

@@ -28,9 +28,10 @@ abstract contract Events {
                             LENDING POOL
     ////////////////////////////////////////////////////////////// */
 
-    event TrancheAdded(address indexed tranche, uint8 indexed index, uint16 interestWeight, uint16 liquidationWeight);
-    event InterestWeightSet(uint256 indexed index, uint16 weight);
-    event LiquidationWeightSet(uint256 indexed index, uint16 weight);
+    event WeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
+    event TrancheAdded(address indexed tranche, uint8 indexed index);
+    event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
+    event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
@@ -42,12 +43,11 @@ abstract contract Events {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event Repay(address indexed account, address indexed from, uint256 amount);
-    event MaxLiquidationFeesSet(uint80 maxInitiatorFee, uint80 maxClosingFee);
+    event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
-    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR

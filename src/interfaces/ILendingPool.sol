@@ -6,12 +6,6 @@ pragma solidity 0.8.19;
 
 interface ILendingPool {
     /**
-     * @notice returns the supply cap of the Lending Pool.
-     * @return supplyCap The supply cap of the Lending Pool.
-     */
-    function supplyCap() external view returns (uint128);
-
-    /**
      * @notice returns the total realised liquidity of the Lending Pool.
      * @return totalRealisedLiquidity The total realised liquidity of the Lending Pool.
      */

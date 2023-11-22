@@ -36,7 +36,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert(LendingPool_OnlyLiquidator.selector);
+        vm.expectRevert(LendingPool_Unauthorized.selector);
         pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
         vm.stopPrank();
     }
@@ -52,9 +52,9 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.assume(liquiditySenior > 100);
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
         vm.assume(startDebt > totalAmount + 2); // Bad debt should be excess since initiator and terminator rewards are 1 and 1 respectively, it should be added to make the baddebt excess
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
-        uint256 openDebt = startDebt + liquidationInitiatorReward + closingReward + liquidationPenalty;
+        uint256 openDebt = startDebt + initiationReward + closingReward + liquidationPenalty;
         vm.assume(openDebt <= type(uint128).max);
 
         vm.prank(address(srTranche));
@@ -87,17 +87,15 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.prank(users.creatorAddress);
         pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
 
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
-            uint256(liquidity)
-                >= uint256(startDebt) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+            uint256(liquidity) >= uint256(startDebt) + initiationReward + auctionTerminationReward + liquidationPenalty
         );
         vm.assume(
-            uint256(liquidity) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-                <= type(uint128).max
+            uint256(liquidity) + initiationReward + auctionTerminationReward + liquidationPenalty <= type(uint128).max
         );
 
         //
@@ -179,17 +177,15 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.prank(users.creatorAddress);
         pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
 
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
-            uint256(liquidity)
-                >= uint256(startDebt) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+            uint256(liquidity) >= uint256(startDebt) + initiationReward + auctionTerminationReward + liquidationPenalty
         );
         vm.assume(
-            uint256(liquidity) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-                <= type(uint128).max
+            uint256(liquidity) + initiationReward + auctionTerminationReward + liquidationPenalty <= type(uint128).max
         );
 
         //
@@ -259,17 +255,15 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
                 && auctionTerminator != users.accountOwner
         );
 
-        (uint256 liquidationInitiatorReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
-            uint256(liquidity)
-                >= uint256(startDebt) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
+            uint256(liquidity) >= uint256(startDebt) + initiationReward + auctionTerminationReward + liquidationPenalty
         );
         vm.assume(
-            uint256(liquidity) + liquidationInitiatorReward + auctionTerminationReward + liquidationPenalty
-                <= type(uint128).max
+            uint256(liquidity) + initiationReward + auctionTerminationReward + liquidationPenalty <= type(uint128).max
         );
 
         // There is still open debt

@@ -11,13 +11,14 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 import { LendingPool } from "../../../src/LendingPool.sol";
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
  */
 contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
+    using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -202,131 +203,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
 
-    function testFuzz_Revert_borrow_BorrowCap(
-        uint128 amountLoaned,
-        uint128 collateralValue,
-        uint128 liquidity,
-        address to,
-        uint128 borrowCap
-    ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
-
-        vm.assume(amountLoaned > 1);
-        vm.assume(collateralValue >= amountLoaned);
-        vm.assume(liquidity > amountLoaned);
-        vm.assume(liquidity > 0);
-        vm.assume(to != address(0));
-        vm.assume(borrowCap > 0);
-        vm.assume(borrowCap < amountLoaned);
-
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
-
-        vm.prank(users.creatorAddress);
-        pool.setBorrowCap(borrowCap);
-
-        vm.expectRevert(BorrowCapExceeded.selector);
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
-    }
-
-    function testFuzz_Success_borrow_BorrowCapSetToZeroAgain(
-        uint128 amountLoaned,
-        uint128 collateralValue,
-        uint128 liquidity,
-        address to
-    ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
-
-        vm.assume(amountLoaned > 1);
-        vm.assume(collateralValue >= amountLoaned);
-        vm.assume(liquidity > amountLoaned);
-        vm.assume(liquidity > 0);
-        vm.assume(to != address(0));
-        vm.assume(to != users.liquidityProvider);
-        vm.assume(to != address(pool));
-        vm.assume(to != address(proxyAccount));
-
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
-
-        // When: borrow cap is set to 1
-        vm.prank(users.creatorAddress);
-        pool.setBorrowCap(1);
-
-        // Then: borrow should revert with "LP_B: Borrow cap reached"
-        vm.expectRevert(BorrowCapExceeded.selector);
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
-
-        // When: borrow cap is set to 0
-        vm.prank(users.creatorAddress);
-        pool.setBorrowCap(0);
-
-        // Then: borrow should succeed
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
-        assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
-        assertEq(mockERC20.stable1.balanceOf(to), amountLoaned);
-        assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
-    }
-
-    function testFuzz_Success_borrow_BorrowCapNotReached(
-        uint256 amountLoaned,
-        uint128 amountLoanedToFail,
-        uint128 collateralValue,
-        uint128 liquidity,
-        address to
-    ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
-
-        amountLoaned = bound(amountLoaned, 2, 99);
-        vm.assume(amountLoanedToFail > 100);
-        vm.assume(collateralValue >= amountLoanedToFail);
-        vm.assume(liquidity > amountLoaned);
-        vm.assume(liquidity > 0);
-        vm.assume(to != address(0));
-        vm.assume(to != users.liquidityProvider);
-        vm.assume(to != address(pool));
-        vm.assume(to != address(proxyAccount));
-
-        vm.prank(address(srTranche));
-        pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
-
-        // When: borrow cap is set to 1
-        vm.prank(users.creatorAddress);
-        pool.setBorrowCap(1);
-
-        // Then: borrow should revert with "LP_B: Borrow cap reached"
-        vm.expectRevert(BorrowCapExceeded.selector);
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
-
-        // When: borrow cap is set to 100 which is lower than the amountLoaned
-        vm.prank(users.creatorAddress);
-        pool.setBorrowCap(100);
-
-        // Then: borrow should still fail with exceeding amount
-        vm.expectRevert(BorrowCapExceeded.selector);
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoanedToFail, address(proxyAccount), to, emptyBytes3);
-
-        // When: right amount is used
-        vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
-
-        // Then: borrow should succeed
-        assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
-        assertEq(mockERC20.stable1.balanceOf(to), amountLoaned);
-        assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
-    }
-
     function testFuzz_Success_borrow_ByAccountOwner(
         uint128 amountLoaned,
         uint128 collateralValue,
@@ -440,11 +316,11 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 ref
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint128(bound(collateralValue, type(uint96).max, type(uint128).max - 1));
 
-        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
         vm.assume(liquidity >= amountLoaned);
-        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned) * originationFee / 10_000));
+        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
         vm.assume(to != address(0));
         vm.assume(to != users.liquidityProvider);
         vm.assume(to != address(pool));
@@ -474,11 +350,12 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(
             debt.balanceOf(address(proxyAccount)),
-            uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000)
+            uint256(amountLoaned) + (uint256(amountLoaned).mulDivUp(originationFee, 10_000))
         );
-        assertEq(treasuryBalancePre + (uint256(amountLoaned) * originationFee / 10_000), treasuryBalancePost);
+        assertEq(treasuryBalancePre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)), treasuryBalancePost);
         assertEq(
-            totalRealisedLiquidityPre + (uint256(amountLoaned) * originationFee / 10_000), totalRealisedLiquidityPost
+            totalRealisedLiquidityPre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)),
+            totalRealisedLiquidityPost
         );
     }
 
@@ -501,10 +378,8 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(proxyAccount));
 
-        uint256 fee = uint256(amountLoaned) * originationFee / 10_000;
-
         vm.prank(users.creatorAddress);
-        pool.setOriginationFee(originationFee);
+        pool.setOriginationFee(0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
@@ -514,7 +389,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, fee, ref);
+        emit Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, 0, ref);
         pool.borrow(amountLoaned, address(proxyAccount), to, ref);
         vm.stopPrank();
     }

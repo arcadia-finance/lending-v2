@@ -37,7 +37,7 @@ contract SetMaxLiquidationFees_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         emit MaxLiquidationFeesSet(maxFeeInitiation, maxFeeClosing);
         pool.setMaxLiquidationFees(maxFeeInitiation, maxFeeClosing);
 
-        assertEq(pool.getMaxInitiatorFee(), maxFeeInitiation);
-        assertEq(pool.getMaxClosingFee(), maxFeeClosing);
+        assertEq(pool.getMaxInitiationFee(), maxFeeInitiation);
+        assertEq(pool.getMaxTerminationFee(), maxFeeClosing);
     }
 }
