@@ -26,8 +26,8 @@ contract Constructor_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     function testFuzz_Success_deployment() public {
         tranche = new Tranche(address(pool), "Senior", "SR");
 
-        assertEq(tranche.name(), string("Senior Arcadia Asset"));
-        assertEq(tranche.symbol(), string("SRarcASSET"));
+        assertEq(tranche.name(), string("Senior ArcadiaV2 Asset"));
+        assertEq(tranche.symbol(), string("SRarcV2ASSET"));
         assertEq(tranche.decimals(), 18);
         assertEq(address(tranche.LENDING_POOL()), address(pool));
     }
