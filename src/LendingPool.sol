@@ -40,6 +40,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     address internal immutable ACCOUNT_FACTORY;
     // Contract address of the Liquidator contract.
     address internal immutable LIQUIDATOR;
+    // Maximum total liquidation penalty, 4 decimal precision.
+    uint256 internal constant MAX_TOTAL_PENALTY = 1100;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
@@ -47,7 +49,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
-    // Origination fee, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
+    // Fee issued upon taking debt, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
     uint8 internal originationFee;
     // Sum of all the interest weights of the tranches + treasury.
     uint24 internal totalInterestWeight;
@@ -74,13 +76,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Fee paid to the Liquidation Initiator.
     // Defined as a fraction of the openDebt with 4 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
-    uint16 internal initiatorRewardWeight;
+    uint16 internal initiationWeight;
     // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 4 decimals precision.
     uint16 internal penaltyWeight;
     // Fee paid to the address that is ending an auction.
     // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 internal closingRewardWeight;
+    uint16 internal terminationWeight;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
@@ -108,7 +110,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight);
+    event WeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
     event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
     event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
@@ -125,13 +127,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
+    event InterestSynced(uint256 interest);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    // Thrown when maximum amount of asset that can be supplied to the pool would be exceeded.
-    error LendingPool_SupplyCapExceeded();
     // Thrown when the tranche of the lending pool already exists.
     error LendingPool_TrancheAlreadyExists();
     // Thrown when a specific tranche does not exist.
@@ -207,12 +208,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         treasury = treasury_;
         ACCOUNT_FACTORY = accountFactory;
         LIQUIDATOR = liquidator;
-        initiatorRewardWeight = 100;
+        initiationWeight = 100;
         penaltyWeight = 500;
         // note: to discuss
-        closingRewardWeight = 100;
+        terminationWeight = 100;
 
-        emit WeightsSet(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        emit WeightsSet(initiationWeight, penaltyWeight, terminationWeight);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -379,7 +380,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param assets The amount of assets of the underlying ERC20 tokens being deposited.
      * @dev Can be used by anyone to donate assets to the Lending Pool.
      * It is supposed to serve as a way to compensate the jrTranche after an
-     * auction didn't get sold and was manually Liquidated by the Protocol after cutoffTime.
+     * auction didn't get sold and was manually liquidated after cutoffTime.
      * @dev First minter of a tranche could abuse this function by minting only 1 share,
      * frontrun next minter by calling this function and inflate the share price.
      * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
@@ -417,7 +418,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
         }
-        totalRealisedLiquidity -= SafeCastLib.safeCastTo128(assets);
+        totalRealisedLiquidity -= assets;
 
         asset.safeTransfer(receiver, assets);
 
@@ -721,6 +722,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
             // Sync interests for LPs and Protocol Treasury.
             _syncInterestsToLiquidityProviders(unrealisedDebt);
+
+            emit InterestSynced(unrealisedDebt);
         }
     }
 
@@ -731,8 +734,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * The base of the exponential: 1 + r, is a 18 decimals fixed point number
      * with r the yearly interest rate.
      * The exponent of the exponential: x, is a 18 decimals fixed point number.
-     * The exponent x is calculated as: the amount of seconds passed since last sync timestamp divided by the average of
-     * seconds per year.
+     * The exponent x is calculated as: the amount of seconds passed since last sync timestamp divided by
+     * the average of seconds per year.
      */
     function calcUnrealisedDebt() public view returns (uint256 unrealisedDebt) {
         unchecked {
@@ -756,9 +759,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     }
 
     /**
-     * @notice Syncs interest payments to the Lending providers and the treasury.
+     * @notice Syncs interest payments to the liquidity providers and the treasury.
      * @param assets The total amount of underlying assets to be paid out as interests.
-     * @dev The interestWeight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
+     * @dev The interest weight of each Tranche determines the relative share of yield (interest payments)
+     * that goes to its liquidity providers.
      */
     function _syncInterestsToLiquidityProviders(uint256 assets) internal {
         uint256 remainingAssets = assets;
@@ -819,8 +823,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in baseCurrency.
      * @param fixedLiquidationCost_ The new fixedLiquidationCost.
      * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon Liquidations positions are big enough to cover
-     * gas costs of the Liquidator without resulting in badDebt.
+     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
+     * network transaction costs while remaining attractive to liquidate.
      */
     function setFixedLiquidationCost(uint96 fixedLiquidationCost_) external onlyOwner {
         emit FixedLiquidationCostSet(fixedLiquidationCost = fixedLiquidationCost_);
@@ -1086,10 +1090,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     {
         uint256 maxInitiationFee_ = maxInitiationFee;
         uint256 maxTerminationFee_ = maxTerminationFee;
-        initiationReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
+        initiationReward = debt.mulDivDown(initiationWeight, ONE_4);
         initiationReward = initiationReward > maxInitiationFee_ ? maxInitiationFee_ : initiationReward;
 
-        terminationReward = debt.mulDivDown(closingRewardWeight, ONE_4);
+        terminationReward = debt.mulDivDown(terminationWeight, ONE_4);
         terminationReward = terminationReward > maxTerminationFee_ ? maxTerminationFee_ : terminationReward;
 
         liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
@@ -1101,22 +1105,24 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
     /**
      * @notice Sets the liquidation weights.
-     * @param initiatorRewardWeight_ Fee paid to the Liquidation Initiator.
+     * @param initiationWeight_ Fee paid to the Liquidation Initiator.
      * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @param closingRewardWeight_ Fee paid to the Liquidation closer.
+     * @param terminationWeight_ Fee paid to the Liquidation closer.
      * @dev Each weight has 4 decimals precision (50 equals 0,005 or 0,5%).
      */
-    function setWeights(uint256 initiatorRewardWeight_, uint256 penaltyWeight_, uint256 closingRewardWeight_)
+    function setWeights(uint256 initiationWeight_, uint256 penaltyWeight_, uint256 terminationWeight_)
         external
         onlyOwner
     {
-        if (initiatorRewardWeight_ + penaltyWeight_ + closingRewardWeight_ > 1100) revert LendingPool_WeightsTooHigh();
+        if (initiationWeight_ + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
+            revert LendingPool_WeightsTooHigh();
+        }
 
-        initiatorRewardWeight = uint16(initiatorRewardWeight_);
+        initiationWeight = uint16(initiationWeight_);
         penaltyWeight = uint16(penaltyWeight_);
-        closingRewardWeight = uint16(closingRewardWeight_);
+        terminationWeight = uint16(terminationWeight_);
 
-        emit WeightsSet(uint16(initiatorRewardWeight_), uint16(penaltyWeight_), uint16(closingRewardWeight_));
+        emit WeightsSet(uint16(initiationWeight_), uint16(penaltyWeight_), uint16(terminationWeight_));
     }
 
     /* //////////////////////////////////////////////////////////////

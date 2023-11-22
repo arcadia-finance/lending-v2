@@ -13,8 +13,8 @@ contract LendingPoolMalicious {
 
     function startLiquidation(
         address account,
-        uint256 initiatorRewardWeight,
+        uint256 initiationWeight,
         uint256 penaltyWeight,
-        uint256 closingRewardWeight
+        uint256 terminationWeight
     ) external returns (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) { }
 }

@@ -23,44 +23,44 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setWeights_NonOwner(
         address unprivilegedAddress_,
-        uint16 initiatorRewardWeight,
+        uint16 initiationWeight,
         uint16 penaltyWeight,
-        uint16 closingRewardWeight
+        uint16 terminationWeight
     ) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_setWeights_WeightsTooHigh(
-        uint16 initiatorRewardWeight,
+        uint16 initiationWeight,
         uint16 penaltyWeight,
-        uint16 closingRewardWeight
+        uint16 terminationWeight
     ) public {
-        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight > 1100);
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > 1100);
 
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(LendingPool_WeightsTooHigh.selector);
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setWeights(uint16 initiatorRewardWeight, uint16 penaltyWeight, uint16 closingRewardWeight)
+    function testFuzz_Success_setWeights(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight)
         public
     {
-        vm.assume(uint32(initiatorRewardWeight) + penaltyWeight + closingRewardWeight <= 1100);
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         vm.startPrank(users.creatorAddress);
         vm.expectEmit();
-        emit WeightsSet(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
-        pool.setWeights(initiatorRewardWeight, penaltyWeight, closingRewardWeight);
+        emit WeightsSet(initiationWeight, penaltyWeight, terminationWeight);
+        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
         vm.stopPrank();
 
         assertEq(pool.getPenaltyWeight(), penaltyWeight);
-        assertEq(pool.getInitiatorRewardWeight(), initiatorRewardWeight);
-        assertEq(pool.getClosingRewardWeight(), closingRewardWeight);
+        assertEq(pool.getInitiatorRewardWeight(), initiationWeight);
+        assertEq(pool.getClosingRewardWeight(), terminationWeight);
     }
 }
