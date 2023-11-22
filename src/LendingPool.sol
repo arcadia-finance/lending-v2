@@ -591,9 +591,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         }
 
         // Mint debt tokens to the Account, debt must be minted before the actions in the Account are performed.
-        if (borrowCap > 0 && maxWithdraw(account) + amountBorrowedWithFee > borrowCap) {
-            revert BorrowCapExceeded();
-        }
         _deposit(amountBorrowedWithFee, account);
 
         // Add origination fee to the treasury.
