@@ -195,18 +195,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param riskManager_ The address of the new Risk Manager.
      * @param asset_ The underlying ERC20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
-     * @param account_factory The address of the Account Factory.
-     * @param LIQUIDATOR_ The address of the Liquidator.
+     * @param accountFactory The address of the Account Factory.
+     * @param liquidator The address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address account_factory, address LIQUIDATOR_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory, address liquidator)
         LendingPoolGuardian()
         Creditor(riskManager_)
         DebtToken(asset_)
     {
         treasury = treasury_;
-        ACCOUNT_FACTORY = account_factory;
-        LIQUIDATOR = LIQUIDATOR_;
+        ACCOUNT_FACTORY = accountFactory;
+        LIQUIDATOR = liquidator;
         initiatorRewardWeight = 100;
         penaltyWeight = 500;
         // note: to discuss
