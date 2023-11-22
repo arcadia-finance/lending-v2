@@ -20,8 +20,12 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 /**
  * @title Arcadia LendingPool.
  * @author Pragma Labs
- * @notice The Lending pool contains the main logic to provide liquidity and take or repay loans for a certain asset
- * and does the accounting of the debtTokens (ERC4626).
+ * @notice The Lending pool is responsible for the:
+ * - Accounting of the liabilities of borrowers via the debtTokens (ERC4626).
+ * - Accounting of the liquidity of the Liquidity Providers, via one or more Tranche(s) (ERC4626).
+ * - Management of issuing and repaying debt.
+ * - Management of interest payments.
+ * - Settlement of liquidations and default events.
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by the first minter.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
@@ -50,7 +54,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
     // Fee issued upon taking debt, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
-    uint8 internal originationFee;
+    uint8 public originationFee;
     // Sum of all the interest weights of the tranches + treasury.
     uint24 internal totalInterestWeight;
     // Fraction (interestWeightTreasury / totalInterestWeight) of the interest fees that go to the treasury.
@@ -70,19 +74,19 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
     // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 internal maxInitiationFee;
+    uint80 public maxInitiationFee;
     // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
-    uint80 internal maxTerminationFee;
+    uint80 public maxTerminationFee;
     // Fee paid to the Liquidation Initiator.
     // Defined as a fraction of the openDebt with 4 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
-    uint16 internal initiationWeight;
+    uint16 public initiationWeight;
     // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 internal penaltyWeight;
+    uint16 public penaltyWeight;
     // Fee paid to the address that is ending an auction.
     // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 internal terminationWeight;
+    uint16 public terminationWeight;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
@@ -110,10 +114,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
+    event LiquidationWeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
-    event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
+    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
     event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
@@ -134,27 +138,27 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ////////////////////////////////////////////////////////////// */
 
     // Thrown when the tranche of the lending pool already exists.
-    error LendingPool_TrancheAlreadyExists();
+    error TrancheAlreadyExists();
     // Thrown when a specific tranche does not exist.
-    error LendingPool_NonExistingTranche();
+    error NonExistingTranche();
     // Thrown when asset amount in input is zero.
-    error LendingPool_ZeroAmount();
+    error ZeroAmount();
     // Thrown when less than 1 share outstanding to mitigate share manipulation.
-    error LendingPool_InsufficientShares();
+    error InsufficientShares();
     // Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
-    error LendingPool_AmountExceedsBalance();
+    error AmountExceedsBalance();
     // Thrown when account specified is not an Arcadia Account.
-    error LendingPool_IsNotAnAccount();
+    error IsNotAnAccount();
     // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
-    error LendingPool_Reverted();
+    error Reverted();
     // Thrown when an account has zero debt.
-    error LendingPool_IsNotAnAccountWithDebt();
+    error IsNotAnAccountWithDebt();
     // Thrown when caller is not authorized.
-    error LendingPool_Unauthorized();
+    error Unauthorized();
     // Thrown when an auction is in process.
-    error LendingPool_AuctionOngoing();
+    error AuctionOngoing();
     // Thrown when liquidation weights are above maximum value.
-    error LendingPool_WeightsTooHigh();
+    error WeightsTooHigh();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -164,7 +168,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @notice Checks if caller is the Liquidator.
      */
     modifier onlyLiquidator() {
-        if (LIQUIDATOR != msg.sender) revert LendingPool_Unauthorized();
+        if (LIQUIDATOR != msg.sender) revert Unauthorized();
         _;
     }
 
@@ -172,7 +176,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @notice Checks if caller is a Tranche.
      */
     modifier onlyTranche() {
-        if (!isTranche[msg.sender]) revert LendingPool_Unauthorized();
+        if (!isTranche[msg.sender]) revert Unauthorized();
         _;
     }
 
@@ -210,10 +214,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         LIQUIDATOR = liquidator;
         initiationWeight = 100;
         penaltyWeight = 500;
-        // note: to discuss
-        terminationWeight = 100;
+        terminationWeight = 50;
 
-        emit WeightsSet(initiationWeight, penaltyWeight, terminationWeight);
+        emit LiquidationWeightsSet(initiationWeight, penaltyWeight, terminationWeight);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -231,7 +234,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
-        if (isTranche[tranche]) revert LendingPool_TrancheAlreadyExists();
+        if (isTranche[tranche]) revert TrancheAlreadyExists();
 
         totalInterestWeight += interestWeight_;
         interestWeightTranches.push(interestWeight_);
@@ -240,12 +243,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         totalLiquidationWeight += liquidationWeight;
         liquidationWeightTranches.push(liquidationWeight);
 
+        uint8 trancheIndex = uint8(tranches.length);
         tranches.push(tranche);
         isTranche[tranche] = true;
 
-        emit TrancheAdded(tranche, uint8(tranches.length - 1));
-        emit InterestWeightSet(tranches.length - 1, interestWeight_);
-        emit LiquidationWeightSet(tranches.length - 1, liquidationWeight);
+        emit TrancheAdded(tranche, trancheIndex);
+        emit TrancheInterestWeightSet(trancheIndex, interestWeight_);
+        emit TrancheLiquidationWeightSet(trancheIndex, liquidationWeight);
     }
 
     /**
@@ -255,12 +259,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
     function setInterestWeight(uint256 index, uint16 weight) external onlyOwner {
-        if (index >= tranches.length) revert LendingPool_NonExistingTranche();
+        if (index >= tranches.length) revert NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + weight;
         interestWeightTranches[index] = weight;
         interestWeight[tranches[index]] = weight;
 
-        emit InterestWeightSet(index, weight);
+        emit TrancheInterestWeightSet(uint8(index), weight);
     }
 
     /**
@@ -270,11 +274,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev The liquidation weight determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function setLiquidationWeight(uint256 index, uint16 weight) external onlyOwner {
-        if (index >= tranches.length) revert LendingPool_NonExistingTranche();
+        if (index >= tranches.length) revert NonExistingTranche();
         totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + weight;
         liquidationWeightTranches[index] = weight;
 
-        emit LiquidationWeightSet(index, weight);
+        emit TrancheLiquidationWeightSet(uint8(index), weight);
     }
 
     /**
@@ -386,12 +390,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
-        if (assets == 0) revert LendingPool_ZeroAmount();
+        if (assets == 0) revert ZeroAmount();
 
         address tranche = tranches[trancheIndex];
         //Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
         //See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
-        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPool_InsufficientShares();
+        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert InsufficientShares();
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
@@ -413,7 +417,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         whenWithdrawNotPaused
         processInterests
     {
-        if (realisedLiquidityOf[msg.sender] < assets) revert LendingPool_AmountExceedsBalance();
+        if (realisedLiquidityOf[msg.sender] < assets) revert AmountExceedsBalance();
 
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
@@ -439,7 +443,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      */
     function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
         //If Account is not an actual address of an Arcadia Account, ownerOfAccount(address) will return the zero address.
-        if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert LendingPool_Unauthorized();
+        if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert Unauthorized();
 
         creditAllowance[account][msg.sender][beneficiary] = amount;
 
@@ -461,7 +465,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     {
         //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
-        if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
+        if (accountOwner == address(0)) revert IsNotAnAccount();
 
         uint256 amountWithFee = amount + amount.mulDivUp(originationFee, ONE_4);
 
@@ -488,7 +492,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         (bool isHealthy, address creditor, uint256 accountVersion) =
             IAccount(account).isAccountHealthy(0, maxWithdraw(account));
         if (!isHealthy || creditor != address(this) || !isValidVersion[accountVersion]) {
-            revert LendingPool_Reverted();
+            revert Reverted();
         }
 
         //Transfer fails if there is insufficient liquidity in the pool.
@@ -539,7 +543,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         asset.safeTransferFrom(bidder, address(this), amount);
 
         uint256 accountDebt = maxWithdraw(account);
-        if (accountDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+        if (accountDebt == 0) revert IsNotAnAccountWithDebt();
         if (accountDebt <= amount) {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
@@ -577,7 +581,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ) external whenBorrowNotPaused processInterests {
         // If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
-        if (accountOwner == address(0)) revert LendingPool_IsNotAnAccount();
+        if (accountOwner == address(0)) revert IsNotAnAccount();
 
         uint256 amountBorrowedWithFee = amountBorrowed + amountBorrowed.mulDivUp(originationFee, ONE_4);
 
@@ -586,7 +590,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // Since calling accountManagementAction() gives the sender full control over all assets in the Account,
             // Only Beneficiaries with maximum allowance can call the doActionWithLeverage function.
             if (creditAllowance[account][accountOwner][msg.sender] != type(uint256).max) {
-                revert LendingPool_Unauthorized();
+                revert Unauthorized();
             }
         }
 
@@ -613,7 +617,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         {
             (address creditor, uint256 accountVersion) =
                 IAccount(account).accountManagementAction(actionHandler, actionData, signature);
-            if (creditor != address(this) || !isValidVersion[accountVersion]) revert LendingPool_Reverted();
+            if (creditor != address(this) || !isValidVersion[accountVersion]) revert Reverted();
         }
 
         emit Borrow(
@@ -685,7 +689,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // During auction initiation, debt tokens representing the liquidation incentives are minted at start of the auction
         // yet not accounted for in the totalRealisedLiquidity.
         // -> skim function must be blocked during auctions.
-        if (auctionsInProgress != 0) revert LendingPool_AuctionOngoing();
+        if (auctionsInProgress != 0) revert AuctionOngoing();
 
         // Pending interests are synced via the processInterests modifier.
         uint256 delta = asset.balanceOf(address(this)) + realisedDebt - totalRealisedLiquidity;
@@ -836,7 +840,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * which are considered as extra debt.
      * The extra debt is then minted towards the Account to encourage the liquidation process and bring the Account to a healthy state.
      * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
-     * @dev If the provided Account has a debt balance of 0, the function reverts with the error "LendingPool_IsNotAnAccountWithDebt."
+     * @dev If the provided Account has a debt balance of 0, the function reverts with the error "IsNotAnAccountWithDebt."
      */
     function startLiquidation(address initiator)
         external
@@ -849,7 +853,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         // Hence by checking that the balance of the msg.sender is not 0,
         // we know that the sender is indeed an Account and has debt.
         startDebt = maxWithdraw(msg.sender);
-        if (startDebt == 0) revert LendingPool_IsNotAnAccountWithDebt();
+        if (startDebt == 0) revert IsNotAnAccountWithDebt();
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
@@ -1112,14 +1116,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         onlyOwner
     {
         if (initiationWeight_ + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
-            revert LendingPool_WeightsTooHigh();
+            revert WeightsTooHigh();
         }
 
         initiationWeight = uint16(initiationWeight_);
         penaltyWeight = uint16(penaltyWeight_);
         terminationWeight = uint16(terminationWeight_);
 
-        emit WeightsSet(uint16(initiationWeight_), uint16(penaltyWeight_), uint16(terminationWeight_));
+        emit LiquidationWeightsSet(uint16(initiationWeight_), uint16(penaltyWeight_), uint16(terminationWeight_));
     }
 
     /* //////////////////////////////////////////////////////////////

@@ -28,10 +28,10 @@ abstract contract Events {
                             LENDING POOL
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
+    event LiquidationWeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
-    event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
+    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);

@@ -43,7 +43,7 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > 1100);
 
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(LendingPool_WeightsTooHigh.selector);
+        vm.expectRevert(WeightsTooHigh.selector);
         pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
         vm.stopPrank();
     }
@@ -55,7 +55,7 @@ contract SetWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.creatorAddress);
         vm.expectEmit();
-        emit WeightsSet(initiationWeight, penaltyWeight, terminationWeight);
+        emit LiquidationWeightsSet(initiationWeight, penaltyWeight, terminationWeight);
         pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
         vm.stopPrank();
 

@@ -91,7 +91,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_liquidateAccount_NotLiquidatable_NoDebt(address liquidationInitiator) public {
         // Given: Account has no debt
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         liquidator.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }

@@ -47,7 +47,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert(LendingPool_TrancheAlreadyExists.selector);
+        vm.expectRevert(TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40, 0);
         vm.stopPrank();
     }
@@ -57,9 +57,9 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(srTranche), 0);
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightSet(0, interestWeight);
+        emit TrancheInterestWeightSet(0, interestWeight);
         vm.expectEmit(true, true, true, true);
-        emit LiquidationWeightSet(0, liquidationWeight);
+        emit TrancheLiquidationWeightSet(0, liquidationWeight);
         pool_.addTranche(address(srTranche), interestWeight, liquidationWeight);
         vm.stopPrank();
 
@@ -82,17 +82,17 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(srTranche), 0);
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightSet(0, interestWeightSr);
+        emit TrancheInterestWeightSet(0, interestWeightSr);
         vm.expectEmit(true, true, true, true);
-        emit LiquidationWeightSet(0, liquidationWeightSr);
+        emit TrancheLiquidationWeightSet(0, liquidationWeightSr);
         pool_.addTranche(address(srTranche), interestWeightSr, liquidationWeightSr);
 
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(jrTranche), 1);
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightSet(1, interestWeightJr);
+        emit TrancheInterestWeightSet(1, interestWeightJr);
         vm.expectEmit(true, true, true, true);
-        emit LiquidationWeightSet(1, liquidationWeightJr);
+        emit TrancheLiquidationWeightSet(1, liquidationWeightJr);
         pool_.addTranche(address(jrTranche), interestWeightJr, liquidationWeightJr);
         vm.stopPrank();
 

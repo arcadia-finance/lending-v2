@@ -32,14 +32,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: startLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(nonAccount);
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt(address liquidationInitiator) public {
         vm.startPrank(address(proxyAccount));
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator);
         vm.stopPrank();
     }
