@@ -118,10 +118,8 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(jrTranche.auctionInProgress(), true);
 
         // And : Liquidation incentives should have been added to openDebt of Account
-        uint256 liquidationInitiatorReward =
-            uint256(amountLoanedStack + 1).mulDivDown(initiatorRewardWeightStack, 10_000);
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiationFee ? maxInitiationFee : liquidationInitiatorReward;
+        uint256 initiationReward = uint256(amountLoanedStack + 1).mulDivDown(initiatorRewardWeightStack, 10_000);
+        initiationReward = initiationReward > maxInitiationFee ? maxInitiationFee : initiationReward;
         uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 10_000);
         uint256 closingReward = (uint256(amountLoanedStack + 1)).mulDivDown(closingRewardWeightStack, 10_000);
         closingReward = closingReward > maxTerminationFee ? maxTerminationFee : closingReward;
@@ -129,7 +127,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: Returned amount should be equal to maxInitiationFee
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            (amountLoanedStack + 1) + liquidationInitiatorReward + liquidationPenalty + closingReward
+            (amountLoanedStack + 1) + initiationReward + liquidationPenalty + closingReward
         );
     }
 

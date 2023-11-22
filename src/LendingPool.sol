@@ -31,7 +31,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     using FixedPointMathLib for uint256;
 
     /* //////////////////////////////////////////////////////////////
-                                STORAGE
+                                CONSTANTS
     ////////////////////////////////////////////////////////////// */
 
     // Seconds per year, leap years ignored.
@@ -40,6 +40,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     address internal immutable ACCOUNT_FACTORY;
     // Contract address of the Liquidator contract.
     address internal immutable LIQUIDATOR;
+
+    /* //////////////////////////////////////////////////////////////
+                                STORAGE
+    ////////////////////////////////////////////////////////////// */
 
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
@@ -191,17 +195,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param riskManager_ The address of the new Risk Manager.
      * @param asset_ The underlying ERC20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
-     * @param ACCOUNT_FACTORY_ The address of the Account Factory.
+     * @param account_factory The address of the Account Factory.
      * @param LIQUIDATOR_ The address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address ACCOUNT_FACTORY_, address LIQUIDATOR_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address account_factory, address LIQUIDATOR_)
         LendingPoolGuardian()
         Creditor(riskManager_)
         DebtToken(asset_)
     {
         treasury = treasury_;
-        ACCOUNT_FACTORY = ACCOUNT_FACTORY_;
+        ACCOUNT_FACTORY = account_factory;
         LIQUIDATOR = LIQUIDATOR_;
         initiatorRewardWeight = 100;
         penaltyWeight = 500;
@@ -680,7 +684,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev In case you accidentally sent funds to the pool, contact the current treasury manager.
      */
     function skim() external processInterests {
-        //During auction initiation, debt tokens representing the liquidation incentives are minted at start of the auction
+        // During auction initiation, debt tokens representing the liquidation incentives are minted at start of the auction
         // yet not accounted for in the totalRealisedLiquidity.
         // -> skim function must be blocked during auctions.
         if (auctionsInProgress != 0) revert LendingPool_AuctionOngoing();
@@ -803,7 +807,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     /**
      * @notice Sets the maxInitiationFee and maxTerminationFee.
      * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
-     * @param maxTerminationFee_ The maximum fee that is paid to the closer of a liquidation.
+     * @param maxTerminationFee_ The maximum fee that is paid to the terminator of a liquidation.
      * @dev The liquidator sets the % of the debt that is paid to the initiator and terminator of a liquidation.
      * This fee is capped by the maxInitiationFee respectively maxTerminationFee.
      */
@@ -848,19 +852,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
-        (uint256 liquidationInitiatorReward, uint256 closingReward, uint256 liquidationPenalty) =
-            _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
         // Mint the liquidation incentives as extra debt towards the Account.
-        _deposit(liquidationInitiatorReward + liquidationPenalty + closingReward, msg.sender);
+        _deposit(initiationReward + liquidationPenalty + closingReward, msg.sender);
 
         // Increase the realised liquidity for the initiator.
         // The other incentives will only be added as realised liquidity for the respective actors
         // after the auction is finished.
-        realisedLiquidityOf[initiator] += liquidationInitiatorReward;
-        totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + liquidationInitiatorReward);
+        realisedLiquidityOf[initiator] += initiationReward;
+        totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + initiationReward);
 
-        // If only ongoing auction, inform most Jr tranche that auctions are ongoing
+        // If this is the sole ongoing auction, prevent any deposits and withdrawals in the most jr tranche
         if (auctionsInProgress == 0) ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
 
         unchecked {
@@ -916,17 +919,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         totalRealisedLiquidity =
             uint128(totalRealisedLiquidity + auctionTerminationReward + liquidationPenalty + surplus);
 
-        // Decrement the number of auctions in progress.
         unchecked {
             // Pay out any surplus to the current Account Owner.
             if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
             // Pay out the "auctionTerminationReward" to the "terminator".
             realisedLiquidityOf[terminator] += auctionTerminationReward;
 
+            // Decrement the number of auctions in progress.
             --auctionsInProgress;
         }
 
-        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        // If this was the sole auction in progress, enable deposits and withdrawals in the most jr tranche.
         if (auctionsInProgress == 0 && tranches.length > 0) {
             ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
         }
@@ -1072,24 +1075,22 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     /**
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
      * @param debt The debt amount of the Account at the time of liquidation initiation.
-     * @return liquidationInitiatorReward The reward for the liquidation initiator, capped by the maximum initiator fee.
-     * @return liquidationTerminationReward The reward for closing the liquidation process, capped by the maximum closing fee.
+     * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator fee.
+     * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing fee.
      * @return liquidationPenalty The penalty paid by the Account owner towards the liquidity providers and the protocol treasury.
      */
     function _calculateRewards(uint256 debt)
         internal
         view
-        returns (uint256 liquidationInitiatorReward, uint256 liquidationTerminationReward, uint256 liquidationPenalty)
+        returns (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty)
     {
         uint256 maxInitiationFee_ = maxInitiationFee;
         uint256 maxTerminationFee_ = maxTerminationFee;
-        liquidationInitiatorReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiationFee_ ? maxInitiationFee_ : liquidationInitiatorReward;
+        initiationReward = debt.mulDivDown(initiatorRewardWeight, ONE_4);
+        initiationReward = initiationReward > maxInitiationFee_ ? maxInitiationFee_ : initiationReward;
 
-        liquidationTerminationReward = debt.mulDivDown(closingRewardWeight, ONE_4);
-        liquidationTerminationReward =
-            liquidationTerminationReward > maxTerminationFee_ ? maxTerminationFee_ : liquidationTerminationReward;
+        terminationReward = debt.mulDivDown(closingRewardWeight, ONE_4);
+        terminationReward = terminationReward > maxTerminationFee_ ? maxTerminationFee_ : terminationReward;
 
         liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
     }

@@ -72,8 +72,8 @@ contract InterestRateModuleExtension is InterestRateModule {
 ////////////////////////////////////////////////////////////// */
 
 contract LendingPoolExtension is LendingPool {
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address ACCOUNT_FACTORY_, address liquidator_)
-        LendingPool(riskManager_, asset_, treasury_, ACCOUNT_FACTORY_, liquidator_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address account_factory, address liquidator_)
+        LendingPool(riskManager_, asset_, treasury_, account_factory, liquidator_)
     { }
 
     function popTranche(uint256 index, address tranche) public {
@@ -160,11 +160,11 @@ contract LendingPoolExtension is LendingPool {
         return fixedLiquidationCost;
     }
 
-    function getmaxInitiationFee() public view returns (uint80) {
+    function getMaxInitiationFee() public view returns (uint80) {
         return maxInitiationFee;
     }
 
-    function getmaxTerminationFee() public view returns (uint80) {
+    function getMaxTerminationFee() public view returns (uint80) {
         return maxTerminationFee;
     }
 
@@ -196,7 +196,7 @@ contract LendingPoolExtension is LendingPool {
         return tranches[id];
     }
 
-    function getACCOUNT_FACTORY() public view returns (address) {
+    function getAccountFactory() public view returns (address) {
         return ACCOUNT_FACTORY;
     }
 

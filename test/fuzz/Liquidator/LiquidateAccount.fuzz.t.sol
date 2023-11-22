@@ -251,14 +251,13 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint128 openDebt_ = amountLoaned + 1;
 
         // Then: Auction should be set and started
-        (uint256 liquidationInitiatorReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
+        (uint256 initiationReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
             pool.getCalculateRewards(openDebt_);
 
-        uint256 liquidationInitiatorReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 10_000);
-        liquidationInitiatorReward =
-            liquidationInitiatorReward > maxInitiationFeeStack ? maxInitiationFeeStack : liquidationInitiatorReward;
+        uint256 initiationReward = uint256(openDebt_).mulDivDown(initiatorRewardWeightStack, 10_000);
+        initiationReward = initiationReward > maxInitiationFeeStack ? maxInitiationFeeStack : initiationReward;
 
-        assertEq(liquidationInitiatorReward, liquidationInitiatorReward_);
+        assertEq(initiationReward, initiationReward_);
         uint256 closingReward = uint256(openDebt_).mulDivDown(closingRewardWeightStack, 10_000);
         closingReward = closingReward > maxTerminationFeeStack ? maxTerminationFeeStack : closingReward;
 
@@ -270,7 +269,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And : Liquidation incentives should have been added to openDebt of Account
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            openDebt_ + liquidationInitiatorReward + liquidationPenaltyReward + closingReward
+            openDebt_ + initiationReward + liquidationPenaltyReward + closingReward
         );
     }
 
