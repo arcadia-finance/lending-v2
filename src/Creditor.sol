@@ -85,7 +85,7 @@ abstract contract Creditor {
     /**
      * @notice Checks if Account can be closed.
      * @param account The Account address.
-     * @dev This function checks if the given account address has an open position. If not, it can be closed.
+     * @dev This function checks if the given Account address has an open position. If not, it can be closed.
      * This function does not do any state changes. It just provides a check if the account can be closed.
      */
     function closeMarginAccount(address account) external virtual;
