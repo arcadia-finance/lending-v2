@@ -4,18 +4,18 @@
  */
 pragma solidity 0.8.19;
 
-import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
-import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
-import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
-import { LogExpMath } from "./libraries/LogExpMath.sol";
-import { ITranche } from "./interfaces/ITranche.sol";
-import { IFactory } from "./interfaces/IFactory.sol";
-import { IAccount } from "./interfaces/IAccount.sol";
-import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { Creditor } from "./Creditor.sol";
-import { ERC20, ERC4626, DebtToken } from "./DebtToken.sol";
+import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
+import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { IAccount } from "./interfaces/IAccount.sol";
+import { IFactory } from "./interfaces/IFactory.sol";
+import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { InterestRateModule } from "./InterestRateModule.sol";
+import { ITranche } from "./interfaces/ITranche.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
+import { LogExpMath } from "./libraries/LogExpMath.sol";
+import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 
 /**
  * @title Arcadia LendingPool.
@@ -31,8 +31,8 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
 contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateModule, ILendingPool {
-    using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
+    using SafeTransferLib for ERC20;
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTANTS
@@ -114,51 +114,56 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event LiquidationWeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
-    event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
-    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
-    event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
-    event TranchePopped(address tranche);
-    event TreasuryInterestWeightSet(uint16 weight);
-    event TreasuryLiquidationWeightSet(uint16 weight);
-    event OriginationFeeSet(uint8 originationFee);
-    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event Borrow(
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
-    event Repay(address indexed account, address indexed from, uint256 amount);
+    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event InterestSynced(uint256 interest);
+    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event LiquidationParametersSet(
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee
+    );
+    event OriginationFeeSet(uint8 originationFee);
+    event Repay(address indexed account, address indexed from, uint256 amount);
+    event TrancheAdded(address indexed tranche, uint8 indexed index);
+    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TranchePopped(address tranche);
+    event TreasuryInterestWeightSet(uint16 weight);
+    event TreasuryLiquidationWeightSet(uint16 weight);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    // Thrown when the tranche of the lending pool already exists.
-    error TrancheAlreadyExists();
-    // Thrown when a specific tranche does not exist.
-    error NonExistingTranche();
-    // Thrown when asset amount in input is zero.
-    error ZeroAmount();
-    // Thrown when less than 1 share outstanding to mitigate share manipulation.
-    error InsufficientShares();
     // Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
     error AmountExceedsBalance();
-    // Thrown when account specified is not an Arcadia Account.
-    error IsNotAnAccount();
-    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
-    error Reverted();
-    // Thrown when an account has zero debt.
-    error IsNotAnAccountWithDebt();
-    // Thrown when caller is not authorized.
-    error Unauthorized();
     // Thrown when an auction is in process.
     error AuctionOngoing();
+    // Thrown when less than 1 share outstanding to mitigate share manipulation.
+    error InsufficientShares();
+    // Thrown when account specified is not an Arcadia Account.
+    error IsNotAnAccount();
+    // Thrown when an account has zero debt.
+    error IsNotAnAccountWithDebt();
     // Thrown when liquidation weights are above maximum value.
-    error WeightsTooHigh();
+    error LiquidationWeightsTooHigh();
+    // Thrown when a specific tranche does not exist.
+    error NonExistingTranche();
+    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
+    error Reverted();
+    // Thrown when the tranche of the lending pool already exists.
+    error TrancheAlreadyExists();
+    // Thrown when caller is not authorized.
+    error Unauthorized();
+    // Thrown when asset amount in input is zero.
+    error ZeroAmount();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -200,8 +205,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @param riskManager_ The address of the new Risk Manager.
      * @param asset_ The underlying ERC20 token of the Lending Pool.
      * @param treasury_ The address of the protocol treasury.
-     * @param accountFactory The address of the Account Factory.
-     * @param liquidator The address of the Liquidator.
+     * @param accountFactory The contract address of the Arcadia Account Factory.
+     * @param liquidator The contract address of the Liquidator.
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
     constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory, address liquidator)
@@ -212,11 +217,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
         treasury = treasury_;
         ACCOUNT_FACTORY = accountFactory;
         LIQUIDATOR = liquidator;
-        initiationWeight = 100;
-        penaltyWeight = 500;
-        terminationWeight = 50;
-
-        emit LiquidationWeightsSet(initiationWeight, penaltyWeight, terminationWeight);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -810,28 +810,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets the maxInitiationFee and maxTerminationFee.
-     * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
-     * @param maxTerminationFee_ The maximum fee that is paid to the terminator of a liquidation.
-     * @dev The liquidator sets the % of the debt that is paid to the initiator and terminator of a liquidation.
-     * This fee is capped by the maxInitiationFee respectively maxTerminationFee.
-     */
-    function setMaxLiquidationFees(uint80 maxInitiationFee_, uint80 maxTerminationFee_) external onlyOwner {
-        emit MaxLiquidationFeesSet(maxInitiationFee = maxInitiationFee_, maxTerminationFee = maxTerminationFee_);
-    }
-
-    /**
-     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in baseCurrency.
-     * @param fixedLiquidationCost_ The new fixedLiquidationCost.
-     * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
-     * network transaction costs while remaining attractive to liquidate.
-     */
-    function setFixedLiquidationCost(uint96 fixedLiquidationCost_) external onlyOwner {
-        emit FixedLiquidationCostSet(fixedLiquidationCost = fixedLiquidationCost_);
-    }
-
-    /**
      * @notice Initiates the liquidation process for an Account.
      * @param initiator The address of the liquidation initiator.
      * @return startDebt The initial debt of the liquidated Account.
@@ -1105,25 +1083,50 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Sets the liquidation weights.
+     * @notice Sets the liquidation parameters.
      * @param initiationWeight_ Fee paid to the Liquidation Initiator.
      * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
      * @param terminationWeight_ Fee paid to the Liquidation closer.
+     * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
+     * @param maxTerminationFee_ The maximum fee that is paid to the terminator of a liquidation.
      * @dev Each weight has 4 decimals precision (50 equals 0,005 or 0,5%).
+     * @dev Each weight sets the % of the debt that is paid to the initiator and terminator of a liquidation.
+     * This fee is capped in absolute value by the maxInitiationFee respectively maxTerminationFee.
      */
-    function setWeights(uint256 initiationWeight_, uint256 penaltyWeight_, uint256 terminationWeight_)
-        external
-        onlyOwner
-    {
-        if (initiationWeight_ + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
-            revert WeightsTooHigh();
+    function setLiquidationParameters(
+        uint16 initiationWeight_,
+        uint16 penaltyWeight_,
+        uint16 terminationWeight_,
+        uint80 maxInitiationFee_,
+        uint80 maxTerminationFee_
+    ) external onlyOwner {
+        // When auctions are ongoing, it is not allowed to modify the auction parameters,
+        // as that would corrupt the rewards and penalties calculated by _calculateRewards().
+        if (auctionsInProgress != 0) revert AuctionOngoing();
+
+        if (uint256(initiationWeight_) + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
+            revert LiquidationWeightsTooHigh();
         }
 
-        initiationWeight = uint16(initiationWeight_);
-        penaltyWeight = uint16(penaltyWeight_);
-        terminationWeight = uint16(terminationWeight_);
+        // Store and emit new parameters.
+        emit LiquidationParametersSet(
+            initiationWeight = initiationWeight_,
+            penaltyWeight = penaltyWeight_,
+            terminationWeight = terminationWeight_,
+            maxInitiationFee = maxInitiationFee_,
+            maxTerminationFee = maxTerminationFee_
+        );
+    }
 
-        emit LiquidationWeightsSet(uint16(initiationWeight_), uint16(penaltyWeight_), uint16(terminationWeight_));
+    /**
+     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in baseCurrency.
+     * @param fixedLiquidationCost_ The new fixedLiquidationCost.
+     * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
+     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
+     * network transaction costs while remaining attractive to liquidate.
+     */
+    function setFixedLiquidationCost(uint96 fixedLiquidationCost_) external onlyOwner {
+        emit FixedLiquidationCostSet(fixedLiquidationCost = fixedLiquidationCost_);
     }
 
     /* //////////////////////////////////////////////////////////////

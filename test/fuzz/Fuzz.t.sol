@@ -98,6 +98,10 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
 
+        // Set the Liquidation parameters.
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(100, 500, 50, 0, 0);
+
         // Set the Guardian.
         vm.prank(users.creatorAddress);
         pool.changeGuardian(users.guardian);

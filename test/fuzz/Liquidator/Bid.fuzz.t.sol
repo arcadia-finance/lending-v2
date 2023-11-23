@@ -141,14 +141,15 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     }
 
     function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint128 amountLoaned) public {
+        vm.startPrank(users.creatorAddress);
+        pool.setLiquidationParameters(2, 2, 5, type(uint80).max, type(uint80).max);
+
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 2);
         vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
-        vm.startPrank(users.creatorAddress);
-        pool.setWeights(2, 2, 5);
 
         uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
         uint256 originalAmount = originalAssetAmounts[0];

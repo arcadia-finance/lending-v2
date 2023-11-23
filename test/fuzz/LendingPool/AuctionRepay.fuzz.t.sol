@@ -200,7 +200,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
 
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -246,7 +246,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountRepaid = bound(amountRepaid, amountLoaned + 1, type(uint256).max - amountLoaned);
 
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(2, 5, 2);
+        pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 

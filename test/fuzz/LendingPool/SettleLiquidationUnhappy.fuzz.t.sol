@@ -83,9 +83,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         address auctionTerminator
     ) public {
         vm.prank(users.creatorAddress);
-        pool.setWeights(2, 5, 2);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
@@ -173,9 +171,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         address auctionTerminator
     ) public {
         vm.prank(users.creatorAddress);
-        pool.setWeights(2, 5, 2);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
@@ -245,9 +241,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         address auctionTerminator
     ) public {
         vm.prank(users.creatorAddress);
-        pool.setWeights(2, 5, 2);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)

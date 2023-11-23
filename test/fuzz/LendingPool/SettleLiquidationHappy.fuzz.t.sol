@@ -41,7 +41,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_settleLiquidation_Surplus(
+    function testFuzz_Success_settleLiquidationHappyFlow_Surplus(
         uint128 startDebt,
         uint128 liquidity,
         address auctionTerminator,

@@ -47,7 +47,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Pool rewards are set to zero
         vm.prank(users.creatorAddress);
-        pool.setWeights(0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         vm.prank(liquidationInitiator);
         liquidator.liquidateAccount(address(proxyAccount));
@@ -114,7 +114,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Pool rewards are set to zero
         vm.prank(users.creatorAddress);
-        pool.setWeights(0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
@@ -175,12 +175,12 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
-        // Set weights
+        // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -228,12 +228,12 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
-        // Set weights
+        // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -295,12 +295,12 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
-        // Set weights
+        // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
