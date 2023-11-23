@@ -87,7 +87,7 @@ contract LendingPoolExtension is LendingPool {
         realisedDebt = realisedDebt_;
     }
 
-    function setInterestRate(uint256 interestRate_) public {
+    function setInterestRate(uint80 interestRate_) public {
         interestRate = interestRate_;
     }
 

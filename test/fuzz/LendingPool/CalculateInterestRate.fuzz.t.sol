@@ -55,6 +55,7 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Given: utilisation is between 80000 and 100000, highSlope_ is bigger than lowSlope_
         vm.assume(utilisationThreshold_ <= ONE_4);
+        vm.assume(utilisation < ONE_4);
         vm.assume(utilisation > utilisationThreshold_);
 
         // When: The InterestConfiguration is set

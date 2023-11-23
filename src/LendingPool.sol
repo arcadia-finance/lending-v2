@@ -863,7 +863,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The interest rate is a function of the utilisation of the Lending Pool.
      * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
      */
-    function _calculateInterestRate(uint256 utilisation) internal view returns (uint256 interestRate_) {
+    function _calculateInterestRate(uint256 utilisation) internal view returns (uint80 interestRate_) {
         unchecked {
             if (utilisation >= utilisationThreshold) {
                 // lsIR (1e22) = uT (1e4) * ls (1e18).
@@ -871,10 +871,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 // hsIR (1e22) = (u - uT) (1e4) * hs (e18).
                 uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold) * highSlopePerYear;
                 // i (1e18) =  (lsIR (e22) + hsIR (1e22)) / 1e4 + bs (1e18).
-                interestRate_ = (lowSlopeInterest + highSlopeInterest) / ONE_4 + baseRatePerYear;
+                interestRate_ = uint80((lowSlopeInterest + highSlopeInterest) / ONE_4 + baseRatePerYear);
             } else {
                 // i (1e18) = (u (1e4) * ls (1e18)) / 1e4 + br (1e18).
-                interestRate_ = utilisation * lowSlopePerYear / ONE_4 + baseRatePerYear;
+                interestRate_ = uint80(utilisation * lowSlopePerYear / ONE_4 + baseRatePerYear);
             }
         }
     }

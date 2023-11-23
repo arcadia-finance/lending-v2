@@ -24,7 +24,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_liquidityOf(
-        uint256 interestRate,
+        uint80 interestRate,
         uint24 deltaTimestamp,
         uint128 realisedDebt,
         uint120 initialLiquidity

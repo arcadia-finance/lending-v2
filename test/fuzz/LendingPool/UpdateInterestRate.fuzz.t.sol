@@ -26,7 +26,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint24 deltaTimestamp,
         uint128 realisedDebt,
         uint120 realisedLiquidity,
-        uint256 interestRate
+        uint80 interestRate
     ) public {
         // realisedDebt smaller than equal to than 3402823669209384912995114146594816
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
