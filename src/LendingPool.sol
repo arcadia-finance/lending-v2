@@ -14,7 +14,6 @@ import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { Creditor } from "./Creditor.sol";
 import { ERC20, ERC4626, DebtToken } from "./DebtToken.sol";
-import { InterestRateModule } from "./InterestRateModule.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 
 /**
@@ -26,7 +25,7 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
  * since totalAssets() cannot be manipulated by the first minter.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
-contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateModule, ILendingPool {
+contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
 
@@ -40,6 +39,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     address internal immutable ACCOUNT_FACTORY;
     // Contract address of the Liquidator contract.
     address internal immutable LIQUIDATOR;
+    // The unit for fixed point numbers with 4 decimals precision.
+    uint16 internal constant ONE_4 = 10_000;
     // Maximum total liquidation penalty, 4 decimal precision.
     uint256 internal constant MAX_TOTAL_PENALTY = 1100;
 
@@ -47,6 +48,20 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
                                 STORAGE
     ////////////////////////////////////////////////////////////// */
 
+    // The current interest rate, 18 decimals precision.
+    uint256 public interestRate;
+    // The interest rate when utilisation is 0.
+    // 18 decimals precision.
+    uint72 public baseRatePerYear;
+    // The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+    // 18 decimals precision.
+    uint72 public lowSlopePerYear;
+    // The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
+    // 18 decimals precision.
+    uint72 public highSlopePerYear;
+    // The optimal capital utilisation, where we go from the first curve to the steeper second curve.
+    // 4 decimal precision.
+    uint16 public utilisationThreshold;
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
     // Fee issued upon taking debt, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
@@ -128,6 +143,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event InterestSynced(uint256 interest);
+    event InterestRate(uint80 interestRate);
+    event InterestRateParametersUpdated(
+        uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
+    );
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
@@ -791,11 +810,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Sets the configuration parameters of InterestRateConfiguration struct.
-     * @param newConfig New set of configuration parameters.
+     * @notice Sets the interest configuration parameters.
+     * @param baseRatePerYear_ The base interest rate per year.
+     * @param lowSlopePerYear_ The slope of the interest rate per year when the utilization rate is below the utilization threshold.
+     * @param highSlopePerYear_ The slope of the interest rate per year when the utilization rate exceeds the utilization threshold.
+     * @param utilisationThreshold_ The utilization threshold for determining the interest rate slope change.
+     * @dev This function can only be called by the contract owner and is intended to be used internally to adjust the interest rate parameters in response to market conditions.
+     * @dev After setting the interest configuration, the function emits an `InterestRateParametersUpdated` event to reflect the updated values.
      */
-    function setInterestConfig(InterestRateConfiguration calldata newConfig) external processInterests onlyOwner {
-        _setInterestConfig(newConfig);
+    function setInterestParameters(
+        uint72 baseRatePerYear_,
+        uint72 lowSlopePerYear_,
+        uint72 highSlopePerYear_,
+        uint16 utilisationThreshold_
+    ) external processInterests onlyOwner {
+        emit InterestRateParametersUpdated(
+            baseRatePerYear = baseRatePerYear_,
+            lowSlopePerYear = lowSlopePerYear_,
+            highSlopePerYear = highSlopePerYear_,
+            utilisationThreshold = utilisationThreshold_
+        );
     }
 
     /**
@@ -803,6 +837,46 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
      * @dev Any address can call this, it will sync unrealised interests and update the interest rate.
      */
     function updateInterestRate() external processInterests { }
+
+    /**
+     * @notice Calculates the interest rate.
+     * @param utilisation Utilisation rate, 4 decimal precision.
+     * @return interestRate_ The current interest rate, 18 decimal precision.
+     * @dev The interest rate is a function of the utilisation of the Lending Pool.
+     * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
+     */
+    function _calculateInterestRate(uint256 utilisation) internal view returns (uint256 interestRate_) {
+        unchecked {
+            if (utilisation >= utilisationThreshold) {
+                // lsIR (1e22) = uT (1e4) * ls (1e18).
+                uint256 lowSlopeInterest = uint256(utilisationThreshold) * lowSlopePerYear;
+                // hsIR (1e22) = (u - uT) (1e4) * hs (e18).
+                uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold) * highSlopePerYear;
+                // i (1e18) =  (lsIR (e22) + hsIR (1e22)) / 1e4 + bs (1e18).
+                interestRate_ = (lowSlopeInterest + highSlopeInterest) / ONE_4 + baseRatePerYear;
+            } else {
+                // i (1e18) = (u (1e4) * ls (1e18)) / 1e4 + br (1e18).
+                interestRate_ = utilisation * lowSlopePerYear / ONE_4 + baseRatePerYear;
+            }
+        }
+    }
+
+    /**
+     * @notice Updates the interest rate.
+     * @param totalDebt Total amount of debt.
+     * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
+     */
+    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
+        uint256 utilisation; // 4 decimals precision
+        unchecked {
+            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
+            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
+        }
+
+        //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
+        //_updateInterestRate() will be called a lot, saves a read from from storage or a write+read from memory.
+        emit InterestRate(uint80(interestRate = _calculateInterestRate(utilisation)));
+    }
 
     /* //////////////////////////////////////////////////////////////
                         LIQUIDATION LOGIC

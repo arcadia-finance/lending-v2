@@ -13,7 +13,7 @@ import { Factory } from "../lib/accounts-v2/src/Factory.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 
 import { ERC20, DebtToken } from "../src/DebtToken.sol";
-import { LendingPool, InterestRateModule } from "../src/LendingPool.sol";
+import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
 import { Creditor } from "../src/Creditor.sol";
 
@@ -52,14 +52,7 @@ contract ArcadiaLendingDeployment is Test {
         pool_weth.addTranche(address(srTranche_weth), 85, 10);
         pool_weth.setTreasuryInterestWeight(15);
         pool_weth.setTreasuryLiquidationWeight(90);
-        pool_weth.setInterestConfig(
-            InterestRateModule.InterestRateConfiguration({
-                baseRatePerYear: 15_000_000_000_000_000,
-                lowSlopePerYear: 70_000_000_000_000_000,
-                highSlopePerYear: 1_250_000_000_000_000_000,
-                utilisationThreshold: 7000
-            })
-        );
+        pool_weth.setInterestParameters(15_000_000_000_000_000, 70_000_000_000_000_000, 1_250_000_000_000_000_000, 7000);
         pool_weth.changeGuardian(vm.addr(deployerPrivateKey));
 
         pool_usdc =
@@ -72,14 +65,7 @@ contract ArcadiaLendingDeployment is Test {
         pool_usdc.addTranche(address(srTranche_usdc), 85, 10);
         pool_usdc.setTreasuryInterestWeight(15);
         pool_usdc.setTreasuryLiquidationWeight(90);
-        pool_usdc.setInterestConfig(
-            InterestRateModule.InterestRateConfiguration({
-                baseRatePerYear: 10_000_000_000_000_000,
-                lowSlopePerYear: 55_000_000_000_000_000,
-                highSlopePerYear: 1_000_000_000_000_000_000,
-                utilisationThreshold: 8000
-            })
-        );
+        pool_usdc.setInterestParameters(10_000_000_000_000_000, 55_000_000_000_000_000, 1_000_000_000_000_000_000, 8000);
         pool_usdc.changeGuardian(vm.addr(deployerPrivateKey));
 
         vm.stopBroadcast();

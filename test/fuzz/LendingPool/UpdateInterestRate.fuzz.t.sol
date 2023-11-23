@@ -60,4 +60,80 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.realisedLiquidityOf(address(treasury)), interestTreasury);
         assertEq(pool.totalRealisedLiquidity(), realisedLiquidity + interest);
     }
+
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(
+        uint128 realisedDebt_,
+        uint128 totalRealisedLiquidity_,
+        uint72 baseRate_,
+        uint72 highSlope_,
+        uint72 lowSlope_,
+        uint16 utilisationThreshold_
+    ) public {
+        // Given: totalRealisedLiquidity_ is more than equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
+        vm.assume(totalRealisedLiquidity_ > 0);
+        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4);
+        vm.assume(realisedDebt_ <= totalRealisedLiquidity_);
+        vm.assume(utilisationThreshold_ <= ONE_4);
+
+        // When: The InterestConfiguration is set
+        vm.prank(users.creatorAddress);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
+
+        // And: utilisation is 10_000 multiplied by realisedDebt_ and divided by totalRealisedLiquidity_
+        uint256 utilisation = (ONE_4 * realisedDebt_) / totalRealisedLiquidity_;
+
+        uint256 expectedInterestRate;
+
+        if (utilisation <= utilisationThreshold_) {
+            // And: expectedInterestRate is lowSlope multiplied by utilisation, divided by 10_000 and added to baseRate
+            expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
+        } else {
+            // And: lowSlopeInterest is utilisationThreshold multiplied by lowSlope,
+            // highSlopeInterest is utilisation minus utilisationThreshold multiplied by highSlope
+            uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
+            uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold_) * highSlope_;
+
+            // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by 10_000
+            expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
+        }
+
+        assertTrue(expectedInterestRate <= type(uint80).max);
+
+        vm.expectEmit();
+        emit InterestRate(uint80(expectedInterestRate));
+        pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
+        uint256 actualInterestRate = pool.interestRate();
+
+        // Then: actualInterestRate should be equal to expectedInterestRate
+        assertEq(actualInterestRate, expectedInterestRate);
+    }
+
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityZero(
+        uint256 realisedDebt_,
+        uint72 baseRate_,
+        uint72 highSlope_,
+        uint72 lowSlope_,
+        uint16 utilisationThreshold_
+    ) public {
+        // Given: totalRealisedLiquidity_ is equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
+        uint256 totalRealisedLiquidity_ = 0;
+        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4); //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
+        vm.assume(utilisationThreshold_ <= ONE_4);
+
+        // When: The InterestConfiguration is set
+        vm.prank(users.creatorAddress);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
+        // And: The interestRateModule is set for a certain combination of realisedDebt_ and totalRealisedLiquidity_
+        pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
+
+        uint256 expectedInterestRate = baseRate_;
+
+        vm.expectEmit();
+        emit InterestRate(uint80(expectedInterestRate));
+        pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
+        uint256 actualInterestRate = pool.interestRate();
+
+        // Then: actualInterestRate should be equal to expectedInterestRate
+        assertEq(actualInterestRate, expectedInterestRate);
+    }
 }
