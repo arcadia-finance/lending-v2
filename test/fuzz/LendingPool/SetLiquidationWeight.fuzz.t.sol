@@ -47,7 +47,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         // When: users.creatorAddress setInterestWeight on index 0
         // Then: setInterestWeight should revert with TR_SIW: Non Existing Tranche
-        vm.expectRevert(LendingPool_NonExistingTranche.selector);
+        vm.expectRevert(NonExistingTranche.selector);
         pool.setLiquidationWeight(0, 50);
         vm.stopPrank();
     }
@@ -59,7 +59,7 @@ contract SetLiquidationWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.addTranche(address(srTranche), 50, 0);
 
         vm.expectEmit(true, true, true, true);
-        emit LiquidationWeightSet(0, 40);
+        emit TrancheLiquidationWeightSet(0, 40);
         pool.setLiquidationWeight(0, 40);
         vm.stopPrank();
 

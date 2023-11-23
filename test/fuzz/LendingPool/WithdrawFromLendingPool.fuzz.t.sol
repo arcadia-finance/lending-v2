@@ -34,7 +34,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         pool.depositInLendingPool(assetsWithdrawn, users.liquidityProvider);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
+        vm.expectRevert(AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -49,7 +49,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
 
-        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
+        vm.expectRevert(AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }

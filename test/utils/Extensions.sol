@@ -72,6 +72,10 @@ contract LendingPoolExtension is LendingPool {
         LendingPool(riskManager_, asset_, treasury_, account_factory, liquidator_)
     { }
 
+    function getMaxTotalPenalty() public pure returns (uint256 maxTotalPenalty) {
+        maxTotalPenalty = MAX_TOTAL_PENALTY;
+    }
+
     function popTranche(uint256 index, address tranche) public {
         _popTranche(index, tranche);
     }

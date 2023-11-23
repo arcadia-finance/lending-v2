@@ -33,7 +33,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_donateToTranche_zeroAssets() public {
-        vm.expectRevert(LendingPool_ZeroAmount.selector);
+        vm.expectRevert(ZeroAmount.selector);
         pool.donateToTranche(1, 0);
     }
 
@@ -51,7 +51,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(donator);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(LendingPool_InsufficientShares.selector);
+        vm.expectRevert(InsufficientShares.selector);
         pool.donateToTranche(0, assets);
         vm.stopPrank();
     }

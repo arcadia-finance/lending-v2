@@ -28,26 +28,31 @@ abstract contract Events {
                             LENDING POOL
     ////////////////////////////////////////////////////////////// */
 
-    event WeightsSet(uint16 initiationWeight, uint16 penaltyWeight, uint16 terminationWeight);
-    event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event InterestWeightSet(uint256 indexed trancheIndex, uint16 weight);
-    event LiquidationWeightSet(uint256 indexed trancheIndex, uint16 weight);
-    event TranchePopped(address tranche);
-    event TreasuryInterestWeightSet(uint16 weight);
-    event TreasuryLiquidationWeightSet(uint16 weight);
-    event OriginationFeeSet(uint8 originationFee);
-    event BorrowCapSet(uint128 borrowCap);
-    event SupplyCapSet(uint128 supplyCap);
-    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
+    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event Borrow(
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
-    event Repay(address indexed account, address indexed from, uint256 amount);
-    event MaxLiquidationFeesSet(uint80 maxInitiationFee, uint80 maxTerminationFee);
+    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
+    event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
+    event LiquidationParametersSet(
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee
+    );
+    event OriginationFeeSet(uint8 originationFee);
+    event Repay(address indexed account, address indexed from, uint256 amount);
+    event TrancheAdded(address indexed tranche, uint8 indexed index);
+    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
+    event TranchePopped(address tranche);
+    event TreasuryInterestWeightSet(uint16 weight);
+    event TreasuryLiquidationWeightSet(uint16 weight);
+
+    event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR

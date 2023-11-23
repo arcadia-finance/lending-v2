@@ -27,7 +27,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setAuctionsInProgress(auctionsInProgress_);
 
         vm.startPrank(sender);
-        vm.expectRevert(LendingPool_AuctionOngoing.selector);
+        vm.expectRevert(AuctionOngoing.selector);
         pool.skim();
         vm.stopPrank();
     }
