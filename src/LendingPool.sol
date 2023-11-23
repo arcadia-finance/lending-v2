@@ -907,16 +907,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
             // Pay out the "auctionTerminationReward" to the "terminator".
             realisedLiquidityOf[terminator] += auctionTerminationReward;
-
-            // Decrement the number of auctions in progress.
-            --auctionsInProgress;
         }
 
-        // If this was the sole auction in progress, enable deposits and withdrawals in the most jr tranche.
-        if (auctionsInProgress == 0 && tranches.length > 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
-        }
-        // Event emitted by Liquidator.
+        _endLiquidation();
     }
 
     /**
@@ -969,17 +962,28 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
             // Unsafe cast: sum will revert if it overflows.
             totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
         }
+
+        // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
         _withdraw(openDebt, account, account);
 
+        _endLiquidation();
+    }
+
+    /**
+     * @notice Ends the liquidation.
+     * @dev Unlocks the most junior Tranche if there are no other liquidations ongoing.
+     */
+    function _endLiquidation() internal {
         // Decrement the number of auctions in progress.
         unchecked {
             --auctionsInProgress;
         }
 
-        // Hook to the most junior Tranche to inform that there are no ongoing auctions.
+        // Hook to the most junior Tranche.
         if (auctionsInProgress == 0 && tranches.length > 0) {
             ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
         }
+
         // Event emitted by Liquidator.
     }
 
@@ -993,7 +997,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
     function _processDefault(uint256 badDebt) internal {
         address tranche;
         uint256 maxBurnable;
-        for (uint256 i = tranches.length; i > 0;) {
+        uint256 length = tranches.length;
+        for (uint256 i = length; i > 0;) {
             unchecked {
                 --i;
             }
@@ -1033,7 +1038,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, InterestRateMo
 
         uint256 trancheShare;
         uint256 weightOfTranche;
-        for (uint256 i; i < tranches.length;) {
+        uint256 length = tranches.length;
+        for (uint256 i; i < length;) {
             weightOfTranche = liquidationWeightTranches[i];
 
             if (weightOfTranche != 0) {
