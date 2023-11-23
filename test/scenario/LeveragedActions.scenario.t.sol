@@ -103,7 +103,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(LendingPool.Reverted.selector);
-        pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
+        pool.flashAction(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
         vm.stopPrank();
     }
 
@@ -136,7 +136,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(LendingPool.Reverted.selector);
-        pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
+        pool.flashAction(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
         vm.stopPrank();
     }
 
@@ -224,9 +224,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.Account_Unhealthy.selector);
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
         vm.stopPrank();
     }
 
@@ -318,9 +316,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
@@ -440,9 +436,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
