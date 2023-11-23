@@ -72,10 +72,10 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         vm.stopPrank();
 
         // Then: All flags are set to False.
-        assertFalse(lendingPoolGuardian.isRepayPaused());
+        assertFalse(lendingPoolGuardian.repayPaused());
         assertFalse(lendingPoolGuardian.withdrawPaused());
-        assertFalse(lendingPoolGuardian.isBorrowPaused());
+        assertFalse(lendingPoolGuardian.borrowPaused());
         assertFalse(lendingPoolGuardian.depositPaused());
-        assertFalse(lendingPoolGuardian.isLiquidationPaused());
+        assertFalse(lendingPoolGuardian.liquidationPaused());
     }
 }
