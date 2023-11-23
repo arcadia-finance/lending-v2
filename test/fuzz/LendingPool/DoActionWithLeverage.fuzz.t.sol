@@ -54,7 +54,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         vm.assume(nonAccount != address(proxyAccount));
         vm.expectRevert(IsNotAnAccount.selector);
-        pool.doActionWithLeverage(amount, nonAccount, actionHandler_, actionData, signature, emptyBytes3);
+        pool.flashAction(amount, nonAccount, actionHandler_, actionData, signature, emptyBytes3);
     }
 
     function testFuzz_Revert_doActionWithLeverage_Unauthorised(
@@ -68,7 +68,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(beneficiary);
         vm.expectRevert(Unauthorized.selector);
-        pool.doActionWithLeverage(amount, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
+        pool.flashAction(amount, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -88,9 +88,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(beneficiary);
         vm.expectRevert(Unauthorized.selector);
-        pool.doActionWithLeverage(
-            amountLoaned, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -114,7 +112,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
-        pool.doActionWithLeverage(
+        pool.flashAction(
             amountLoaned, address(proxyAccount), address(actionHandler), actionData, signature, emptyBytes3
         );
         vm.stopPrank();
@@ -141,7 +139,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(
+        pool.flashAction(
             amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
         );
 
@@ -173,7 +171,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, type(uint256).max, address(proxyAccount));
 
         vm.prank(beneficiary);
-        pool.doActionWithLeverage(
+        pool.flashAction(
             amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
         );
 
@@ -212,7 +210,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(users.accountOwner);
-        pool.doActionWithLeverage(
+        pool.flashAction(
             amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
         );
         vm.stopPrank();
@@ -261,9 +259,7 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
         emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
-        pool.doActionWithLeverage(
-            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), ref
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), ref);
         vm.stopPrank();
     }
 }
