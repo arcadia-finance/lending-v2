@@ -73,6 +73,9 @@ abstract contract Creditor {
      * @return baseCurrency The base currency of the Creditor.
      * @return liquidator The liquidator of the Creditor.
      * @return fixedLiquidationCost Estimated fixed costs (independent of size of debt) to liquidate a position.
+     * @dev This function response is used for the Arcadia Accounts margin account creation.
+     * This function does not deploy a new Arcadia Account.
+     * It just provides the parameters to be used in Arcadia Account to connect to the Creditor.
      */
     function openMarginAccount(uint256 accountVersion)
         external
@@ -80,9 +83,17 @@ abstract contract Creditor {
         returns (bool success, address baseCurrency, address liquidator, uint256 fixedLiquidationCost);
 
     /**
+     * @notice Checks if Account can be closed.
+     * @param account The Account address.
+     * @dev This function checks if the given Account address has an open position. If not, it can be closed.
+     */
+    function closeMarginAccount(address account) external virtual;
+
+    /**
      * @notice Returns the open position of the Account.
      * @param account The Account address.
      * @return openPosition The open position of the Account.
+     * @dev The open position is the sum of all liabilities.
      */
     function getOpenPosition(address account) external view virtual returns (uint256 openPosition);
 
@@ -90,6 +101,8 @@ abstract contract Creditor {
      * @notice Starts the liquidation of an account and returns the open position of the Account.
      * @param initiator The address of the liquidation initiator.
      * @return openPosition the open position of the Account.
+     * @dev Starts the liquidation process in the Creditor.
+     * This function should be callable by Arcadia Account.
      */
     function startLiquidation(address initiator) external virtual returns (uint256 openPosition);
 }

@@ -183,6 +183,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     error Unauthorized();
     // Thrown when asset amount in input is zero.
     error ZeroAmount();
+    // Thrown when address has an open position
+    error OpenPositionNonZero();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -1245,6 +1247,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             liquidator_ = LIQUIDATOR;
             fixedLiquidationCost_ = fixedLiquidationCost;
         }
+    }
+
+    /**
+     * @inheritdoc Creditor
+     */
+    function closeMarginAccount(address account) external view override {
+        if (maxWithdraw(account) != 0) revert OpenPositionNonZero();
     }
 
     /**

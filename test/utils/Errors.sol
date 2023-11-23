@@ -26,6 +26,7 @@ abstract contract Errors {
     error Reverted();
     error IsNotAnAccountWithDebt();
     error LiquidationWeightsTooHigh();
+    error OpenPositionNonZero();
 
     /*//////////////////////////////////////////////////////////////////////////
                                    LIQUIDATOR
