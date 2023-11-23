@@ -14,8 +14,16 @@ import { IGuardian } from "./interfaces/IGuardian.sol";
 /**
  * @title Tranche
  * @author Pragma Labs
- * @notice The Tranche contract allows for lending of a specified ERC20 token, managed by a lending pool.
- * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying asset.
+ * @notice Each Lending Pool has one or more Tranche(s).
+ * Different Tranches receive different yields, but also have different protections against losses due to bad debt:
+ * In general the most junior Tranche will have the highest yield,
+ * but it will be the first Tranche to absorb losses when liquidations result in bad debt.
+ * The Liquidity Providers do not provide Liquidity directly to the Lending Pool, but via a Tranche.
+ * As such Liquidity Providers with different risk/reward preferences can provide liquidity to the same Lending Pool
+ * (benefitting borrowers with deeper liquidity), but via different Tranches.
+ * @dev Each Tranche contract will do the accounting of the balances of its Liquidity Providers,
+ * while the Lending Pool will do the accounting of the balances of its Tranches.
+ * @dev A Tranche is according the ERC4626 standard, with a certain ERC20 as underlying asset.
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
@@ -89,7 +97,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice The constructor for a tranche.
-     * @param lendingPool_ the Lending Pool of the underlying ERC-20 token, with the lending logic.
+     * @param lendingPool_ the Lending Pool of the underlying ERC20 token, with the lending logic.
      * @param prefix_ The prefix of the contract name (eg. Senior -> Mezzanine -> Junior).
      * @param prefixSymbol_ The prefix of the contract symbol (eg. SR  -> MZ -> JR).
      * @dev The name and symbol of the tranche are automatically generated, based on the name and symbol of the underlying token.
@@ -97,8 +105,8 @@ contract Tranche is ITranche, ERC4626, Owned {
     constructor(address lendingPool_, string memory prefix_, string memory prefixSymbol_)
         ERC4626(
             ERC4626(address(lendingPool_)).asset(),
-            string(abi.encodePacked(prefix_, " Arcadia ", ERC4626(lendingPool_).asset().name())),
-            string(abi.encodePacked(prefixSymbol_, "arc", ERC4626(lendingPool_).asset().symbol()))
+            string(abi.encodePacked(prefix_, " ArcadiaV2 ", ERC4626(lendingPool_).asset().name())),
+            string(abi.encodePacked(prefixSymbol_, "arcV2", ERC4626(lendingPool_).asset().symbol()))
         )
         Owned(msg.sender)
     {
@@ -148,7 +156,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of the standard ERC-4626 deposit implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being deposited.
+     * @param assets The amount of assets of the underlying ERC20 token being deposited.
      * @param receiver The address that receives the minted shares.
      * @return shares The amount of shares minted.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
@@ -177,7 +185,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @notice Modification of the standard ERC-4626 mint implementation.
      * @param shares The amount of shares minted.
      * @param receiver The address that receives the minted shares.
-     * @return assets The amount of assets of the underlying ERC-20 token being deposited.
+     * @return assets The amount of assets of the underlying ERC20 token being deposited.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
      * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
@@ -202,8 +210,8 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of the standard ERC-4626 withdraw implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being withdrawn.
-     * @param receiver The address of the receiver of the underlying ERC-20 tokens.
+     * @param assets The amount of assets of the underlying ERC20 token being withdrawn.
+     * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the assets being withdrawn.
      * @return shares The corresponding amount of shares redeemed.
      */
@@ -234,7 +242,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     /**
      * @notice Modification of the standard ERC-4626 redeem implementation.
      * @param shares The amount of shares being redeemed.
-     * @param receiver The address of the receiver of the underlying ERC-20 tokens.
+     * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the shares being redeemed.
      * @return assets The corresponding amount of assets withdrawn.
      */
@@ -331,7 +339,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of previewWithdraw() where interests are realized (state modification).
-     * @return assets The amount of assets of the underlying ERC-20 token being withdrawn.
+     * @return assets The amount of assets of the underlying ERC20 token being withdrawn.
      * @dev This function is a modification of previewWithdraw() where interests are realized (state modification).
      */
     function previewWithdrawAndSync(uint256 assets) public returns (uint256) {
