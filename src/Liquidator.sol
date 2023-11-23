@@ -49,6 +49,8 @@ contract Liquidator is Owned, ILiquidator {
         uint128 startDebt;
         // The base of the auction price curve.
         uint64 base;
+        // The timestamp after which the auction is considered not successful.
+        uint32 cutoffTimeStamp;
         // The timestamp the auction started.
         uint32 startTime;
         // Sets the begin price of the auction, 4 decimals precision.
@@ -58,8 +60,6 @@ contract Liquidator is Owned, ILiquidator {
         // Flag indicating if the auction is still ongoing.
         bool inAuction;
         // The time after which the auction is considered not successful, in seconds.
-        uint32 cutoffTime;
-        // The contract address of the Creditor that issued the debt.
         address creditor;
         // The contract address of each asset in the Account, at the moment the liquidation was initiated.
         address[] assetAddresses;
@@ -229,7 +229,7 @@ contract Liquidator is Owned, ILiquidator {
         // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
         auctionInformation_.base = base;
         auctionInformation_.startTime = uint32(block.timestamp);
-        auctionInformation_.cutoffTime = cutoffTime;
+        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
         auctionInformation_.startPriceMultiplier = startPriceMultiplier;
         auctionInformation_.minPriceMultiplier = minPriceMultiplier;
     }
@@ -333,7 +333,6 @@ contract Liquidator is Owned, ILiquidator {
 
         for (uint256 i; i < askedAssetAmounts.length;) {
             unchecked {
-                // ToDo: check that there is no way we can get an amount 0 for an asset in an Account.
                 totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
                 ++i;
             }
@@ -447,7 +446,7 @@ contract Liquidator is Owned, ILiquidator {
         } else if (collateralValue == 0) {
             // Unhappy flow: All collateral is sold.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
-        } else if (block.timestamp - auctionInformation_.startTime > auctionInformation_.cutoffTime) {
+        } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
             // All remaining assets are transferred to the owner of Liquidator.sol,
