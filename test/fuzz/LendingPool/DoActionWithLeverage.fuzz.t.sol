@@ -94,13 +94,13 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_doActionWithLeverage_InsufficientLiquidity(
         uint128 amountLoaned,
-        uint128 collateralValue,
+        uint112 collateralValue,
         uint128 liquidity,
         bytes calldata actionData,
         bytes calldata signature
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity < amountLoaned);
@@ -120,11 +120,11 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_doActionWithLeverage_ByAccountOwner(
         uint128 amountLoaned,
-        uint128 collateralValue,
+        uint112 collateralValue,
         uint128 liquidity
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
@@ -150,12 +150,12 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_doActionWithLeverage_ByMaxAuthorisedAddress(
         uint128 amountLoaned,
-        uint128 collateralValue,
+        uint112 collateralValue,
         uint128 liquidity,
         address beneficiary
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
 
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(liquidity >= amountLoaned);
@@ -183,12 +183,12 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_doActionWithLeverage_originationFeeAvailable(
         uint128 amountLoaned,
-        uint128 collateralValue,
+        uint112 collateralValue,
         uint128 liquidity,
         uint8 originationFee
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, type(uint96).max, type(uint128).max - 1));
+        collateralValue = uint112(bound(collateralValue, type(uint96).max, type(uint112).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
         vm.assume(liquidity >= amountLoaned);
@@ -233,13 +233,13 @@ contract doActionWithLeverage_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_doActionWithLeverage_EmitReferralEvent(
         uint128 amountLoaned,
-        uint128 collateralValue,
+        uint112 collateralValue,
         uint128 liquidity,
         uint8 originationFee,
         bytes3 ref
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint128(bound(collateralValue, 0, type(uint128).max - 1));
+        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
 
         vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
         vm.assume(liquidity >= amountLoaned);

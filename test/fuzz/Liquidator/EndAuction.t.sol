@@ -25,7 +25,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                         HELPER FUNCTIONS
     /////////////////////////////////////////////////////////////// */
 
-    function initiateLiquidation(uint128 amountLoaned) public {
+    function initiateLiquidation(uint112 amountLoaned) public {
         // Account has debt
         bytes3 emptyBytes3;
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
@@ -63,7 +63,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint128 amountLoaned
+        uint112 amountLoaned
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
         cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60), (8 * 60 * 60))); // > 1 hour && < 8 hours
@@ -71,7 +71,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint128(bound(amountLoaned, 1, (type(uint128).max / 150) * 100)); // No overflow when debt is increased
+        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100)); // No overflow when debt is increased
 
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
@@ -94,7 +94,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         address randomAddress
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -102,7 +102,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint128(bound(amountLoaned, 1, (type(uint128).max / 150) * 100));
+        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100));
 
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
@@ -132,7 +132,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         address randomAddress
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -140,7 +140,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint128(bound(amountLoaned, 1, (type(uint128).max / 150) * 100));
+        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100));
 
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
@@ -168,7 +168,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint128 amountLoaned
+        uint112 amountLoaned
     ) public {
         // Preprocess: Set up the fuzzed variables
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -177,7 +177,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint128(bound(amountLoaned, 1, (type(uint128).max / 150) * 100)); // No overflow when debt is increased
+        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100)); // No overflow when debt is increased
 
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);

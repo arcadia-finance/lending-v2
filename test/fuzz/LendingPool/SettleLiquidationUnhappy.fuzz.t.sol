@@ -235,11 +235,14 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
     //
     function testFuzz_Success_settleLiquidationUnhappyFlow_BadDebt_ProcessDefault(
-        uint128 liquidity,
+        uint112 liquidity,
         uint128 startDebt,
         uint128 openDebt,
         address auctionTerminator
     ) public {
+        // Given: collateralValue is smaller than maxExposure.
+        liquidity = uint112(bound(liquidity, 0, type(uint112).max - 1));
+
         vm.prank(users.creatorAddress);
         pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
@@ -257,7 +260,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
             uint256(liquidity) >= uint256(startDebt) + initiationReward + auctionTerminationReward + liquidationPenalty
         );
         vm.assume(
-            uint256(liquidity) + initiationReward + auctionTerminationReward + liquidationPenalty <= type(uint128).max
+            uint256(liquidity) + initiationReward + auctionTerminationReward + liquidationPenalty <= type(uint112).max
         );
 
         // There is still open debt

@@ -11,7 +11,7 @@ import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
-import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Scenario tests for Borrow and Repay flows.
@@ -34,7 +34,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
             address(pool),
             address(mockERC20.token1),
             0,
-            type(uint128).max,
+            type(uint112).max,
             Constants.tokenToStableCollFactor,
             Constants.tokenToStableLiqFactor
         );
@@ -43,11 +43,11 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testScenario_Revert_borrow_NotAllowTooMuchCreditAfterDeposit(uint128 amountToken, uint128 amountCredit)
+    function testScenario_Revert_borrow_NotAllowTooMuchCreditAfterDeposit(uint112 amountToken, uint112 amountCredit)
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
@@ -69,9 +69,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(mockERC20.stable1.balanceOf(users.accountOwner), 0);
     }
 
-    function testScenario_Revert_borrow_NotAllowCreditAfterLargeUnrealizedDebt(uint128 amountToken) public {
+    function testScenario_Revert_borrow_NotAllowCreditAfterLargeUnrealizedDebt(uint112 amountToken) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         uint128 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals);
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
@@ -97,16 +97,15 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Revert_withdraw_OpenDebtIsTooLarge(
-        uint128 amountToken,
-        uint128 amountTokenWithdrawal,
+        uint112 amountToken,
+        uint112 amountTokenWithdrawal,
         uint128 amountCredit
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0 && amountTokenWithdrawal > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
         vm.assume(amountToken >= amountTokenWithdrawal);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
@@ -138,9 +137,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
     }
 
-    function testScenario_Success_getFreeMargin_AmountOfAllowedCredit(uint128 amountToken) public {
+    function testScenario_Success_getFreeMargin_AmountOfAllowedCredit(uint112 amountToken) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
@@ -155,9 +154,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(actualValue, expectedValue);
     }
 
-    function testScenario_Success_borrow_AllowCreditAfterDeposit(uint128 amountToken, uint128 amountCredit) public {
+    function testScenario_Success_borrow_AllowCreditAfterDeposit(uint112 amountToken, uint128 amountCredit) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
         vm.assume(amountToken > 0);
@@ -181,12 +180,12 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_borrow_IncreaseOfDebtPerBlock(
-        uint128 amountToken,
+        uint112 amountToken,
         uint128 amountCredit,
         uint24 deltaTimestamp
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         uint256 _yearlyInterestRate = pool.interestRate();
@@ -234,17 +233,16 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_borrow_AllowAdditionalCreditAfterPriceIncrease(
-        uint128 amountToken,
+        uint112 amountToken,
         uint128 amountCredit,
         uint16 newPrice
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         vm.assume(newPrice * 10 ** Constants.tokenOracleDecimals > rates.token1ToUsd);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
@@ -272,16 +270,15 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_withdraw_OpenDebtIsNotTooLarge(
-        uint128 amountToken,
-        uint128 amountTokenWithdrawal,
+        uint112 amountToken,
+        uint112 amountTokenWithdrawal,
         uint128 amountCredit
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0 && amountTokenWithdrawal > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
         vm.assume(amountToken >= amountTokenWithdrawal);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
@@ -308,16 +305,15 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_syncInterests_IncreaseBalanceDebtContract(
-        uint128 amountToken,
+        uint112 amountToken,
         uint128 amountCredit,
         uint24 deltaTimestamp
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
@@ -347,16 +343,15 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(unrealisedDebt, balanceAfter - balanceBefore);
     }
 
-    function testScenario_Success_repay_ExactDebt(uint128 amountToken, uint128 amountCredit, uint16 blocksToRoll)
+    function testScenario_Success_repay_ExactDebt(uint112 amountToken, uint128 amountCredit, uint16 blocksToRoll)
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         vm.assume(amountCredit > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
@@ -387,19 +382,18 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_repay_ExessiveDebt(
-        uint128 amountToken,
+        uint112 amountToken,
         uint128 amountCredit,
         uint16 blocksToRoll,
         uint8 factor
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         vm.assume(factor > 0);
         vm.assume(amountCredit > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
@@ -435,18 +429,17 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Success_repay_PartialDebt(
-        uint128 amountToken,
+        uint112 amountToken,
         uint128 amountCredit,
         uint24 deltaTimestamp,
         uint128 toRepay
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint128(bound(amountToken, 0, type(uint128).max - 1));
+        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
 
         vm.assume(amountToken > 0);
         vm.assume(toRepay > 0);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
-        vm.assume(amountToken < type(uint128).max / collFactor_);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);

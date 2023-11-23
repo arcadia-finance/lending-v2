@@ -20,7 +20,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         Liquidator_Fuzz_Test.setUp();
     }
 
-    function initiateLiquidation(uint128 amountLoaned) public {
+    function initiateLiquidation(uint112 amountLoaned) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
@@ -55,10 +55,10 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_InvalidBid(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Revert_bid_InvalidBid(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -69,11 +69,11 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_NoFundsBidder(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Revert_bid_NoFundsBidder(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
         vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
+        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -87,11 +87,11 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_NotApprovedLending(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Revert_bid_NotApprovedLending(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100);
+        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -107,11 +107,11 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_bid_partially(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Success_bid_partially(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 12);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -140,14 +140,14 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(inAuction, true);
     }
 
-    function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint128 amountLoaned) public {
+    function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint112 amountLoaned) public {
         vm.startPrank(users.creatorAddress);
         pool.setLiquidationParameters(2, 2, 5, type(uint80).max, type(uint80).max);
 
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 2);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
