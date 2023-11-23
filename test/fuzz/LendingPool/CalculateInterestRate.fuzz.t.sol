@@ -47,11 +47,11 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_calculateInterestRate_OverOptimalUtilisation(
-        uint40 utilisation, //4
-        uint72 baseRate_, // 0
-        uint72 highSlope_, // 0
-        uint72 lowSlope_, // 1521234
-        uint16 utilisationThreshold_ // 3
+        uint40 utilisation,
+        uint72 baseRate_,
+        uint72 highSlope_,
+        uint72 lowSlope_,
+        uint16 utilisationThreshold_
     ) public {
         // Given: utilisation is between 80000 and 100000, highSlope_ is bigger than lowSlope_
         vm.assume(utilisationThreshold_ <= ONE_4);

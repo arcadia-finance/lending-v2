@@ -44,7 +44,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     // Contract address of the Liquidator contract.
     address internal immutable LIQUIDATOR;
     // The unit for fixed point numbers with 4 decimals precision.
-    uint16 internal constant ONE_4 = 10_000;
+    uint256 internal constant ONE_4 = 10_000;
     // Maximum total liquidation penalty, 4 decimal precision.
     uint256 internal constant MAX_TOTAL_PENALTY = 1100;
 
@@ -53,7 +53,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ////////////////////////////////////////////////////////////// */
 
     // The current interest rate, 18 decimals precision.
-    uint256 public interestRate;
+    uint80 public interestRate;
     // The interest rate when utilisation is 0.
     // 18 decimals precision.
     uint72 public baseRatePerYear;
@@ -840,6 +840,23 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function updateInterestRate() external processInterests { }
 
     /**
+     * @notice Updates the interest rate.
+     * @param totalDebt Total amount of debt.
+     * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
+     */
+    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
+        uint256 utilisation; // 4 decimals precision
+        unchecked {
+            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
+            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
+        }
+
+        //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
+        //_updateInterestRate() will be called a lot, saves a read from from storage or a write+read from memory.
+        emit InterestRate(uint80(interestRate = _calculateInterestRate(utilisation)));
+    }
+
+    /**
      * @notice Calculates the interest rate.
      * @param utilisation Utilisation rate, 4 decimal precision.
      * @return interestRate_ The current interest rate, 18 decimal precision.
@@ -860,23 +877,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 interestRate_ = utilisation * lowSlopePerYear / ONE_4 + baseRatePerYear;
             }
         }
-    }
-
-    /**
-     * @notice Updates the interest rate.
-     * @param totalDebt Total amount of debt.
-     * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
-     */
-    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
-        uint256 utilisation; // 4 decimals precision
-        unchecked {
-            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
-            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
-        }
-
-        //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
-        //_updateInterestRate() will be called a lot, saves a read from from storage or a write+read from memory.
-        emit InterestRate(uint80(interestRate = _calculateInterestRate(utilisation)));
     }
 
     /* //////////////////////////////////////////////////////////////
