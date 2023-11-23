@@ -255,18 +255,6 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
         depositPaused = depositPaused_;
         liquidationPaused = liquidationPaused_;
     }
-
-    function isRepayPaused() public view returns (bool) {
-        return repayPaused;
-    }
-
-    function isBorrowPaused() public view returns (bool) {
-        return borrowPaused;
-    }
-
-    function isLiquidationPaused() public view returns (bool) {
-        return liquidationPaused;
-    }
 }
 
 /* //////////////////////////////////////////////////////////////

@@ -18,15 +18,15 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     ////////////////////////////////////////////////////////////// */
 
     // Flag indicating if the repay() function is paused.
-    bool internal repayPaused;
+    bool public repayPaused;
     // Flag indicating if the withdraw() function is paused.
     bool public withdrawPaused;
     // Flag indicating if the borrow() function is paused.
-    bool internal borrowPaused;
+    bool public borrowPaused;
     // Flag indicating if the deposit() function is paused.
     bool public depositPaused;
     // Flag indicating if the liquidation() function is paused.
-    bool internal liquidationPaused;
+    bool public liquidationPaused;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
@@ -90,28 +90,24 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     }
 
     /* //////////////////////////////////////////////////////////////
-                                CONSTRUCTOR
-    ////////////////////////////////////////////////////////////// */
-
-    constructor() { }
-
-    /* //////////////////////////////////////////////////////////////
                             PAUSING LOGIC
     ////////////////////////////////////////////////////////////// */
 
     /**
      * @inheritdoc BaseGuardian
+     * @dev This function can be called by the guardian to pause all functionality in the event of an emergency.
      */
     function pause() external override onlyGuardian {
         if (block.timestamp <= pauseTimestamp + 32 days) revert Cannot_Pause();
-        repayPaused = true;
-        withdrawPaused = true;
-        borrowPaused = true;
-        depositPaused = true;
-        liquidationPaused = true;
         pauseTimestamp = block.timestamp;
 
-        emit PauseFlagsUpdated(true, true, true, true, true);
+        emit PauseFlagsUpdated(
+            repayPaused = true,
+            withdrawPaused = true,
+            borrowPaused = true,
+            depositPaused = true,
+            liquidationPaused = true
+        );
     }
 
     /**
@@ -125,33 +121,35 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Can only update flags from paused (true) to unPaused (false), cannot be used the other way around
      * (to set unPaused flags to paused).
      */
-    function unPause(
+    function unpause(
         bool repayPaused_,
         bool withdrawPaused_,
         bool borrowPaused_,
         bool depositPaused_,
         bool liquidationPaused_
     ) external onlyOwner {
-        repayPaused = repayPaused && repayPaused_;
-        withdrawPaused = withdrawPaused && withdrawPaused_;
-        borrowPaused = borrowPaused && borrowPaused_;
-        depositPaused = depositPaused && depositPaused_;
-        liquidationPaused = liquidationPaused && liquidationPaused_;
-
-        emit PauseFlagsUpdated(repayPaused, withdrawPaused, borrowPaused, depositPaused, liquidationPaused);
+        emit PauseFlagsUpdated(
+            repayPaused = repayPaused && repayPaused_,
+            withdrawPaused = withdrawPaused && withdrawPaused_,
+            borrowPaused = borrowPaused && borrowPaused_,
+            depositPaused = depositPaused && depositPaused_,
+            liquidationPaused = liquidationPaused && liquidationPaused_
+        );
     }
 
     /**
      * @inheritdoc BaseGuardian
+     * @dev This function can be called by the guardian to unpause all functionality.
      */
     function unPause() external override {
         if (block.timestamp <= pauseTimestamp + 30 days) revert Cannot_UnPause();
-        repayPaused = false;
-        withdrawPaused = false;
-        borrowPaused = false;
-        depositPaused = false;
-        liquidationPaused = false;
 
-        emit PauseFlagsUpdated(false, false, false, false, false);
+        emit PauseFlagsUpdated(
+            repayPaused = false,
+            withdrawPaused = false,
+            borrowPaused = false,
+            depositPaused = false,
+            liquidationPaused = false
+        );
     }
 }

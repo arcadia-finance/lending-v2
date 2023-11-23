@@ -26,7 +26,7 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
 
         vm.startPrank(nonOwner);
         vm.expectRevert("UNAUTHORIZED");
-        lendingPoolGuardian.unPause(
+        lendingPoolGuardian.unpause(
             flags.repayPaused, flags.withdrawPaused, flags.borrowPaused, flags.depositPaused, flags.liquidationPaused
         );
         vm.stopPrank();
@@ -62,17 +62,17 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
             initialFlags.depositPaused && flags.depositPaused,
             initialFlags.liquidationPaused && flags.liquidationPaused
         );
-        lendingPoolGuardian.unPause(
+        lendingPoolGuardian.unpause(
             flags.repayPaused, flags.withdrawPaused, flags.borrowPaused, flags.depositPaused, flags.liquidationPaused
         );
         vm.stopPrank();
 
         // Then: Flags can only be toggled from paused (true) to unpaused (false)
         // if initialFlag was true en new flag is false.
-        assertEq(lendingPoolGuardian.isRepayPaused(), initialFlags.repayPaused && flags.repayPaused);
+        assertEq(lendingPoolGuardian.repayPaused(), initialFlags.repayPaused && flags.repayPaused);
         assertEq(lendingPoolGuardian.withdrawPaused(), initialFlags.withdrawPaused && flags.withdrawPaused);
-        assertEq(lendingPoolGuardian.isBorrowPaused(), initialFlags.borrowPaused && flags.borrowPaused);
+        assertEq(lendingPoolGuardian.borrowPaused(), initialFlags.borrowPaused && flags.borrowPaused);
         assertEq(lendingPoolGuardian.depositPaused(), initialFlags.depositPaused && flags.depositPaused);
-        assertEq(lendingPoolGuardian.isLiquidationPaused(), initialFlags.liquidationPaused && flags.liquidationPaused);
+        assertEq(lendingPoolGuardian.liquidationPaused(), initialFlags.liquidationPaused && flags.liquidationPaused);
     }
 }
