@@ -4,20 +4,18 @@
  */
 pragma solidity 0.8.19;
 
-import { InterestRateModule_Fuzz_Test } from "./_InterestRateModule.fuzz.t.sol";
-
-import { InterestRateModule } from "../../../src/InterestRateModule.sol";
+import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "calculateInterestRate" of contract "InterestRateModule".
  */
-contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModule_Fuzz_Test {
+contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        InterestRateModule_Fuzz_Test.setUp();
+        LendingPool_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -34,19 +32,12 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         vm.assume(utilisationThreshold_ <= ONE_4);
         vm.assume(utilisation <= utilisationThreshold_);
 
-        // And: a certain InterestRateConfiguration
-        InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
-            baseRatePerYear: baseRate_,
-            highSlopePerYear: highSlope_,
-            lowSlopePerYear: lowSlope_,
-            utilisationThreshold: utilisationThreshold_
-        });
-
         // When: The InterestConfiguration is set
-        interestRateModule.setInterestConfig(config);
+        vm.prank(users.creatorAddress);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // And: actualInterestRate is calculateInterestRate with utilisation
-        uint256 actualInterestRate = interestRateModule.calculateInterestRate(utilisation);
+        uint256 actualInterestRate = pool.calculateInterestRate(utilisation);
 
         // And: expectedInterestRate is lowSlope multiplied by utilisation divided by 10_000 and added to baseRate
         uint256 expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
@@ -64,18 +55,12 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
     ) public {
         // Given: utilisation is between 80000 and 100000, highSlope_ is bigger than lowSlope_
         vm.assume(utilisationThreshold_ <= ONE_4);
+        vm.assume(utilisation < ONE_4);
         vm.assume(utilisation > utilisationThreshold_);
 
-        // And: a certain InterestRateConfiguration
-        InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
-            baseRatePerYear: baseRate_,
-            highSlopePerYear: highSlope_,
-            lowSlopePerYear: lowSlope_,
-            utilisationThreshold: utilisationThreshold_
-        });
-
         // When: The InterestConfiguration is set
-        interestRateModule.setInterestConfig(config);
+        vm.prank(users.creatorAddress);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // And: lowSlopeInterest is utilisationThreshold multiplied by lowSlope, highSlopeInterest is utilisation minus utilisationThreshold multiplied by highSlope
         uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
@@ -85,7 +70,7 @@ contract CalculateInterestRate_InterestRateModule_Fuzz_Test is InterestRateModul
         uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
 
         // And: actualInterestRate is calculateInterestRate with utilisation
-        uint256 actualInterestRate = interestRateModule.calculateInterestRate(utilisation);
+        uint256 actualInterestRate = pool.calculateInterestRate(utilisation);
 
         // Then: actualInterestRate should be equal to expectedInterestRate
         assertEq(actualInterestRate, expectedInterestRate);

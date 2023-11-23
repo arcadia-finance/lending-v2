@@ -7,12 +7,6 @@ pragma solidity 0.8.19;
 /// @notice Abstract contract containing all the events emitted by the protocol.
 abstract contract Events {
     /* //////////////////////////////////////////////////////////////
-                     INTEREST RATE MODULE
-    ////////////////////////////////////////////////////////////// */
-
-    event InterestRate(uint80 interestRate);
-
-    /* //////////////////////////////////////////////////////////////
                         LENDING POOL GUARDIAN
     ////////////////////////////////////////////////////////////// */
 
@@ -51,8 +45,9 @@ abstract contract Events {
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
-
     event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
+    event InterestRate(uint80 interestRate);
+    event InterestRateParametersUpdated(uint80 interestRate);
 
     /* //////////////////////////////////////////////////////////////
                             LIQUIDATOR
