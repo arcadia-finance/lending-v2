@@ -45,10 +45,7 @@ abstract contract Events {
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
-
     event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
     event InterestRate(uint80 interestRate);
     event InterestRateParametersUpdated(uint80 interestRate);
 

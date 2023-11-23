@@ -152,16 +152,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event TranchePopped(address tranche);
     event TreasuryInterestWeightSet(uint16 weight);
     event TreasuryLiquidationWeightSet(uint16 weight);
-    event OriginationFeeSet(uint8 originationFee);
-    event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event Borrow(
-        address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
-    );
-    event Repay(address indexed account, address indexed from, uint256 amount);
-    event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
-    event InterestSynced(uint256 interest);
     event InterestRate(uint80 interestRate);
     event InterestRateParametersUpdated(
         uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
