@@ -288,9 +288,10 @@ contract LiquidatorExtension is Liquidator {
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (uint128 startDebt_, uint32 startTime_, bool inAuction_)
+        returns (uint128 startDebt_, uint32 cutoffTimeStamp_, uint32 startTime_, bool inAuction_)
     {
         startDebt_ = auctionInformation[account_].startDebt;
+        cutoffTimeStamp_ = auctionInformation[account_].cutoffTimeStamp;
         startTime_ = auctionInformation[account_].startTime;
         inAuction_ = auctionInformation[account_].inAuction;
     }
@@ -299,7 +300,6 @@ contract LiquidatorExtension is Liquidator {
         public
         view
         returns (
-            uint32 cutoffTime_,
             address trustedCreditor_,
             address[] memory assetAddresses_,
             uint32[] memory assetShares_,
@@ -307,7 +307,6 @@ contract LiquidatorExtension is Liquidator {
             uint256[] memory assetIds_
         )
     {
-        cutoffTime_ = auctionInformation[account_].cutoffTime;
         trustedCreditor_ = auctionInformation[account_].creditor;
         assetAddresses_ = auctionInformation[account_].assetAddresses;
         assetShares_ = auctionInformation[account_].assetShares;
