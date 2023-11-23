@@ -17,20 +17,15 @@ abstract contract Errors {
                                   LENDING POOL
     //////////////////////////////////////////////////////////////////////////*/
 
-    error LendingPool_OnlyLiquidator();
-    error LendingPool_OnlyTranche();
-    error LendingPool_SupplyCapExceeded();
-    error LendingPool_TrancheAlreadyExists();
-    error LendingPool_NonExistingTranche();
-    error LendingPool_ZeroAmount();
-    error LendingPool_InsufficientShares();
-    error LendingPool_AmountExceedsBalance();
-    error LendingPool_IsNotAnAccount();
-    error LendingPool_Reverted();
-    error LendingPool_IsNotAnAccountWithDebt();
-    error LendingPool_Unauthorized();
-    error LendingPool_AuctionOngoing();
-    error LendingPool_WeightsTooHigh();
+    error TrancheAlreadyExists();
+    error NonExistingTranche();
+    error ZeroAmount();
+    error InsufficientShares();
+    error AmountExceedsBalance();
+    error IsNotAnAccount();
+    error Reverted();
+    error IsNotAnAccountWithDebt();
+    error LiquidationWeightsTooHigh();
 
     /*//////////////////////////////////////////////////////////////////////////
                                    LIQUIDATOR
@@ -54,6 +49,11 @@ abstract contract Errors {
 
     error Locked();
     error ZeroAssets();
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    SHARED
+    //////////////////////////////////////////////////////////////////////////*/
+
     error AuctionOngoing();
     error Unauthorized();
     error ZeroShares();

@@ -41,7 +41,7 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_setInterestWeight_InexistingTranche(uint256 index) public {
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(LendingPool_NonExistingTranche.selector);
+        vm.expectRevert(NonExistingTranche.selector);
         pool.setInterestWeight(index, 50);
         vm.stopPrank();
     }
@@ -51,7 +51,7 @@ contract SetInterestWeight_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.addTranche(address(srTranche), 50, 0);
 
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightSet(0, 40);
+        emit TrancheInterestWeightSet(0, 40);
         pool.setInterestWeight(0, 40);
         vm.stopPrank();
 

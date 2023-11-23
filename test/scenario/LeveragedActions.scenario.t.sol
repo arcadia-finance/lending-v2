@@ -102,7 +102,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
+        vm.expectRevert(LendingPool.Reverted.selector);
         pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
         vm.stopPrank();
     }
@@ -135,7 +135,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
+        vm.expectRevert(LendingPool.Reverted.selector);
         pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
         vm.stopPrank();
     }

@@ -47,7 +47,7 @@ contract ArcadiaLendingDeployment is Test {
         srTranche_weth = new Tranche(address(pool_weth), "Senior", "sr");
 
         pool_weth.setOriginationFee(10);
-        pool_weth.setMaxLiquidationFees(3 * 10 ** 18, 3 * 10 ** 18);
+        pool_weth.setLiquidationParameters(100, 500, 50, 3 * 10 ** 18, 3 * 10 ** 18);
         pool_weth.setFixedLiquidationCost(0.002 * 10 ** 18);
         pool_weth.addTranche(address(srTranche_weth), 85, 10);
         pool_weth.setTreasuryInterestWeight(15);
@@ -60,7 +60,7 @@ contract ArcadiaLendingDeployment is Test {
         srTranche_usdc = new Tranche(address(pool_usdc), "Senior", "sr");
 
         pool_usdc.setOriginationFee(10);
-        pool_usdc.setMaxLiquidationFees(5000 * 10 ** 6, 5000 * 10 ** 6);
+        pool_weth.setLiquidationParameters(100, 500, 50, 5000 * 10 ** 6, 5000 * 10 ** 6);
         pool_usdc.setFixedLiquidationCost(2 * 10 ** 6);
         pool_usdc.addTranche(address(srTranche_usdc), 85, 10);
         pool_usdc.setTreasuryInterestWeight(15);

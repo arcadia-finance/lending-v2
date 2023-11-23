@@ -28,7 +28,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(srTranche));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(LendingPool_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         pool.depositInLendingPool(assets, from);
         vm.stopPrank();
     }

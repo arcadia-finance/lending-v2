@@ -32,14 +32,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: startLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(nonAccount);
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt(address liquidationInitiator) public {
         vm.startPrank(address(proxyAccount));
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator);
         vm.stopPrank();
     }
@@ -89,12 +89,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
-        vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
 
-        // And: Weights are set
+        // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setWeights(initiationWeight, penaltyWeight, terminationWeight);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -153,8 +153,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
+
+        // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setMaxLiquidationFees(maxInitiationFee, maxTerminationFee);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));

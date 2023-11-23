@@ -33,7 +33,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert(LendingPool_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         pool.auctionRepay(0, amount, address(proxyAccount), bidder);
         vm.stopPrank();
     }
@@ -120,7 +120,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.startPrank(address(liquidator));
-        vm.expectRevert(LendingPool_IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(IsNotAnAccountWithDebt.selector);
         pool.auctionRepay(amountRepaid, amountRepaid, nonAccount, sender);
         vm.stopPrank();
     }
@@ -200,7 +200,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
 
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -246,7 +246,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountRepaid = bound(amountRepaid, amountLoaned + 1, type(uint256).max - amountLoaned);
 
         vm.startPrank(users.creatorAddress);
-        pool.setWeights(2, 5, 2);
+        pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
