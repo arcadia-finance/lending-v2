@@ -102,7 +102,7 @@ abstract contract Creditor {
      * @param initiator The address of the liquidation initiator.
      * @return openPosition the open position of the Account.
      * @dev Starts the liquidation process in the Creditor.
-     * This function should be callable by Arcadia Account
+     * This function should be callable by Arcadia Account.
      */
     function startLiquidation(address initiator) external virtual returns (uint256 openPosition);
 }
