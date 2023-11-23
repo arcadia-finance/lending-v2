@@ -12,7 +12,7 @@ import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
-import { AccountV1 } from "lib/accounts-v2/src/AccountV1.sol";
+import { AccountV1 } from "lib/accounts-v2/src/accounts/AccountV1.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN

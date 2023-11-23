@@ -10,8 +10,8 @@ import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
-import { RiskConstants } from "../../lib/accounts-v2/src/libraries/RiskConstants.sol";
 import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
+import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Scenario tests for Borrow and Repay flows.
@@ -57,7 +57,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit > maxCredit);
 
@@ -78,8 +78,8 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
         uint128 amountCredit = uint128(
-            ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-                / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals)
+            ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_ / RiskModule.ONE_4
+                / 10 ** (18 - Constants.stableDecimals)
         );
         vm.assume(amountCredit > 0);
 
@@ -121,7 +121,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(
             freeMargin - amountCredit
                 < ((amountTokenWithdrawal * valueOfOneToken) / 10 ** Constants.tokenDecimals) * collFactor_
-                    / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals)
+                    / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals)
         );
 
         vm.prank(users.accountOwner);
@@ -133,7 +133,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assets[0] = address(mockERC20.token1);
         amounts[0] = amountTokenWithdrawal;
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(AccountErrors.Account_Unhealthy.selector);
+        vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
         proxyAccount.withdraw(assets, ids, amounts);
         vm.stopPrank();
     }
@@ -148,7 +148,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 expectedValue = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         uint256 actualValue = proxyAccount.getFreeMargin();
 
@@ -167,8 +167,8 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
 
         uint256 maxCredit = (
-            (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_
-                / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals)
+            (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_ / RiskModule.ONE_4
+                / 10 ** (18 - Constants.stableDecimals)
         );
 
         vm.assume(amountCredit <= maxCredit);
@@ -200,8 +200,8 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 maxCredit = (
-            (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_
-                / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals)
+            (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_ / RiskModule.ONE_4
+                / 10 ** (18 - Constants.stableDecimals)
         );
 
         vm.assume(amountCredit <= maxCredit);
@@ -248,7 +248,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 
@@ -264,7 +264,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint256 newValueOfOneEth = (Constants.WAD * newRateTokenToUsd) / 10 ** Constants.tokenOracleDecimals;
         uint256 expectedAvailableCredit = ((newValueOfOneEth * amountToken) / 10 ** Constants.tokenDecimals)
-            * collFactor_ / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals) - amountCredit;
+            * collFactor_ / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals) - amountCredit;
 
         uint256 actualAvailableCredit = proxyAccount.getFreeMargin();
 
@@ -290,7 +290,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * (amountToken - amountTokenWithdrawal)) / 10 ** Constants.tokenDecimals)
-            * collFactor_ / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            * collFactor_ / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 
@@ -323,7 +323,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 
@@ -362,7 +362,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 
@@ -405,7 +405,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 
@@ -452,7 +452,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
-            / RiskConstants.RISK_FACTOR_UNIT / 10 ** (18 - Constants.stableDecimals);
+            / RiskModule.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
         vm.assume(amountCredit <= maxCredit);
 

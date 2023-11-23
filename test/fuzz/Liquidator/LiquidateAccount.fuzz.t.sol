@@ -8,7 +8,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
-import { AccountV1 } from "accounts-v2/src/AccountV1.sol";
+import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 
@@ -118,7 +118,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
-        vm.expectRevert(AccountErrors.Account_Not_Liquidatable.selector);
+        vm.expectRevert(AccountErrors.AccountNotLiquidatable.selector);
         liquidator.liquidateAccount(address(proxyAccount));
     }
 

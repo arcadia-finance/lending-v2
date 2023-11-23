@@ -9,14 +9,14 @@ import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
-import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
+import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
 import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
-import { RiskConstants } from "../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Common logic needed by all fuzz tests.
@@ -113,8 +113,8 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             address(mockERC20.stable1),
             0,
             type(uint128).max,
-            RiskConstants.RISK_FACTOR_UNIT,
-            RiskConstants.RISK_FACTOR_UNIT
+            uint16(RiskModule.ONE_4),
+            uint16(RiskModule.ONE_4)
         );
 
         // For clarity, some contracts have a generalised name in some tests.

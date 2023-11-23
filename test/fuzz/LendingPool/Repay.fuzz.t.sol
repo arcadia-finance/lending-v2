@@ -5,8 +5,7 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
@@ -31,7 +30,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
@@ -60,7 +59,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
@@ -81,7 +80,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(Function_Is_Paused.selector);
+        vm.expectRevert(FunctionIsPaused.selector);
         pool.repay(amountLoaned, address(proxyAccount));
         vm.stopPrank();
     }
@@ -112,7 +111,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.assume(amountLoaned > amountRepaid);
         vm.assume(amountRepaid > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -147,7 +146,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
 
         vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -185,7 +184,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.assume(availableFunds > amountLoaned);
         vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);

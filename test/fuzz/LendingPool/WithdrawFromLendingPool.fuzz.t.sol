@@ -70,7 +70,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(Function_Is_Paused.selector);
+        vm.expectRevert(FunctionIsPaused.selector);
         vm.prank(address(srTranche));
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
     }
