@@ -5,8 +5,7 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Fuzz tests for the function "totalAssets" of contract "LendingPool".
@@ -24,7 +23,7 @@ contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_totalAssets(uint120 realisedDebt, uint80 interestRate, uint24 deltaTimestamp) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(realisedDebt <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(interestRate <= 1e3 * 1e18); // 1000%.
         vm.assume(interestRate > 0);
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year.

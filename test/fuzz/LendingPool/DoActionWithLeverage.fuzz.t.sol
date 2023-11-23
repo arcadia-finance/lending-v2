@@ -6,7 +6,7 @@ pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { ActionData } from "../../../lib/accounts-v2/src/actions/utils/ActionData.sol";
+import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 

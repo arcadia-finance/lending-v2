@@ -5,8 +5,7 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Fuzz tests for the function "liquidityOf" of contract "LendingPool".
@@ -29,7 +28,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 realisedDebt,
         uint120 initialLiquidity
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        vm.assume(realisedDebt <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
         vm.assume(interestRate > 0);

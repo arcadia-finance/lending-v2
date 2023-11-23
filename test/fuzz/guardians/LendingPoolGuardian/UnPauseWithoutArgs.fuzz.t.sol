@@ -39,8 +39,8 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         // When: A sender un-pauses within 30 days passed from the last pause.
         // Then: The transaction reverts.
         vm.startPrank(sender);
-        vm.expectRevert(BaseGuardian.Cannot_UnPause.selector);
-        lendingPoolGuardian.unPause();
+        vm.expectRevert(BaseGuardian.CannotUnpause.selector);
+        lendingPoolGuardian.unpause();
         vm.stopPrank();
     }
 
@@ -68,7 +68,7 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         vm.startPrank(sender);
         vm.expectEmit(true, true, true, true);
         emit PauseFlagsUpdated(false, false, false, false, false);
-        lendingPoolGuardian.unPause();
+        lendingPoolGuardian.unpause();
         vm.stopPrank();
 
         // Then: All flags are set to False.

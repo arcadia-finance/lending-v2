@@ -49,7 +49,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if repay is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert Function_Is_Paused();
+        if (repayPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -58,7 +58,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if withdraw is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert Function_Is_Paused();
+        if (withdrawPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -67,7 +67,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if borrow is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert Function_Is_Paused();
+        if (borrowPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -76,7 +76,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if deposit is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert Function_Is_Paused();
+        if (depositPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -85,7 +85,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * It throws if liquidation is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert Function_Is_Paused();
+        if (liquidationPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -98,7 +98,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev This function can be called by the guardian to pause all functionality in the event of an emergency.
      */
     function pause() external override onlyGuardian {
-        if (block.timestamp <= pauseTimestamp + 32 days) revert Cannot_Pause();
+        if (block.timestamp <= pauseTimestamp + 32 days) revert CannotPause();
         pauseTimestamp = block.timestamp;
 
         emit PauseFlagsUpdated(
@@ -141,8 +141,8 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @inheritdoc BaseGuardian
      * @dev This function can be called by the guardian to unpause all functionality.
      */
-    function unPause() external override {
-        if (block.timestamp <= pauseTimestamp + 30 days) revert Cannot_UnPause();
+    function unpause() external override {
+        if (block.timestamp <= pauseTimestamp + 30 days) revert CannotUnpause();
 
         emit PauseFlagsUpdated(
             repayPaused = false,

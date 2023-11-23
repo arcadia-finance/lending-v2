@@ -11,7 +11,6 @@ abstract contract Errors {
     //////////////////////////////////////////////////////////////////////////*/
 
     error BorrowCapExceeded();
-    error FunctionNotImplemented();
 
     /*//////////////////////////////////////////////////////////////////////////
                                   LENDING POOL
@@ -26,7 +25,6 @@ abstract contract Errors {
     error Reverted();
     error IsNotAnAccountWithDebt();
     error LiquidationWeightsTooHigh();
-    error OpenPositionNonZero();
 
     /*//////////////////////////////////////////////////////////////////////////
                                    LIQUIDATOR
