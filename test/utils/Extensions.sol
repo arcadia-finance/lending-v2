@@ -38,10 +38,6 @@ contract DebtTokenExtension is DebtToken {
         return realisedDebt;
     }
 
-    function getBorrowCap() public view returns (uint256) {
-        return borrowCap;
-    }
-
     function setRealisedDebt(uint256 realisedDebt_) public {
         realisedDebt = realisedDebt_;
     }
@@ -202,10 +198,6 @@ contract LendingPoolExtension is LendingPool {
 
     function getLiquidator() public view returns (address) {
         return LIQUIDATOR;
-    }
-
-    function getBorrowCap() public view returns (uint256) {
-        return borrowCap;
     }
 
     function getYearlySeconds() public pure returns (uint256) {

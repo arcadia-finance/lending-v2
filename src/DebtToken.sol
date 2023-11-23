@@ -12,6 +12,8 @@ import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.so
  * @author Pragma Labs
  * @notice The Logic to do the debt accounting for a lending pool for a certain ERC20 token.
  * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying.
+ * @dev Implementation slightly deviates from the ERC4626 specifications,
+ * maxDeposit() and maxMint() are not implemented.
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
@@ -25,15 +27,11 @@ abstract contract DebtToken is ERC4626 {
 
     // Total amount of `underlying asset` that debtors have in debt, does not take into account pending interests.
     uint256 internal realisedDebt;
-    // Maximum amount of `underlying asset` in debt that a single debtor can take.
-    uint128 internal borrowCap;
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    // Thrown when assets to borrow exceeds amount of debt that a single debtor can take on that asset.
-    error BorrowCapExceeded();
     // Thrown when function called has not be implemented.
     error FunctionNotImplemented();
     // Thrown when amount of asset would represent zero shares.
@@ -194,14 +192,6 @@ abstract contract DebtToken is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Modification of the standard ERC4626 approve implementation.
-     * @dev No public approve allowed.
-     */
-    function approve(address, uint256) public pure override returns (bool) {
-        revert FunctionNotImplemented();
-    }
-
-    /**
      * @notice Modification of the standard ERC4626 transfer implementation.
      * @dev No public transfer allowed.
      */
@@ -212,16 +202,10 @@ abstract contract DebtToken is ERC4626 {
     /**
      * @notice Modification of the standard ERC4626 transferFrom implementation.
      * @dev No public transferFrom allowed.
+     * @dev The functions approve() and permit() will not revert, but since transferFrom() reverts,
+     * it can never be used to transfer tokens.
      */
     function transferFrom(address, address, uint256) public pure override returns (bool) {
-        revert FunctionNotImplemented();
-    }
-
-    /**
-     * @notice Modification of the standard ERC4626 permit implementation.
-     * @dev No public permit allowed.
-     */
-    function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) public pure override {
         revert FunctionNotImplemented();
     }
 }
