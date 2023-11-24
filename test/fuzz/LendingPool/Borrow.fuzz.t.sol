@@ -119,8 +119,9 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.creatorAddress);
-        LendingPool pool_ =
-        new LendingPool(users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
+        LendingPool pool_ = new LendingPool(
+            users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
+        );
         pool_.setAccountVersion(1, true);
         vm.stopPrank();
 

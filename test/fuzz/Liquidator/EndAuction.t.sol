@@ -52,7 +52,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_endAuction_NotForSale() public {
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Liquidator_NotForSale.selector);
+        vm.expectRevert(NotForSale.selector);
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
     }
@@ -84,7 +84,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // call should revert.
         vm.startPrank(users.creatorAddress);
-        vm.expectRevert(Liquidator_EndAuctionFailed.selector);
+        vm.expectRevert(EndAuctionFailed.selector);
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
     }

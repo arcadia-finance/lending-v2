@@ -42,8 +42,13 @@ contract ArcadiaLendingDeployment is Test {
         factory = new Factory();
         liquidator = new Liquidator();
 
-        pool_weth =
-        new LendingPool(vm.addr(deployerPrivateKey), ERC20(address(weth)), DeployAddresses.treasury_base, address(factory), address(liquidator));
+        pool_weth = new LendingPool(
+            vm.addr(deployerPrivateKey),
+            ERC20(address(weth)),
+            DeployAddresses.treasury_base,
+            address(factory),
+            address(liquidator)
+        );
         srTranche_weth = new Tranche(address(pool_weth), "Senior", "sr");
 
         pool_weth.setOriginationFee(10);
@@ -55,8 +60,13 @@ contract ArcadiaLendingDeployment is Test {
         pool_weth.setInterestParameters(15_000_000_000_000_000, 70_000_000_000_000_000, 1_250_000_000_000_000_000, 7000);
         pool_weth.changeGuardian(vm.addr(deployerPrivateKey));
 
-        pool_usdc =
-        new LendingPool(vm.addr(deployerPrivateKey), ERC20(address(usdc)), DeployAddresses.treasury_base, address(factory), address(liquidator));
+        pool_usdc = new LendingPool(
+            vm.addr(deployerPrivateKey),
+            ERC20(address(usdc)),
+            DeployAddresses.treasury_base,
+            address(factory),
+            address(liquidator)
+        );
         srTranche_usdc = new Tranche(address(pool_usdc), "Senior", "sr");
 
         pool_usdc.setOriginationFee(10);
