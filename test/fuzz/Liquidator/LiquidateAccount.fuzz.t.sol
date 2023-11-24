@@ -59,7 +59,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert(Liquidator_AuctionOngoing.selector);
+        vm.expectRevert(AuctionOngoing.selector);
         liquidator.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }
@@ -135,8 +135,9 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
 
         // And: AccountV1Malicious is created
-        AccountV1Malicious maliciousAccount =
-        new AccountV1Malicious(address(pool_malicious), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor);
+        AccountV1Malicious maliciousAccount = new AccountV1Malicious(
+            address(pool_malicious), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor
+        );
 
         // When Then: Liquidation Initiator calls liquidateAccount, It will succeed
         vm.prank(liquidationInitiator);

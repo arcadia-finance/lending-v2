@@ -11,6 +11,7 @@ import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { Owned } from "../lib/solmate/src/auth/Owned.sol";
 import { RiskModule } from "../lib/accounts-v2/src/RiskModule.sol";
+import { LiquidatorErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Liquidator.
@@ -82,31 +83,6 @@ contract Liquidator is Owned, ILiquidator {
     event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when the liquidateAccount function is called on an Account that is already in an auction.
-    error Liquidator_AuctionOngoing();
-    // Thrown when cutOffTime is above the maximum value.
-    error Liquidator_CutOffTooHigh();
-    // Thrown when cutOffTime is below the minimum value.
-    error Liquidator_CutOffTooLow();
-    // Thrown if the auction was not successfully ended.
-    error Liquidator_EndAuctionFailed();
-    // Thrown when halfLifeTime is above the maximum value.
-    error Liquidator_HalfLifeTimeTooHigh();
-    // Thrown when halfLifeTime is below the minimum value.
-    error Liquidator_HalfLifeTimeTooLow();
-    // Thrown when the auction has not yet expired.
-    error Liquidator_InvalidBid();
-    // Thrown when the start price multiplier is above the maximum value.
-    error Liquidator_MultiplierTooHigh();
-    // Thrown when the start price multiplier is below the minimum value.
-    error Liquidator_MultiplierTooLow();
-    // Thrown when an Account is not for sale.
-    error Liquidator_NotForSale();
-
-    /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
@@ -154,10 +130,10 @@ contract Liquidator is Owned, ILiquidator {
         uint16 minPriceMultiplier_
     ) external onlyOwner {
         // Checks that halfLifeTime and cutoffTime_ are within reasonable boundaries.
-        if (halfLifeTime < 120) revert Liquidator_HalfLifeTimeTooLow(); // 2 minutes.
-        if (halfLifeTime > 28_800) revert Liquidator_HalfLifeTimeTooHigh(); // 8 hours.
-        if (cutoffTime_ < 3600) revert Liquidator_CutOffTooLow(); // 1 hour.
-        if (cutoffTime_ > 64_800) revert Liquidator_CutOffTooHigh(); // 18 hours.
+        if (halfLifeTime < 120) revert LiquidatorErrors.HalfLifeTimeTooLow(); // 2 minutes.
+        if (halfLifeTime > 28_800) revert LiquidatorErrors.HalfLifeTimeTooHigh(); // 8 hours.
+        if (cutoffTime_ < 3600) revert LiquidatorErrors.CutOffTooLow(); // 1 hour.
+        if (cutoffTime_ > 64_800) revert LiquidatorErrors.CutOffTooHigh(); // 18 hours.
 
         // Derive base from the halfLifeTime.
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
@@ -168,9 +144,9 @@ contract Liquidator is Owned, ILiquidator {
         LogExpMath.pow(base_, uint256(cutoffTime_) * 1e18);
 
         // Checks that startPriceMultiplier_ and minPriceMultiplier_ are within reasonable boundaries.
-        if (startPriceMultiplier_ < 10_000) revert Liquidator_MultiplierTooLow();
-        if (startPriceMultiplier_ > 30_000) revert Liquidator_MultiplierTooHigh();
-        if (minPriceMultiplier_ > 9000) revert Liquidator_MultiplierTooHigh();
+        if (startPriceMultiplier_ < 10_000) revert LiquidatorErrors.MultiplierTooLow();
+        if (startPriceMultiplier_ > 30_000) revert LiquidatorErrors.MultiplierTooHigh();
+        if (minPriceMultiplier_ > 9000) revert LiquidatorErrors.MultiplierTooHigh();
 
         // Store the new parameters.
         emit AuctionCurveParametersSet(
@@ -198,7 +174,7 @@ contract Liquidator is Owned, ILiquidator {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is already being auctioned.
-        if (auctionInformation_.inAuction) revert Liquidator_AuctionOngoing();
+        if (auctionInformation_.inAuction) revert LiquidatorErrors.AuctionOngoing();
 
         // Set the inAuction flag to true.
         auctionInformation_.inAuction = true;
@@ -280,7 +256,7 @@ contract Liquidator is Owned, ILiquidator {
      */
     function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+        if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
         // Calculate the current auction price of the assets being bought.
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
@@ -328,7 +304,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256[] memory assetAmounts = auctionInformation_.assetAmounts;
         uint32[] memory assetShares = auctionInformation_.assetShares;
         if (assetAmounts.length != askedAssetAmounts.length) {
-            revert Liquidator_InvalidBid();
+            revert LiquidatorErrors.InvalidBid();
         }
 
         for (uint256 i; i < askedAssetAmounts.length;) {
@@ -400,10 +376,10 @@ contract Liquidator is Owned, ILiquidator {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is being auctioned.
-        if (!auctionInformation_.inAuction) revert Liquidator_NotForSale();
+        if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
         bool success = _endAuction(account, auctionInformation_);
-        if (!success) revert Liquidator_EndAuctionFailed();
+        if (!success) revert LiquidatorErrors.EndAuctionFailed();
     }
 
     /**

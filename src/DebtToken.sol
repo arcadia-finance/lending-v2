@@ -6,6 +6,7 @@ pragma solidity 0.8.19;
 
 import { ERC20, ERC4626 } from "../lib/solmate/src/mixins/ERC4626.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { DebtTokenErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Debt Token.
@@ -27,15 +28,6 @@ abstract contract DebtToken is ERC4626 {
 
     // Total amount of `underlying asset` that debtors have in debt, does not take into account pending interests.
     uint256 internal realisedDebt;
-
-    /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when function called has not be implemented.
-    error FunctionNotImplemented();
-    // Thrown when amount of asset would represent zero shares.
-    error ZeroShares();
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -75,7 +67,7 @@ abstract contract DebtToken is ERC4626 {
      * @dev No public deposit allowed.
      */
     function deposit(uint256, address) public pure override returns (uint256) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 
     /**
@@ -101,7 +93,7 @@ abstract contract DebtToken is ERC4626 {
      * @dev No public mint allowed.
      */
     function mint(uint256, address) public pure override returns (uint256) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 
     /**
@@ -109,7 +101,7 @@ abstract contract DebtToken is ERC4626 {
      * @dev No public withdraw allowed.
      */
     function withdraw(uint256, address, address) public pure override returns (uint256) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 
     /**
@@ -122,7 +114,7 @@ abstract contract DebtToken is ERC4626 {
      */
     function _withdraw(uint256 assets, address receiver, address account) internal returns (uint256 shares) {
         // Check for rounding error since we round down in previewWithdraw.
-        if ((shares = previewWithdraw(assets)) == 0) revert ZeroShares();
+        if ((shares = previewWithdraw(assets)) == 0) revert DebtTokenErrors.ZeroShares();
 
         _burn(account, shares);
 
@@ -136,7 +128,7 @@ abstract contract DebtToken is ERC4626 {
      * @dev No public redeem allowed.
      */
     function redeem(uint256, address, address) public pure override returns (uint256) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -196,7 +188,7 @@ abstract contract DebtToken is ERC4626 {
      * @dev No public transfer allowed.
      */
     function transfer(address, uint256) public pure override returns (bool) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 
     /**
@@ -206,6 +198,6 @@ abstract contract DebtToken is ERC4626 {
      * it can never be used to transfer tokens.
      */
     function transferFrom(address, address, uint256) public pure override returns (bool) {
-        revert FunctionNotImplemented();
+        revert DebtTokenErrors.FunctionNotImplemented();
     }
 }

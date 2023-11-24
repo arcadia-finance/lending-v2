@@ -15,6 +15,7 @@ import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { LendingPoolErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Arcadia LendingPool.
@@ -158,35 +159,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     );
 
     /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when amount available to withdraw of an asset is less than amount requested to withdraw.
-    error AmountExceedsBalance();
-    // Thrown when an auction is in process.
-    error AuctionOngoing();
-    // Thrown when less than 1 share outstanding to mitigate share manipulation.
-    error InsufficientShares();
-    // Thrown when account specified is not an Arcadia Account.
-    error IsNotAnAccount();
-    // Thrown when an account has zero debt.
-    error IsNotAnAccountWithDebt();
-    // Thrown when liquidation weights are above maximum value.
-    error LiquidationWeightsTooHigh();
-    // Thrown when a specific tranche does not exist.
-    error NonExistingTranche();
-    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
-    error Reverted();
-    // Thrown when the tranche of the lending pool already exists.
-    error TrancheAlreadyExists();
-    // Thrown when caller is not authorized.
-    error Unauthorized();
-    // Thrown when asset amount in input is zero.
-    error ZeroAmount();
-    // Thrown when address has an open position
-    error OpenPositionNonZero();
-
-    /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
@@ -194,7 +166,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Checks if caller is the Liquidator.
      */
     modifier onlyLiquidator() {
-        if (LIQUIDATOR != msg.sender) revert Unauthorized();
+        if (LIQUIDATOR != msg.sender) revert LendingPoolErrors.Unauthorized();
         _;
     }
 
@@ -202,7 +174,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Checks if caller is a Tranche.
      */
     modifier onlyTranche() {
-        if (!isTranche[msg.sender]) revert Unauthorized();
+        if (!isTranche[msg.sender]) revert LendingPoolErrors.Unauthorized();
         _;
     }
 
@@ -255,7 +227,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
-        if (isTranche[tranche]) revert TrancheAlreadyExists();
+        if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
         totalInterestWeight += interestWeight_;
         interestWeightTranches.push(interestWeight_);
@@ -280,7 +252,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
     function setInterestWeight(uint256 index, uint16 weight) external onlyOwner {
-        if (index >= tranches.length) revert NonExistingTranche();
+        if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + weight;
         interestWeightTranches[index] = weight;
         interestWeight[tranches[index]] = weight;
@@ -295,7 +267,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The liquidation weight determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function setLiquidationWeight(uint256 index, uint16 weight) external onlyOwner {
-        if (index >= tranches.length) revert NonExistingTranche();
+        if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + weight;
         liquidationWeightTranches[index] = weight;
 
@@ -411,12 +383,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
-        if (assets == 0) revert ZeroAmount();
+        if (assets == 0) revert LendingPoolErrors.ZeroAmount();
 
         address tranche = tranches[trancheIndex];
         //Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
         //See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
-        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert InsufficientShares();
+        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPoolErrors.InsufficientShares();
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
@@ -438,7 +410,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         whenWithdrawNotPaused
         processInterests
     {
-        if (realisedLiquidityOf[msg.sender] < assets) revert AmountExceedsBalance();
+        if (realisedLiquidityOf[msg.sender] < assets) revert LendingPoolErrors.AmountExceedsBalance();
 
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
@@ -464,7 +436,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
         //If Account is not an actual address of an Arcadia Account, ownerOfAccount(address) will return the zero address.
-        if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert Unauthorized();
+        if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert LendingPoolErrors.Unauthorized();
 
         creditAllowance[account][msg.sender][beneficiary] = amount;
 
@@ -486,7 +458,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     {
         //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
-        if (accountOwner == address(0)) revert IsNotAnAccount();
+        if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
 
         uint256 amountWithFee = amount + amount.mulDivUp(originationFee, ONE_4);
 
@@ -513,7 +485,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         (bool isHealthy, address creditor, uint256 accountVersion) =
             IAccount(account).isAccountHealthy(0, maxWithdraw(account));
         if (!isHealthy || creditor != address(this) || !isValidVersion[accountVersion]) {
-            revert Reverted();
+            revert LendingPoolErrors.Reverted();
         }
 
         //Transfer fails if there is insufficient liquidity in the pool.
@@ -564,7 +536,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         asset.safeTransferFrom(bidder, address(this), amount);
 
         uint256 accountDebt = maxWithdraw(account);
-        if (accountDebt == 0) revert IsNotAnAccountWithDebt();
+        if (accountDebt == 0) revert LendingPoolErrors.IsNotAnAccountWithDebt();
         if (accountDebt <= amount) {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
@@ -602,7 +574,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ) external whenBorrowNotPaused processInterests {
         // If Account is not an actual address of a Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
-        if (accountOwner == address(0)) revert IsNotAnAccount();
+        if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
 
         uint256 amountBorrowedWithFee = amountBorrowed + amountBorrowed.mulDivUp(originationFee, ONE_4);
 
@@ -611,7 +583,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             // Since calling accountManagementAction() gives the sender full control over all assets in the Account,
             // Only Beneficiaries with maximum allowance can call the flashAction function.
             if (creditAllowance[account][accountOwner][msg.sender] != type(uint256).max) {
-                revert Unauthorized();
+                revert LendingPoolErrors.Unauthorized();
             }
         }
 
@@ -638,7 +610,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         {
             (address creditor, uint256 accountVersion) =
                 IAccount(account).accountManagementAction(actionTarget, actionData, signature);
-            if (creditor != address(this) || !isValidVersion[accountVersion]) revert Reverted();
+            if (creditor != address(this) || !isValidVersion[accountVersion]) revert LendingPoolErrors.Reverted();
         }
 
         emit Borrow(account, msg.sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
@@ -708,7 +680,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // During auction initiation, debt tokens representing the liquidation incentives are minted at start of the auction
         // yet not accounted for in the totalRealisedLiquidity.
         // -> skim function must be blocked during auctions.
-        if (auctionsInProgress != 0) revert AuctionOngoing();
+        if (auctionsInProgress != 0) revert LendingPoolErrors.AuctionOngoing();
 
         // Pending interests are synced via the processInterests modifier.
         uint256 delta = asset.balanceOf(address(this)) + realisedDebt - totalRealisedLiquidity;
@@ -905,7 +877,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Hence by checking that the balance of the msg.sender is not 0,
         // we know that the sender is indeed an Account and has debt.
         startDebt = maxWithdraw(msg.sender);
-        if (startDebt == 0) revert IsNotAnAccountWithDebt();
+        if (startDebt == 0) revert LendingPoolErrors.IsNotAnAccountWithDebt();
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
@@ -1182,10 +1154,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ) external onlyOwner {
         // When auctions are ongoing, it is not allowed to modify the auction parameters,
         // as that would corrupt the rewards and penalties calculated by _calculateRewards().
-        if (auctionsInProgress != 0) revert AuctionOngoing();
+        if (auctionsInProgress != 0) revert LendingPoolErrors.AuctionOngoing();
 
         if (uint256(initiationWeight_) + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
-            revert LiquidationWeightsTooHigh();
+            revert LendingPoolErrors.LiquidationWeightsTooHigh();
         }
 
         // Store and emit new parameters.
@@ -1251,7 +1223,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @inheritdoc Creditor
      */
     function closeMarginAccount(address account) external view override {
-        if (maxWithdraw(account) != 0) revert OpenPositionNonZero();
+        if (maxWithdraw(account) != 0) revert LendingPoolErrors.OpenPositionNonZero();
     }
 
     /**

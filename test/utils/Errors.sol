@@ -30,17 +30,15 @@ abstract contract Errors {
                                    LIQUIDATOR
     //////////////////////////////////////////////////////////////////////////*/
 
-    error Liquidator_AuctionOngoing();
-    error Liquidator_NotForSale();
-    error Liquidator_InvalidBid();
-    error Liquidator_HalfLifeTimeTooLow();
-    error Liquidator_HalfLifeTimeTooHigh();
-    error Liquidator_CutOffTooLow();
-    error Liquidator_CutOffTooHigh();
-    error Liquidator_MultiplierTooLow();
-    error Liquidator_MultiplierTooHigh();
-    error Liquidator_Unauthorized();
-    error Liquidator_EndAuctionFailed();
+    error NotForSale();
+    error InvalidBid();
+    error HalfLifeTimeTooLow();
+    error HalfLifeTimeTooHigh();
+    error CutOffTooLow();
+    error CutOffTooHigh();
+    error MultiplierTooLow();
+    error MultiplierTooHigh();
+    error EndAuctionFailed();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     TRANCHE

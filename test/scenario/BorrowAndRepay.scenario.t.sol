@@ -12,6 +12,7 @@ import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
 import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 
 /**
  * @notice Scenario tests for Borrow and Repay flows.
@@ -62,7 +63,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountCredit > maxCredit);
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.Reverted.selector);
+        vm.expectRevert(LendingPoolErrors.Reverted.selector);
         pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
@@ -91,7 +92,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         vm.roll(block.number + 10);
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.Reverted.selector);
+        vm.expectRevert(LendingPoolErrors.Reverted.selector);
         pool.borrow(1, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.stopPrank();
     }
