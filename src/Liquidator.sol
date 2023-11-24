@@ -40,6 +40,8 @@ contract Liquidator is Owned, ILiquidator {
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
+    // Address to which all assets are transferred to after an unsuccessful auction.
+    address internal assetRecipient;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -80,7 +82,6 @@ contract Liquidator is Owned, ILiquidator {
     event AuctionCurveParametersSet(
         uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
     );
-    event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -97,6 +98,19 @@ contract Liquidator is Owned, ILiquidator {
         minPriceMultiplier = 6000;
 
         emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    AUCTION ASSET RECIPIENT
+    ///////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice The asset recipient receives all assets of an Account after an unsuccessful auction.
+     * @param assetRecipient_ The address of the new asset recipient.
+     * @dev This function can only be called by the protocol owner.
+     */
+    function setRecipient(address assetRecipient_) external onlyOwner {
+        assetRecipient = assetRecipient_;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -179,6 +193,14 @@ contract Liquidator is Owned, ILiquidator {
         // Set the inAuction flag to true.
         auctionInformation_.inAuction = true;
 
+        // Store the auction price-curve parameters.
+        // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
+        auctionInformation_.base = base;
+        auctionInformation_.startTime = uint32(block.timestamp);
+        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
+        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
+        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
+
         // Check if the Account is insolvent and if it is, start the liquidation in the Account.
         // startLiquidation will revert if the Account is still solvent.
         (
@@ -200,14 +222,6 @@ contract Liquidator is Owned, ILiquidator {
         // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
         // These will be used to calculate the price of bids to partially liquidate the Account.
         auctionInformation_.assetShares = _getAssetShares(assetValues);
-
-        // Store the auction price-curve parameters.
-        // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
-        auctionInformation_.base = base;
-        auctionInformation_.startTime = uint32(block.timestamp);
-        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
-        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
-        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
     }
 
     /**
@@ -277,15 +291,13 @@ contract Liquidator is Owned, ILiquidator {
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
         if (earlyTerminate) {
             // Stop the auction, no need to do a health check for the account since it has no debt anymore.
-            auctionInformation_.inAuction = false;
-
-            emit AuctionFinished(account, auctionInformation_.creditor, startDebt);
+            _endAuction(account);
         }
         // If not all debt is repaid, the bidder can still earn a termination incentive by ending the auction
         // if one of the conditions to end the auction is met.
         // "_endAuction()" will silently fail without reverting, if the auction was not successfully ended.
         else if (endAuction_) {
-            _endAuction(account, auctionInformation_);
+            _settleAuction(account, auctionInformation_);
         }
     }
 
@@ -378,8 +390,9 @@ contract Liquidator is Owned, ILiquidator {
         // Check if the account is being auctioned.
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
-        bool success = _endAuction(account, auctionInformation_);
-        if (!success) revert LiquidatorErrors.EndAuctionFailed();
+        if (!_settleAuction(account, auctionInformation_)) revert LiquidatorErrors.EndAuctionFailed();
+
+        _endAuction(account);
     }
 
     /**
@@ -401,7 +414,7 @@ contract Liquidator is Owned, ILiquidator {
      * While this process is not fully trustless, it is the only way to solve an extreme unhappy flow,
      * where an auction did not end within cutoffTime (due to market or technical reasons).
      */
-    function _endAuction(address account, AuctionInformation storage auctionInformation_)
+    function _settleAuction(address account, AuctionInformation storage auctionInformation_)
         internal
         returns (bool success)
     {
@@ -425,17 +438,19 @@ contract Liquidator is Owned, ILiquidator {
         } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
-            // All remaining assets are transferred to the owner of Liquidator.sol,
-            // And a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(owner);
+            // All remaining assets are transferred to the asset recipient,
+            // and a manual (trusted) liquidation has to be done.
+            IAccount(account).auctionBoughtIn(assetRecipient);
         } else {
             // None of the conditions to end the auction are met.
             return false;
         }
 
-        IAccount(account).endAuction();
-
-        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt));
         return true;
+    }
+
+    function _endAuction(address account) internal {
+        delete auctionInformation[account];
+        IAccount(account).endAuction();
     }
 }

@@ -12,7 +12,6 @@ import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
-import { Liquidator } from "../../src/Liquidator.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -337,5 +336,9 @@ contract LiquidatorExtension is Liquidator {
 
     function getInAuction(address account) external view returns (bool) {
         return auctionInformation[account].inAuction;
+    }
+
+    function getAssetRecipient() external view returns (address) {
+        return assetRecipient;
     }
 }
