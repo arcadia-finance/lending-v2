@@ -407,6 +407,7 @@ contract Liquidator is Owned, ILiquidator {
     {
         // Stop the auction.
         auctionInformation_.inAuction = false;
+        IAccount(account).endAuction();
 
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
