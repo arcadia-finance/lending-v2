@@ -309,7 +309,7 @@ contract Liquidator is Owned, ILiquidator {
 
         // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
         // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
-        // This means the calculating the bid price will be faulty but the askedAssetAmount won't be possible to transfer
+        // This means that when the calculated bid price is faulty, the withdraw in the Account will always revert.
         for (uint256 i; i < askedAssetAmounts.length;) {
             unchecked {
                 totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
