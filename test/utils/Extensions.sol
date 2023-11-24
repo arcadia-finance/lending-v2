@@ -239,7 +239,7 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
     constructor() LendingPoolGuardian() { }
 
     function setPauseTimestamp(uint256 pauseTimestamp_) public {
-        pauseTimestamp = pauseTimestamp_;
+        pauseTimestamp = uint96(pauseTimestamp_);
     }
 
     function setFlags(

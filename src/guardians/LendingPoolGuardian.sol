@@ -5,12 +5,15 @@
 
 pragma solidity 0.8.19;
 
-import { BaseGuardian } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
+import { BaseGuardian, GuardianErrors } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
  * @title LendingPool Guardian.
  * @author Pragma Labs
- * @notice Logic inherited by the LendingPool that allows an authorized guardian to trigger an emergency stop.
+ * @notice Logic inherited by the LendingPool that allows:
+ * - An authorized guardian to trigger an emergency stop.
+ * - The protocol owner to unpause functionalities one-by-one.
+ * - Anyone to unpause all functionalities after a fixed cool-down period.
  */
 abstract contract LendingPoolGuardian is BaseGuardian {
     /* //////////////////////////////////////////////////////////////
@@ -45,47 +48,42 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for repay.
-     * It throws if repay is paused.
+     * @dev Throws if the repay functionality is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert FunctionIsPaused();
+        if (repayPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for withdraw.
-     * It throws if withdraw is paused.
+     * @dev Throws if the withdraw functionality is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert FunctionIsPaused();
+        if (withdrawPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for borrow.
-     * It throws if borrow is paused.
+     * @dev Throws if the borrow functionality is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert FunctionIsPaused();
+        if (borrowPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for deposit.
-     * It throws if deposit is paused.
+     * @dev Throws if the deposit functionality is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert FunctionIsPaused();
+        if (depositPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for liquidation.
-     * It throws if liquidation is paused.
+     * @dev Throws if the liquidation functionality is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert FunctionIsPaused();
+        if (liquidationPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
@@ -95,11 +93,15 @@ abstract contract LendingPoolGuardian is BaseGuardian {
 
     /**
      * @inheritdoc BaseGuardian
-     * @dev This function can be called by the guardian to pause all functionality in the event of an emergency.
+     * @dev This function will pause the functionality to:
+     * - Repay debt.
+     * - Withdraw liquidity.
+     * - Borrow.
+     * - Deposit liquidity.
+     * - Liquidate positions.
      */
-    function pause() external override onlyGuardian {
-        if (block.timestamp <= pauseTimestamp + 32 days) revert CannotPause();
-        pauseTimestamp = block.timestamp;
+    function pause() external override onlyGuardian afterCoolDownOf(32 days) {
+        pauseTimestamp = uint96(block.timestamp);
 
         emit PauseFlagsUpdated(
             repayPaused = true,
@@ -139,11 +141,14 @@ abstract contract LendingPoolGuardian is BaseGuardian {
 
     /**
      * @inheritdoc BaseGuardian
-     * @dev This function can be called by the guardian to unpause all functionality.
+     * @dev This function will unpause the functionality to:
+     * - Repay debt.
+     * - Withdraw liquidity.
+     * - Borrow.
+     * - Deposit liquidity.
+     * - Liquidate positions.
      */
-    function unpause() external override {
-        if (block.timestamp <= pauseTimestamp + 30 days) revert CannotUnpause();
-
+    function unpause() external override afterCoolDownOf(30 days) {
         emit PauseFlagsUpdated(
             repayPaused = false,
             withdrawPaused = false,
