@@ -59,7 +59,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert(Liquidator_AuctionOngoing.selector);
+        vm.expectRevert(AuctionOngoing.selector);
         liquidator.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }
