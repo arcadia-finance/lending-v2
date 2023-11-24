@@ -90,7 +90,7 @@ interface IAccount {
         external
         returns (address, uint256);
 
-   /**
+    /**
      * @notice Sets the "inAuction" flag to false when an auction ends.
      */
     function endAuction() external;
