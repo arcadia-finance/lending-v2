@@ -407,7 +407,6 @@ contract Liquidator is Owned, ILiquidator {
     {
         // Stop the auction.
         auctionInformation_.inAuction = false;
-        IAccount(account).endAuction();
 
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
@@ -433,6 +432,8 @@ contract Liquidator is Owned, ILiquidator {
             // None of the conditions to end the auction are met.
             return false;
         }
+
+        IAccount(account).endAuction();
 
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt));
         return true;
