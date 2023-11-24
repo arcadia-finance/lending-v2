@@ -113,7 +113,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             address(pool),
             address(mockERC20.stable1),
             0,
-            type(uint128).max,
+            type(uint112).max,
             uint16(RiskModule.ONE_4),
             uint16(RiskModule.ONE_4)
         );

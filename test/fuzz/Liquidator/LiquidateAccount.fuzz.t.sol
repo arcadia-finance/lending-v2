@@ -29,13 +29,13 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint128 amountLoaned)
+    function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint112 amountLoaned)
         public
     {
         // Given: Account auction is already started
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 150) * 100); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -98,12 +98,12 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_liquidateAccount_NotLiquidatable_Healthy(
         address liquidationInitiator,
-        uint128 amountLoaned
+        uint112 amountLoaned
     ) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint128).max - 2); // No overflow when debt is increased
+        vm.assume(amountLoaned <= type(uint112).max - 2); // No overflow when debt is increased
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -155,7 +155,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
@@ -164,7 +164,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         // Given: Account has debt
@@ -206,7 +206,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartTwo(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
@@ -215,7 +215,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint256(amountLoaned) * initiationWeight <= (type(uint256).max));
         vm.assume(uint256(amountLoaned) * terminationWeight <= (type(uint256).max));
         vm.assume(uint256(amountLoaned) * penaltyWeight <= (type(uint256).max));
@@ -276,7 +276,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartThree(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint8 initiationWeight,
         uint8 penaltyWeight,
         uint8 terminationWeight,
@@ -285,7 +285,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint128).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
 
         // Given: Account has debt

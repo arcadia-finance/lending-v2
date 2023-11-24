@@ -38,12 +38,12 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_AuctionRepay_InsufficientFunds(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint256 availableFunds,
         address sender
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
         vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
@@ -71,9 +71,9 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_auctionRepay_Paused(uint128 amountLoaned, uint256 availableFunds, address sender) public {
+    function testFuzz_Revert_auctionRepay_Paused(uint112 amountLoaned, uint256 availableFunds, address sender) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
         vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
@@ -124,7 +124,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_auctionRepay_ZeroAmount(uint128 amountLoaned, address sender) public {
+    function testFuzz_Revert_auctionRepay_ZeroAmount(uint112 amountLoaned, address sender) public {
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -132,7 +132,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than as 0.
-        amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -148,7 +148,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_auctionRepay_AmountInferiorLoan(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint256 amountRepaid,
         address sender
     ) public {
@@ -159,7 +159,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than amountRepaid, which is bigger than 0.
-        amountLoaned = uint128(bound(amountLoaned, 2, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
         amountRepaid = bound(amountRepaid, 1, amountLoaned - 1);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
@@ -188,7 +188,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned - amountRepaid);
     }
 
-    function testFuzz_Success_auctionRepay_ExactAmount(uint128 amountLoaned, address sender) public {
+    function testFuzz_Success_auctionRepay_ExactAmount(uint112 amountLoaned, address sender) public {
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -196,7 +196,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than 0
-        amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
 
         vm.startPrank(users.creatorAddress);
         pool.setLiquidationParameters(0, 0, 0, 0, 0);
@@ -227,7 +227,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_auctionRepay_AmountExceedingLoan(
-        uint128 amountLoaned,
+        uint112 amountLoaned,
         uint256 amountRepaid,
         address sender
     ) public {
@@ -238,7 +238,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than 0.
-        amountLoaned = uint128(bound(amountLoaned, 1, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
 
         // And: "amountRepaid" is bigger than "amountLoaned".
         // And: "balanceOf" the "liquidityProvider" does not underflow.

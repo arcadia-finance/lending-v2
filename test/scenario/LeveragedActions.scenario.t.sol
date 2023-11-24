@@ -17,7 +17,7 @@ import { LendingPool } from "../../src/LendingPool.sol";
 import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
 import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
-import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
 import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 
 /**
@@ -61,7 +61,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             address(pool),
             address(mockERC20.token1),
             0,
-            type(uint128).max,
+            type(uint112).max,
             Constants.tokenToStableCollFactor,
             Constants.tokenToStableLiqFactor
         );
