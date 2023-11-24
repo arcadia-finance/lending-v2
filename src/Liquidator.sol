@@ -433,6 +433,8 @@ contract Liquidator is Owned, ILiquidator {
             return false;
         }
 
+        IAccount(account).endAuction();
+
         emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt));
         return true;
     }

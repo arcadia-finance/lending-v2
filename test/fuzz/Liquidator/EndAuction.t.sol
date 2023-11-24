@@ -160,6 +160,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
 
         assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
+        assert(proxyAccount.inAuction() == false);
     }
 
     function testFuzz_Success_endAuction_AfterCutoff(
@@ -198,5 +199,6 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // The remaining tokens should be sent to protocol owner
         assertEq(mockERC20.stable1.balanceOf(liquidator.owner()), amountLoaned);
         assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
+        assert(proxyAccount.inAuction() == false);
     }
 }
