@@ -5,7 +5,8 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+
+import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
@@ -46,7 +47,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
@@ -76,7 +77,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
+        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
         vm.assume(availableFunds > 0);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);

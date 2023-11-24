@@ -6,13 +6,13 @@ pragma solidity 0.8.19;
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
+import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
+import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
-import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
-import { AccountV1 } from "lib/accounts-v2/src/accounts/AccountV1.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -239,7 +239,7 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
     constructor() LendingPoolGuardian() { }
 
     function setPauseTimestamp(uint256 pauseTimestamp_) public {
-        pauseTimestamp = pauseTimestamp_;
+        pauseTimestamp = uint96(pauseTimestamp_);
     }
 
     function setFlags(
@@ -323,7 +323,7 @@ contract LiquidatorExtension is Liquidator {
         return _calculateBidPrice(auctionInformation_, askedShare);
     }
 
-    function getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory riskValues_)
+    function getAssetShares(AssetValueAndRiskFactors[] memory riskValues_)
         public
         pure
         returns (uint32[] memory assetDistribution)

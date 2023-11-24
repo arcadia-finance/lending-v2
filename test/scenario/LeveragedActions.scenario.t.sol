@@ -8,16 +8,16 @@ import { Scenario_Lending_Test } from "./_Scenario.t.sol";
 
 import { StdStorage, stdStorage } from "../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
+import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
 import { ActionData } from "../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { BitPackingLib } from "../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { IPermit2 } from "../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
-import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
-import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
 import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 
 /**
@@ -243,7 +243,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / RiskModule.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / AssetValuationLib.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -362,7 +362,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / RiskModule.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / AssetValuationLib.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
