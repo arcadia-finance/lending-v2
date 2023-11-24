@@ -179,6 +179,14 @@ contract Liquidator is Owned, ILiquidator {
         // Set the inAuction flag to true.
         auctionInformation_.inAuction = true;
 
+        // Store the auction price-curve parameters.
+        // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
+        auctionInformation_.base = base;
+        auctionInformation_.startTime = uint32(block.timestamp);
+        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
+        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
+        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
+
         // Check if the Account is insolvent and if it is, start the liquidation in the Account.
         // startLiquidation will revert if the Account is still solvent.
         (
@@ -200,14 +208,6 @@ contract Liquidator is Owned, ILiquidator {
         // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
         // These will be used to calculate the price of bids to partially liquidate the Account.
         auctionInformation_.assetShares = _getAssetShares(assetValues);
-
-        // Store the auction price-curve parameters.
-        // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
-        auctionInformation_.base = base;
-        auctionInformation_.startTime = uint32(block.timestamp);
-        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
-        auctionInformation_.startPriceMultiplier = startPriceMultiplier;
-        auctionInformation_.minPriceMultiplier = minPriceMultiplier;
     }
 
     /**
@@ -307,6 +307,9 @@ contract Liquidator is Owned, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
+        // Known issue: if the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
+        // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
+        // This means the calculating the bid price will be faulty but the askedAssetAmount won't be possible to transfer
         for (uint256 i; i < askedAssetAmounts.length;) {
             unchecked {
                 totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
