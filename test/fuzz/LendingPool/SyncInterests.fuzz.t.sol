@@ -5,7 +5,8 @@
 pragma solidity 0.8.19;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+
+import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
  * @notice Fuzz tests for the function "syncInterests" of contract "LendingPool".
@@ -28,7 +29,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint120 realisedLiquidity,
         uint80 interestRate
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
+        vm.assume(realisedDebt <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
         // Given: deltaTimestamp than 5 years, realisedDebt than 3402823669209384912995114146594816 and bigger than 0
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //5 year

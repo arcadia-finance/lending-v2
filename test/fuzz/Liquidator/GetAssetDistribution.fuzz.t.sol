@@ -7,8 +7,8 @@ pragma solidity 0.8.19;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
+import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
-import { RiskModule } from "lib/accounts-v2/src/RiskModule.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -32,8 +32,7 @@ contract GetAssetDistribution_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(totalValue_ > totalAssetNumber);
         vm.assume(totalValue_ < type(uint256).max / ONE_4);
 
-        RiskModule.AssetValueAndRiskFactors[] memory riskValues_ =
-            new RiskModule.AssetValueAndRiskFactors[](totalAssetNumber);
+        AssetValueAndRiskFactors[] memory riskValues_ = new AssetValueAndRiskFactors[](totalAssetNumber);
         for (uint256 i; i < totalAssetNumber;) {
             riskValues_[i].assetValue = totalValue_ / totalAssetNumber;
 

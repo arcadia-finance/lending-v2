@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { RiskModule } from "../../lib/accounts-v2/src/RiskModule.sol";
+import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 interface IAccount {
     /**
@@ -52,7 +52,7 @@ interface IAccount {
             uint256[] memory,
             address,
             uint256,
-            RiskModule.AssetValueAndRiskFactors[] memory
+            AssetValueAndRiskFactors[] memory
         );
 
     /**

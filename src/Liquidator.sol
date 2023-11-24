@@ -4,14 +4,14 @@
  */
 pragma solidity 0.8.19;
 
+import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
-import { Owned } from "../lib/solmate/src/auth/Owned.sol";
-import { RiskModule } from "../lib/accounts-v2/src/RiskModule.sol";
 import { LiquidatorErrors } from "./libraries/Errors.sol";
+import { Owned } from "../lib/solmate/src/auth/Owned.sol";
 
 /**
  * @title Liquidator.
@@ -187,7 +187,7 @@ contract Liquidator is Owned, ILiquidator {
             uint256[] memory assetAmounts,
             address creditor,
             uint256 debt,
-            RiskModule.AssetValueAndRiskFactors[] memory assetValues
+            AssetValueAndRiskFactors[] memory assetValues
         ) = IAccount(account).startLiquidation(msg.sender);
 
         // Store the Account information.
@@ -215,7 +215,7 @@ contract Liquidator is Owned, ILiquidator {
      * @param assetValues An array with the values of each asset in the Account.
      * @return assetShares An array of asset shares, with 4 decimals precision.
      */
-    function _getAssetShares(RiskModule.AssetValueAndRiskFactors[] memory assetValues)
+    function _getAssetShares(AssetValueAndRiskFactors[] memory assetValues)
         internal
         pure
         returns (uint32[] memory assetShares)

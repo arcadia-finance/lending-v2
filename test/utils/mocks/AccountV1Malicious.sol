@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { RiskModule } from "../../../lib/accounts-v2/src/RiskModule.sol";
+import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 contract AccountV1Malicious {
     address public creditor;
@@ -36,7 +36,7 @@ contract AccountV1Malicious {
             uint256[] memory assetAmounts,
             address creditor_,
             uint256 totalOpenDebt_,
-            RiskModule.AssetValueAndRiskFactors[] memory assetAndRiskValues
+            AssetValueAndRiskFactors[] memory assetAndRiskValues
         )
     {
         assetAddresses = new address[](1);
@@ -52,7 +52,7 @@ contract AccountV1Malicious {
 
         totalOpenDebt_ = totalOpenDebt;
 
-        assetAndRiskValues = new RiskModule.AssetValueAndRiskFactors[](1);
+        assetAndRiskValues = new AssetValueAndRiskFactors[](1);
         assetAndRiskValues[0].assetValue = valueInBaseCurrency;
         assetAndRiskValues[0].collateralFactor = collateralFactor;
         assetAndRiskValues[0].liquidationFactor = liquidationFactor;
