@@ -455,6 +455,9 @@ contract Liquidator is Owned, ILiquidator {
         return true;
     }
 
+    /**
+     * @notice Ends the liquidation on the Account and removes data stored related to the auction.
+     */
     function _endAuction(address account) internal {
         delete auctionInformation[account];
         IAccount(account).endAuction();
