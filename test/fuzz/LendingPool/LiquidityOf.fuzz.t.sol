@@ -25,10 +25,11 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_liquidityOf(
         uint80 interestRate,
         uint24 deltaTimestamp,
-        uint128 realisedDebt,
+        uint112 realisedDebt,
         uint120 initialLiquidity
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskModule.ONE_4); // No overflow Risk Module
+        // Given: collateralValue is smaller than maxExposure.
+        realisedDebt = uint112(bound(realisedDebt, 0, type(uint112).max - 1));
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
         vm.assume(interestRate > 0);
