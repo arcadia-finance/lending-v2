@@ -333,7 +333,6 @@ contract Liquidator is Owned, ILiquidator {
      * @dev Successful bids are only guaranteed until the cutoffTime.
      * Calculating the bid price after the cutoffTime will revert at some point (due to too low precision of the LogExpMath library).
      * Take this into account for bids done after the cutoffTime.
-     * might revert. Be aware the bidding after cutoffTime might revert due to this.
      */
     function _calculateBidPrice(AuctionInformation storage auctionInformation_, uint256 totalShare)
         internal
