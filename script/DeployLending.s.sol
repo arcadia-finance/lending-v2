@@ -17,7 +17,6 @@ import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 
-
 contract ArcadiaLendingDeployment is Test {
     Factory public factory;
     ERC20 public weth;
