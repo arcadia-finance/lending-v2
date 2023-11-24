@@ -307,7 +307,7 @@ contract Liquidator is Owned, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // Known issue: if the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
+        // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
         // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
         // This means the calculating the bid price will be faulty but the askedAssetAmount won't be possible to transfer
         for (uint256 i; i < askedAssetAmounts.length;) {
