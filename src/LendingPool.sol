@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.19;
 
-import { Creditor } from "./Creditor.sol";
+import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
