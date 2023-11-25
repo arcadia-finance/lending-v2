@@ -22,7 +22,7 @@ abstract contract Errors {
     error InsufficientShares();
     error AmountExceedsBalance();
     error IsNotAnAccount();
-    error Reverted();
+    error InvalidVersion();
     error IsNotAnAccountWithDebt();
     error LiquidationWeightsTooHigh();
 

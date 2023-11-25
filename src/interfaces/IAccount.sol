@@ -13,16 +13,6 @@ interface IAccount {
     function owner() external view returns (address);
 
     /**
-     * @notice Checks if the Account is healthy and still has free margin.
-     * @param debtIncrease The amount with which the debt is increased.
-     * @param openDebt The total open Debt against the Account.
-     * @return success Boolean indicating if there is sufficient margin to back a certain amount of Debt.
-     * @return creditor_ The contract address of the creditor.
-     * @return accountVersion_ The Account version.
-     */
-    function isAccountHealthy(uint256 debtIncrease, uint256 openDebt) external view returns (bool, address, uint256);
-
-    /**
      * @notice Calculates the total collateral value (MTM discounted with a haircut) of the Account.
      * @return collateralValue The collateral value, returned in the decimals of the base currency.
      */
@@ -33,6 +23,26 @@ interface IAccount {
      * @return usedMargin The total amount of Margin that is currently in use to back liabilities.
      */
     function getUsedMargin() external view returns (uint256);
+
+    /**
+     * @notice Checks if the Account is still healthy for an updated open position.
+     * @param openPosition The new open position.
+     * @return accountVersion The current Account version.
+     */
+    function updateOpenPosition(uint256 openPosition) external view returns (uint256);
+
+    /**
+     * @notice Executes a flash action initiated by the Creditor.
+     * @param actionTarget The contract address of the flashAction.
+     * @param actionData A bytes object containing three structs and two bytes objects.
+     * The first struct contains the info about the assets to withdraw from this Account to the actionTarget.
+     * The second struct contains the info about the owner's assets that need to be transferred from the owner to the actionTarget.
+     * The third struct contains the permit for the Permit2 transfer.
+     * The first bytes object contains the signature for the Permit2 transfer.
+     * The second bytes object contains the encoded input for the actionTarget.
+     * @return accountVersion The current Account version.
+     */
+    function flashActionByCreditor(address actionTarget, bytes calldata actionData) external returns (uint256);
 
     /**
      * @notice Checks if an Account is liquidatable and continues the liquidation flow.
@@ -74,20 +84,6 @@ interface IAccount {
      * @param to The recipient's address to receive the assets, set by the Creditor.
      */
     function auctionBoughtIn(address to) external;
-
-    /**
-     * @notice Executes a flash action.
-     * @param actionTarget The contract address of the flashAction.
-     * @param actionData A bytes object containing three structs and two bytes objects.
-     * The first struct contains the info about the assets to withdraw from this Account to the actionTarget.
-     * The second struct contains the info about the owner's assets that need to be transferred from the owner to the actionTarget.
-     * The third struct contains the permit for the Permit2 transfer.
-     * The first bytes object contains the signature for the Permit2 transfer.
-     * The second bytes object contains the encoded input for the actionTarget.
-     * @return creditor_ The contract address of the Creditor.
-     * @return accountVersion_ The Account version.
-     */
-    function flashAction(address actionTarget, bytes calldata actionData) external returns (address, uint256);
 
     /**
      * @notice Sets the "inAuction" flag to false when an auction ends.

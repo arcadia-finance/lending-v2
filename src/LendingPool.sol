@@ -368,7 +368,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(assets + totalRealisedLiquidity);
         }
 
-        //Event emitted by Tranche.
+        // Event emitted by Tranche.
     }
 
     /**
@@ -386,8 +386,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         if (assets == 0) revert LendingPoolErrors.ZeroAmount();
 
         address tranche = tranches[trancheIndex];
-        //Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
-        //See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
+        // Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
+        // See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
         if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPoolErrors.InsufficientShares();
 
         asset.safeTransferFrom(msg.sender, address(this), assets);
@@ -419,7 +419,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         asset.safeTransfer(receiver, assets);
 
-        //Event emitted by Tranche.
+        // Event emitted by Tranche.
 
         emit LendingPoolWithdrawal(receiver, assets);
     }
@@ -435,7 +435,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param account The address of the Arcadia Account backing the debt.
      */
     function approveBeneficiary(address beneficiary, uint256 amount, address account) external {
-        //If Account is not an actual address of an Arcadia Account, ownerOfAccount(address) will return the zero address.
+        // If Account is not an actual address of an Arcadia Account, ownerOfAccount(address) will return the zero address.
         if (IFactory(ACCOUNT_FACTORY).ownerOfAccount(account) != msg.sender) revert LendingPoolErrors.Unauthorized();
 
         creditAllowance[account][msg.sender][beneficiary] = amount;
@@ -456,13 +456,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         whenBorrowNotPaused
         processInterests
     {
-        //If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
+        // If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
 
         uint256 amountWithFee = amount + amount.mulDivUp(originationFee, ONE_4);
 
-        //Check allowances to take debt.
+        // Check allowances to take debt.
         if (accountOwner != msg.sender) {
             uint256 allowed = creditAllowance[account][accountOwner][msg.sender];
             if (allowed != type(uint256).max) {
@@ -470,10 +470,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
-        //Mint debt tokens to the Account.
+        // Mint debt tokens to the Account.
         _deposit(amountWithFee, account);
 
-        //Add origination fee to the treasury.
+        // Add origination fee to the treasury.
         unchecked {
             if (amountWithFee - amount > 0) {
                 totalRealisedLiquidity = SafeCastLib.safeCastTo128(amountWithFee + totalRealisedLiquidity - amount);
@@ -481,14 +481,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
-        //Call Account to check if it is still healthy after the debt is increased with amountWithFee.
-        (bool isHealthy, address creditor, uint256 accountVersion) =
-            IAccount(account).isAccountHealthy(0, maxWithdraw(account));
-        if (!isHealthy || creditor != address(this) || !isValidVersion[accountVersion]) {
-            revert LendingPoolErrors.Reverted();
-        }
+        // UpdateOpenPosition checks that Account indeed has opened a margin account for this Lending Pool and
+        // checks that it is still healthy after the debt is increased with amountWithFee.
+        // Reverts in Account if it becomes unhealthy.
+        uint256 accountVersion = IAccount(account).updateOpenPosition(maxWithdraw(account));
+        if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
 
-        //Transfer fails if there is insufficient liquidity in the pool.
+        // Transfer fails if there is insufficient liquidity in the pool.
         asset.safeTransfer(to, amount);
 
         emit Borrow(account, msg.sender, to, amount, amountWithFee - amount, referrer);
@@ -511,6 +510,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _withdraw(amount, account, account);
+
+        // No need to call updateOpenPosition() on the Account.
+        // That the Account has debt, implies that the Account indeed has opened a margin account for this Lending Pool.
 
         emit Repay(account, msg.sender, amount);
     }
@@ -546,6 +548,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         _withdraw(amount, account, account);
+
+        // No need to call updateOpenPosition() on the Account.
+        // That the Account has debt, implies that the Account indeed has opened a margin account for this Lending Pool.
 
         emit Repay(account, bidder, amount);
     }
@@ -606,9 +611,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // resulting from the actions back into the Account.
         // As last step, after all assets are deposited back into the Account a final health check is done:
         // The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the debt taken during this function).
+        // flashActionByCreditor also checks that Account indeed has opened a margin account for this Lending Pool.
         {
-            (address creditor, uint256 accountVersion) = IAccount(account).flashAction(actionTarget, actionData);
-            if (creditor != address(this) || !isValidVersion[accountVersion]) revert LendingPoolErrors.Reverted();
+            uint256 accountVersion = IAccount(account).flashActionByCreditor(actionTarget, actionData);
+            if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
         }
 
         emit Borrow(account, msg.sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);

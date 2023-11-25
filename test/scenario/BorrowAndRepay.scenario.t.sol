@@ -63,7 +63,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(amountCredit > maxCredit);
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPoolErrors.Reverted.selector);
+        vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
         pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
@@ -92,7 +92,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         vm.roll(block.number + 10);
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPoolErrors.Reverted.selector);
+        vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
         pool.borrow(1, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.stopPrank();
     }
