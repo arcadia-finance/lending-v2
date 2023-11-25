@@ -338,7 +338,7 @@ contract LiquidatorExtension is Liquidator {
         return auctionInformation[account].inAuction;
     }
 
-    function getAssetRecipient() external view returns (address) {
-        return assetRecipient;
+    function getAssetRecipient(address creditor) external view returns (address) {
+        return creditorToAssetRecipient[creditor];
     }
 }

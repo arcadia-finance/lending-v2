@@ -5,6 +5,7 @@
 pragma solidity 0.8.19;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
@@ -40,8 +41,8 @@ contract Liquidator is Owned, ILiquidator {
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
-    // Address to which all assets are transferred to after an unsuccessful auction.
-    address internal assetRecipient;
+    // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
+    mapping(address => address) internal creditorToAssetRecipient;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -109,8 +110,9 @@ contract Liquidator is Owned, ILiquidator {
      * @param assetRecipient_ The address of the new asset recipient.
      * @dev This function can only be called by the protocol owner.
      */
-    function setRecipient(address assetRecipient_) external onlyOwner {
-        assetRecipient = assetRecipient_;
+    function setAssetRecipient(address creditor, address assetRecipient_) external {
+        if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
+        creditorToAssetRecipient[creditor] = assetRecipient_;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -446,7 +448,7 @@ contract Liquidator is Owned, ILiquidator {
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(assetRecipient);
+            IAccount(account).auctionBoughtIn(creditorToAssetRecipient[creditor]);
         } else {
             // None of the conditions to end the auction are met.
             return false;
