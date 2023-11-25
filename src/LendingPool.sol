@@ -762,12 +762,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint24 totalInterestWeight_ = totalInterestWeight;
         uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength;) {
+        for (uint256 i; i < trancheLength; ++i) {
             trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
             unchecked {
                 realisedLiquidityOf[tranches[i]] += trancheShare;
                 remainingAssets -= trancheShare;
-                ++i;
             }
         }
         unchecked {
@@ -1085,7 +1084,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint256 weightOfTranche;
         uint256 length = tranches.length;
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ++i) {
             weightOfTranche = liquidationWeightTranches[i];
 
             if (weightOfTranche != 0) {
@@ -1094,10 +1093,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                     realisedLiquidityOf[tranches[i]] += trancheShare;
                     remainingAssets -= trancheShare;
                 }
-            }
-
-            unchecked {
-                ++i;
             }
         }
 

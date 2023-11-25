@@ -222,19 +222,17 @@ contract Liquidator is Owned, ILiquidator {
     {
         uint256 length = assetValues.length;
         uint256 totalValue;
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ++i) {
             unchecked {
                 totalValue += assetValues[i].assetValue;
-                ++i;
             }
         }
         assetShares = new uint32[](length);
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ++i) {
             unchecked {
                 // The asset shares are calculated relative to the total value of the Account.
                 // "assetValue" is a uint256 in baseCurrency units, will never overflow.
                 assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
-                ++i;
             }
         }
     }
@@ -310,10 +308,9 @@ contract Liquidator is Owned, ILiquidator {
         // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
         // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
         // This means that when the calculated bid price is faulty, the withdraw in the Account will always revert.
-        for (uint256 i; i < askedAssetAmounts.length;) {
+        for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
                 totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
-                ++i;
             }
         }
     }
