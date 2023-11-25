@@ -297,7 +297,7 @@ contract Liquidator is Owned, ILiquidator {
         // if one of the conditions to end the auction is met.
         // "_endAuction()" will silently fail without reverting, if the auction was not successfully ended.
         else if (endAuction_) {
-            _settleAuction(account, auctionInformation_);
+            if (_settleAuction(account, auctionInformation_)) _endAuction(account);
         }
     }
 
