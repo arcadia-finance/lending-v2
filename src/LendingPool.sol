@@ -481,10 +481,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
-        // UpdateOpenPosition checks that Account indeed has opened a margin account for this Lending Pool and
+        // UpdateOpenPosition checks that the Account indeed has opened a margin account for this Lending Pool and
         // checks that it is still healthy after the debt is increased with amountWithFee.
-        // Reverts in Account if it becomes unhealthy.
-        uint256 accountVersion = IAccount(account).updateOpenPosition(maxWithdraw(account));
+        // Reverts in Account if one of the checks fails.
+        uint256 accountVersion = IAccount(account).increaseOpenPosition(maxWithdraw(account));
         if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
 
         // Transfer fails if there is insufficient liquidity in the pool.
@@ -510,9 +510,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _withdraw(amount, account, account);
-
-        // No need to call updateOpenPosition() on the Account.
-        // That the Account has debt, implies that the Account indeed has opened a margin account for this Lending Pool.
 
         emit Repay(account, msg.sender, amount);
     }
@@ -548,9 +545,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         _withdraw(amount, account, account);
-
-        // No need to call updateOpenPosition() on the Account.
-        // That the Account has debt, implies that the Account indeed has opened a margin account for this Lending Pool.
 
         emit Repay(account, bidder, amount);
     }
@@ -611,7 +605,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // resulting from the actions back into the Account.
         // As last step, after all assets are deposited back into the Account a final health check is done:
         // The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the debt taken during this function).
-        // flashActionByCreditor also checks that Account indeed has opened a margin account for this Lending Pool.
+        // flashActionByCreditor also checks that the Account indeed has opened a margin account for this Lending Pool.
         {
             uint256 accountVersion = IAccount(account).flashActionByCreditor(actionTarget, actionData);
             if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();

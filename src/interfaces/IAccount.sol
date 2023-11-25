@@ -29,7 +29,7 @@ interface IAccount {
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
      */
-    function updateOpenPosition(uint256 openPosition) external view returns (uint256);
+    function increaseOpenPosition(uint256 openPosition) external view returns (uint256);
 
     /**
      * @notice Executes a flash action initiated by the Creditor.
