@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: BUSL-1.1
  */
 
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
-import { BaseGuardian, GuardianErrors } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
+import { BaseGuardian } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
  * @title LendingPool Guardian.
@@ -51,7 +51,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Throws if the repay functionality is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert GuardianErrors.FunctionIsPaused();
+        if (repayPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -59,7 +59,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Throws if the withdraw functionality is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert GuardianErrors.FunctionIsPaused();
+        if (withdrawPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -67,7 +67,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Throws if the borrow functionality is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert GuardianErrors.FunctionIsPaused();
+        if (borrowPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -75,7 +75,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Throws if the deposit functionality is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert GuardianErrors.FunctionIsPaused();
+        if (depositPaused) revert FunctionIsPaused();
         _;
     }
 
@@ -83,7 +83,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev Throws if the liquidation functionality is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert GuardianErrors.FunctionIsPaused();
+        if (liquidationPaused) revert FunctionIsPaused();
         _;
     }
 

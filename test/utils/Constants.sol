@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 library Constants {
     uint72 internal constant interestRate = 5e16; //5% with 18 decimals precision
