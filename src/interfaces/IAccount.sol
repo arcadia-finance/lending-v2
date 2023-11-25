@@ -76,19 +76,18 @@ interface IAccount {
     function auctionBoughtIn(address to) external;
 
     /**
-     * @notice Calls external action handler to execute and interact with external logic.
-     * @param actionHandler The address of the action handler.
-     * @param actionData A bytes object containing three actionAssetData structs, an address array and a bytes array.
-     * The first struct contains the info about the assets to withdraw from this Account to the actionHandler.
-     * The second struct contains the info about the owner's assets that are not in this Account and needs to be transferred to the actionHandler.
-     * The third struct contains the info about the assets that needs to be deposited from the actionHandler back into the Account.
-     * @param signature The signature to verify.
-     * @return creditor_ The contract address of the creditor.
+     * @notice Executes a flash action.
+     * @param actionTarget The contract address of the flashAction.
+     * @param actionData A bytes object containing three structs and two bytes objects.
+     * The first struct contains the info about the assets to withdraw from this Account to the actionTarget.
+     * The second struct contains the info about the owner's assets that need to be transferred from the owner to the actionTarget.
+     * The third struct contains the permit for the Permit2 transfer.
+     * The first bytes object contains the signature for the Permit2 transfer.
+     * The second bytes object contains the encoded input for the actionTarget.
+     * @return creditor_ The contract address of the Creditor.
      * @return accountVersion_ The Account version.
      */
-    function accountManagementAction(address actionHandler, bytes calldata actionData, bytes calldata signature)
-        external
-        returns (address, uint256);
+    function flashAction(address actionTarget, bytes calldata actionData) external returns (address, uint256);
 
     /**
      * @notice Sets the "inAuction" flag to false when an auction ends.
