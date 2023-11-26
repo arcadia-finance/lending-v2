@@ -117,10 +117,22 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         );
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(amountLoaned + 1);
+
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
-        vm.expectEmit();
-        emit AuctionFinished(address(proxyAccount), address(pool), uint128(amountLoaned) + 1);
+        vm.expectEmit(true, true, true, true);
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool),
+            uint128(amountLoaned + 1),
+            initiationReward,
+            terminationReward,
+            liquidationPenalty,
+            0,
+            0
+        );
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
 
@@ -148,14 +160,26 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Given: The account auction is initiated.
         initiateLiquidation(amountLoaned);
 
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(amountLoaned + 1);
+
         // By setting the minUsdValue of creditor to uint256 max value, remaining assets value should be 0.
         vm.prank(pool.riskManager());
         registryExtension.setMinUsdValueCreditor(address(pool), type(uint256).max);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
-        vm.expectEmit();
-        emit AuctionFinished(address(proxyAccount), address(pool), uint128(amountLoaned) + 1);
+        vm.expectEmit(true, true, true, false); //ignore exact calculations
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool),
+            uint128(amountLoaned + 1),
+            initiationReward,
+            terminationReward,
+            liquidationPenalty,
+            0,
+            0
+        );
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
 
@@ -186,18 +210,30 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Given: The account auction is initiated.
         initiateLiquidation(amountLoaned);
 
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(amountLoaned + 1);
+
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);
 
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
         vm.startPrank(users.creatorAddress);
-        vm.expectEmit();
-        emit AuctionFinished(address(proxyAccount), address(pool), uint128(amountLoaned) + 1);
+        vm.expectEmit(true, true, true, false); //ignore exact calculations
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool),
+            uint128(amountLoaned + 1),
+            initiationReward,
+            terminationReward,
+            liquidationPenalty,
+            0,
+            0
+        );
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
 
         // The remaining tokens should be sent to protocol owner
-        assertEq(mockERC20.stable1.balanceOf(liquidator.owner()), amountLoaned);
+        assertEq(mockERC20.stable1.balanceOf(liquidator.getAssetRecipient(address(pool))), amountLoaned);
         assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
         assert(proxyAccount.inAuction() == false);
     }
