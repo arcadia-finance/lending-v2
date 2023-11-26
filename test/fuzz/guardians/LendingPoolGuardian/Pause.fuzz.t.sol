@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPoolGuardian_Fuzz_Test, BaseGuardian, GuardianErrors } from "./_LendingPoolGuardian.fuzz.t.sol";
 
+import { GuardianErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
  */
