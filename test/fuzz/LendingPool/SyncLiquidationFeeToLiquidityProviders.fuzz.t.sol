@@ -30,9 +30,9 @@ contract SyncLiquidationFeeToLiquidityProviders_LendingPool_Fuzz_Test is Lending
         uint256 totalPenaltyWeight = uint256(weightSr) + uint256(weightJr) + uint256(weightTreasury);
         vm.assume(totalPenaltyWeight > 0);
         vm.startPrank(users.creatorAddress);
-        pool.setLiquidationWeight(0, weightSr);
-        pool.setLiquidationWeight(1, weightJr);
-        pool.setTreasuryLiquidationWeight(weightTreasury);
+        pool.setTrancheWeights(0, 10, weightSr);
+        pool.setTrancheWeights(1, 10, weightJr);
+        pool.setTreasuryWeights(10, weightTreasury);
         vm.stopPrank();
 
         pool.syncLiquidationFeeToLiquidityProviders(penalty);

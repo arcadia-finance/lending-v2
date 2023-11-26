@@ -57,16 +57,16 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     uint80 public interestRate;
     // The interest rate when utilisation is 0.
     // 18 decimals precision.
-    uint72 public baseRatePerYear;
+    uint72 internal baseRatePerYear;
     // The slope of the first curve, defined as the delta in interest rate for a delta in utilisation of 100%.
     // 18 decimals precision.
-    uint72 public lowSlopePerYear;
+    uint72 internal lowSlopePerYear;
     // The slope of the second curve, defined as the delta in interest rate for a delta in utilisation of 100%.
     // 18 decimals precision.
-    uint72 public highSlopePerYear;
+    uint72 internal highSlopePerYear;
     // The optimal capital utilisation, where we go from the first curve to the steeper second curve.
     // 4 decimal precision.
-    uint16 public utilisationThreshold;
+    uint16 internal utilisationThreshold;
     // Last timestamp that interests were realized.
     uint32 internal lastSyncedTimestamp;
     // Fee issued upon taking debt, 4 decimals precision (10 equals 0.001 or 0.1%), capped at 255 (2.55%).
@@ -158,11 +158,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event OriginationFeeSet(uint8 originationFee);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event TrancheInterestWeightSet(uint8 indexed trancheIndex, uint16 weight);
-    event TrancheLiquidationWeightSet(uint8 indexed trancheIndex, uint16 weight);
     event TranchePopped(address tranche);
-    event TreasuryInterestWeightSet(uint16 weight);
-    event TreasuryLiquidationWeightSet(uint16 weight);
+    event TrancheWeightsUpdated(uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight);
+    event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
     event InterestRate(uint80 interestRate);
     event InterestRateParametersUpdated(
         uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
@@ -251,37 +249,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         isTranche[tranche] = true;
 
         emit TrancheAdded(tranche, trancheIndex);
-        emit TrancheInterestWeightSet(trancheIndex, interestWeight_);
-        emit TrancheLiquidationWeightSet(trancheIndex, liquidationWeight);
+        emit TrancheWeightsUpdated(trancheIndex, interestWeight_, liquidationWeight);
     }
 
     /**
      * @notice Changes the interest weight of a specific Tranche.
      * @param index The index of the Tranche for which a new interest weight is being set.
-     * @param weight The new interest weight of the Tranche at the index.
+     * @param interestWeight_ The new interest weight of the Tranche at the index.
+     * @param liquidationWeight The new liquidation weight of the Tranche at the index.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
-    function setInterestWeight(uint256 index, uint16 weight) external onlyOwner {
+    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
         if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
-        totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + weight;
-        interestWeightTranches[index] = weight;
-        interestWeight[tranches[index]] = weight;
+        totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + interestWeight_;
+        interestWeightTranches[index] = interestWeight_;
+        interestWeight[tranches[index]] = interestWeight_;
 
-        emit TrancheInterestWeightSet(uint8(index), weight);
-    }
+        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + liquidationWeight;
+        liquidationWeightTranches[index] = liquidationWeight;
 
-    /**
-     * @notice Changes the liquidation weight of a specific tranche.
-     * @param index The index of the Tranche for which a new liquidation weight is being set.
-     * @param weight The new liquidation weight of the Tranche at the index.
-     * @dev The liquidation weight determines the relative share of the liquidation fee that goes to its Liquidity providers.
-     */
-    function setLiquidationWeight(uint256 index, uint16 weight) external onlyOwner {
-        if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
-        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + weight;
-        liquidationWeightTranches[index] = weight;
-
-        emit TrancheLiquidationWeightSet(uint8(index), weight);
+        emit TrancheWeightsUpdated(uint8(index), interestWeight_, liquidationWeight);
     }
 
     /**
@@ -312,27 +299,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Changes the fraction of the interest payments that go to the treasury.
      * @param interestWeightTreasury_ The new interestWeight of the treasury.
+     * @param liquidationWeightTreasury_ The new liquidationWeight of the treasury.
      * @dev The interestWeight determines the relative share of the yield (interest payments) that goes to the protocol treasury.
      * @dev Setting interestWeightTreasury to a very high value will cause the treasury to collect all interest fees from that moment on.
      * Although this will affect the future profits of liquidity providers, no funds nor realized interest are at risk for LPs.
      */
-    function setTreasuryInterestWeight(uint16 interestWeightTreasury_) external onlyOwner {
+    function setTreasuryWeights(uint16 interestWeightTreasury_, uint16 liquidationWeightTreasury_) external onlyOwner {
         totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeightTreasury_;
-
-        emit TreasuryInterestWeightSet(interestWeightTreasury = interestWeightTreasury_);
-    }
-
-    /**
-     * @notice Changes the fraction of the liquidation fees that go to the treasury.
-     * @param liquidationWeightTreasury_ The new liquidationWeight of the liquidation fee.
-     * @dev The liquidationWeight determines the relative share of the liquidation fee that goes to the protocol treasury.
-     * @dev Setting liquidationWeightTreasury to a very high value will cause the treasury to collect all liquidation fees from that moment on.
-     * Although this will affect the future profits of liquidity providers in the tranches, no funds nor realized interest are at risk for LPs.
-     */
-    function setTreasuryLiquidationWeight(uint16 liquidationWeightTreasury_) external onlyOwner {
         totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTreasury + liquidationWeightTreasury_;
 
-        emit TreasuryLiquidationWeightSet(liquidationWeightTreasury = liquidationWeightTreasury_);
+        emit TreasuryWeightsUpdated(
+            interestWeightTreasury = interestWeightTreasury_, liquidationWeightTreasury = liquidationWeightTreasury_
+        );
     }
 
     /**
@@ -1241,5 +1219,19 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function getOpenPosition(address account) external view override returns (uint256 openPosition) {
         openPosition = maxWithdraw(account);
+    }
+
+    /* //////////////////////////////////////////////////////////////
+                            HELPER FUNCTIONS
+    ////////////////////////////////////////////////////////////// */
+    /**
+     * @notice Returns the configuration of the interest rate slopes.
+     * @return baseRatePerYear The base interest rate per year.
+     * @return lowSlopePerYear The slope of the interest rate per year when the utilization rate is below the utilization threshold.
+     * @return highSlopePerYear The slope of the interest rate per year when the utilization rate exceeds the utilization threshold.
+     * @return utilisationThreshold The utilization threshold for determining the interest rate slope change.
+     */
+    function getInterestRateConfig() external view returns (uint72, uint72, uint72, uint16) {
+        return (baseRatePerYear, lowSlopePerYear, highSlopePerYear, utilisationThreshold);
     }
 }
