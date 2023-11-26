@@ -25,6 +25,8 @@ library LiquidatorErrors {
     error MultiplierTooLow();
     // Thrown when an Account is not for sale.
     error NotForSale();
+    // Thrown when not authorized.
+    error NotAuthorized();
 }
 
 library DebtTokenErrors {

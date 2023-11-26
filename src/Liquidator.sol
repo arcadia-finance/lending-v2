@@ -5,6 +5,7 @@
 pragma solidity 0.8.19;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
@@ -40,6 +41,8 @@ contract Liquidator is Owned, ILiquidator {
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
+    // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
+    mapping(address => address) internal creditorToAssetRecipient;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -80,7 +83,6 @@ contract Liquidator is Owned, ILiquidator {
     event AuctionCurveParametersSet(
         uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
     );
-    event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
 
     /* //////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -97,6 +99,21 @@ contract Liquidator is Owned, ILiquidator {
         minPriceMultiplier = 6000;
 
         emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    AUCTION ASSET RECIPIENT
+    ///////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice The asset recipient receives all assets of an Account after an unsuccessful auction.
+     * @param creditor The address of the creditor for which the asset recipient is set.
+     * @param assetRecipient_ The address of the new asset recipient for a given creditor.
+     * @dev This function can only be called by the Risk Manager of the creditor.
+     */
+    function setAssetRecipient(address creditor, address assetRecipient_) external {
+        if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
+        creditorToAssetRecipient[creditor] = assetRecipient_;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -277,15 +294,13 @@ contract Liquidator is Owned, ILiquidator {
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
         if (earlyTerminate) {
             // Stop the auction, no need to do a health check for the account since it has no debt anymore.
-            auctionInformation_.inAuction = false;
-
-            emit AuctionFinished(account, auctionInformation_.creditor, startDebt);
+            _endAuction(account);
         }
         // If not all debt is repaid, the bidder can still earn a termination incentive by ending the auction
         // if one of the conditions to end the auction is met.
         // "_endAuction()" will silently fail without reverting, if the auction was not successfully ended.
         else if (endAuction_) {
-            _endAuction(account, auctionInformation_);
+            if (_settleAuction(account, auctionInformation_)) _endAuction(account);
         }
     }
 
@@ -384,8 +399,9 @@ contract Liquidator is Owned, ILiquidator {
         // Check if the account is being auctioned.
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
-        bool success = _endAuction(account, auctionInformation_);
-        if (!success) revert LiquidatorErrors.EndAuctionFailed();
+        if (!_settleAuction(account, auctionInformation_)) revert LiquidatorErrors.EndAuctionFailed();
+
+        _endAuction(account);
     }
 
     /**
@@ -407,7 +423,7 @@ contract Liquidator is Owned, ILiquidator {
      * While this process is not fully trustless, it is the only way to solve an extreme unhappy flow,
      * where an auction did not end within cutoffTime (due to market or technical reasons).
      */
-    function _endAuction(address account, AuctionInformation storage auctionInformation_)
+    function _settleAuction(address account, AuctionInformation storage auctionInformation_)
         internal
         returns (bool success)
     {
@@ -431,17 +447,22 @@ contract Liquidator is Owned, ILiquidator {
         } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
-            // All remaining assets are transferred to the owner of Liquidator.sol,
-            // And a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(owner);
+            // All remaining assets are transferred to the asset recipient,
+            // and a manual (trusted) liquidation has to be done.
+            IAccount(account).auctionBoughtIn(creditorToAssetRecipient[creditor]);
         } else {
             // None of the conditions to end the auction are met.
             return false;
         }
 
-        IAccount(account).endAuction();
-
-        emit AuctionFinished(account, auctionInformation_.creditor, uint128(startDebt));
         return true;
+    }
+
+    /**
+     * @notice Ends the liquidation on the Account and removes data stored related to the auction.
+     */
+    function _endAuction(address account) internal {
+        delete auctionInformation[account];
+        IAccount(account).endAuction();
     }
 }
