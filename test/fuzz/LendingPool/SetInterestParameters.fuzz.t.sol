@@ -7,7 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the function "setInterestConfig" of contract "LendingPool".
+ * @notice Fuzz tests for the function "SetInterestParameters" of contract "LendingPool".
  */
 
 contract SetInterestParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
