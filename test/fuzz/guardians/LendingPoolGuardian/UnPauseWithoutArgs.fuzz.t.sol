@@ -2,9 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
-import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
+import { LendingPoolGuardian_Fuzz_Test, BaseGuardian } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 import { GuardianErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
 

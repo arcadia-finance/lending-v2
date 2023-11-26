@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
@@ -131,6 +131,16 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ////////////////////////////////////////////////////////////// */
 
     event AuctionStarted(address indexed account, address indexed creditor, uint128 openDebt);
+    event AuctionFinished(
+        address indexed account,
+        address indexed creditor,
+        uint256 openDebt,
+        uint256 initiationReward,
+        uint256 terminationReward,
+        uint256 penalty,
+        uint256 badDebt,
+        uint256 surplus
+    );
     event Borrow(
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
@@ -760,12 +770,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint24 totalInterestWeight_ = totalInterestWeight;
         uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength;) {
+        for (uint256 i; i < trancheLength; ++i) {
             trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
             unchecked {
                 realisedLiquidityOf[tranches[i]] += trancheShare;
                 remainingAssets -= trancheShare;
-                ++i;
             }
         }
         unchecked {
@@ -929,7 +938,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *  to bring the Account in a healthy position, and pay out all liquidation incentives to the
      *  relevant actors.
      * @dev The following pending incentives are made claimable:
-     *   - The "auctionTerminationReward", going towards the terminator of the auction.
+     *   - The "terminationReward", going towards the terminator of the auction.
      *   - The "liquidationFee", going towards LPs and the Treasury.
      *   - If there are still remaining assets after paying off all debt and incentives,
      *   the surplus goes towards the owner of the account.
@@ -937,23 +946,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function _settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
         internal
     {
-        (, uint256 auctionTerminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
         // Pay out the "liquidationPenalty" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
 
         // Unsafe cast: sum will revert if it overflows.
-        totalRealisedLiquidity =
-            uint128(totalRealisedLiquidity + auctionTerminationReward + liquidationPenalty + surplus);
+        totalRealisedLiquidity = uint128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
 
         unchecked {
             // Pay out any surplus to the current Account Owner.
             if (surplus > 0) realisedLiquidityOf[IAccount(account).owner()] += surplus;
-            // Pay out the "auctionTerminationReward" to the "terminator".
-            realisedLiquidityOf[terminator] += auctionTerminationReward;
+            // Pay out the "terminationReward" to the "terminator".
+            realisedLiquidityOf[terminator] += terminationReward;
         }
 
         _endLiquidation();
+
+        emit AuctionFinished(
+            account, address(this), startDebt, initiationReward, terminationReward, liquidationPenalty, 0, surplus
+        );
     }
 
     /**
@@ -965,7 +977,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *  and maybe not even to pay off all debt.
      * @dev The order in which incentives are not paid out/ bad debt is settled is fixed:
      *   - First, the "liquidationFee", going towards LPs and the Treasury is not paid out.
-     *   - Next, the "auctionTerminationReward", going towards the terminator of the auction is not paid out.
+     *   - Next, the "terminationReward", going towards the terminator of the auction is not paid out.
      *   - Next, the underlying assets of LPs in the most junior Tranche are written off pro rata.
      *   - Next, the underlying assets of LPs in the second most junior Tranche are written off pro rata.
      *   - etc.
@@ -976,23 +988,23 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         onlyLiquidator
         processInterests
     {
-        (, uint256 auctionTerminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
         // Any remaining debt that was not recovered during the auction must be written off.
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
         uint256 openDebt = maxWithdraw(account);
-        if (openDebt > auctionTerminationReward + liquidationPenalty) {
+        uint256 badDebt;
+        if (openDebt > terminationReward + liquidationPenalty) {
             // "openDebt" is bigger than pending liquidation incentives.
             // No incentives will be paid out, and a default event is triggered.
-            uint256 badDebt;
             unchecked {
-                badDebt = openDebt - auctionTerminationReward - liquidationPenalty;
+                badDebt = openDebt - terminationReward - liquidationPenalty;
             }
 
             totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
         } else {
-            uint256 remainder = liquidationPenalty + auctionTerminationReward - openDebt;
+            uint256 remainder = liquidationPenalty + terminationReward - openDebt;
             if (openDebt >= liquidationPenalty) {
                 // "openDebt" is bigger than the "liquidationPenalty" but smaller than the total pending liquidation incentives.
                 // Don't pay out the "liquidationPenalty" to Lps, partially pay out the "terminator".
@@ -1000,8 +1012,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             } else {
                 // "openDebt" is smaller than the "liquidationPenalty".
                 // Fully pay out the "terminator" and partially pay out the "liquidationPenalty" to Lps.
-                realisedLiquidityOf[terminator] += auctionTerminationReward;
-                _syncLiquidationFeeToLiquidityProviders(remainder - auctionTerminationReward);
+                realisedLiquidityOf[terminator] += terminationReward;
+                _syncLiquidationFeeToLiquidityProviders(remainder - terminationReward);
             }
             // Unsafe cast: sum will revert if it overflows.
             totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
@@ -1011,6 +1023,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         _withdraw(openDebt, account, account);
 
         _endLiquidation();
+
+        emit AuctionFinished(
+            account, address(this), startDebt, initiationReward, terminationReward, liquidationPenalty, badDebt, 0
+        );
     }
 
     /**
@@ -1083,7 +1099,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint256 weightOfTranche;
         uint256 length = tranches.length;
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ++i) {
             weightOfTranche = liquidationWeightTranches[i];
 
             if (weightOfTranche != 0) {
@@ -1092,10 +1108,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                     realisedLiquidityOf[tranches[i]] += trancheShare;
                     remainingAssets -= trancheShare;
                 }
-            }
-
-            unchecked {
-                ++i;
             }
         }
 

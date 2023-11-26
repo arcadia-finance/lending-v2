@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 /// @notice Abstract contract containing all the events emitted by the protocol.
 abstract contract Events {
@@ -56,7 +56,16 @@ abstract contract Events {
     event AuctionCurveParametersSet(
         uint64 base, uint32 cutoffTime, uint16 startPriceMultiplier, uint16 minPriceMultiplier
     );
-    event AuctionFinished(address indexed account, address indexed creditor, uint128 startDebt);
+    event AuctionFinished(
+        address indexed account,
+        address indexed creditor,
+        uint256 openDebt,
+        uint256 initiationReward,
+        uint256 terminationReward,
+        uint256 penalty,
+        uint256 badDebt,
+        uint256 surplus
+    );
 
     /* //////////////////////////////////////////////////////////////
                             TRANCHE

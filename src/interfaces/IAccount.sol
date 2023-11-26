@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
@@ -29,7 +29,7 @@ interface IAccount {
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
      */
-    function increaseOpenPosition(uint256 openPosition) external view returns (uint256);
+    function increaseOpenPosition(uint256 openPosition) external returns (uint256);
 
     /**
      * @notice Executes a flash action initiated by the Creditor.

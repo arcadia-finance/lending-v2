@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 library LiquidatorErrors {
     // Thrown when the liquidateAccount function is called on an Account that is already in an auction.
@@ -25,6 +25,8 @@ library LiquidatorErrors {
     error MultiplierTooLow();
     // Thrown when an Account is not for sale.
     error NotForSale();
+    // Thrown when not authorized.
+    error NotAuthorized();
 }
 
 library DebtTokenErrors {

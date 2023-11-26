@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -125,6 +125,11 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
         pool_.setAccountVersion(1, true);
         vm.stopPrank();
+
+        vm.prank(users.riskManager);
+        registryExtension.setRiskParametersOfPrimaryAsset(
+            address(pool_), address(mockERC20.stable1), 0, type(uint112).max, 100, 100
+        );
 
         vm.startPrank(users.accountOwner);
         proxyAccount.closeMarginAccount();

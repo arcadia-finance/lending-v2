@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
@@ -11,7 +11,6 @@ import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/As
 import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
-import { Liquidator } from "../../src/Liquidator.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 
 /* //////////////////////////////////////////////////////////////
@@ -337,5 +336,9 @@ contract LiquidatorExtension is Liquidator {
 
     function getInAuction(address account) external view returns (bool) {
         return auctionInformation[account].inAuction;
+    }
+
+    function getAssetRecipient(address creditor) external view returns (address) {
+        return creditorToAssetRecipient[creditor];
     }
 }
