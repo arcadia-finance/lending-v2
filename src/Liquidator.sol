@@ -107,8 +107,9 @@ contract Liquidator is Owned, ILiquidator {
 
     /**
      * @notice The asset recipient receives all assets of an Account after an unsuccessful auction.
-     * @param assetRecipient_ The address of the new asset recipient.
-     * @dev This function can only be called by the protocol owner.
+     * @param creditor The address of the creditor for which the asset recipient is set.
+     * @param assetRecipient_ The address of the new asset recipient for a given creditor.
+     * @dev This function can only be called by the Risk Manager of the creditor.
      */
     function setAssetRecipient(address creditor, address assetRecipient_) external {
         if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
