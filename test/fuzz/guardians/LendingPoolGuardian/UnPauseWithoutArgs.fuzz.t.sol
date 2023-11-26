@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPoolGuardian_Fuzz_Test, BaseGuardian } from "./_LendingPoolGuardian.fuzz.t.sol";
 
+import { GuardianErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "unPause" of contract "LendingPoolGuardian".
  */
@@ -39,7 +41,7 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         // When: A sender un-pauses within 30 days passed from the last pause.
         // Then: The transaction reverts.
         vm.startPrank(sender);
-        vm.expectRevert(BaseGuardian.CoolDownPeriodNotPassed.selector);
+        vm.expectRevert(GuardianErrors.CoolDownPeriodNotPassed.selector);
         lendingPoolGuardian.unpause();
         vm.stopPrank();
     }

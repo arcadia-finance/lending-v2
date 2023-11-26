@@ -6,9 +6,11 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 
 /**
  * @notice Fuzz tests for the function "flashAction" of contract "LendingPool".
@@ -30,16 +32,16 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.startPrank(users.creatorAddress);
+        vm.prank(users.creatorAddress);
         actionHandler = new ActionMultiCall();
-        registryExtension.setAllowedAction(address(actionHandler), true);
-        vm.stopPrank();
 
         ActionData memory emptyActionData;
         address[] memory to;
         bytes[] memory data;
+        bytes memory actionTargetData = abi.encode(emptyActionData, to, data);
+        IPermit2.PermitBatchTransferFrom memory permit;
         bytes memory signature;
-        callData = abi.encode(emptyActionData, emptyActionData, signature, emptyActionData, to, data);
+        callData = abi.encode(emptyActionData, emptyActionData, permit, signature, actionTargetData);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -49,26 +51,24 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 amount,
         address nonAccount,
         address actionHandler_,
-        bytes calldata actionData,
-        bytes calldata signature
+        bytes calldata actionData
     ) public {
         vm.assume(nonAccount != address(proxyAccount));
         vm.expectRevert(IsNotAnAccount.selector);
-        pool.flashAction(amount, nonAccount, actionHandler_, actionData, signature, emptyBytes3);
+        pool.flashAction(amount, nonAccount, actionHandler_, actionData, emptyBytes3);
     }
 
     function testFuzz_Revert_flashAction_Unauthorised(
         uint256 amount,
         address beneficiary,
         address actionHandler_,
-        bytes calldata actionData,
-        bytes calldata signature
+        bytes calldata actionData
     ) public {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.startPrank(beneficiary);
         vm.expectRevert(Unauthorized.selector);
-        pool.flashAction(amount, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
+        pool.flashAction(amount, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -77,8 +77,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 amountLoaned,
         address beneficiary,
         address actionHandler_,
-        bytes calldata actionData,
-        bytes calldata signature
+        bytes calldata actionData
     ) public {
         vm.assume(beneficiary != users.accountOwner);
         vm.assume(amountAllowed < type(uint256).max);
@@ -88,7 +87,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(beneficiary);
         vm.expectRevert(Unauthorized.selector);
-        pool.flashAction(amountLoaned, address(proxyAccount), actionHandler_, actionData, signature, emptyBytes3);
+        pool.flashAction(amountLoaned, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -96,8 +95,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 amountLoaned,
         uint112 collateralValue,
         uint128 liquidity,
-        bytes calldata actionData,
-        bytes calldata signature
+        bytes calldata actionData
     ) public {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
@@ -112,9 +110,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
-        pool.flashAction(
-            amountLoaned, address(proxyAccount), address(actionHandler), actionData, signature, emptyBytes3
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), actionData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -139,9 +135,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         vm.prank(users.accountOwner);
-        pool.flashAction(
-            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
@@ -171,9 +165,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, type(uint256).max, address(proxyAccount));
 
         vm.prank(beneficiary);
-        pool.flashAction(
-            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
@@ -210,9 +202,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
 
         vm.startPrank(users.accountOwner);
-        pool.flashAction(
-            amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
 
         uint256 treasuryBalancePost = pool.realisedLiquidityOf(treasury);
@@ -259,7 +249,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
         emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, new bytes(0), ref);
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, ref);
         vm.stopPrank();
     }
 }
