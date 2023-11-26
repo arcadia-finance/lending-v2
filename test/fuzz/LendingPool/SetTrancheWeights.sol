@@ -52,14 +52,14 @@ contract SetTrancheWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.addTranche(address(srTranche), 50, 0);
 
         vm.expectEmit(true, true, true, true);
-        emit TrancheWeightsUpdated(0, 410, 40);
+        emit TrancheWeightsUpdated(0, 10, 40);
         pool.setTrancheWeights(0, 10, 40);
         vm.stopPrank();
 
-        assertEq(pool.getTotalInterestWeight(), 40);
-        assertEq(pool.getInterestWeightTranches(0), 40);
-        assertEq(pool.getInterestWeight(address(srTranche)), 40);
-        assertEq(pool.getTotalLiquidationWeight(), 10);
-        assertEq(pool.getLiquidationWeightTranches(0), 10);
+        assertEq(pool.getTotalInterestWeight(), 10);
+        assertEq(pool.getInterestWeightTranches(0), 10);
+        assertEq(pool.getInterestWeight(address(srTranche)), 10);
+        assertEq(pool.getTotalLiquidationWeight(), 40);
+        assertEq(pool.getLiquidationWeightTranches(0), 40);
     }
 }
