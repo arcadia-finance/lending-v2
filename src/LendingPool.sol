@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
@@ -772,12 +772,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint24 totalInterestWeight_ = totalInterestWeight;
         uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength;) {
+        for (uint256 i; i < trancheLength; ++i) {
             trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
             unchecked {
                 realisedLiquidityOf[tranches[i]] += trancheShare;
                 remainingAssets -= trancheShare;
-                ++i;
             }
         }
         unchecked {
@@ -1102,7 +1101,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 trancheShare;
         uint256 weightOfTranche;
         uint256 length = tranches.length;
-        for (uint256 i; i < length;) {
+        for (uint256 i; i < length; ++i) {
             weightOfTranche = liquidationWeightTranches[i];
 
             if (weightOfTranche != 0) {
@@ -1111,10 +1110,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                     realisedLiquidityOf[tranches[i]] += trancheShare;
                     remainingAssets -= trancheShare;
                 }
-            }
-
-            unchecked {
-                ++i;
             }
         }
 
