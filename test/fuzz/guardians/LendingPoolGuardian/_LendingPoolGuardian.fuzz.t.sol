@@ -7,7 +7,7 @@ pragma solidity 0.8.22;
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
 
 import { LendingPoolGuardianExtension } from "../../../utils/Extensions.sol";
-import { BaseGuardian } from "../../../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
+import { BaseGuardian, GuardianErrors } from "../../../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
  * @notice Common logic needed by all "LendingPoolGuardian" fuzz tests.

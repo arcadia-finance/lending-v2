@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.22;
 
-import { LendingPoolGuardian_Fuzz_Test, BaseGuardian } from "./_LendingPoolGuardian.fuzz.t.sol";
+import { LendingPoolGuardian_Fuzz_Test, BaseGuardian, GuardianErrors } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
@@ -25,7 +25,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.assume(nonGuard != users.guardian);
 
         vm.startPrank(nonGuard);
-        vm.expectRevert(BaseGuardian.OnlyGuardian.selector);
+        vm.expectRevert(GuardianErrors.OnlyGuardian.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }
@@ -45,7 +45,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         // When: Guardian pauses again within 32 days passed from the last pause.
         // Then: The transaction reverts.
         vm.startPrank(users.guardian);
-        vm.expectRevert(BaseGuardian.CoolDownPeriodNotPassed.selector);
+        vm.expectRevert(GuardianErrors.CoolDownPeriodNotPassed.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }

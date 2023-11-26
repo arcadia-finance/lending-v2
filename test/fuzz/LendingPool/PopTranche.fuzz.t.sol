@@ -23,7 +23,7 @@ contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_popTranche() public {
         vm.prank(users.creatorAddress);
-        pool.setLiquidationWeight(0, 10);
+        pool.setTrancheWeights(0, 50, 10);
 
         assertEq(pool.getTotalInterestWeight(), 100);
         assertEq(pool.getInterestWeightTranches(0), 50);
