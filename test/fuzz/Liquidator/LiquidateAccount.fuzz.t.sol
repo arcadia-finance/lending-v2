@@ -125,18 +125,18 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
         address liquidationInitiator,
         uint128 totalOpenDebt,
-        uint128 valueInBaseCurrency,
+        uint128 valueInNumeraire,
         uint256 collateralFactor,
         uint256 liquidationFactor
     ) public {
-        vm.assume(valueInBaseCurrency > 0);
+        vm.assume(valueInNumeraire > 0);
         vm.assume(totalOpenDebt > 0);
         // Given: Malicious Lending pool
         LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
 
         // And: AccountV1Malicious is created
         AccountV1Malicious maliciousAccount = new AccountV1Malicious(
-            address(pool_malicious), totalOpenDebt, valueInBaseCurrency, collateralFactor, liquidationFactor
+            address(pool_malicious), totalOpenDebt, valueInNumeraire, collateralFactor, liquidationFactor
         );
 
         // When Then: Liquidation Initiator calls liquidateAccount, It will succeed

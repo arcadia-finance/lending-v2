@@ -8,7 +8,7 @@ contract AccountV1 {
     address public owner;
     uint256 public totalValue;
     uint256 public lockedValue;
-    address public baseCurrency;
+    address public numeraire;
     address public creditor;
     uint16 public accountVersion;
 

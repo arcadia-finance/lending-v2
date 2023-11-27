@@ -32,12 +32,12 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         // When: Account opens a margin proxyAccount
-        (bool success, address baseCurrency, address liquidator_, uint256 fixedLiquidationCost_) =
+        (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_) =
             pool.openMarginAccount(accountVersion);
 
         // Then: openMarginAccount should return false and the zero address
         assertTrue(!success);
-        assertEq(address(0), baseCurrency);
+        assertEq(address(0), numeraire);
         assertEq(address(0), liquidator_);
         assertEq(0, fixedLiquidationCost_);
     }
@@ -52,12 +52,12 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         // When: Account opens a margin proxyAccount
-        (bool success, address baseCurrency, address liquidator_, uint256 fixedLiquidationCost_) =
+        (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_) =
             pool.openMarginAccount(accountVersion);
 
         // Then: openMarginAccount should return success and correct contract addresses
         assertTrue(success);
-        assertEq(address(mockERC20.stable1), baseCurrency);
+        assertEq(address(mockERC20.stable1), numeraire);
         assertEq(address(liquidator), liquidator_);
         assertEq(fixedLiquidationCost, fixedLiquidationCost_);
     }

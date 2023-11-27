@@ -49,7 +49,7 @@ contract Liquidator is Owned, ILiquidator {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        // The open debt, denominated in the Creditor's baseCurrency.
+        // The open debt, denominated in the Creditor's numeraire.
         uint128 startDebt;
         // The base of the auction price curve.
         uint64 base;
@@ -248,7 +248,7 @@ contract Liquidator is Owned, ILiquidator {
         for (uint256 i; i < length; ++i) {
             unchecked {
                 // The asset shares are calculated relative to the total value of the Account.
-                // "assetValue" is a uint256 in baseCurrency units, will never overflow.
+                // "assetValue" is a uint256 in Numeraire units, will never overflow.
                 assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
             }
         }
@@ -277,7 +277,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
         uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
 
-        // Transfer an amount of "price" in "baseCurrency" to the LendingPool to repay the Accounts debt.
+        // Transfer an amount of "price" in "numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         uint128 startDebt = auctionInformation_.startDebt;
@@ -335,7 +335,7 @@ contract Liquidator is Owned, ILiquidator {
      * @param auctionInformation_ The auction information.
      * @param totalShare The share of initial assets the bidder wants to buy,
      * calculated based on the relative value of the assets when the auction was initiated.
-     * @return price The price for which the bid can be purchased, denominated in the baseCurrency.
+     * @return price The price for which the bid can be purchased, denominated in the Numeraire.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
      * Debt: The total debt of the Account at the moment the auction was initiated.
@@ -364,12 +364,12 @@ contract Liquidator is Owned, ILiquidator {
             uint256 minPriceMultiplier_ = auctionInformation_.minPriceMultiplier;
 
             // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
-            // P: price, denominated in the baseCurrency.
-            // Debt: The initial debt of the Account, denominated in the baseCurrency.
+            // P: price, denominated in the Numeraire.
+            // Debt: The initial debt of the Account, denominated in the Numeraire.
             // S: The share of assets being bought, 4 decimals precision
             // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
-            // Since the result must be denominated in the baseCurrency, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
+            // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
             // No overflow possible: uint128 * uint32 * uint18 * uint18.
             price = (
                 auctionInformation_.startDebt * totalShare

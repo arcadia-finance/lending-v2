@@ -9,20 +9,20 @@ import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries
 contract AccountV1Malicious {
     address public creditor;
     uint256 public totalOpenDebt;
-    uint256 public valueInBaseCurrency;
+    uint256 public valueInNumeraire;
     uint256 public collateralFactor;
     uint256 public liquidationFactor;
 
     constructor(
         address trustedCreditor_,
         uint256 totalOpenDebt_,
-        uint256 valueInBaseCurrency_,
+        uint256 valueInNumeraire_,
         uint256 collateralFactor_,
         uint256 liquidationFactor_
     ) payable {
         creditor = trustedCreditor_;
         totalOpenDebt = totalOpenDebt_;
-        valueInBaseCurrency = valueInBaseCurrency_;
+        valueInNumeraire = valueInNumeraire_;
         collateralFactor = collateralFactor_;
         liquidationFactor = liquidationFactor_;
     }
@@ -53,7 +53,7 @@ contract AccountV1Malicious {
         totalOpenDebt_ = totalOpenDebt;
 
         assetAndRiskValues = new AssetValueAndRiskFactors[](1);
-        assetAndRiskValues[0].assetValue = valueInBaseCurrency;
+        assetAndRiskValues[0].assetValue = valueInNumeraire;
         assetAndRiskValues[0].collateralFactor = collateralFactor;
         assetAndRiskValues[0].liquidationFactor = liquidationFactor;
     }

@@ -14,7 +14,7 @@ interface IAccount {
 
     /**
      * @notice Calculates the total collateral value (MTM discounted with a haircut) of the Account.
-     * @return collateralValue The collateral value, returned in the decimals of the base currency.
+     * @return collateralValue The collateral value, returned in the decimal precision of the Numeraire.
      */
     function getCollateralValue() external view returns (uint256);
 
