@@ -49,7 +49,7 @@ contract Liquidator is Owned, ILiquidator {
 
     // Struct with additional information about the auction of a specific Account.
     struct AuctionInformation {
-        // The open debt, denominated in the Creditor's numeraire.
+        // The open debt, denominated in the Creditor's Numeraire.
         uint128 startDebt;
         // The base of the auction price curve.
         uint64 base;
@@ -277,7 +277,7 @@ contract Liquidator is Owned, ILiquidator {
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
         uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
 
-        // Transfer an amount of "price" in "numeraire" to the LendingPool to repay the Accounts debt.
+        // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         uint128 startDebt = auctionInformation_.startDebt;
