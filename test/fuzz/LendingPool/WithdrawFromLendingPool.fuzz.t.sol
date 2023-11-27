@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -34,7 +34,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         pool.depositInLendingPool(assetsWithdrawn, users.liquidityProvider);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
+        vm.expectRevert(AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -49,7 +49,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
 
-        vm.expectRevert(LendingPool_AmountExceedsBalance.selector);
+        vm.expectRevert(AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -70,7 +70,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(LendingPoolGuardian_FunctionIsPaused.selector);
+        vm.expectRevert(FunctionIsPaused.selector);
         vm.prank(address(srTranche));
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
     }

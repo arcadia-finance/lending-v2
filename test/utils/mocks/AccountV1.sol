@@ -2,14 +2,14 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 contract AccountV1 {
     address public owner;
     uint256 public totalValue;
     uint256 public lockedValue;
-    address public baseCurrency;
-    address public trustedCreditor;
+    address public numeraire;
+    address public creditor;
     uint16 public accountVersion;
 
     uint256 public mockToSurpressWarning;
@@ -22,8 +22,8 @@ contract AccountV1 {
         totalValue = _totalValue;
     }
 
-    function setTrustedCreditor(address _trustedCreditor) external {
-        trustedCreditor = _trustedCreditor;
+    function setCreditor(address _trustedCreditor) external {
+        creditor = _trustedCreditor;
     }
 
     function isAccountHealthy(uint256 amount, uint256 totalOpenDebt)
@@ -39,11 +39,11 @@ contract AccountV1 {
             success = totalValue >= totalOpenDebt;
         }
 
-        return (success, trustedCreditor, accountVersion);
+        return (success, creditor, accountVersion);
     }
 
     function accountManagementAction(address, bytes calldata) external returns (address, uint256) {
         mockToSurpressWarning = 1;
-        return (trustedCreditor, accountVersion);
+        return (creditor, accountVersion);
     }
 }

@@ -2,11 +2,12 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
 
 import { LendingPoolGuardianExtension } from "../../../utils/Extensions.sol";
+import { BaseGuardian, GuardianErrors } from "../../../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
  * @notice Common logic needed by all "LendingPoolGuardian" fuzz tests.

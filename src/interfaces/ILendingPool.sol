@@ -2,17 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity 0.8.19;
-
-import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
+pragma solidity 0.8.22;
 
 interface ILendingPool {
-    /**
-     * @notice returns the supply cap of the Lending Pool.
-     * @return supplyCap The supply cap of the Lending Pool.
-     */
-    function supplyCap() external view returns (uint128);
-
     /**
      * @notice returns the total realised liquidity of the Lending Pool.
      * @return totalRealisedLiquidity The total realised liquidity of the Lending Pool.
@@ -54,20 +46,28 @@ interface ILendingPool {
     function calcUnrealisedDebt() external view returns (uint256);
 
     /**
-     * @notice Settles the liquidation after the auction is finished and pays out Creditor, Original owner and Service providers.
-     * @param account The contract address of the Account.
-     * @param originalOwner The original owner of the Account before the auction.
-     * @param badDebt The amount of liabilities that was not recouped by the auction.
-     * @param liquidationInitiatorReward The Reward for the Liquidation Initiator.
-     * @param liquidationFee The additional fee the `originalOwner` has to pay to the protocol.
-     * @param remainder Any funds remaining after the auction are returned back to the `originalOwner`.
+     * @notice Repays debt via an auction.
+     * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param amount The amount of debt repaid by a bidder during the auction.
+     * @param account The contract address of the Arcadia Account backing the loan.
+     * @param bidder The address of the bidder.
+     * @return earlyTerminate Bool indicating of the full amount of debt was repaid.
      */
-    function settleLiquidation(
-        address account,
-        address originalOwner,
-        uint256 badDebt,
-        uint256 liquidationInitiatorReward,
-        uint256 liquidationFee,
-        uint256 remainder
-    ) external;
+    function auctionRepay(uint256 startDebt, uint256 amount, address account, address bidder) external returns (bool);
+
+    /**
+     * @notice Settles the liquidation process for a specific Account.
+     * @param account The address of the Account undergoing liquidation settlement.
+     * @param startDebt The initial debt amount of the liquidated Account.
+     * @param terminator The address of the liquidation terminator.
+     */
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator) external;
+
+    /**
+     * @notice Settles the liquidation process for a specific Account.
+     * @param account The address of the Account undergoing liquidation settlement.
+     * @param startDebt The initial debt amount of the liquidated Account.
+     * @param terminator The address of the liquidation terminator.
+     */
+    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, address terminator) external;
 }

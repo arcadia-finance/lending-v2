@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 
@@ -27,8 +27,7 @@ abstract contract LendingPool_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithAccounts();
 
         vm.startPrank(users.creatorAddress);
-        pool.setTreasuryInterestWeight(10);
-        pool.setTreasuryLiquidationWeight(80);
+        pool.setTreasuryWeights(10, 80);
         pool.addTranche(address(srTranche), 50, 0);
         pool.addTranche(address(jrTranche), 40, 20);
         pool.setAccountVersion(1, true);
@@ -41,7 +40,7 @@ abstract contract LendingPool_Fuzz_Test is Fuzz_Lending_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.prank(users.accountOwner);
-        proxyAccount.openTrustedMarginAccount(address(pool));
+        proxyAccount.openMarginAccount(address(pool));
     }
 
     /* ///////////////////////////////////////////////////////////////

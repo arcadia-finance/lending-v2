@@ -2,17 +2,15 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { InterestRateModule } from "../../../src/InterestRateModule.sol";
-
 /**
- * @notice Fuzz tests for the function "setInterestConfig" of contract "LendingPool".
+ * @notice Fuzz tests for the function "SetInterestParameters" of contract "LendingPool".
  */
 
-contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract SetInterestParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -24,7 +22,7 @@ contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setInterestConfig_NonOwner(
+    function testFuzz_Revert_setInterestParameters_NonOwner(
         address unprivilegedAddress,
         uint8 baseRate_,
         uint8 highSlope_,
@@ -33,37 +31,23 @@ contract SetInterestConfig_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
-        InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
-            baseRatePerYear: baseRate_,
-            highSlopePerYear: highSlope_,
-            lowSlopePerYear: lowSlope_,
-            utilisationThreshold: utilisationThreshold_
-        });
-
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setInterestConfig(config);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setInterestConfig(
+    function testFuzz_Success_setInterestParameters(
         uint8 baseRate_,
         uint8 highSlope_,
         uint8 lowSlope_,
         uint8 utilisationThreshold_
     ) public {
-        InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
-            baseRatePerYear: baseRate_,
-            highSlopePerYear: highSlope_,
-            lowSlopePerYear: lowSlope_,
-            utilisationThreshold: utilisationThreshold_
-        });
-
         vm.prank(users.creatorAddress);
-        pool.setInterestConfig(config);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         (uint256 baseRatePerYear, uint256 lowSlopePerYear, uint256 highSlopePerYear, uint256 utilisationThreshold) =
-            pool.interestRateConfig();
+            pool.getInterestRateVariables();
         assertEq(baseRatePerYear, baseRate_);
         assertEq(highSlopePerYear, highSlope_);
         assertEq(lowSlopePerYear, lowSlope_);

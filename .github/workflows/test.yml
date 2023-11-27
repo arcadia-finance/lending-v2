@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - dev
+      - AF-33-Partial-Liquidation
+      - AF*
 
 env:
   FOUNDRY_PROFILE: ci
@@ -21,8 +23,7 @@ jobs:
       - name: Main Checkout
         env:
           SSH_KEY_FOR_SUBMODULE: ${{secrets.ACCOUNT_V2_DEPLOY_KEY}}
-        run:
-          mkdir $HOME/.ssh && echo "$SSH_KEY_FOR_SUBMODULE" > $HOME/.ssh/id_rsa && chmod 600 $HOME/.ssh/id_rsa && git submodule update --init --recursive
+        run: mkdir $HOME/.ssh && echo "$SSH_KEY_FOR_SUBMODULE" > $HOME/.ssh/id_rsa && chmod 600 $HOME/.ssh/id_rsa && git submodule update --init --recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1

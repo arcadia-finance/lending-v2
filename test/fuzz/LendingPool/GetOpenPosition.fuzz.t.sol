@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -21,9 +21,9 @@ contract GetOpenPosition_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_getOpenPosition(uint128 amountLoaned) public {
+    function testFuzz_Success_getOpenPosition(uint112 amountLoaned) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint128(bound(amountLoaned, 0, type(uint128).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         // Given: an Account has taken out debt
         vm.assume(amountLoaned > 0);

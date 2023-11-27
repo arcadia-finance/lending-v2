@@ -2,12 +2,11 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../fuzz/Fuzz.t.sol";
 
 import { Constants } from "../utils/Constants.sol";
-import { InterestRateModule } from "../../src/InterestRateModule.sol";
 
 /**
  * @notice Common logic needed by all scenario tests.
@@ -49,17 +48,13 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
 
         vm.startPrank(users.creatorAddress);
         pool.setAccountVersion(1, true);
-        InterestRateModule.InterestRateConfiguration memory config = InterestRateModule.InterestRateConfiguration({
-            baseRatePerYear: Constants.interestRate,
-            highSlopePerYear: Constants.interestRate,
-            lowSlopePerYear: Constants.interestRate,
-            utilisationThreshold: Constants.utilisationThreshold
-        });
-        pool.setInterestConfig(config);
+        pool.setInterestParameters(
+            Constants.interestRate, Constants.interestRate, Constants.interestRate, Constants.utilisationThreshold
+        );
         vm.stopPrank();
 
         vm.prank(users.accountOwner);
-        proxyAccount.openTrustedMarginAccount(address(pool));
+        proxyAccount.openMarginAccount(address(pool));
     }
 
     /*//////////////////////////////////////////////////////////////////////////

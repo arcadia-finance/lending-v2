@@ -2,17 +2,19 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Base_Lending_Test } from "../Base.t.sol";
 import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 
 import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 
-import { AccountV1 } from "../../lib/accounts-v2/src/AccountV1.sol";
+import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
+import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
 import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
+import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { Tranche } from "../../src/Tranche.sol";
 
@@ -36,7 +38,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     // ToDo : move to Types users
     address internal treasury;
-    LendingPool public poolTest;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
@@ -48,6 +49,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
     function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
         // ToDo : move to Types users
+        Base_Lending_Test.setUp();
         treasury = address(34_567);
 
         vm.label({ account: treasury, newLabel: "Treasury" });
@@ -60,7 +62,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
-        liquidator = new LiquidatorExtension(address(factory));
+        liquidator = new LiquidatorExtension();
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
@@ -89,22 +91,34 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
-        liquidator = new LiquidatorExtension(address(factory));
-        pool =
-        new LendingPoolExtension(users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
+        liquidator = new LiquidatorExtension();
+        pool = new LendingPoolExtension(
+            users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
+        );
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
         vm.stopPrank();
+
+        // Set the Liquidation parameters.
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(100, 500, 50, 0, 0);
 
         // Set the Guardian.
         vm.prank(users.creatorAddress);
         pool.changeGuardian(users.guardian);
 
         // Set the risk parameters.
-        vm.prank(users.riskManager);
-        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
-            address(pool), address(mockERC20.stable1), 0, type(uint128).max, 100, 100
+        vm.startPrank(users.riskManager);
+        registryExtension.setRiskParametersOfPrimaryAsset(
+            address(pool),
+            address(mockERC20.stable1),
+            0,
+            type(uint112).max,
+            uint16(AssetValuationLib.ONE_4),
+            uint16(AssetValuationLib.ONE_4)
         );
+        registryExtension.setMaxRecursiveCalls(address(pool), type(uint256).max);
+        vm.stopPrank();
 
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
@@ -113,7 +127,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         debt = DebtTokenExtension(address(pool));
 
         // Label the base test contracts.
-        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
         vm.label({ account: address(liquidator), newLabel: "Liquidator" });
         vm.label({ account: address(pool), newLabel: "Lending Pool" });
         vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });

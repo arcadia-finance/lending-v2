@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -31,9 +31,9 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         vm.assume(totalInterestWeight > 0);
 
         vm.startPrank(users.creatorAddress);
-        pool.setInterestWeight(0, weightSr);
-        pool.setInterestWeight(1, weightJr);
-        pool.setTreasuryInterestWeight(weightTreasury);
+        pool.setTrancheWeights(0, weightSr, 0);
+        pool.setTrancheWeights(1, weightJr, 10);
+        pool.setTreasuryWeights(weightTreasury, 10);
         vm.stopPrank();
 
         pool.syncInterestsToLendingPool(interests);

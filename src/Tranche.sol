@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Owned } from "../lib/solmate/src/auth/Owned.sol";
 import { ERC4626 } from "../lib/solmate/src/mixins/ERC4626.sol";
@@ -10,12 +10,21 @@ import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { IGuardian } from "./interfaces/IGuardian.sol";
+import { TrancheErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Tranche
  * @author Pragma Labs
- * @notice The Tranche contract allows for lending of a specified ERC20 token, managed by a lending pool.
- * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying
+ * @notice Each Lending Pool has one or more Tranche(s).
+ * Different Tranches receive different yields, but also have different protections against losses due to bad debt:
+ * In general the most junior Tranche will have the highest yield,
+ * but it will be the first Tranche to absorb losses when liquidations result in bad debt.
+ * The Liquidity Providers do not provide Liquidity directly to the Lending Pool, but via a Tranche.
+ * As such Liquidity Providers with different risk/reward preferences can provide liquidity to the same Lending Pool
+ * (benefitting borrowers with deeper liquidity), but via different Tranches.
+ * @dev Each Tranche contract will do the accounting of the balances of its Liquidity Providers,
+ * while the Lending Pool will do the accounting of the balances of its Tranches.
+ * @dev A Tranche is according the ERC4626 standard, with a certain ERC20 as underlying asset.
  * @dev Implementation not vulnerable to ERC4626 inflation attacks,
  * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
  * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
@@ -23,7 +32,11 @@ import { IGuardian } from "./interfaces/IGuardian.sol";
 contract Tranche is ITranche, ERC4626, Owned {
     using FixedPointMathLib for uint256;
 
-    ILendingPool public immutable lendingPool;
+    /* //////////////////////////////////////////////////////////////
+                                CONSTANTS
+    ////////////////////////////////////////////////////////////// */
+
+    ILendingPool public immutable LENDING_POOL;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
@@ -31,7 +44,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     // Flag indicating if the Tranche is locked or not.
     bool public locked;
-    // Flag indicating if there are ongoing auctions or not.
+    // Flag indicating if there is at least one ongoing auction or none.
     bool public auctionInProgress;
 
     /* //////////////////////////////////////////////////////////////
@@ -39,40 +52,32 @@ contract Tranche is ITranche, ERC4626, Owned {
     ////////////////////////////////////////////////////////////// */
 
     event LockSet(bool status);
-    event AuctionFlagSet(bool status);
+    event AuctionInProgressSet(bool status);
 
     /* //////////////////////////////////////////////////////////////
                                 ERRORS
     ////////////////////////////////////////////////////////////// */
 
-    // Thrown when a tranche is locked.
-    error Tranche_Locked();
-    // Thrown when amount of shares would represent zero assets.
-    error Tranche_ZeroAssets();
-    // Thrown when an auction is in process.
-    error Tranche_AuctionOngoing();
-    // Thrown when caller is not valid.
-    error Tranche_Unauthorized();
-    // Thrown when amount of asset would represent zero shares.
-    error Tranche_ZeroShares();
-
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
+    /**
+     * @dev Functions with this modifier can only be called when the Tranche is not locked.
+     */
     modifier notLocked() {
-        if (locked) revert Tranche_Locked();
+        if (locked) revert TrancheErrors.Locked();
         _;
     }
 
     /**
      * @dev Certain actions (depositing and withdrawing) can be halted on the most junior tranche while auctions are in progress.
-     * This prevents frontrunning both in the case there is bad debt (by pulling out the tranche before the bad debt is settled),
+     * This prevents front running both in the case there is bad debt (by pulling out the tranche before the bad debt is settled),
      * as in the case there are big payouts to the LPs (mitigate Just In Time attacks, where MEV bots front-run the payout of
      * Liquidation penalties to the most junior tranche and withdraw immediately after).
      */
     modifier notDuringAuction() {
-        if (auctionInProgress) revert Tranche_AuctionOngoing();
+        if (auctionInProgress) revert TrancheErrors.AuctionOngoing();
         _;
     }
 
@@ -82,7 +87,7 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice The constructor for a tranche.
-     * @param lendingPool_ the Lending Pool of the underlying ERC-20 token, with the lending logic.
+     * @param lendingPool_ the Lending Pool of the underlying ERC20 token, with the lending logic.
      * @param prefix_ The prefix of the contract name (eg. Senior -> Mezzanine -> Junior).
      * @param prefixSymbol_ The prefix of the contract symbol (eg. SR  -> MZ -> JR).
      * @dev The name and symbol of the tranche are automatically generated, based on the name and symbol of the underlying token.
@@ -90,12 +95,12 @@ contract Tranche is ITranche, ERC4626, Owned {
     constructor(address lendingPool_, string memory prefix_, string memory prefixSymbol_)
         ERC4626(
             ERC4626(address(lendingPool_)).asset(),
-            string(abi.encodePacked(prefix_, " Arcadia ", ERC4626(lendingPool_).asset().name())),
-            string(abi.encodePacked(prefixSymbol_, "arc", ERC4626(lendingPool_).asset().symbol()))
+            string(abi.encodePacked(prefix_, " ArcadiaV2 ", ERC4626(lendingPool_).asset().name())),
+            string(abi.encodePacked(prefixSymbol_, "arcV2", ERC4626(lendingPool_).asset().symbol()))
         )
         Owned(msg.sender)
     {
-        lendingPool = ILendingPool(lendingPool_);
+        LENDING_POOL = ILendingPool(lendingPool_);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -104,26 +109,22 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Locks the tranche in case all liquidity of the tranche is written off due to bad debt.
-     * @dev Only the Lending Pool can call this function, only trigger is a severe default event.
+     * @dev This function can only be called by the Lending Pool and is triggered exclusively during a severe default event.
      */
     function lock() external {
-        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
-        locked = true;
-        auctionInProgress = false;
+        if (msg.sender != address(LENDING_POOL)) revert TrancheErrors.Unauthorized();
 
-        emit LockSet(true);
-        emit AuctionFlagSet(false);
+        emit LockSet(locked = true);
+        emit AuctionInProgressSet(auctionInProgress = false);
     }
 
     /**
      * @notice Unlocks the tranche.
-     * @dev Only the Owner can call this function, since tranches are locked due to complete defaults,
+     * @dev Only the Owner can call this function, since tranches are locked due to complete defaults.
      * This function will only be called to partially refund existing share-holders after a default.
      */
     function unLock() external onlyOwner {
-        locked = false;
-
-        emit LockSet(false);
+        emit LockSet(locked = false);
     }
 
     /**
@@ -134,10 +135,9 @@ contract Tranche is ITranche, ERC4626, Owned {
      * and that no liquidity can be withdrawn during a negative auction.
      */
     function setAuctionInProgress(bool auctionInProgress_) external {
-        if (msg.sender != address(lendingPool)) revert Tranche_Unauthorized();
-        auctionInProgress = auctionInProgress_;
+        if (msg.sender != address(LENDING_POOL)) revert TrancheErrors.Unauthorized();
 
-        emit AuctionFlagSet(auctionInProgress_);
+        emit AuctionInProgressSet(auctionInProgress = auctionInProgress_);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -146,12 +146,12 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of the standard ERC-4626 deposit implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being deposited.
+     * @param assets The amount of assets of the underlying ERC20 token being deposited.
      * @param receiver The address that receives the minted shares.
      * @return shares The amount of shares minted.
      * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
+     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function deposit(uint256 assets, address receiver)
         public
@@ -161,10 +161,10 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
-        if ((shares = previewDepositAndSync(assets)) == 0) revert Tranche_ZeroShares();
+        if ((shares = previewDepositAndSync(assets)) == 0) revert TrancheErrors.ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
-        lendingPool.depositInLendingPool(assets, msg.sender);
+        LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
 
@@ -175,10 +175,10 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @notice Modification of the standard ERC-4626 mint implementation.
      * @param shares The amount of shares minted.
      * @param receiver The address that receives the minted shares.
-     * @return assets The corresponding amount of assets of the underlying ERC-20 token being deposited.
-     * @dev This contract does not directly transfers the underlying assets from the sender to the receiver.
+     * @return assets The amount of assets of the underlying ERC20 token being deposited.
+     * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
      * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool.
+     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function mint(uint256 shares, address receiver)
         public
@@ -187,10 +187,11 @@ contract Tranche is ITranche, ERC4626, Owned {
         notDuringAuction
         returns (uint256 assets)
     {
-        assets = previewMintAndSync(shares); // No need to check for rounding error, previewMint rounds up.
+        // No need to check for rounding error, previewMint rounds up.
+        assets = previewMintAndSync(shares);
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
-        lendingPool.depositInLendingPool(assets, msg.sender);
+        LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
 
@@ -199,8 +200,8 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Modification of the standard ERC-4626 withdraw implementation.
-     * @param assets The amount of assets of the underlying ERC-20 token being withdrawn.
-     * @param receiver The address of the receiver of the underlying ERC-20 tokens.
+     * @param assets The amount of assets of the underlying ERC20 token being withdrawn.
+     * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the assets being withdrawn.
      * @return shares The corresponding amount of shares redeemed.
      */
@@ -211,27 +212,27 @@ contract Tranche is ITranche, ERC4626, Owned {
         notDuringAuction
         returns (uint256 shares)
     {
-        shares = previewWithdrawAndSync(assets); // No need to check for rounding error, previewWithdraw rounds up.
+        // No need to check for rounding error, previewWithdraw rounds up.
+        shares = previewWithdrawAndSync(assets);
 
         if (msg.sender != owner_) {
-            uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
+            // Saves gas for limited approvals.
+            uint256 allowed = allowance[owner_][msg.sender];
 
-            if (allowed != type(uint256).max) {
-                allowance[owner_][msg.sender] = allowed - shares;
-            }
+            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
 
         _burn(owner_, shares);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
+        LENDING_POOL.withdrawFromLendingPool(assets, receiver);
 
-        lendingPool.withdrawFromLendingPool(assets, receiver);
+        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
 
     /**
      * @notice Modification of the standard ERC-4626 redeem implementation.
-     * @param shares the amount of shares being redeemed.
-     * @param receiver The address of the receiver of the underlying ERC-20 tokens.
+     * @param shares The amount of shares being redeemed.
+     * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the shares being redeemed.
      * @return assets The corresponding amount of assets withdrawn.
      */
@@ -243,21 +244,20 @@ contract Tranche is ITranche, ERC4626, Owned {
         returns (uint256 assets)
     {
         if (msg.sender != owner_) {
-            uint256 allowed = allowance[owner_][msg.sender]; // Saves gas for limited approvals.
+            // Saves gas for limited approvals.
+            uint256 allowed = allowance[owner_][msg.sender];
 
-            if (allowed != type(uint256).max) {
-                allowance[owner_][msg.sender] = allowed - shares;
-            }
+            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
 
         // Check for rounding error since we round down in previewRedeem.
-        if ((assets = previewRedeemAndSync(shares)) == 0) revert Tranche_ZeroAssets();
+        if ((assets = previewRedeemAndSync(shares)) == 0) revert TrancheErrors.ZeroAssets();
 
         _burn(owner_, shares);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
+        LENDING_POOL.withdrawFromLendingPool(assets, receiver);
 
-        lendingPool.withdrawFromLendingPool(assets, receiver);
+        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -266,65 +266,83 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
-     * @return assets The total amount of underlying assets, to which liquidity providers have a claim.
+     * @return assets The total amount of underlying assets.
      * @dev The Liquidity Pool does the accounting of the outstanding claim on liquidity per tranche.
      */
     function totalAssets() public view override returns (uint256 assets) {
-        assets = lendingPool.liquidityOf(address(this));
+        assets = LENDING_POOL.liquidityOf(address(this));
     }
 
     /**
+     * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
+     * @return assets The total amount of underlying assets.
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
-        assets = lendingPool.liquidityOfAndSync(address(this));
+        assets = LENDING_POOL.liquidityOfAndSync(address(this));
     }
 
     /**
-     * @dev Modification of convertToShares() where interests are realised (state modification).
+     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets.
+     * @dev This function is a modification of convertToShares() where interests are realized (state modification).
      */
     function convertToSharesAndSync(uint256 assets) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivDown(supply, totalAssetsAndSync());
     }
 
     /**
-     * @dev Modification of convertToAssets() where interests are realised (state modification).
+     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
+     * @return assets The amount of underlying assets.
+     * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
     function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivDown(totalAssetsAndSync(), supply);
     }
 
     /**
-     * @dev Modification of previewDeposit() where interests are realised (state modification).
+     * @notice Returns the amount of shares that correspond to a certain amount of underlying assets.
+     * @return shares The amount of shares minted.
+     * @dev This function is a modification of previewDeposit() where interests are realized (state modification).
      */
     function previewDepositAndSync(uint256 assets) public returns (uint256) {
         return convertToSharesAndSync(assets);
     }
 
     /**
-     * @dev Modification of previewMint() where interests are realised (state modification).
+     * @notice Modification of previewMint() where interests are realized (state modification).
+     * @return assets The corresponding amount of assets of the underlying ERC20 token being deposited.
+     * @dev This function is a modification of previewMint() where interests are realized (state modification).
      */
     function previewMintAndSync(uint256 shares) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? shares : shares.mulDivUp(totalAssetsAndSync(), supply);
     }
 
     /**
-     * @dev Modification of previewWithdraw() where interests are realised (state modification).
+     * @notice Modification of previewWithdraw() where interests are realized (state modification).
+     * @return assets The amount of assets of the underlying ERC20 token being withdrawn.
+     * @dev This function is a modification of previewWithdraw() where interests are realized (state modification).
      */
     function previewWithdrawAndSync(uint256 assets) public returns (uint256) {
-        uint256 supply = totalSupply; // Saves an extra SLOAD if totalSupply is non-zero.
+        // Cache totalSupply
+        uint256 supply = totalSupply;
 
         return supply == 0 ? assets : assets.mulDivUp(supply, totalAssetsAndSync());
     }
 
     /**
-     * @dev Modification of previewRedeem() where interests are realised (state modification).
+     * @notice Modification of previewRedeem() where interests are realized (state modification).
+     * @return shares The amount of shares being redeemed.
+     * @dev This function is a modification of previewRedeem() where interests are realized (state modification).
      */
     function previewRedeemAndSync(uint256 shares) public returns (uint256) {
         return convertToAssetsAndSync(shares);
@@ -338,45 +356,33 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxDeposit() according the EIP-4626 specification.
      */
     function maxDeposit(address) public view override returns (uint256 maxAssets) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).depositPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = lendingPool.supplyCap();
-        uint256 realisedLiquidity = lendingPool.totalRealisedLiquidity();
-        uint256 interests = lendingPool.calcUnrealisedDebt();
+        uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
+        uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
-        if (supplyCap > 0) {
-            if (realisedLiquidity + interests > supplyCap) return 0;
-            maxAssets = supplyCap - realisedLiquidity - interests;
-        } else {
-            maxAssets = type(uint128).max - realisedLiquidity - interests;
-        }
+        maxAssets = type(uint128).max - realisedLiquidity - interests;
     }
 
     /**
      * @dev maxMint() according the EIP-4626 specification.
      */
     function maxMint(address) public view override returns (uint256 maxShares) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).depositPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).depositPaused()) return 0;
 
-        uint256 supplyCap = lendingPool.supplyCap();
-        uint256 realisedLiquidity = lendingPool.totalRealisedLiquidity();
-        uint256 interests = lendingPool.calcUnrealisedDebt();
+        uint256 realisedLiquidity = LENDING_POOL.totalRealisedLiquidity();
+        uint256 interests = LENDING_POOL.calcUnrealisedDebt();
 
-        if (supplyCap > 0) {
-            if (realisedLiquidity + interests > supplyCap) return 0;
-            maxShares = convertToShares(supplyCap - realisedLiquidity - interests);
-        } else {
-            maxShares = convertToShares(type(uint128).max - realisedLiquidity - interests);
-        }
+        maxShares = convertToShares(type(uint128).max - realisedLiquidity - interests);
     }
 
     /**
      * @dev maxWithdraw() according the EIP-4626 specification.
      */
     function maxWithdraw(address owner_) public view override returns (uint256 maxAssets) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).withdrawPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).withdrawPaused()) return 0;
 
-        uint256 availableAssets = asset.balanceOf(address(lendingPool));
+        uint256 availableAssets = asset.balanceOf(address(LENDING_POOL));
         uint256 claimableAssets = convertToAssets(balanceOf[owner_]);
 
         maxAssets = availableAssets < claimableAssets ? availableAssets : claimableAssets;
@@ -386,11 +392,11 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev maxRedeem() according the EIP-4626 specification.
      */
     function maxRedeem(address owner_) public view override returns (uint256 maxShares) {
-        if (locked || auctionInProgress || IGuardian(address(lendingPool)).withdrawPaused()) return 0;
+        if (locked || auctionInProgress || IGuardian(address(LENDING_POOL)).withdrawPaused()) return 0;
 
         uint256 claimableShares = balanceOf[owner_];
         if (claimableShares == 0) return 0;
-        uint256 availableShares = convertToShares(asset.balanceOf(address(lendingPool)));
+        uint256 availableShares = convertToShares(asset.balanceOf(address(LENDING_POOL)));
 
         maxShares = availableShares < claimableShares ? availableShares : claimableShares;
     }

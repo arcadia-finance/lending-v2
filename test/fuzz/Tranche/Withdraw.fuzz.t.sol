@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
@@ -29,7 +29,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Tranche_Locked.selector);
+        vm.expectRevert(Locked.selector);
         tranche.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -39,7 +39,7 @@ contract Withdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.setAuctionInProgress(true);
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Tranche_AuctionOngoing.selector);
+        vm.expectRevert(AuctionOngoing.selector);
         tranche.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }

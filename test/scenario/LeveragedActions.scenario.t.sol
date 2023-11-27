@@ -2,20 +2,23 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { Scenario_Lending_Test } from "./_Scenario.t.sol";
 
 import { StdStorage, stdStorage } from "../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
-import { ActionData } from "../../lib/accounts-v2/src/actions/utils/ActionData.sol";
+import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
+import { ActionData } from "../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { BitPackingLib } from "../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
-import { IPermit2 } from "../../lib/accounts-v2/test/utils/Interfaces.sol";
+import { IPermit2 } from "../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LogExpMath } from "../../src/libraries/LogExpMath.sol";
 import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/MultiActionMock.sol";
+import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 
 /**
  * @notice Scenario tests for With Leveraged Actions flows.
@@ -46,7 +49,6 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.startPrank(users.creatorAddress);
         multiActionMock = new MultiActionMock();
         action = new ActionMultiCall();
-        mainRegistryExtension.setAllowedAction(address(action), true);
         vm.stopPrank();
 
         vm.prank(users.accountOwner);
@@ -54,11 +56,11 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
-        mainRegistryExtension.setRiskParametersOfPrimaryAsset(
+        registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.token1),
             0,
-            type(uint128).max,
+            type(uint112).max,
             Constants.tokenToStableCollFactor,
             Constants.tokenToStableLiqFactor
         );
@@ -70,20 +72,20 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testScenario_Revert_doActionWithLeverage_DifferentTrustedCreditor() public {
+    function testScenario_Revert_doActionWithLeverage_DifferentCreditor() public {
         vm.startPrank(users.accountOwner);
-        proxyAccount.closeTrustedMarginAccount();
+        proxyAccount.closeMarginAccount();
         proxyAccount.setAssetManager(address(pool), true);
         vm.stopPrank();
 
         //Prepare input parameters
-        ActionData memory assetDataOut = ActionData({
+        ActionData memory withdrawData = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
             assetTypes: new uint256[](0)
         });
-        ActionData memory assetDataIn = ActionData({
+        ActionData memory depositData = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
@@ -96,12 +98,16 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         IPermit2.TokenPermissions[] memory tokenPermissions;
 
-        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, tokenPermissions, assetDataIn, to, data);
+        bytes memory signature;
+
+        bytes memory actionTargetData = abi.encode(depositData, to, data);
+        bytes memory callData =
+            abi.encode(withdrawData, transferFromOwner, tokenPermissions, signature, actionTargetData);
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
-        pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
+        vm.expectRevert(AccountErrors.OnlyCreditor.selector);
+        pool.flashAction(0, address(proxyAccount), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -110,13 +116,13 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         pool.setAccountVersion(1, false);
 
         //Prepare input parameters
-        ActionData memory assetDataOut = ActionData({
+        ActionData memory withdrawData = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
             assetTypes: new uint256[](0)
         });
-        ActionData memory assetDataIn = ActionData({
+        ActionData memory depositData = ActionData({
             assets: new address[](0),
             assetIds: new uint256[](0),
             assetAmounts: new uint256[](0),
@@ -129,12 +135,16 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         IPermit2.TokenPermissions[] memory tokenPermissions;
 
-        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, tokenPermissions, assetDataIn, to, data);
+        bytes memory signature;
+
+        bytes memory actionTargetData = abi.encode(depositData, to, data);
+        bytes memory callData =
+            abi.encode(withdrawData, transferFromOwner, tokenPermissions, signature, actionTargetData);
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(LendingPool.LendingPool_Reverted.selector);
-        pool.doActionWithLeverage(0, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3);
+        vm.expectRevert(LendingPoolErrors.InvalidVersion.selector);
+        pool.flashAction(0, address(proxyAccount), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -143,8 +153,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint64 stableCollateral,
         uint64 tokenOut
     ) public {
-        uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-        uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+        uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+        uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
         uint256 stableIn =
             uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals / stableRate;
@@ -190,41 +200,43 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         to[1] = address(multiActionMock);
         to[2] = address(mockERC20.token1);
 
-        ActionData memory assetDataOut = ActionData({
+        ActionData memory withdrawData = ActionData({
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
             assetTypes: new uint256[](1)
         });
 
-        assetDataOut.assets[0] = address(mockERC20.stable1);
-        assetDataOut.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
-        assetDataOut.assetAmounts[0] = stableCollateral;
+        withdrawData.assets[0] = address(mockERC20.stable1);
+        withdrawData.assetTypes[0] = 0;
+        withdrawData.assetIds[0] = 0;
+        withdrawData.assetAmounts[0] = stableCollateral;
 
-        ActionData memory assetDataIn = ActionData({
+        ActionData memory depositData = ActionData({
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
             assetTypes: new uint256[](1)
         });
 
-        assetDataIn.assets[0] = address(mockERC20.token1);
-        assetDataIn.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
+        depositData.assets[0] = address(mockERC20.token1);
+        depositData.assetTypes[0] = 0;
+        withdrawData.assetIds[0] = 0;
 
         ActionData memory transferFromOwner;
 
         IPermit2.TokenPermissions[] memory tokenPermissions;
 
-        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, tokenPermissions, assetDataIn, to, data);
+        bytes memory signature;
+
+        bytes memory actionTargetData = abi.encode(depositData, to, data);
+        bytes memory callData =
+            abi.encode(withdrawData, transferFromOwner, tokenPermissions, signature, actionTargetData);
 
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
-        vm.expectRevert("A_AMA: Account Unhealthy");
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -236,13 +248,13 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / AssetValuationLib.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -284,40 +296,42 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         to[1] = address(multiActionMock);
         to[2] = address(mockERC20.token1);
 
-        ActionData memory assetDataOut = ActionData({
+        ActionData memory withdrawData = ActionData({
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
             assetTypes: new uint256[](1)
         });
 
-        assetDataOut.assets[0] = address(mockERC20.stable1);
-        assetDataOut.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
-        assetDataOut.assetAmounts[0] = stableCollateral;
+        withdrawData.assets[0] = address(mockERC20.stable1);
+        withdrawData.assetTypes[0] = 0;
+        withdrawData.assetIds[0] = 0;
+        withdrawData.assetAmounts[0] = stableCollateral;
 
-        ActionData memory assetDataIn = ActionData({
+        ActionData memory depositData = ActionData({
             assets: new address[](1),
             assetIds: new uint256[](1),
             assetAmounts: new uint256[](1),
             assetTypes: new uint256[](1)
         });
 
-        assetDataIn.assets[0] = address(mockERC20.token1);
-        assetDataIn.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
+        depositData.assets[0] = address(mockERC20.token1);
+        depositData.assetTypes[0] = 0;
+        withdrawData.assetIds[0] = 0;
 
         ActionData memory transferFromOwner;
 
         IPermit2.TokenPermissions[] memory tokenPermissions;
 
-        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, tokenPermissions, assetDataIn, to, data);
+        bytes memory signature;
+
+        bytes memory actionTargetData = abi.encode(depositData, to, data);
+        bytes memory callData =
+            abi.encode(withdrawData, transferFromOwner, tokenPermissions, signature, actionTargetData);
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
@@ -344,7 +358,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         vm.startPrank(users.tokenCreatorAddress);
         mockERC20.stable1.mint(address(action), debtAmount);
-        action.executeAction(abi.encode(ad, ad, tokenPermissions, ad, tos, dataArr));
+        action.executeAction(abi.encode(ad, tos, dataArr));
         vm.stopPrank();
 
         assertEq(debt.balanceOf(address(proxyAccount)), 0);
@@ -357,13 +371,13 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = mainRegistryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = mainRegistryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
             collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals
-                * Constants.tokenToStableCollFactor / 100 * 10 ** Constants.stableDecimals / stableRate;
+                * Constants.tokenToStableCollFactor / AssetValuationLib.ONE_4 * 10 ** Constants.stableDecimals / stableRate;
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
@@ -385,60 +399,64 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         depositTokenInAccount(proxyAccount, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
-        bytes[] memory data = new bytes[](3);
-        address[] memory to = new address[](3);
+        bytes memory callData;
+        {
+            bytes[] memory data = new bytes[](3);
+            address[] memory to = new address[](3);
 
-        data[0] = abi.encodeWithSignature("approve(address,uint256)", address(multiActionMock), stableIn);
-        data[1] = abi.encodeWithSignature(
-            "swapAssets(address,address,uint256,uint256)",
-            address(mockERC20.stable1),
-            address(mockERC20.token1),
-            stableIn,
-            uint256(tokenOut)
-        );
-        data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
+            data[0] = abi.encodeWithSignature("approve(address,uint256)", address(multiActionMock), stableIn);
+            data[1] = abi.encodeWithSignature(
+                "swapAssets(address,address,uint256,uint256)",
+                address(mockERC20.stable1),
+                address(mockERC20.token1),
+                stableIn,
+                uint256(tokenOut)
+            );
+            data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
 
-        vm.prank(users.tokenCreatorAddress);
-        mockERC20.token1.mint(address(multiActionMock), tokenOut);
+            vm.prank(users.tokenCreatorAddress);
+            mockERC20.token1.mint(address(multiActionMock), tokenOut);
 
-        to[0] = address(mockERC20.stable1);
-        to[1] = address(multiActionMock);
-        to[2] = address(mockERC20.token1);
+            to[0] = address(mockERC20.stable1);
+            to[1] = address(multiActionMock);
+            to[2] = address(mockERC20.token1);
 
-        ActionData memory assetDataOut = ActionData({
-            assets: new address[](1),
-            assetIds: new uint256[](1),
-            assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1)
-        });
+            ActionData memory withdrawData = ActionData({
+                assets: new address[](1),
+                assetIds: new uint256[](1),
+                assetAmounts: new uint256[](1),
+                assetTypes: new uint256[](1)
+            });
 
-        assetDataOut.assets[0] = address(mockERC20.stable1);
-        assetDataOut.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
-        assetDataOut.assetAmounts[0] = stableCollateral;
+            withdrawData.assets[0] = address(mockERC20.stable1);
+            withdrawData.assetTypes[0] = 0;
+            withdrawData.assetIds[0] = 0;
+            withdrawData.assetAmounts[0] = stableCollateral;
 
-        ActionData memory assetDataIn = ActionData({
-            assets: new address[](1),
-            assetIds: new uint256[](1),
-            assetAmounts: new uint256[](1),
-            assetTypes: new uint256[](1)
-        });
+            ActionData memory depositData = ActionData({
+                assets: new address[](1),
+                assetIds: new uint256[](1),
+                assetAmounts: new uint256[](1),
+                assetTypes: new uint256[](1)
+            });
 
-        assetDataIn.assets[0] = address(mockERC20.token1);
-        assetDataIn.assetTypes[0] = 0;
-        assetDataOut.assetIds[0] = 0;
+            depositData.assets[0] = address(mockERC20.token1);
+            depositData.assetTypes[0] = 0;
+            withdrawData.assetIds[0] = 0;
 
-        ActionData memory transferFromOwner;
+            ActionData memory transferFromOwner;
 
-        IPermit2.TokenPermissions[] memory tokenPermissions;
+            IPermit2.TokenPermissions[] memory tokenPermissions;
 
-        bytes memory callData = abi.encode(assetDataOut, transferFromOwner, tokenPermissions, assetDataIn, to, data);
+            bytes memory signature;
+
+            bytes memory actionTargetData = abi.encode(depositData, to, data);
+            callData = abi.encode(withdrawData, transferFromOwner, tokenPermissions, signature, actionTargetData);
+        }
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.doActionWithLeverage(
-            stableMargin, address(proxyAccount), address(action), callData, new bytes(0), emptyBytes3
-        );
+        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);

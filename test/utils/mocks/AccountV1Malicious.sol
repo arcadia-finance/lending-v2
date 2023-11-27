@@ -1,0 +1,60 @@
+/**
+ * Created by Pragma Labs
+ * SPDX-License-Identifier: BUSL-1.1
+ */
+pragma solidity 0.8.22;
+
+import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+
+contract AccountV1Malicious {
+    address public creditor;
+    uint256 public totalOpenDebt;
+    uint256 public valueInNumeraire;
+    uint256 public collateralFactor;
+    uint256 public liquidationFactor;
+
+    constructor(
+        address trustedCreditor_,
+        uint256 totalOpenDebt_,
+        uint256 valueInNumeraire_,
+        uint256 collateralFactor_,
+        uint256 liquidationFactor_
+    ) payable {
+        creditor = trustedCreditor_;
+        totalOpenDebt = totalOpenDebt_;
+        valueInNumeraire = valueInNumeraire_;
+        collateralFactor = collateralFactor_;
+        liquidationFactor = liquidationFactor_;
+    }
+
+    function startLiquidation(address)
+        external
+        view
+        returns (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            address creditor_,
+            uint256 totalOpenDebt_,
+            AssetValueAndRiskFactors[] memory assetAndRiskValues
+        )
+    {
+        assetAddresses = new address[](1);
+        assetAddresses[0] = address(0);
+
+        assetIds = new uint256[](1);
+        assetIds[0] = 0;
+
+        assetAmounts = new uint256[](1);
+        assetAmounts[0] = 0;
+
+        creditor_ = creditor;
+
+        totalOpenDebt_ = totalOpenDebt;
+
+        assetAndRiskValues = new AssetValueAndRiskFactors[](1);
+        assetAndRiskValues[0].assetValue = valueInNumeraire;
+        assetAndRiskValues[0].collateralFactor = collateralFactor;
+        assetAndRiskValues[0].liquidationFactor = liquidationFactor;
+    }
+}

@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -25,7 +25,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert(LendingPool_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, nonAccount);
     }
 
@@ -37,7 +37,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != users.accountOwner);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(LendingPool_Unauthorized.selector);
+        vm.expectRevert(Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
         vm.stopPrank();
     }

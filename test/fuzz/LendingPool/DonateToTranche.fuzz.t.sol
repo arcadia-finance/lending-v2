@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -33,23 +33,8 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_donateToTranche_zeroAssets() public {
-        vm.expectRevert(LendingPool_ZeroAmount.selector);
+        vm.expectRevert(ZeroAmount.selector);
         pool.donateToTranche(1, 0);
-    }
-
-    function testFuzz_Revert_donateToTranche_SupplyCap(uint256 amount, uint128 supplyCap) public {
-        // Given: amount should be greater than 1
-        vm.assume(amount > 1);
-        vm.assume(pool.totalRealisedLiquidity() + amount > supplyCap);
-        vm.assume(supplyCap > 0);
-
-        // When: supply cap is set to 1
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(supplyCap);
-
-        // Then: depositInLendingPool is reverted with supplyCapExceeded()
-        vm.expectRevert(LendingPool_SupplyCapExceeded.selector);
-        pool.donateToTranche(1, amount);
     }
 
     function testFuzz_Revert_donateToTranche_InsufficientShares(uint32 initialShares, uint128 assets, address donator)
@@ -59,9 +44,6 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(assets < type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
         vm.assume(initialShares < 10 ** pool.decimals());
 
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(type(uint128).max);
-
         vm.startPrank(users.liquidityProvider);
         srTranche.mint(initialShares, users.liquidityProvider);
         mockERC20.stable1.transfer(donator, assets);
@@ -69,7 +51,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(donator);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(LendingPool_InsufficientShares.selector);
+        vm.expectRevert(InsufficientShares.selector);
         pool.donateToTranche(0, assets);
         vm.stopPrank();
     }
@@ -81,9 +63,6 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(assets <= type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
         vm.assume(index < pool.numberOfTranches());
         vm.assume(initialShares >= 10 ** pool.decimals());
-
-        vm.prank(users.creatorAddress);
-        pool.setSupplyCap(type(uint128).max);
 
         address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);

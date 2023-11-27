@@ -2,9 +2,11 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
-import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
+import { LendingPoolGuardian_Fuzz_Test, BaseGuardian, GuardianErrors } from "./_LendingPoolGuardian.fuzz.t.sol";
+
+import { GuardianErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
@@ -25,7 +27,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.assume(nonGuard != users.guardian);
 
         vm.startPrank(nonGuard);
-        vm.expectRevert("Guardian: Only guardian");
+        vm.expectRevert(GuardianErrors.OnlyGuardian.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }
@@ -43,9 +45,9 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         vm.warp(lastPauseTimestamp + timePassed);
 
         // When: Guardian pauses again within 32 days passed from the last pause.
-        // Then: The transaction reverts with "G_P: Cannot pause".
+        // Then: The transaction reverts.
         vm.startPrank(users.guardian);
-        vm.expectRevert("G_P: Cannot pause");
+        vm.expectRevert(GuardianErrors.CoolDownPeriodNotPassed.selector);
         lendingPoolGuardian.pause();
         vm.stopPrank();
     }
@@ -68,15 +70,15 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         // When: the Guardian pauses.
         vm.startPrank(users.guardian);
         vm.expectEmit(true, true, true, true);
-        emit PauseUpdate(true, true, true, true, true);
+        emit PauseFlagsUpdated(true, true, true, true, true);
         lendingPoolGuardian.pause();
         vm.stopPrank();
 
         // Then: All flags are set to True.
-        assertTrue(lendingPoolGuardian.isRepayPaused());
+        assertTrue(lendingPoolGuardian.repayPaused());
         assertTrue(lendingPoolGuardian.withdrawPaused());
-        assertTrue(lendingPoolGuardian.isBorrowPaused());
+        assertTrue(lendingPoolGuardian.borrowPaused());
         assertTrue(lendingPoolGuardian.depositPaused());
-        assertTrue(lendingPoolGuardian.isLiquidationPaused());
+        assertTrue(lendingPoolGuardian.liquidationPaused());
     }
 }

@@ -3,14 +3,17 @@
  * SPDX-License-Identifier: BUSL-1.1
  */
 
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
-import { BaseGuardian } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
+import { BaseGuardian, GuardianErrors } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
 /**
- * @title LendingPool Guardian
+ * @title LendingPool Guardian.
  * @author Pragma Labs
- * @notice This module provides the logic for the LendingPool that allows authorized accounts to trigger an emergency stop.
+ * @notice Logic inherited by the LendingPool that allows:
+ * - An authorized guardian to trigger an emergency stop.
+ * - The protocol owner to unpause functionalities one-by-one.
+ * - Anyone to unpause all functionalities after a fixed cool-down period.
  */
 abstract contract LendingPoolGuardian is BaseGuardian {
     /* //////////////////////////////////////////////////////////////
@@ -18,89 +21,71 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     ////////////////////////////////////////////////////////////// */
 
     // Flag indicating if the repay() function is paused.
-    bool internal repayPaused;
+    bool public repayPaused;
     // Flag indicating if the withdraw() function is paused.
     bool public withdrawPaused;
     // Flag indicating if the borrow() function is paused.
-    bool internal borrowPaused;
+    bool public borrowPaused;
     // Flag indicating if the deposit() function is paused.
     bool public depositPaused;
     // Flag indicating if the liquidation() function is paused.
-    bool internal liquidationPaused;
+    bool public liquidationPaused;
 
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
 
-    event PauseUpdate(
-        bool repayPauseUpdate,
-        bool withdrawPauseUpdate,
-        bool borrowPauseUpdate,
-        bool depositPauseUpdate,
-        bool liquidationPauseUpdate
+    event PauseFlagsUpdated(
+        bool repayPauseFlagsUpdated,
+        bool withdrawPauseFlagsUpdated,
+        bool borrowPauseFlagsUpdated,
+        bool depositPauseFlagsUpdated,
+        bool liquidationPauseFlagsUpdated
     );
-
-    /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
-
-    // Thrown when the contract is paused for a certain action.
-    error LendingPoolGuardian_FunctionIsPaused();
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for repay.
-     * It throws if repay is paused.
+     * @dev Throws if the repay functionality is paused.
      */
     modifier whenRepayNotPaused() {
-        if (repayPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (repayPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for withdraw.
-     * It throws if withdraw is paused.
+     * @dev Throws if the withdraw functionality is paused.
      */
     modifier whenWithdrawNotPaused() {
-        if (withdrawPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (withdrawPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for borrow.
-     * It throws if borrow is paused.
+     * @dev Throws if the borrow functionality is paused.
      */
     modifier whenBorrowNotPaused() {
-        if (borrowPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (borrowPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for deposit.
-     * It throws if deposit is paused.
+     * @dev Throws if the deposit functionality is paused.
      */
     modifier whenDepositNotPaused() {
-        if (depositPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (depositPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
 
     /**
-     * @dev This modifier is used to restrict access to certain functions when the contract is paused for liquidation.
-     * It throws if liquidation is paused.
+     * @dev Throws if the liquidation functionality is paused.
      */
     modifier whenLiquidationNotPaused() {
-        if (liquidationPaused) revert LendingPoolGuardian_FunctionIsPaused();
+        if (liquidationPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
-
-    /* //////////////////////////////////////////////////////////////
-                                CONSTRUCTOR
-    ////////////////////////////////////////////////////////////// */
-
-    constructor() { }
 
     /* //////////////////////////////////////////////////////////////
                             PAUSING LOGIC
@@ -108,57 +93,68 @@ abstract contract LendingPoolGuardian is BaseGuardian {
 
     /**
      * @inheritdoc BaseGuardian
+     * @dev This function will pause the functionality to:
+     * - Repay debt.
+     * - Withdraw liquidity.
+     * - Borrow.
+     * - Deposit liquidity.
+     * - Liquidate positions.
      */
-    function pause() external override onlyGuardian {
-        require(block.timestamp > pauseTimestamp + 32 days, "G_P: Cannot pause");
-        repayPaused = true;
-        withdrawPaused = true;
-        borrowPaused = true;
-        depositPaused = true;
-        liquidationPaused = true;
-        pauseTimestamp = block.timestamp;
+    function pause() external override onlyGuardian afterCoolDownOf(32 days) {
+        pauseTimestamp = uint96(block.timestamp);
 
-        emit PauseUpdate(true, true, true, true, true);
+        emit PauseFlagsUpdated(
+            repayPaused = true,
+            withdrawPaused = true,
+            borrowPaused = true,
+            depositPaused = true,
+            liquidationPaused = true
+        );
     }
 
     /**
      * @notice This function is used to unpause one or more flags.
-     * @param repayPaused_ false when repay functionality should be unPaused.
-     * @param withdrawPaused_ false when withdraw functionality should be unPaused.
-     * @param borrowPaused_ false when borrow functionality should be unPaused.
-     * @param depositPaused_ false when deposit functionality should be unPaused.
-     * @param liquidationPaused_ false when liquidation functionality should be unPaused.
+     * @param repayPaused_ False when repay functionality should be unPaused.
+     * @param withdrawPaused_ False when withdraw functionality should be unPaused.
+     * @param borrowPaused_ False when borrow functionality should be unPaused.
+     * @param depositPaused_ False when deposit functionality should be unPaused.
+     * @param liquidationPaused_ False when liquidation functionality should be unPaused.
      * @dev This function can unPause repay, withdraw, borrow, and deposit individually.
      * @dev Can only update flags from paused (true) to unPaused (false), cannot be used the other way around
      * (to set unPaused flags to paused).
      */
-    function unPause(
+    function unpause(
         bool repayPaused_,
         bool withdrawPaused_,
         bool borrowPaused_,
         bool depositPaused_,
         bool liquidationPaused_
     ) external onlyOwner {
-        repayPaused = repayPaused && repayPaused_;
-        withdrawPaused = withdrawPaused && withdrawPaused_;
-        borrowPaused = borrowPaused && borrowPaused_;
-        depositPaused = depositPaused && depositPaused_;
-        liquidationPaused = liquidationPaused && liquidationPaused_;
-
-        emit PauseUpdate(repayPaused, withdrawPaused, borrowPaused, depositPaused, liquidationPaused);
+        emit PauseFlagsUpdated(
+            repayPaused = repayPaused && repayPaused_,
+            withdrawPaused = withdrawPaused && withdrawPaused_,
+            borrowPaused = borrowPaused && borrowPaused_,
+            depositPaused = depositPaused && depositPaused_,
+            liquidationPaused = liquidationPaused && liquidationPaused_
+        );
     }
 
     /**
      * @inheritdoc BaseGuardian
+     * @dev This function will unpause the functionality to:
+     * - Repay debt.
+     * - Withdraw liquidity.
+     * - Borrow.
+     * - Deposit liquidity.
+     * - Liquidate positions.
      */
-    function unPause() external override {
-        require(block.timestamp > pauseTimestamp + 30 days, "G_UP: Cannot unPause");
-        repayPaused = false;
-        withdrawPaused = false;
-        borrowPaused = false;
-        depositPaused = false;
-        liquidationPaused = false;
-
-        emit PauseUpdate(false, false, false, false, false);
+    function unpause() external override afterCoolDownOf(30 days) {
+        emit PauseFlagsUpdated(
+            repayPaused = false,
+            withdrawPaused = false,
+            borrowPaused = false,
+            depositPaused = false,
+            liquidationPaused = false
+        );
     }
 }

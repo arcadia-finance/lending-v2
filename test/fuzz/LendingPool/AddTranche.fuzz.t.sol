@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -28,8 +28,13 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool_Fuzz_Test.setUp();
 
         vm.prank(users.creatorAddress);
-        pool_ =
-        new LendingPoolExtension(users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator));
+        pool_ = new LendingPoolExtension(
+            users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
+        );
+
+        // Set the Liquidation parameters.
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(100, 500, 50, type(uint80).max, type(uint80).max);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -47,7 +52,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
         pool_.addTranche(address(srTranche), 50, 0);
-        vm.expectRevert(LendingPool_TrancheAlreadyExists.selector);
+        vm.expectRevert(TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40, 0);
         vm.stopPrank();
     }
@@ -55,7 +60,9 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(srTranche), 0, interestWeight, liquidationWeight);
+        emit TrancheAdded(address(srTranche), 0);
+        vm.expectEmit(true, true, true, true);
+        emit TrancheWeightsUpdated(0, interestWeight, liquidationWeight);
         pool_.addTranche(address(srTranche), interestWeight, liquidationWeight);
         vm.stopPrank();
 
@@ -76,11 +83,15 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(srTranche), 0, interestWeightSr, liquidationWeightSr);
+        emit TrancheAdded(address(srTranche), 0);
+        vm.expectEmit(true, true, true, true);
+        emit TrancheWeightsUpdated(0, interestWeightSr, liquidationWeightSr);
         pool_.addTranche(address(srTranche), interestWeightSr, liquidationWeightSr);
 
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(jrTranche), 1, interestWeightJr, liquidationWeightJr);
+        emit TrancheAdded(address(jrTranche), 1);
+        vm.expectEmit(true, true, true, true);
+        emit TrancheWeightsUpdated(1, interestWeightJr, liquidationWeightJr);
         pool_.addTranche(address(jrTranche), interestWeightJr, liquidationWeightJr);
         vm.stopPrank();
 

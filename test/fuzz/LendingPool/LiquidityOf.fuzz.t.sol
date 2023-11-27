@@ -2,11 +2,11 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { RiskConstants } from "../../../lib/accounts-v2/src/libraries/RiskConstants.sol";
+import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
  * @notice Fuzz tests for the function "liquidityOf" of contract "LendingPool".
@@ -24,12 +24,13 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_liquidityOf(
-        uint256 interestRate,
+        uint80 interestRate,
         uint24 deltaTimestamp,
-        uint128 realisedDebt,
+        uint112 realisedDebt,
         uint120 initialLiquidity
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / RiskConstants.RISK_FACTOR_UNIT); // No overflow Risk Module
+        // Given: collateralValue is smaller than maxExposure.
+        realisedDebt = uint112(bound(realisedDebt, 0, type(uint112).max - 1));
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
         vm.assume(interestRate > 0);

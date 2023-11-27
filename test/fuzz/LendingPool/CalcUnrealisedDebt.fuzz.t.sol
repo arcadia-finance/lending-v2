@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.19;
+pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -21,7 +21,7 @@ contract CalcUnrealisedDebt_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_calcUnrealisedDebt(uint24 deltaTimestamp, uint128 realisedDebt, uint256 interestRate)
+    function testFuzz_Success_calcUnrealisedDebt(uint24 deltaTimestamp, uint128 realisedDebt, uint80 interestRate)
         public
     {
         // Given: deltaTimestamp smaller than equal to 5 years,
