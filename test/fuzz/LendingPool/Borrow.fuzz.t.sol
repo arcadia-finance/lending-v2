@@ -126,10 +126,12 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool_.setAccountVersion(1, true);
         vm.stopPrank();
 
-        vm.prank(users.riskManager);
+        vm.startPrank(users.riskManager);
         registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool_), address(mockERC20.stable1), 0, type(uint112).max, 100, 100
         );
+        registryExtension.setMaxRecursiveCalls(address(pool_), type(uint256).max);
+        vm.stopPrank();
 
         vm.startPrank(users.accountOwner);
         proxyAccount.closeMarginAccount();

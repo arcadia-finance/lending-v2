@@ -1159,7 +1159,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     }
 
     /**
-     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in baseCurrency.
+     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in Numeraire.
      * @param fixedLiquidationCost_ The new fixedLiquidationCost.
      * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
      * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
@@ -1197,11 +1197,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         external
         view
         override
-        returns (bool success, address baseCurrency, address liquidator_, uint256 fixedLiquidationCost_)
+        returns (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_)
     {
         if (isValidVersion[accountVersion]) {
             success = true;
-            baseCurrency = address(asset);
+            numeraire = address(asset);
             liquidator_ = LIQUIDATOR;
             fixedLiquidationCost_ = fixedLiquidationCost;
         }

@@ -108,7 +108,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         pool.changeGuardian(users.guardian);
 
         // Set the risk parameters.
-        vm.prank(users.riskManager);
+        vm.startPrank(users.riskManager);
         registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.stable1),
@@ -117,6 +117,8 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             uint16(AssetValuationLib.ONE_4),
             uint16(AssetValuationLib.ONE_4)
         );
+        registryExtension.setMaxRecursiveCalls(address(pool), type(uint256).max);
+        vm.stopPrank();
 
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;

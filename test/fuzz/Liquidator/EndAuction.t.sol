@@ -165,7 +165,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // By setting the minUsdValue of creditor to uint256 max value, remaining assets value should be 0.
         vm.prank(pool.riskManager());
-        registryExtension.setMinUsdValueCreditor(address(pool), type(uint256).max);
+        registryExtension.setMinUsdValue(address(pool), type(uint256).max);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
