@@ -998,7 +998,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
-        _withdraw(openDebt, account, account);
+        if (!(previewWithdraw(openDebt) == 0)) _withdraw(openDebt, account, account);
 
         _endLiquidation();
 
