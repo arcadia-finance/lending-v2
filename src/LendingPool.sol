@@ -134,7 +134,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event AuctionFinished(
         address indexed account,
         address indexed creditor,
-        uint256 openDebt,
+        uint256 startDebt,
         uint256 initiationReward,
         uint256 terminationReward,
         uint256 penalty,
