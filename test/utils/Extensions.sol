@@ -199,11 +199,11 @@ contract LendingPoolExtension is LendingPool {
         return penaltyWeight;
     }
 
-    function getInitiatorRewardWeight() public view returns (uint16) {
+    function getInitiationRewardWeight() public view returns (uint16) {
         return initiationWeight;
     }
 
-    function getClosingRewardWeight() public view returns (uint16) {
+    function getTerminationRewardWeight() public view returns (uint16) {
         return terminationWeight;
     }
 

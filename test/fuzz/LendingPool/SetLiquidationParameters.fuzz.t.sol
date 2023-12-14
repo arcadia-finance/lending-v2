@@ -95,8 +95,8 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.stopPrank();
 
         assertEq(pool.getPenaltyWeight(), penaltyWeight);
-        assertEq(pool.getInitiatorRewardWeight(), initiationWeight);
-        assertEq(pool.getClosingRewardWeight(), terminationWeight);
+        assertEq(pool.getInitiationRewardWeight(), initiationWeight);
+        assertEq(pool.getTerminationRewardWeight(), terminationWeight);
         assertEq(pool.getMaxInitiationFee(), maxInitiationFee);
         assertEq(pool.getMaxTerminationFee(), maxTerminationFee);
     }

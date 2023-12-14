@@ -866,10 +866,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
-        (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
         // Mint the liquidation incentives as extra debt towards the Account.
-        _deposit(initiationReward + liquidationPenalty + closingReward, msg.sender);
+        _deposit(initiationReward + liquidationPenalty + terminationReward, msg.sender);
 
         // Increase the realised liquidity for the initiator.
         // The other incentives will only be added as realised liquidity for the respective actors
