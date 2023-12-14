@@ -263,6 +263,12 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 contract LiquidatorExtension is Liquidator {
     constructor() Liquidator() { }
 
+    function setInAuction(address account, address creditor, uint128 startDebt) public {
+        auctionInformation[account].inAuction = true;
+        auctionInformation[account].creditor = creditor;
+        auctionInformation[account].startDebt = startDebt;
+    }
+
     function getAuctionInformationPartOne(address account_)
         public
         view

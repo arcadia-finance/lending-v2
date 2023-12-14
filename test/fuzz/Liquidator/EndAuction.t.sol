@@ -89,6 +89,57 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
+    function testFuzz_Success_endAuction_ZeroCollateral(
+        uint256 shares,
+        uint256 totalSupply,
+        uint128 totalDebt,
+        uint128 startDebt,
+        uint128 liquidity
+    ) public {
+        // Given: totalDebt is not 0.
+        totalDebt = uint128(bound(totalDebt, 1, type(uint128).max));
+
+        // And: invariant ERC20.
+        shares = bound(shares, 0, totalSupply);
+        // And: convertToAssets does not overflow.
+        shares = bound(shares, 0, type(uint256).max / totalDebt);
+
+        // And: liquidityOf is bigger or equal as totalDebt (invariant).
+        uint256 assets = (totalSupply > 0) ? shares * totalDebt / totalSupply : totalDebt;
+        // Have to round up.
+        if (shares * totalDebt > assets * totalSupply) assets += 1;
+        liquidity = uint128(bound(liquidity, totalDebt, type(uint128).max));
+
+        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
+            shares
+        );
+        stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
+        debt.setRealisedDebt(uint256(totalDebt));
+        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
+            liquidity
+        );
+        pool.setTotalRealisedLiquidity(uint128(liquidity));
+
+        // And: All liquidation parameters are 0 (we do not tests want to test _calculateRewards and want to avoid overflows).
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
+
+        // And: Account has no collateral.
+
+        // And: Liquidation is initiated.
+        liquidator.setInAuction(address(proxyAccount), proxyAccount.creditor(), startDebt);
+        pool.setAuctionsInProgress(1);
+
+        // When: liquidation is ended.
+        liquidator.endAuction(address(proxyAccount));
+
+        // Then: Auction is ended.
+        assertFalse(liquidator.getAuctionIsActive(address(proxyAccount)));
+
+        // And: Account has no debt anymore.
+        assertEq(proxyAccount.getUsedMargin(), 0);
+    }
+
     function testFuzz_Success_endAuction_AccountIsHealthy(
         uint32 halfLifeTime,
         uint32 cutoffTime,
@@ -136,7 +187,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
 
-        assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
     }
 
     function testFuzz_Success_endAuction_NoRemainingValue(
@@ -183,8 +234,8 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
 
-        assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
-        assert(proxyAccount.inAuction() == false);
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(proxyAccount.inAuction(), false);
     }
 
     function testFuzz_Success_endAuction_AfterCutoff(
@@ -234,7 +285,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // The remaining tokens should be sent to protocol owner
         assertEq(mockERC20.stable1.balanceOf(liquidator.getAssetRecipient(address(pool))), amountLoaned);
-        assert(liquidator.getAuctionIsActive(address(proxyAccount)) == false);
-        assert(proxyAccount.inAuction() == false);
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(proxyAccount.inAuction(), false);
     }
 }
