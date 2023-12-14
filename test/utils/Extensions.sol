@@ -345,7 +345,7 @@ contract LiquidatorExtension is Liquidator {
     }
 
     function getAssetRecipient(address creditor) external view returns (address) {
-        return creditorToAssetRecipient[creditor];
+        return creditorToAccountRecipient[creditor];
     }
 
     function getAccountFactory() public view returns (address) {

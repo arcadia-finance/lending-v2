@@ -45,7 +45,7 @@ contract Liquidator is Owned, ILiquidator {
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
     // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
-    mapping(address => address) internal creditorToAssetRecipient;
+    mapping(address => address) internal creditorToAccountRecipient;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -111,18 +111,18 @@ contract Liquidator is Owned, ILiquidator {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    AUCTION ASSET RECIPIENT
+                    AUCTION ACCOUNT RECIPIENT
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice The asset recipient receives all assets of an Account after an unsuccessful auction.
-     * @param creditor The address of the creditor for which the asset recipient is set.
-     * @param assetRecipient_ The address of the new asset recipient for a given creditor.
-     * @dev This function can only be called by the Risk Manager of the creditor.
+     * @notice The Account recipient receives the Accounts after an unsuccessful auction.
+     * @param creditor The contract address of the Creditor for which the Account recipient is set.
+     * @param accountRecipient The address of the new Account recipient for a given creditor.
+     * @dev This function can only be called by the Risk Manager of the Creditor.
      */
-    function setAssetRecipient(address creditor, address assetRecipient_) external {
+    function setAccountRecipient(address creditor, address accountRecipient) external {
         if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
-        creditorToAssetRecipient[creditor] = assetRecipient_;
+        creditorToAccountRecipient[creditor] = accountRecipient;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -452,7 +452,7 @@ contract Liquidator is Owned, ILiquidator {
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(creditorToAssetRecipient[creditor]);
+            IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
         } else {
             // None of the conditions to end the auction are met.
             return false;

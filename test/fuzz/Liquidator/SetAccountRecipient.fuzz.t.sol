@@ -8,9 +8,9 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 
 /**
- * @notice Fuzz tests for the function "setAssetRecipient" of contract "Liquidator".
+ * @notice Fuzz tests for the function "setAccountRecipient" of contract "Liquidator".
  */
-contract SetAssetRecipient_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract SetAccountRecipient_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -29,12 +29,12 @@ contract SetAssetRecipient_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(LiquidatorErrors.NotAuthorized.selector);
-        liquidator.setAssetRecipient(address(pool), newAssetRecipient);
+        liquidator.setAccountRecipient(address(pool), newAssetRecipient);
         vm.stopPrank();
     }
 
     function testFuzz_Success_setAssetRecipient(address newAssetRecipient) public {
         vm.prank(users.riskManager);
-        liquidator.setAssetRecipient(address(pool), newAssetRecipient);
+        liquidator.setAccountRecipient(address(pool), newAssetRecipient);
     }
 }

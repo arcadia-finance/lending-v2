@@ -130,6 +130,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than as 0.
@@ -157,6 +158,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than amountRepaid, which is bigger than 0.
@@ -194,6 +196,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than 0
@@ -236,6 +239,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(pool));
+        vm.assume(sender != address(proxyAccount));
 
         // Given: collateralValue is smaller than maxExposure.
         // And: amountLoaned is bigger than 0.
