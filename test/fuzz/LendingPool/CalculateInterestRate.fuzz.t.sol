@@ -21,6 +21,32 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+    function testFuzz_Success_calculateInterestRate_RepayPaused(
+        uint40 utilisation,
+        uint72 baseRate_,
+        uint72 highSlope_,
+        uint72 lowSlope_,
+        uint16 utilisationThreshold_
+    ) public {
+        // Given: utilisation is between 0 and 80000, baseRate_ is less than 10_000, highSlope_ is bigger than lowSlope_
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+
+        // And: The InterestConfiguration is set
+        vm.prank(users.creatorAddress);
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
+
+        // And: Repay is paused.
+        vm.warp(35 days);
+        vm.prank(users.guardian);
+        pool.pause();
+
+        // When: Interest is calculated.
+        uint256 interestRate = pool.calculateInterestRate(utilisation);
+
+        // Then: Interest should be be 0.
+        assertEq(interestRate, 0);
+    }
+
     function testFuzz_Success_calculateInterestRate_UnderOptimalUtilisation(
         uint40 utilisation,
         uint72 baseRate_,
