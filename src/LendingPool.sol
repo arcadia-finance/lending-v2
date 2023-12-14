@@ -134,7 +134,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event AuctionFinished(
         address indexed account,
         address indexed creditor,
-        uint256 openDebt,
+        uint256 startDebt,
         uint256 initiationReward,
         uint256 terminationReward,
         uint256 penalty,
@@ -971,7 +971,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Any remaining debt that was not recovered during the auction must be written off.
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
-        uint256 openDebt = maxWithdraw(account);
+        uint256 shares = balanceOf[account];
+        uint256 openDebt = convertToAssets(shares);
         uint256 badDebt;
         if (openDebt > terminationReward + liquidationPenalty) {
             // "openDebt" is bigger than pending liquidation incentives.
@@ -999,7 +1000,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
-        _withdraw(openDebt, account, account);
+        _burn(account, shares);
+        realisedDebt -= openDebt;
+        emit Withdraw(msg.sender, account, account, openDebt, shares);
 
         _endLiquidation();
 
