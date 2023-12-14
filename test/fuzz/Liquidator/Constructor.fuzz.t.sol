@@ -27,11 +27,12 @@ contract Constructor_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_deployment() public {
+    function testFuzz_Success_deployment(address factory_) public {
         vm.expectEmit(true, true, true, true);
         emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
-        liquidator_ = new LiquidatorExtension();
+        liquidator_ = new LiquidatorExtension(factory_);
 
+        assertEq(liquidator_.getAccountFactory(), factory_);
         assertEq(liquidator_.getBase(), 999_807_477_651_317_446);
         assertEq(liquidator_.getCutoffTime(), 14_400);
         assertEq(liquidator_.getStartPriceMultiplier(), 15_000);

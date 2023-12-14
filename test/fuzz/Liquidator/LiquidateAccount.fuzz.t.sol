@@ -6,8 +6,6 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
-import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
-import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
@@ -28,6 +26,16 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
+    function testFuzz_Revert_liquidateAccount_NotAnAccount(address nonAccount, address caller) public {
+        vm.assume(nonAccount != address(proxyAccount));
+        vm.assume(nonAccount != address(accountV1Logic));
+        vm.assume(nonAccount != address(accountV2Logic));
+
+        vm.prank(caller);
+        vm.expectRevert(IsNotAnAccount.selector);
+        liquidator.liquidateAccount(nonAccount);
+    }
 
     function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint112 amountLoaned)
         public
@@ -120,38 +128,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(liquidationInitiator);
         vm.expectRevert(AccountErrors.AccountNotLiquidatable.selector);
         liquidator.liquidateAccount(address(proxyAccount));
-    }
-
-    function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
-        address liquidationInitiator,
-        uint128 totalOpenDebt,
-        uint128 valueInNumeraire,
-        uint256 collateralFactor,
-        uint256 liquidationFactor
-    ) public {
-        vm.assume(valueInNumeraire > 0);
-        vm.assume(totalOpenDebt > 0);
-        // Given: Malicious Lending pool
-        LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
-
-        // And: AccountV1Malicious is created
-        AccountV1Malicious maliciousAccount = new AccountV1Malicious(
-            address(pool_malicious), totalOpenDebt, valueInNumeraire, collateralFactor, liquidationFactor
-        );
-
-        // When Then: Liquidation Initiator calls liquidateAccount, It will succeed
-        vm.prank(liquidationInitiator);
-        liquidator.liquidateAccount(address(maliciousAccount));
-
-        // And: No harm to protocol
-        // Since lending pool is maliciousAccount, it will not represent the real value in the protocol
-        // So, no harm to protocol
-
-        // Then: Auction will be set but lending pool will not be in auction mode
-        bool isAuctionActive = liquidator.getAuctionIsActive(address(maliciousAccount));
-        assertEq(isAuctionActive, true);
-
-        assertGe(pool.getAuctionsInProgress(), 0);
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
