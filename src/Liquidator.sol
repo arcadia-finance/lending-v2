@@ -8,6 +8,7 @@ import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/Asset
 import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
@@ -27,6 +28,8 @@ contract Liquidator is Owned, ILiquidator {
 
     // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
+    // Contract address of the Arcadia Account Factory.
+    address internal immutable ACCOUNT_FACTORY;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
@@ -88,7 +91,13 @@ contract Liquidator is Owned, ILiquidator {
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
-    constructor() Owned(msg.sender) {
+    /**
+     * @notice The constructor for the Liquidator.
+     * @param accountFactory The contract address of the Arcadia Account Factory.
+     */
+    constructor(address accountFactory) Owned(msg.sender) {
+        ACCOUNT_FACTORY = accountFactory;
+
         // Half life of 3600s.
         base = 999_807_477_651_317_446;
         // 4 hours.
@@ -181,13 +190,10 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Initiate the liquidation of an Account.
      * @param account The contract address of the Account to be liquidated.
-     * @dev We do not check if the address passed is an actual Arcadia Account.
-     * A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account),
-     * that implemented startLiquidation().
-     * This would successfully start an auction and the malicious non-Account might be in auction indefinitely,
-     * but this does not block or impact any current or future 'real' auctions of Arcadia-Accounts.
      */
     function liquidateAccount(address account) external {
+        if (!IFactory(ACCOUNT_FACTORY).isAccount(account)) revert LiquidatorErrors.IsNotAnAccount();
+
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is already being auctioned.

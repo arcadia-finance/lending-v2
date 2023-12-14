@@ -40,7 +40,7 @@ contract ArcadiaLendingDeployment is Test {
         vm.startBroadcast(deployerPrivateKey);
 
         factory = new Factory();
-        liquidator = new Liquidator();
+        liquidator = new Liquidator(address(factory));
 
         pool_weth = new LendingPool(
             vm.addr(deployerPrivateKey),

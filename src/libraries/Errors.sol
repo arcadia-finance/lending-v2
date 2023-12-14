@@ -19,6 +19,8 @@ library LiquidatorErrors {
     error HalfLifeTimeTooLow();
     // Thrown when the auction has not yet expired.
     error InvalidBid();
+    // Thrown when account specified is not an Arcadia Account.
+    error IsNotAnAccount();
     // Thrown when the start price multiplier is above the maximum value.
     error MultiplierTooHigh();
     // Thrown when the start price multiplier is below the minimum value.

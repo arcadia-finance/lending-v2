@@ -52,9 +52,9 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.assume(liquiditySenior > 100);
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
         vm.assume(startDebt > totalAmount + 2); // Bad debt should be excess since initiator and terminator rewards are 1 and 1 respectively, it should be added to make the baddebt excess
-        (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) =
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt);
-        uint256 openDebt = startDebt + initiationReward + closingReward + liquidationPenalty;
+        uint256 openDebt = startDebt + initiationReward + terminationReward + liquidationPenalty;
         vm.assume(openDebt <= type(uint128).max);
 
         vm.prank(address(srTranche));
