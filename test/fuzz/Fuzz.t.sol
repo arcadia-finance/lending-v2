@@ -120,6 +120,10 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         registryExtension.setMaxRecursiveCalls(address(pool), type(uint256).max);
         vm.stopPrank();
 
+        // Set the Account recipient.
+        vm.prank(users.riskManager);
+        liquidator.setAccountRecipient(address(pool), users.riskManager);
+
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
 
