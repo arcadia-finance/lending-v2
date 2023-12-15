@@ -28,10 +28,10 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint72 lowSlope_,
         uint16 utilisationThreshold_
     ) public {
-        // Given: utilisation is between 0 and 80000, baseRate_ is less than 10_000, highSlope_ is bigger than lowSlope_
+        // Given: utilisation is less than 10_000.
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
 
-        // And: The InterestConfiguration is set
+        // And: The InterestConfiguration is set.
         vm.prank(users.creatorAddress);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
@@ -54,21 +54,21 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint72 lowSlope_,
         uint16 utilisationThreshold_
     ) public {
-        // Given: utilisation is between 0 and 80000, baseRate_ is less than 10_000, highSlope_ is bigger than lowSlope_
-        vm.assume(utilisationThreshold_ <= ONE_4);
-        vm.assume(utilisation <= utilisationThreshold_);
+        // Given: utilisation is less than 10_000.
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+
+        // And: utilisation is below utilisationThreshold_.
+        utilisation = uint40(bound(utilisation, 0, utilisationThreshold_));
 
         // When: The InterestConfiguration is set
         vm.prank(users.creatorAddress);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
-        // And: actualInterestRate is calculateInterestRate with utilisation
+        // When: Interest is calculated.
         uint256 actualInterestRate = pool.calculateInterestRate(utilisation);
 
-        // And: expectedInterestRate is lowSlope multiplied by utilisation divided by 10_000 and added to baseRate
-        uint256 expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
-
         // Then: actualInterestRate should be equal to expectedInterestRate
+        uint256 expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
         assertEq(actualInterestRate, expectedInterestRate);
     }
 
@@ -79,12 +79,13 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint72 lowSlope_,
         uint16 utilisationThreshold_
     ) public {
-        // Given: utilisation is between 80000 and 100000, highSlope_ is bigger than lowSlope_
-        vm.assume(utilisationThreshold_ <= ONE_4);
-        vm.assume(utilisation < ONE_4);
-        vm.assume(utilisation > utilisationThreshold_);
+        // Given: utilisation is less than 10_000.
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
 
-        // When: The InterestConfiguration is set
+        // And: utilisation is above utilisationThreshold_.
+        utilisation = uint40(bound(utilisation, utilisationThreshold_ + 1, ONE_4));
+
+        // And: The InterestConfiguration is set.
         vm.prank(users.creatorAddress);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
@@ -92,13 +93,11 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
         uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold_) * highSlope_;
 
-        // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by divided by 10_000
-        uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
-
-        // And: actualInterestRate is calculateInterestRate with utilisation
+        // When: Interest is calculated.
         uint256 actualInterestRate = pool.calculateInterestRate(utilisation);
 
         // Then: actualInterestRate should be equal to expectedInterestRate
+        uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
         assertEq(actualInterestRate, expectedInterestRate);
     }
 }
