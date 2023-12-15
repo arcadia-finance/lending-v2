@@ -822,6 +822,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
      */
     function _calculateInterestRate(uint256 utilisation) internal view returns (uint80 interestRate_) {
+        // While repays are paused, interest rate is set to 0.
+        if (repayPaused) return 0;
+
         unchecked {
             if (utilisation >= utilisationThreshold) {
                 // lsIR (1e22) = uT (1e4) * ls (1e18).
