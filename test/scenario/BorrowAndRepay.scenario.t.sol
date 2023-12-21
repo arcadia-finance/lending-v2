@@ -17,7 +17,6 @@ import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 /**
  * @notice Scenario tests for Borrow and Repay flows.
  */
-
 contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

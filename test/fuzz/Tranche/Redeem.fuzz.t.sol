@@ -11,7 +11,6 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 /**
  * @notice Fuzz tests for the function "redeem" of contract "Tranche".
  */
-
 contract Redeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

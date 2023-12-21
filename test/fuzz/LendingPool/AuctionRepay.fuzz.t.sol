@@ -11,7 +11,6 @@ import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetV
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
  */
-
 contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

@@ -10,7 +10,6 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
-
 contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -214,9 +213,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(amountLoaned + 1);
 
-        // By setting the minUsdValue of creditor to uint256 max value, remaining assets value should be 0.
+        // By setting the minUsdValue of creditor to uint128 max value, remaining assets value will be 0.
+        vm.assume(proxyAccount.getAccountValue(address(0)) <= type(uint128).max);
         vm.prank(pool.riskManager());
-        registryExtension.setMinUsdValue(address(pool), type(uint256).max);
+        registryExtension.setRiskParameters(address(pool), type(uint128).max, 0, type(uint64).max);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
