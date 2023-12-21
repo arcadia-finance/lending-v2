@@ -267,6 +267,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);
 
+        // Update oracle to avoid InactiveOracle().
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
+
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
