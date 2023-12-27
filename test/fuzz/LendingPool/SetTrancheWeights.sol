@@ -13,7 +13,6 @@ import { LendingPoolExtension } from "../../utils/Extensions.sol";
 /**
  * @notice Fuzz tests for the function "setTrancheWeights" of contract "LendingPool".
  */
-
 contract SetTrancheWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

@@ -9,7 +9,6 @@ import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "deposit" of contract "Tranche".
  */
-
 contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -70,7 +69,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.prank(users.liquidityProvider);
         tranche.deposit(assets / 3, receiver);
 
-        vm.warp(500);
+        vm.warp(block.timestamp + 500);
 
         vm.prank(users.liquidityProvider);
         vm.expectCall(address(pool), abi.encodeWithSignature("liquidityOfAndSync(address)", address(tranche)));

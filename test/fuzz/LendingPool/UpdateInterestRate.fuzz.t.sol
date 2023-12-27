@@ -40,7 +40,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setTotalRealisedLiquidity(realisedLiquidity);
         pool.setRealisedDebt(realisedDebt);
         pool.setInterestRate(interestRate);
-        pool.setLastSyncedTimestamp(uint32(block.number));
+        pool.setLastSyncedTimestamp(uint32(block.timestamp));
 
         uint256 start_timestamp = block.timestamp;
         vm.warp(start_timestamp + deltaTimestamp);

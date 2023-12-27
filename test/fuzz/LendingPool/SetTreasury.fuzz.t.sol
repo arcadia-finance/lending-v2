@@ -9,7 +9,6 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "setTreasury" of contract "LendingPool".
  */
-
 contract SetTreasury_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

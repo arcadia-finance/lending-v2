@@ -11,7 +11,6 @@ import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetV
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
  */
-
 contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -68,6 +67,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(proxyAccount));
         vm.warp(35 days);
+
+        // Update oracle to avoid InactiveOracle().
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
