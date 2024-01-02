@@ -430,9 +430,6 @@ contract Liquidator is Owned, ILiquidator {
         internal
         returns (bool success)
     {
-        // Stop the auction.
-        auctionInformation_.inAuction = false;
-
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
