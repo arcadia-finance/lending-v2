@@ -933,7 +933,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Pay out the "liquidationPenalty" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
 
-        totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
+        totalRealisedLiquidity =
+            SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
 
         unchecked {
             // Pay out any surplus to the current Account Owner.
