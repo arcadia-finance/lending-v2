@@ -82,8 +82,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
     uint128 public totalRealisedLiquidity;
-    // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-    uint96 internal fixedLiquidationCost;
+    // The minimum amount of collateral that must be held in an Account before a position can be opened.
+    uint96 internal minimumMargin;
 
     // Address of the protocol treasury.
     address internal treasury;
@@ -145,7 +145,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
+    event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event LiquidationParametersSet(
@@ -1166,14 +1166,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     }
 
     /**
-     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in Numeraire.
-     * @param fixedLiquidationCost_ The new fixedLiquidationCost.
-     * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
+     * @notice Sets the minimum amount of collateral that must be held in an Account before a position can be opened.
+     * @param minimumMargin_ The new minimumMargin.
+     * @dev The minimum margin should be a conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
+     * The minimumMargin prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
      * network transaction costs while remaining attractive to liquidate.
      */
-    function setFixedLiquidationCost(uint96 fixedLiquidationCost_) external onlyOwner {
-        emit FixedLiquidationCostSet(fixedLiquidationCost = fixedLiquidationCost_);
+    function setMinimumMargin(uint96 minimumMargin_) external onlyOwner {
+        emit MinimumMarginSet(minimumMargin = minimumMargin_);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -1204,13 +1204,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         external
         view
         override
-        returns (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_)
+        returns (bool success, address numeraire, address liquidator_, uint256 minimumMargin_)
     {
         if (isValidVersion[accountVersion]) {
             success = true;
             numeraire = address(asset);
             liquidator_ = LIQUIDATOR;
-            fixedLiquidationCost_ = fixedLiquidationCost;
+            minimumMargin_ = minimumMargin;
         }
     }
 
