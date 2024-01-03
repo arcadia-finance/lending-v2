@@ -933,8 +933,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Pay out the "liquidationPenalty" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
 
-        // Unsafe cast: sum will revert if it overflows.
-        totalRealisedLiquidity = uint128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
+        totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
 
         unchecked {
             // Pay out any surplus to the current Account Owner.
@@ -998,8 +997,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 realisedLiquidityOf[terminator] += terminationReward;
                 _syncLiquidationFeeToLiquidityProviders(remainder - terminationReward);
             }
-            // Unsafe cast: sum will revert if it overflows.
-            totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }
 
         // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
