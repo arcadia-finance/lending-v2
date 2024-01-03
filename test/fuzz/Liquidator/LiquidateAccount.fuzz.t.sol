@@ -10,11 +10,14 @@ import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
+
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using FixedPointMathLib for uint256;
+    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -303,5 +306,50 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(assetShares_[0], ONE_4);
         assertEq(assetAmounts_[0], amountLoanedStack);
         assertEq(assetIds_[0], 0);
+    }
+
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt_ZeroTotalValue(
+        uint112 amountLoaned,
+        uint8 initiationWeight,
+        uint8 penaltyWeight,
+        uint8 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
+        address liquidationInitiator
+    ) public {
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+
+        // Given: Account has debt
+        bytes3 emptyBytes3;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+
+        // And: Liquidation parameters are set.
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
+
+        // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
+        uint256 slot = stdstore.target(address(accountV1Logic)).sig(accountV1Logic.erc20Balances.selector).with_key(
+            address(mockERC20.stable1)
+        ).find();
+        vm.store(address(proxyAccount), bytes32(slot), bytes32(0));
+
+        // When: Liquidation Initiator calls liquidateAccount
+        vm.prank(liquidationInitiator);
+        liquidator.liquidateAccount(address(proxyAccount));
+
+        (,, uint32[] memory assetShares_,,) = liquidator.getAuctionInformationPartTwo(address(proxyAccount));
+
+        // Then : assetShares should return 0.
+        assertEq(assetShares_[0], 0);
     }
 }
