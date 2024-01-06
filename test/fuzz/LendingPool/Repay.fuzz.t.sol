@@ -11,7 +11,6 @@ import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetV
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
  */
-
 contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -36,6 +35,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
+        vm.assume(sender != address(proxyAccount));
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
 
@@ -65,6 +65,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
+        vm.assume(sender != address(proxyAccount));
         vm.warp(35 days);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
@@ -95,6 +96,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(nonAccount != address(proxyAccount));
         vm.assume(availableFunds > amountRepaid);
         vm.assume(sender != users.liquidityProvider);
+        vm.assume(sender != address(proxyAccount));
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.transfer(sender, availableFunds);
 

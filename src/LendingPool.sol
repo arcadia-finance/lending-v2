@@ -82,8 +82,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
     uint128 public totalRealisedLiquidity;
-    // Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-    uint96 internal fixedLiquidationCost;
+    // The minimum amount of collateral that must be held in an Account before a position can be opened.
+    uint96 internal minimumMargin;
 
     // Address of the protocol treasury.
     address internal treasury;
@@ -134,7 +134,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event AuctionFinished(
         address indexed account,
         address indexed creditor,
-        uint256 openDebt,
+        uint256 startDebt,
         uint256 initiationReward,
         uint256 terminationReward,
         uint256 penalty,
@@ -145,7 +145,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
+    event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event LiquidationParametersSet(
@@ -235,6 +235,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
     function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+        if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
         totalInterestWeight += interestWeight_;
@@ -821,6 +822,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * We use two linear curves: one below the optimal utilisation with low slope and a steep one above.
      */
     function _calculateInterestRate(uint256 utilisation) internal view returns (uint80 interestRate_) {
+        // While repays are paused, interest rate is set to 0.
+        if (repayPaused) return 0;
+
         unchecked {
             if (utilisation >= utilisationThreshold) {
                 // lsIR (1e22) = uT (1e4) * ls (1e18).
@@ -866,10 +870,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
-        (uint256 initiationReward, uint256 closingReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
         // Mint the liquidation incentives as extra debt towards the Account.
-        _deposit(initiationReward + liquidationPenalty + closingReward, msg.sender);
+        _deposit(initiationReward + liquidationPenalty + terminationReward, msg.sender);
 
         // Increase the realised liquidity for the initiator.
         // The other incentives will only be added as realised liquidity for the respective actors
@@ -929,8 +933,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Pay out the "liquidationPenalty" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
 
-        // Unsafe cast: sum will revert if it overflows.
-        totalRealisedLiquidity = uint128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
+        totalRealisedLiquidity =
+            SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
 
         unchecked {
             // Pay out any surplus to the current Account Owner.
@@ -970,7 +974,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Any remaining debt that was not recovered during the auction must be written off.
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
-        uint256 openDebt = maxWithdraw(account);
+        uint256 shares = balanceOf[account];
+        uint256 openDebt = convertToAssets(shares);
         uint256 badDebt;
         if (openDebt > terminationReward + liquidationPenalty) {
             // "openDebt" is bigger than pending liquidation incentives.
@@ -993,12 +998,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 realisedLiquidityOf[terminator] += terminationReward;
                 _syncLiquidationFeeToLiquidityProviders(remainder - terminationReward);
             }
-            // Unsafe cast: sum will revert if it overflows.
-            totalRealisedLiquidity = uint128(totalRealisedLiquidity + remainder);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }
 
         // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
-        _withdraw(openDebt, account, account);
+        _burn(account, shares);
+        realisedDebt -= openDebt;
+        emit Withdraw(msg.sender, account, account, openDebt, shares);
 
         _endLiquidation();
 
@@ -1159,14 +1165,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     }
 
     /**
-     * @notice Sets the estimated max network transaction cost to liquidate a position, denominated in Numeraire.
-     * @param fixedLiquidationCost_ The new fixedLiquidationCost.
-     * @dev Conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
-     * The fixedLiquidationCost prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
+     * @notice Sets the minimum amount of collateral that must be held in an Account before a position can be opened.
+     * @param minimumMargin_ The new minimumMargin.
+     * @dev The minimum margin should be a conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
+     * The minimumMargin prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
      * network transaction costs while remaining attractive to liquidate.
      */
-    function setFixedLiquidationCost(uint96 fixedLiquidationCost_) external onlyOwner {
-        emit FixedLiquidationCostSet(fixedLiquidationCost = fixedLiquidationCost_);
+    function setMinimumMargin(uint96 minimumMargin_) external onlyOwner {
+        emit MinimumMarginSet(minimumMargin = minimumMargin_);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -1197,13 +1203,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         external
         view
         override
-        returns (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_)
+        returns (bool success, address numeraire, address liquidator_, uint256 minimumMargin_)
     {
         if (isValidVersion[accountVersion]) {
             success = true;
             numeraire = address(asset);
             liquidator_ = LIQUIDATOR;
-            fixedLiquidationCost_ = fixedLiquidationCost;
+            minimumMargin_ = minimumMargin;
         }
     }
 

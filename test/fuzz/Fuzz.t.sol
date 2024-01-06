@@ -62,7 +62,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
-        liquidator = new LiquidatorExtension();
+        liquidator = new LiquidatorExtension(address(factory));
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
         srTranche = new Tranche(address(pool), "Senior", "SR");
         jrTranche = new Tranche(address(pool), "Junior", "JR");
@@ -91,7 +91,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
-        liquidator = new LiquidatorExtension();
+        liquidator = new LiquidatorExtension(address(factory));
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
@@ -119,6 +119,10 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         );
         registryExtension.setMaxRecursiveCalls(address(pool), type(uint256).max);
         vm.stopPrank();
+
+        // Set the Account recipient.
+        vm.prank(users.riskManager);
+        liquidator.setAccountRecipient(address(pool), users.riskManager);
 
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;

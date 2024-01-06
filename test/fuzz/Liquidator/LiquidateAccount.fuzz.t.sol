@@ -6,17 +6,18 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
-import { AccountV1Malicious } from "../../utils/mocks/AccountV1Malicious.sol";
-import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using FixedPointMathLib for uint256;
+    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -28,6 +29,16 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
+    function testFuzz_Revert_liquidateAccount_NotAnAccount(address nonAccount, address caller) public {
+        vm.assume(nonAccount != address(proxyAccount));
+        vm.assume(nonAccount != address(accountV1Logic));
+        vm.assume(nonAccount != address(accountV2Logic));
+
+        vm.prank(caller);
+        vm.expectRevert(IsNotAnAccount.selector);
+        liquidator.liquidateAccount(nonAccount);
+    }
 
     function testFuzz_Revert_liquidateAccount_AuctionOngoing(address liquidationInitiator, uint112 amountLoaned)
         public
@@ -78,7 +89,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_liquidateAccount_NoCreditorInAccount(address liquidationInitiator) public {
         // Given: Account is there and no creditor
-        address proxyAddress_NoCreditor = factory.createAccount(2, 0, address(0), address(0));
+        address proxyAddress_NoCreditor = factory.createAccount(2, 0, address(0));
         AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoCreditor);
 
         // When Then: Liquidator tries to liquidate, It should revert because there is no creditor to call to get the account debt
@@ -120,38 +131,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(liquidationInitiator);
         vm.expectRevert(AccountErrors.AccountNotLiquidatable.selector);
         liquidator.liquidateAccount(address(proxyAccount));
-    }
-
-    function testFuzz_Success_liquidateAccount_MaliciousAccount_MaliciousCreditor_NoHarmToProtocol(
-        address liquidationInitiator,
-        uint128 totalOpenDebt,
-        uint128 valueInNumeraire,
-        uint256 collateralFactor,
-        uint256 liquidationFactor
-    ) public {
-        vm.assume(valueInNumeraire > 0);
-        vm.assume(totalOpenDebt > 0);
-        // Given: Malicious Lending pool
-        LendingPoolMalicious pool_malicious = new LendingPoolMalicious();
-
-        // And: AccountV1Malicious is created
-        AccountV1Malicious maliciousAccount = new AccountV1Malicious(
-            address(pool_malicious), totalOpenDebt, valueInNumeraire, collateralFactor, liquidationFactor
-        );
-
-        // When Then: Liquidation Initiator calls liquidateAccount, It will succeed
-        vm.prank(liquidationInitiator);
-        liquidator.liquidateAccount(address(maliciousAccount));
-
-        // And: No harm to protocol
-        // Since lending pool is maliciousAccount, it will not represent the real value in the protocol
-        // So, no harm to protocol
-
-        // Then: Auction will be set but lending pool will not be in auction mode
-        bool isAuctionActive = liquidator.getAuctionIsActive(address(maliciousAccount));
-        assertEq(isAuctionActive, true);
-
-        assertGe(pool.getAuctionsInProgress(), 0);
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_ONE(
@@ -253,25 +232,25 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint128 openDebt_ = amountLoaned + 1;
 
         // Then: Auction should be set and started
-        (uint256 initiationReward_, uint256 auctionClosingReward_, uint256 liquidationPenaltyReward_) =
+        (uint256 initiationReward_, uint256 terminationReward_, uint256 liquidationPenaltyReward_) =
             pool.getCalculateRewards(openDebt_);
 
         uint256 initiationReward = uint256(openDebt_).mulDivDown(initiationWeightStack, 10_000);
         initiationReward = initiationReward > maxInitiationFeeStack ? maxInitiationFeeStack : initiationReward;
 
         assertEq(initiationReward, initiationReward_);
-        uint256 closingReward = uint256(openDebt_).mulDivDown(terminationWeightStack, 10_000);
-        closingReward = closingReward > maxTerminationFeeStack ? maxTerminationFeeStack : closingReward;
+        uint256 terminationReward = uint256(openDebt_).mulDivDown(terminationWeightStack, 10_000);
+        terminationReward = terminationReward > maxTerminationFeeStack ? maxTerminationFeeStack : terminationReward;
 
         uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 10_000);
 
-        assertEq(auctionClosingReward_, closingReward);
+        assertEq(terminationReward_, terminationReward);
         assertEq(liquidationPenaltyReward, liquidationPenaltyReward_);
 
         // And : Liquidation incentives should have been added to openDebt of Account
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
-            openDebt_ + initiationReward + liquidationPenaltyReward + closingReward
+            openDebt_ + initiationReward + liquidationPenaltyReward + terminationReward
         );
     }
 
@@ -327,5 +306,50 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(assetShares_[0], ONE_4);
         assertEq(assetAmounts_[0], amountLoanedStack);
         assertEq(assetIds_[0], 0);
+    }
+
+    function testFuzz_Success_liquidateAccount_UnhealthyDebt_ZeroTotalValue(
+        uint112 amountLoaned,
+        uint8 initiationWeight,
+        uint8 penaltyWeight,
+        uint8 terminationWeight,
+        uint80 maxInitiationFee,
+        uint80 maxTerminationFee,
+        address liquidationInitiator
+    ) public {
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
+        vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+
+        // Given: Account has debt
+        bytes3 emptyBytes3;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+
+        // And: Liquidation parameters are set.
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(
+            initiationWeight, penaltyWeight, terminationWeight, maxInitiationFee, maxTerminationFee
+        );
+
+        // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
+        uint256 slot = stdstore.target(address(accountV1Logic)).sig(accountV1Logic.erc20Balances.selector).with_key(
+            address(mockERC20.stable1)
+        ).find();
+        vm.store(address(proxyAccount), bytes32(slot), bytes32(0));
+
+        // When: Liquidation Initiator calls liquidateAccount
+        vm.prank(liquidationInitiator);
+        liquidator.liquidateAccount(address(proxyAccount));
+
+        (,, uint32[] memory assetShares_,,) = liquidator.getAuctionInformationPartTwo(address(proxyAccount));
+
+        // Then : assetShares should return 0.
+        assertEq(assetShares_[0], 0);
     }
 }

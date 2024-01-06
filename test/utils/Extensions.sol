@@ -134,8 +134,8 @@ contract LendingPoolExtension is LendingPool {
         liquidationWeightTreasury_ = liquidationWeightTreasury;
     }
 
-    function getFixedLiquidationCost() public view returns (uint96) {
-        return fixedLiquidationCost;
+    function getMinimumMargin() public view returns (uint96) {
+        return minimumMargin;
     }
 
     function getMaxInitiationFee() public view returns (uint80) {
@@ -199,11 +199,11 @@ contract LendingPoolExtension is LendingPool {
         return penaltyWeight;
     }
 
-    function getInitiatorRewardWeight() public view returns (uint16) {
+    function getInitiationRewardWeight() public view returns (uint16) {
         return initiationWeight;
     }
 
-    function getClosingRewardWeight() public view returns (uint16) {
+    function getTerminationRewardWeight() public view returns (uint16) {
         return terminationWeight;
     }
 
@@ -261,7 +261,13 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 ////////////////////////////////////////////////////////////// */
 
 contract LiquidatorExtension is Liquidator {
-    constructor() Liquidator() { }
+    constructor(address accountFactory) Liquidator(accountFactory) { }
+
+    function setInAuction(address account, address creditor, uint128 startDebt) public {
+        auctionInformation[account].inAuction = true;
+        auctionInformation[account].creditor = creditor;
+        auctionInformation[account].startDebt = startDebt;
+    }
 
     function getAuctionInformationPartOne(address account_)
         public
@@ -339,6 +345,10 @@ contract LiquidatorExtension is Liquidator {
     }
 
     function getAssetRecipient(address creditor) external view returns (address) {
-        return creditorToAssetRecipient[creditor];
+        return creditorToAccountRecipient[creditor];
+    }
+
+    function getAccountFactory() public view returns (address) {
+        return ACCOUNT_FACTORY;
     }
 }

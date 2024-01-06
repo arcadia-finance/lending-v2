@@ -6,7 +6,6 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
-import { LendingPoolMalicious } from "../../utils/mocks/LendingPoolMalicious.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -90,6 +89,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_bid_NotApprovedLending(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));
+        vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
         vm.assume(amountLoaned > 3);
         vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
         initiateLiquidation(amountLoaned);

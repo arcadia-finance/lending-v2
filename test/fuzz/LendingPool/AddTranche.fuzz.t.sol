@@ -57,6 +57,14 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
+    function testFuzz_Revert_addTranche_AuctionOnGoing() public {
+        vm.startPrank(users.creatorAddress);
+        pool_.setAuctionsInProgress(1);
+        vm.expectRevert(AuctionOngoing.selector);
+        pool_.addTranche(address(srTranche), 50, 0);
+        vm.stopPrank();
+    }
+
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);

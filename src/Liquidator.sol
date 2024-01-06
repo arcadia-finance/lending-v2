@@ -8,6 +8,7 @@ import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/Asset
 import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
@@ -27,6 +28,8 @@ contract Liquidator is Owned, ILiquidator {
 
     // The unit for fixed point numbers with 4 decimals precision.
     uint16 internal constant ONE_4 = 10_000;
+    // Contract address of the Arcadia Account Factory.
+    address internal immutable ACCOUNT_FACTORY;
 
     /* //////////////////////////////////////////////////////////////
                                 STORAGE
@@ -42,7 +45,7 @@ contract Liquidator is Owned, ILiquidator {
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
     // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
-    mapping(address => address) internal creditorToAssetRecipient;
+    mapping(address => address) internal creditorToAccountRecipient;
 
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
@@ -88,7 +91,13 @@ contract Liquidator is Owned, ILiquidator {
                                 CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
 
-    constructor() Owned(msg.sender) {
+    /**
+     * @notice The constructor for the Liquidator.
+     * @param accountFactory The contract address of the Arcadia Account Factory.
+     */
+    constructor(address accountFactory) Owned(msg.sender) {
+        ACCOUNT_FACTORY = accountFactory;
+
         // Half life of 3600s.
         base = 999_807_477_651_317_446;
         // 4 hours.
@@ -102,18 +111,18 @@ contract Liquidator is Owned, ILiquidator {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    AUCTION ASSET RECIPIENT
+                    AUCTION ACCOUNT RECIPIENT
     ///////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice The asset recipient receives all assets of an Account after an unsuccessful auction.
-     * @param creditor The address of the creditor for which the asset recipient is set.
-     * @param assetRecipient_ The address of the new asset recipient for a given creditor.
-     * @dev This function can only be called by the Risk Manager of the creditor.
+     * @notice The Account recipient receives the Accounts after an unsuccessful auction.
+     * @param creditor The contract address of the Creditor for which the Account recipient is set.
+     * @param accountRecipient The address of the new Account recipient for a given creditor.
+     * @dev This function can only be called by the Risk Manager of the Creditor.
      */
-    function setAssetRecipient(address creditor, address assetRecipient_) external {
+    function setAccountRecipient(address creditor, address accountRecipient) external {
         if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
-        creditorToAssetRecipient[creditor] = assetRecipient_;
+        creditorToAccountRecipient[creditor] = accountRecipient;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -181,13 +190,10 @@ contract Liquidator is Owned, ILiquidator {
     /**
      * @notice Initiate the liquidation of an Account.
      * @param account The contract address of the Account to be liquidated.
-     * @dev We do not check if the address passed is an actual Arcadia Account.
-     * A malicious msg.sender can pass a self created contract as Account (not an actual Arcadia-Account),
-     * that implemented startLiquidation().
-     * This would successfully start an auction and the malicious non-Account might be in auction indefinitely,
-     * but this does not block or impact any current or future 'real' auctions of Arcadia-Accounts.
      */
     function liquidateAccount(address account) external {
+        if (!IFactory(ACCOUNT_FACTORY).isAccount(account)) revert LiquidatorErrors.IsNotAnAccount();
+
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is already being auctioned.
@@ -245,6 +251,9 @@ contract Liquidator is Owned, ILiquidator {
             }
         }
         assetShares = new uint32[](length);
+
+        if (totalValue == 0) return assetShares;
+
         for (uint256 i; i < length; ++i) {
             unchecked {
                 // The asset shares are calculated relative to the total value of the Account.
@@ -424,9 +433,6 @@ contract Liquidator is Owned, ILiquidator {
         internal
         returns (bool success)
     {
-        // Stop the auction.
-        auctionInformation_.inAuction = false;
-
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
@@ -446,7 +452,7 @@ contract Liquidator is Owned, ILiquidator {
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(creditorToAssetRecipient[creditor]);
+            IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
         } else {
             // None of the conditions to end the auction are met.
             return false;
