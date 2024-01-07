@@ -7,9 +7,9 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 /**
- * @notice Fuzz tests for the function "setFixedLiquidationCost" of contract "LendingPool".
+ * @notice Fuzz tests for the function "setMinimumMargin" of contract "LendingPool".
  */
-contract SetFixedLiquidationCost_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract SetMinimumMargin_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -21,24 +21,21 @@ contract SetFixedLiquidationCost_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setFixedLiquidationCost_Unauthorised(
-        address unprivilegedAddress,
-        uint96 fixedLiquidationCost
-    ) public {
+    function testFuzz_Revert_setMinimumMargin_Unauthorised(address unprivilegedAddress, uint96 minimumMargin) public {
         vm.assume(unprivilegedAddress != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setFixedLiquidationCost(fixedLiquidationCost);
+        pool.setMinimumMargin(minimumMargin);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setFixedLiquidationCost(uint96 fixedLiquidationCost) public {
+    function testFuzz_Success_setMinimumMargin(uint96 minimumMargin) public {
         vm.prank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit FixedLiquidationCostSet(fixedLiquidationCost);
-        pool.setFixedLiquidationCost(fixedLiquidationCost);
+        emit MinimumMarginSet(minimumMargin);
+        pool.setMinimumMargin(minimumMargin);
 
-        assertEq(pool.getFixedLiquidationCost(), fixedLiquidationCost);
+        assertEq(pool.getMinimumMargin(), minimumMargin);
     }
 }

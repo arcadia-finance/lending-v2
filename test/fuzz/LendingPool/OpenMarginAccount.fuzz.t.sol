@@ -21,44 +21,43 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_openMarginAccount_InvalidAccountVersion(
-        uint256 accountVersion,
-        uint96 fixedLiquidationCost
-    ) public {
+    function testFuzz_Success_openMarginAccount_InvalidAccountVersion(uint256 accountVersion, uint96 minimumMargin)
+        public
+    {
         // Given: accountVersion is invalid
         vm.startPrank(users.creatorAddress);
         pool.setAccountVersion(accountVersion, false);
-        pool.setFixedLiquidationCost(fixedLiquidationCost);
+        pool.setMinimumMargin(minimumMargin);
         vm.stopPrank();
 
         // When: Account opens a margin proxyAccount
-        (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_) =
+        (bool success, address numeraire, address liquidator_, uint256 minimumMargin_) =
             pool.openMarginAccount(accountVersion);
 
         // Then: openMarginAccount should return false and the zero address
         assertTrue(!success);
         assertEq(address(0), numeraire);
         assertEq(address(0), liquidator_);
-        assertEq(0, fixedLiquidationCost_);
+        assertEq(0, minimumMargin_);
     }
 
-    function testFuzz_Success_openMarginAccount_ValidAccountVersion(uint256 accountVersion, uint96 fixedLiquidationCost)
+    function testFuzz_Success_openMarginAccount_ValidAccountVersion(uint256 accountVersion, uint96 minimumMargin)
         public
     {
         // Given: accountVersion is valid
         vm.startPrank(users.creatorAddress);
         pool.setAccountVersion(accountVersion, true);
-        pool.setFixedLiquidationCost(fixedLiquidationCost);
+        pool.setMinimumMargin(minimumMargin);
         vm.stopPrank();
 
         // When: Account opens a margin proxyAccount
-        (bool success, address numeraire, address liquidator_, uint256 fixedLiquidationCost_) =
+        (bool success, address numeraire, address liquidator_, uint256 minimumMargin_) =
             pool.openMarginAccount(accountVersion);
 
         // Then: openMarginAccount should return success and correct contract addresses
         assertTrue(success);
         assertEq(address(mockERC20.stable1), numeraire);
         assertEq(address(liquidator), liquidator_);
-        assertEq(fixedLiquidationCost, fixedLiquidationCost_);
+        assertEq(minimumMargin, minimumMargin_);
     }
 }

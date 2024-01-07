@@ -27,7 +27,7 @@ abstract contract Events {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event FixedLiquidationCostSet(uint96 fixedLiquidationCost);
+    event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event LiquidationParametersSet(
