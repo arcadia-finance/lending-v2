@@ -117,7 +117,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             uint16(AssetValuationLib.ONE_4),
             uint16(AssetValuationLib.ONE_4)
         );
-        registryExtension.setMaxRecursiveCalls(address(pool), type(uint256).max);
+        registryExtension.setRiskParameters(address(pool), 0, 15 minutes, type(uint64).max);
         vm.stopPrank();
 
         // Set the Account recipient.
