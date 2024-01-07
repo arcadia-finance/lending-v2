@@ -53,7 +53,7 @@ contract ArcadiaLendingDeployment is Test {
 
         pool_weth.setOriginationFee(10);
         pool_weth.setLiquidationParameters(100, 500, 50, 3 * 10 ** 18, 3 * 10 ** 18);
-        pool_weth.setFixedLiquidationCost(0.002 * 10 ** 18);
+        pool_weth.setMinimumMargin(0.002 * 10 ** 18);
         pool_weth.addTranche(address(srTranche_weth), 85, 10);
         pool_weth.setTreasuryWeights(15, 90);
         pool_weth.setInterestParameters(15_000_000_000_000_000, 70_000_000_000_000_000, 1_250_000_000_000_000_000, 7000);
@@ -70,7 +70,7 @@ contract ArcadiaLendingDeployment is Test {
 
         pool_usdc.setOriginationFee(10);
         pool_weth.setLiquidationParameters(100, 500, 50, 5000 * 10 ** 6, 5000 * 10 ** 6);
-        pool_usdc.setFixedLiquidationCost(2 * 10 ** 6);
+        pool_usdc.setMinimumMargin(2 * 10 ** 6);
         pool_usdc.addTranche(address(srTranche_usdc), 85, 10);
         pool_usdc.setTreasuryWeights(15, 90);
         pool_usdc.setInterestParameters(10_000_000_000_000_000, 55_000_000_000_000_000, 1_000_000_000_000_000_000, 8000);

@@ -134,8 +134,8 @@ contract LendingPoolExtension is LendingPool {
         liquidationWeightTreasury_ = liquidationWeightTreasury;
     }
 
-    function getFixedLiquidationCost() public view returns (uint96) {
-        return fixedLiquidationCost;
+    function getMinimumMargin() public view returns (uint96) {
+        return minimumMargin;
     }
 
     function getMaxInitiationFee() public view returns (uint80) {

@@ -248,9 +248,9 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // And: amountLoaned is bigger than 0.
         amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
 
-        // And: "amountRepaid" is bigger than "amountLoaned".
+        // And: "totalRealisedLiquidity" in "_settleLiquidationHappyFlow" does not overflow.
         // And: "balanceOf" the "liquidityProvider" does not underflow.
-        amountRepaid = bound(amountRepaid, amountLoaned + 1, type(uint256).max - amountLoaned);
+        amountRepaid = bound(amountRepaid, amountLoaned + 1, type(uint128).max - amountLoaned);
 
         vm.startPrank(users.creatorAddress);
         pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);

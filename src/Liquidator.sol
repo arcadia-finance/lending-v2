@@ -251,6 +251,9 @@ contract Liquidator is Owned, ILiquidator {
             }
         }
         assetShares = new uint32[](length);
+
+        if (totalValue == 0) return assetShares;
+
         for (uint256 i; i < length; ++i) {
             unchecked {
                 // The asset shares are calculated relative to the total value of the Account.
@@ -430,9 +433,6 @@ contract Liquidator is Owned, ILiquidator {
         internal
         returns (bool success)
     {
-        // Stop the auction.
-        auctionInformation_.inAuction = false;
-
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
