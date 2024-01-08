@@ -506,7 +506,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, msg.sender, amount);
     }
@@ -541,7 +541,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             amount = accountDebt;
         }
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, bidder, amount);
     }
