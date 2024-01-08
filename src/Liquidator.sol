@@ -22,7 +22,6 @@ import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
-
 contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
