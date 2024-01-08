@@ -588,6 +588,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
+        // Need to update the actionTimestamp before transferring tokens,
+        // or ERC777s could reenter to frontrun Account transfers.
+        IAccount(account).updateActionTimestampByCreditor();
+
         // Send Borrowed funds to the actionTarget.
         asset.safeTransfer(actionTarget, amountBorrowed);
 

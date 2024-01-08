@@ -25,6 +25,11 @@ interface IAccount {
     function getUsedMargin() external view returns (uint256);
 
     /**
+     * @notice Updates the actionTimestamp
+     */
+    function updateActionTimestampByCreditor() external;
+
+    /**
      * @notice Checks if the Account is still healthy for an updated open position.
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
