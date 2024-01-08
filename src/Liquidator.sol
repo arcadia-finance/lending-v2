@@ -14,13 +14,14 @@ import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { LiquidatorErrors } from "./libraries/Errors.sol";
 import { Owned } from "../lib/solmate/src/auth/Owned.sol";
+import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /**
  * @title Liquidator.
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
-contract Liquidator is Owned, ILiquidator {
+contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     using SafeTransferLib for ERC20;
     /* //////////////////////////////////////////////////////////////
                                CONSTANTS
@@ -191,7 +192,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Initiate the liquidation of an Account.
      * @param account The contract address of the Account to be liquidated.
      */
-    function liquidateAccount(address account) external {
+    function liquidateAccount(address account) external nonReentrant {
         if (!IFactory(ACCOUNT_FACTORY).isAccount(account)) revert LiquidatorErrors.IsNotAnAccount();
 
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
@@ -278,7 +279,7 @@ contract Liquidator is Owned, ILiquidator {
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external {
+    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
@@ -399,7 +400,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Ends an auction and settles the liquidation.
      * @param account The contract address of the account in liquidation.
      */
-    function endAuction(address account) external {
+    function endAuction(address account) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is being auctioned.
