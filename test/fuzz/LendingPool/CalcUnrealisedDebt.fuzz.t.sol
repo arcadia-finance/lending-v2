@@ -34,7 +34,7 @@ contract CalcUnrealisedDebt_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
 
         pool.setInterestRate(interestRate);
-        pool.setLastSyncedTimestamp(uint32(block.number));
+        pool.setLastSyncedTimestamp(uint32(block.timestamp));
         pool.setRealisedDebt(realisedDebt);
 
         vm.warp(block.timestamp + deltaTimestamp);
