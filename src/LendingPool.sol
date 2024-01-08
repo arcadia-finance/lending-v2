@@ -234,7 +234,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The interest weight of each Tranche determines the relative share of the yield (interest payments) that goes to its Liquidity providers.
      * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
-    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight)
+        external
+        onlyOwner
+        processInterests
+    {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
@@ -260,7 +264,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param liquidationWeight The new liquidation weight of the Tranche at the index.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
-    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight)
+        external
+        onlyOwner
+        processInterests
+    {
         if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + interestWeight_;
         interestWeightTranches[index] = interestWeight_;
