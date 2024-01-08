@@ -644,7 +644,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity of a tranche equals the sum of the realised liquidity
             // of the tranche, and its pending interests.
-            uint256 interest = calcUnrealisedDebt().mulDivUp(interestWeight[owner_], totalInterestWeight);
+            uint256 interest = calcUnrealisedDebt().mulDivDown(interestWeight[owner_], totalInterestWeight);
             unchecked {
                 assets = realisedLiquidityOf[owner_] + interest;
             }
