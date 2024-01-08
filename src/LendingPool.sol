@@ -994,7 +994,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 badDebt = openDebt - terminationReward - liquidationPenalty;
             }
 
-            totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
         } else {
             uint256 remainder = liquidationPenalty + terminationReward - openDebt;
