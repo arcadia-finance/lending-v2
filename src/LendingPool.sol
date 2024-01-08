@@ -234,7 +234,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The interest weight of each Tranche determines the relative share of the yield (interest payments) that goes to its Liquidity providers.
      * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
-    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight)
+        external
+        onlyOwner
+        processInterests
+    {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
@@ -260,7 +264,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param liquidationWeight The new liquidation weight of the Tranche at the index.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
-    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight)
+        external
+        onlyOwner
+        processInterests
+    {
         if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + interestWeight_;
         interestWeightTranches[index] = interestWeight_;
@@ -501,7 +509,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, msg.sender, amount);
     }
@@ -536,7 +544,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             amount = accountDebt;
         }
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, bidder, amount);
     }
@@ -651,7 +659,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity of a tranche equals the sum of the realised liquidity
             // of the tranche, and its pending interests.
-            uint256 interest = calcUnrealisedDebt().mulDivUp(interestWeight[owner_], totalInterestWeight);
+            uint256 interest = calcUnrealisedDebt().mulDivDown(interestWeight[owner_], totalInterestWeight);
             unchecked {
                 assets = realisedLiquidityOf[owner_] + interest;
             }
@@ -889,7 +897,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + initiationReward);
 
         // If this is the sole ongoing auction, prevent any deposits and withdrawals in the most jr tranche
-        if (auctionsInProgress == 0) ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
+        }
 
         unchecked {
             ++auctionsInProgress;
@@ -991,7 +1001,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 badDebt = openDebt - terminationReward - liquidationPenalty;
             }
 
-            totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
         } else {
             uint256 remainder = liquidationPenalty + terminationReward - openDebt;

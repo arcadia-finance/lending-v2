@@ -5,9 +5,10 @@
 pragma solidity 0.8.22;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
@@ -21,7 +22,9 @@ import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
+
 contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
+    using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
     /* //////////////////////////////////////////////////////////////
                                CONSTANTS
@@ -256,11 +259,8 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         if (totalValue == 0) return assetShares;
 
         for (uint256 i; i < length; ++i) {
-            unchecked {
-                // The asset shares are calculated relative to the total value of the Account.
-                // "assetValue" is a uint256 in Numeraire units, will never overflow.
-                assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
-            }
+            // The asset shares are calculated relative to the total value of the Account.
+            assetShares[i] = uint32(assetValues[i].assetValue.mulDivUp(ONE_4, totalValue));
         }
     }
 
@@ -330,12 +330,12 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
-        // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
-        // This means that when the calculated bid price is faulty, the withdraw in the Account will always revert.
+        // unchecked: Exposure limits are capped to a uint112.
+        // So if askedAssetAmounts are passed such that totalShare overflows,
+        // then the withdraw in the Account will always revert.
         for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
-                totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
+                totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
             }
         }
     }

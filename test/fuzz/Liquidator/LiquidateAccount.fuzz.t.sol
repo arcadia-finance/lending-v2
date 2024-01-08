@@ -13,7 +13,7 @@ import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
+ * @notice Fuzz tests for the function "liquidateAccount" of contract "Liquidator".
  */
 contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     using FixedPointMathLib for uint256;
