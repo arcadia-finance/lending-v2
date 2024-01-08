@@ -8,7 +8,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 
 /**
- * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
+ * @notice Fuzz tests for the function "bid" of contract "Liquidator".
  */
 contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////

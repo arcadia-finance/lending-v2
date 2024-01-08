@@ -273,6 +273,14 @@ contract LiquidatorExtension is Liquidator {
         auctionInformation[account].startDebt = startDebt;
     }
 
+    function setAssetAmounts(address account, uint256[] memory assetAmounts) public {
+        auctionInformation[account].assetAmounts = assetAmounts;
+    }
+
+    function setAssetShares(address account, uint32[] memory assetShares) public {
+        auctionInformation[account].assetShares = assetShares;
+    }
+
     function getAuctionInformationPartOne(address account_)
         public
         view
