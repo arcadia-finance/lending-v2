@@ -174,6 +174,10 @@ contract LendingPoolExtension is LendingPool {
         return tranches[id];
     }
 
+    function getTranches() public view returns (address[] memory) {
+        return tranches;
+    }
+
     function getAccountFactory() public view returns (address) {
         return ACCOUNT_FACTORY;
     }
@@ -267,6 +271,14 @@ contract LiquidatorExtension is Liquidator {
         auctionInformation[account].inAuction = true;
         auctionInformation[account].creditor = creditor;
         auctionInformation[account].startDebt = startDebt;
+    }
+
+    function setAssetAmounts(address account, uint256[] memory assetAmounts) public {
+        auctionInformation[account].assetAmounts = assetAmounts;
+    }
+
+    function setAssetShares(address account, uint32[] memory assetShares) public {
+        auctionInformation[account].assetShares = assetShares;
     }
 
     function getAuctionInformationPartOne(address account_)

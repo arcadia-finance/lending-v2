@@ -5,22 +5,25 @@
 pragma solidity 0.8.22;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { LiquidatorErrors } from "./libraries/Errors.sol";
 import { Owned } from "../lib/solmate/src/auth/Owned.sol";
+import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /**
  * @title Liquidator.
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
-contract Liquidator is Owned, ILiquidator {
+contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
+    using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
     /* //////////////////////////////////////////////////////////////
                                CONSTANTS
@@ -191,7 +194,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Initiate the liquidation of an Account.
      * @param account The contract address of the Account to be liquidated.
      */
-    function liquidateAccount(address account) external {
+    function liquidateAccount(address account) external nonReentrant {
         if (!IFactory(ACCOUNT_FACTORY).isAccount(account)) revert LiquidatorErrors.IsNotAnAccount();
 
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
@@ -255,11 +258,8 @@ contract Liquidator is Owned, ILiquidator {
         if (totalValue == 0) return assetShares;
 
         for (uint256 i; i < length; ++i) {
-            unchecked {
-                // The asset shares are calculated relative to the total value of the Account.
-                // "assetValue" is a uint256 in Numeraire units, will never overflow.
-                assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
-            }
+            // The asset shares are calculated relative to the total value of the Account.
+            assetShares[i] = uint32(assetValues[i].assetValue.mulDivUp(ONE_4, totalValue));
         }
     }
 
@@ -278,7 +278,7 @@ contract Liquidator is Owned, ILiquidator {
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external {
+    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
@@ -329,12 +329,12 @@ contract Liquidator is Owned, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
-        // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
-        // This means that when the calculated bid price is faulty, the withdraw in the Account will always revert.
+        // unchecked: Exposure limits are capped to a uint112.
+        // So if askedAssetAmounts are passed such that totalShare overflows,
+        // then the withdraw in the Account will always revert.
         for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
-                totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
+                totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
             }
         }
     }
@@ -399,7 +399,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Ends an auction and settles the liquidation.
      * @param account The contract address of the account in liquidation.
      */
-    function endAuction(address account) external {
+    function endAuction(address account) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is being auctioned.

@@ -51,8 +51,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
         uint256 interest = unrealisedDebt * 50 / 100;
-        if (interest * 100 < unrealisedDebt * 50) interest += 1;
-        // interest for a tranche is rounded up
+        // interest for a tranche is rounded down
         uint256 expectedValue = initialLiquidity + interest;
 
         uint256 actualValue = pool.liquidityOf(address(srTranche));
