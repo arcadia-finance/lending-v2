@@ -375,11 +375,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         if (assets == 0) revert LendingPoolErrors.ZeroAmount();
 
         address tranche = tranches[trancheIndex];
+
+        // Need to transfer before donating or ERC777s could reenter.
+        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        asset.safeTransferFrom(msg.sender, address(this), assets);
+
         // Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
         // See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
         if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPoolErrors.InsufficientShares();
-
-        asset.safeTransferFrom(msg.sender, address(this), assets);
 
         unchecked {
             realisedLiquidityOf[tranche] += assets; //[̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]
