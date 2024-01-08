@@ -174,6 +174,10 @@ contract LendingPoolExtension is LendingPool {
         return tranches[id];
     }
 
+    function getTranches() public view returns (address[] memory) {
+        return tranches;
+    }
+
     function getAccountFactory() public view returns (address) {
         return ACCOUNT_FACTORY;
     }
