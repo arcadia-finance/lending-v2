@@ -180,7 +180,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
@@ -231,7 +231,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.setTotalRealisedLiquidity(0);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
@@ -275,7 +275,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         initiateLiquidation(minimumMargin, amountLoaned);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // By setting the minUsdValue of creditor to uint256 max value, remaining assets value should be 0.
         vm.prank(pool.riskManager());
@@ -327,7 +327,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         initiateLiquidation(minimumMargin, amountLoaned);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);

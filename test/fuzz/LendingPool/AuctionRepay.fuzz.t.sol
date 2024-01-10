@@ -33,7 +33,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(Unauthorized.selector);
-        pool.auctionRepay(0, amount, address(proxyAccount), bidder);
+        pool.auctionRepay(0, 0, amount, address(proxyAccount), bidder);
         vm.stopPrank();
     }
 
@@ -67,7 +67,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.startPrank(address(liquidator));
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        pool.auctionRepay(amountLoaned, amountLoaned, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, 0, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
     }
 
@@ -99,7 +99,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.startPrank(address(liquidator));
         vm.expectRevert(FunctionIsPaused.selector);
-        pool.auctionRepay(amountLoaned, amountLoaned, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, 0, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
     }
 
@@ -120,7 +120,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(address(liquidator));
         vm.expectRevert(IsNotAnAccountWithDebt.selector);
-        pool.auctionRepay(amountRepaid, amountRepaid, nonAccount, sender);
+        pool.auctionRepay(amountRepaid, 0, amountRepaid, nonAccount, sender);
         vm.stopPrank();
     }
 
@@ -145,7 +145,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(liquidator));
         vm.expectRevert(ZeroShares.selector);
-        pool.auctionRepay(amountLoaned, 0, address(proxyAccount), sender);
+        pool.auctionRepay(amountLoaned, 0, 0, address(proxyAccount), sender);
     }
 
     function testFuzz_Success_auctionRepay_AmountInferiorLoan(
@@ -181,7 +181,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(address(liquidator));
         vm.expectEmit(true, true, true, true);
         emit Repay(address(proxyAccount), sender, amountRepaid);
-        bool earlyTerminate = pool.auctionRepay(amountLoaned, amountRepaid, address(proxyAccount), sender);
+        bool earlyTerminate = pool.auctionRepay(amountLoaned, 0, amountRepaid, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertFalse(earlyTerminate);
@@ -220,7 +220,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(address(liquidator));
         vm.expectEmit(true, true, true, true);
         emit Repay(address(proxyAccount), sender, amountLoaned);
-        bool earlyTerminate = pool.auctionRepay(amountLoaned, amountLoaned, address(proxyAccount), sender);
+        bool earlyTerminate = pool.auctionRepay(amountLoaned, 0, amountLoaned, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertTrue(earlyTerminate);
@@ -268,7 +268,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.expectEmit(true, true, true, true);
         emit Repay(address(proxyAccount), sender, amountLoaned);
         vm.startPrank(address(liquidator));
-        bool earlyTerminate = pool.auctionRepay(amountLoaned, amountRepaid, address(proxyAccount), sender);
+        bool earlyTerminate = pool.auctionRepay(amountLoaned, 0, amountRepaid, address(proxyAccount), sender);
         vm.stopPrank();
 
         assertTrue(earlyTerminate);

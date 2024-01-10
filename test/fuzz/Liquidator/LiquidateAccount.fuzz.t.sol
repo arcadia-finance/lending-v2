@@ -233,7 +233,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Then: Auction should be set and started
         (uint256 initiationReward_, uint256 terminationReward_, uint256 liquidationPenaltyReward_) =
-            pool.getCalculateRewards(openDebt_);
+            pool.getCalculateRewards(openDebt_, 0);
 
         uint256 initiationReward = uint256(openDebt_).mulDivDown(initiationWeightStack, 10_000);
         initiationReward = initiationReward > maxInitiationFeeStack ? maxInitiationFeeStack : initiationReward;

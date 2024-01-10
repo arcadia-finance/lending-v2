@@ -517,13 +517,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Repays debt via an auction.
      * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param amount The amount repaid by a bidder during the auction.
      * @param account The contract address of the Arcadia Account backing the debt.
      * @param bidder The address of the bidder.
      * @return earlyTerminate Bool indicating whether the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
-    function auctionRepay(uint256 startDebt, uint256 amount, address account, address bidder)
+    function auctionRepay(uint256 startDebt, uint256 minimumMargin_, uint256 amount, address account, address bidder)
         external
         whenLiquidationNotPaused
         onlyLiquidator
@@ -540,7 +541,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
-            _settleLiquidationHappyFlow(account, startDebt, bidder, (amount - accountDebt));
+            _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, bidder, (amount - accountDebt));
             amount = accountDebt;
         }
 
@@ -862,6 +863,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Initiates the liquidation process for an Account.
      * @param initiator The address of the liquidation initiator.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @return startDebt The initial debt of the liquidated Account.
      * @dev This function is only callable by an Arcadia Account with debt.
      * The liquidation process involves assessing the Account's debt and calculating liquidation incentives,
@@ -870,7 +872,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
      * @dev If the provided Account has a debt balance of 0, the function reverts with the error "IsNotAnAccountWithDebt."
      */
-    function startLiquidation(address initiator)
+    function startLiquidation(address initiator, uint256 minimumMargin_)
         external
         override
         whenLiquidationNotPaused
@@ -885,7 +887,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
         // Mint the liquidation incentives as extra debt towards the Account.
         _deposit(initiationReward + liquidationPenalty + terminationReward, msg.sender);
@@ -913,24 +916,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the liquidation terminator.
      * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
      *  to bring the Account in a healthy position, and pay out all liquidation incentives to the
      *  relevant actors.
      */
-    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator)
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, uint256 minimumMargin_, address terminator)
         external
         whenLiquidationNotPaused
         onlyLiquidator
         processInterests
     {
-        _settleLiquidationHappyFlow(account, startDebt, terminator, 0);
+        _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, terminator, 0);
     }
 
     /**
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
      * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
@@ -942,10 +947,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *   - If there are still remaining assets after paying off all debt and incentives,
      *   the surplus goes towards the owner of the account.
      */
-    function _settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
-        internal
-    {
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+    function _settleLiquidationHappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator,
+        uint256 surplus
+    ) internal {
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
         // Pay out the "liquidationPenalty" to the LPs and Treasury.
         _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
@@ -971,6 +981,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives/bad debt.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the auction terminator.
      * @dev In the unhappy flow, the auction proceeds are not sufficient to pay out all liquidation incentives
      *  and maybe not even to pay off all debt.
@@ -981,13 +992,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *   - Next, the underlying assets of LPs in the second most junior Tranche are written off pro rata.
      *   - etc.
      */
-    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, address terminator)
-        external
-        whenLiquidationNotPaused
-        onlyLiquidator
-        processInterests
-    {
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+    function settleLiquidationUnhappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator
+    ) external whenLiquidationNotPaused onlyLiquidator processInterests {
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
         // Any remaining debt that was not recovered during the auction must be written off.
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
@@ -1121,11 +1133,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
      * @param debt The debt amount of the Account at the time of liquidation initiation.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator fee.
      * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing fee.
      * @return liquidationPenalty The penalty paid by the Account owner towards the liquidity providers and the protocol treasury.
      */
-    function _calculateRewards(uint256 debt)
+    function _calculateRewards(uint256 debt, uint256 minimumMargin_)
         internal
         view
         returns (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty)

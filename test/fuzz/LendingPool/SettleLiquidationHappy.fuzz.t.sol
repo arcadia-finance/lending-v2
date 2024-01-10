@@ -37,7 +37,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(Unauthorized.selector);
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -50,7 +50,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         surplus = uint128(bound(surplus, 1, type(uint128).max));
         vm.assume(startDebt > 0);
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
         vm.assume(uint256(liquidity) >= startDebt + initiationReward + auctionTerminationReward + liquidationPenalty);
         vm.assume(
             uint256(liquidity) + surplus + initiationReward + auctionTerminationReward + liquidationPenalty
@@ -73,7 +73,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator, surplus);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator, surplus);
 
         // round up
         uint256 liqPenaltyTreasury =

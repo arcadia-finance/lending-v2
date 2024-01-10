@@ -211,14 +211,22 @@ contract LendingPoolExtension is LendingPool {
         return terminationWeight;
     }
 
-    function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
-        return _calculateRewards(amount);
+    function getCalculateRewards(uint256 amount, uint256 minimumMargin_)
+        public
+        view
+        returns (uint256, uint256, uint256)
+    {
+        return _calculateRewards(amount, minimumMargin_);
     }
 
-    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
-        external
-    {
-        _settleLiquidationHappyFlow(account, startDebt, terminator, surplus);
+    function settleLiquidationHappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator,
+        uint256 surplus
+    ) external {
+        _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, terminator, surplus);
     }
 
     function getInterestRateVariables() public view returns (uint256, uint256, uint256, uint256) {

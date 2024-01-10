@@ -294,8 +294,9 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         uint128 startDebt = auctionInformation_.startDebt;
-        bool earlyTerminate =
-            ILendingPool(auctionInformation_.creditor).auctionRepay(startDebt, price, account, msg.sender);
+        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
+            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
+        );
 
         // Transfer the assets to the bidder.
         IAccount(account).auctionBid(
@@ -450,13 +451,13 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             // Happy flow: Account is back in a healthy state.
             // An Account is healthy if the collateral value is equal or greater than the used margin.
             // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
-            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (collateralValue == 0) {
             // Unhappy flow: All collateral is sold.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
             IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);

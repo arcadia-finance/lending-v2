@@ -37,7 +37,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(Unauthorized.selector);
-        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -53,7 +53,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint256 totalAmount = uint256(liquiditySenior) + uint256(liquidityJunior);
         vm.assume(startDebt > totalAmount + 2); // Bad debt should be excess since initiator and terminator rewards are 1 and 1 respectively, it should be added to make the baddebt excess
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
         uint256 openDebt = startDebt + initiationReward + terminationReward + liquidationPenalty;
         vm.assume(openDebt <= type(uint128).max);
 
@@ -72,7 +72,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // When Then: settleLiquidation should fail if there is more debt than the liquidity
         vm.startPrank(address(liquidator));
         vm.expectRevert(stdError.arithmeticError);
-        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -86,7 +86,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
@@ -121,7 +121,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
 
         // As all liquidation penalty can not be distributed
         uint256 liquidationFee = liquidationPenalty - openDebt;
@@ -174,7 +174,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setLiquidationParameters(2, 5, 2, type(uint80).max, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
@@ -211,7 +211,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
 
         uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
 
@@ -253,7 +253,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         );
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
 
         // Given: Liquidity is deposited in Lending Pool
         vm.assume(
@@ -289,7 +289,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
 
         // And: Terminator should not be able to claim his rewards for liquidation termination
         assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
