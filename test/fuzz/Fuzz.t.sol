@@ -101,7 +101,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // Set the Liquidation parameters.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(100, 500, 50, 0, 0, 0);
+        pool.setLiquidationParameters(100, 500, 50, 0, 0);
 
         // Set the Guardian.
         vm.prank(users.creatorAddress);

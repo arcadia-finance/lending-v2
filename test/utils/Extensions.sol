@@ -216,37 +216,6 @@ contract LendingPoolExtension is LendingPool {
     function updateInterestRate(uint256 realisedDebt_, uint256 totalRealisedLiquidity_) public {
         return _updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
     }
-
-    function setLiquidationParameters(
-        uint16 initiationWeight,
-        uint16 penaltyWeight,
-        uint16 terminationWeight,
-        uint16 minRewardWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward
-    ) external onlyOwner {
-        // When auctions are ongoing, it is not allowed to modify the auction parameters,
-        // as that would corrupt the rewards and penalties calculated by _calculateRewards().
-        if (auctionsInProgress != 0) revert LendingPoolErrors.AuctionOngoing();
-
-        // Total penalties/rewards, paid by the Account cannot exceed MAX_TOTAL_PENALTY.
-        if (uint256(initiationWeight) + penaltyWeight + terminationWeight > MAX_TOTAL_PENALTY) {
-            revert LendingPoolErrors.LiquidationWeightsTooHigh();
-        }
-
-        // Sum of the initiationReward and terminationReward cannot exceed minimumMargin of the Account.
-        // -> minRewardWeight is capped to 50%.
-        if (minRewardWeight > ONE_4 / 2) revert LendingPoolErrors.LiquidationWeightsTooHigh();
-
-        liquidationParameters = LiquidationParameters({
-            initiationWeight: initiationWeight,
-            penaltyWeight: penaltyWeight,
-            terminationWeight: terminationWeight,
-            minRewardWeight: minRewardWeight,
-            maxInitiationReward: maxInitiationReward,
-            maxTerminationReward: maxTerminationReward
-        });
-    }
 }
 
 /* //////////////////////////////////////////////////////////////

@@ -132,7 +132,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: All liquidation parameters are 0 (we do not tests want to test _calculateRewards and want to avoid overflows).
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(0, 0, 0, 0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         // And: Account has no collateral.
 

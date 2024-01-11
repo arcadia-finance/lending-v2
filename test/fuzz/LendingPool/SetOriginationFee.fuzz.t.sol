@@ -31,11 +31,8 @@ contract SetOriginationFee_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_setOriginationFee(uint8 fee) public {
-        vm.startPrank(users.creatorAddress);
-        vm.expectEmit(true, true, true, true);
-        emit OriginationFeeSet(fee);
+        vm.prank(users.creatorAddress);
         pool.setOriginationFee(fee);
-        vm.stopPrank();
 
         assertEq(pool.getOriginationFee(), fee);
     }

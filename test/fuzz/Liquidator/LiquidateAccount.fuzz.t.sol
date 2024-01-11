@@ -58,7 +58,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Pool rewards are set to zero
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(0, 0, 0, 0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         vm.prank(liquidationInitiator);
         liquidator.liquidateAccount(address(proxyAccount));
@@ -125,7 +125,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Pool rewards are set to zero
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(0, 0, 0, 0, 0, 0);
+        pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
         vm.prank(liquidationInitiator);
@@ -138,8 +138,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -158,9 +157,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -189,8 +186,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -212,9 +208,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -225,8 +219,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Avoid stack too deep
         uint16 terminationWeightStack = terminationWeight;
-        uint80 maxInitiationRewardStack = maxInitiationReward;
-        uint80 maxTerminationRewardStack = maxTerminationReward;
+        uint80 maxRewardStack = maxReward;
         uint16 penaltyWeightStack = penaltyWeight;
         uint16 initiationWeightStack = initiationWeight;
         uint128 openDebt_ = amountLoaned + 1;
@@ -236,12 +229,11 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             pool.getCalculateRewards(openDebt_, 0);
 
         uint256 initiationReward = uint256(openDebt_).mulDivDown(initiationWeightStack, 10_000);
-        initiationReward = initiationReward > maxInitiationRewardStack ? maxInitiationRewardStack : initiationReward;
+        initiationReward = initiationReward > maxRewardStack ? maxRewardStack : initiationReward;
 
         assertEq(initiationReward, initiationReward_);
         uint256 terminationReward = uint256(openDebt_).mulDivDown(terminationWeightStack, 10_000);
-        terminationReward =
-            terminationReward > maxTerminationRewardStack ? maxTerminationRewardStack : terminationReward;
+        terminationReward = terminationReward > maxRewardStack ? maxRewardStack : terminationReward;
 
         uint256 liquidationPenaltyReward = uint256(openDebt_).mulDivUp(penaltyWeightStack, 10_000);
 
@@ -260,8 +252,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint8 initiationWeight,
         uint8 penaltyWeight,
         uint8 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -280,9 +271,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -314,8 +303,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint8 initiationWeight,
         uint8 penaltyWeight,
         uint8 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         vm.assume(amountLoaned > 1);
@@ -334,9 +322,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
         uint256 slot = stdstore.target(address(accountV1Logic)).sig(accountV1Logic.erc20Balances.selector).with_key(

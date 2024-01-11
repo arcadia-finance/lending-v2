@@ -25,87 +25,95 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setLiquidationParameters_NonOwner(
         address unprivilegedAddress_,
-        LendingPool.LiquidationParameters memory params
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint16 minRewardWeight,
+        uint80 maxReward
     ) public {
         vm.assume(unprivilegedAddress_ != users.creatorAddress);
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setLiquidationParameters(params);
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_setLiquidationParameters_AuctionsOngoing(
         uint16 auctionsInProgress,
-        LendingPool.LiquidationParameters memory params
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint16 minRewardWeight,
+        uint80 maxReward
     ) public {
         auctionsInProgress = uint16(bound(auctionsInProgress, 1, type(uint16).max));
         pool.setAuctionsInProgress(auctionsInProgress);
 
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(AuctionOngoing.selector);
-        pool.setLiquidationParameters(params);
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_setLiquidationParameters_WeightsTooHigh(LendingPool.LiquidationParameters memory params)
-        public
-    {
-        vm.assume(
-            uint32(params.initiationWeight) + params.penaltyWeight + params.terminationWeight
-                > pool.getMaxTotalPenalty()
-        );
+    function testFuzz_Revert_setLiquidationParameters_WeightsTooHigh(
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint16 minRewardWeight,
+        uint80 maxReward
+    ) public {
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > pool.getMaxTotalPenalty());
 
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(LiquidationWeightsTooHigh.selector);
-        pool.setLiquidationParameters(params);
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_setLiquidationParameters_MinRewardWeightTooHigh(
-        LendingPool.LiquidationParameters memory params
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint16 minRewardWeight,
+        uint80 maxReward
     ) public {
-        vm.assume(
-            uint32(params.initiationWeight) + params.penaltyWeight + params.terminationWeight
-                <= pool.getMaxTotalPenalty()
-        );
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= pool.getMaxTotalPenalty());
 
-        params.minRewardWeight = uint16(bound(params.minRewardWeight, 5000 + 1, type(uint16).max));
+        minRewardWeight = uint16(bound(minRewardWeight, 5000 + 1, type(uint16).max));
 
         vm.startPrank(users.creatorAddress);
         vm.expectRevert(LiquidationWeightsTooHigh.selector);
-        pool.setLiquidationParameters(params);
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setLiquidationParameters(LendingPool.LiquidationParameters memory params) public {
-        vm.assume(
-            uint32(params.initiationWeight) + params.penaltyWeight + params.terminationWeight
-                <= pool.getMaxTotalPenalty()
-        );
+    function testFuzz_Success_setLiquidationParameters(
+        uint16 initiationWeight,
+        uint16 penaltyWeight,
+        uint16 terminationWeight,
+        uint16 minRewardWeight,
+        uint80 maxReward
+    ) public {
+        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= pool.getMaxTotalPenalty());
 
-        params.minRewardWeight = uint16(bound(params.minRewardWeight, 0, 5000));
+        minRewardWeight = uint16(bound(minRewardWeight, 0, 5000));
 
-        vm.startPrank(users.creatorAddress);
-        vm.expectEmit();
-        emit LiquidationParametersSet(params);
-        pool.setLiquidationParameters(params);
-        vm.stopPrank();
+        vm.prank(users.creatorAddress);
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
 
         (
-            uint80 maxInitiationReward,
-            uint80 maxTerminationReward,
-            uint16 minRewardWeight,
-            uint16 initiationWeight,
-            uint16 penaltyWeight,
-            uint16 terminationWeight
-        ) = pool.liquidationParameters();
+            uint16 initiationWeight_,
+            uint16 penaltyWeight_,
+            uint16 terminationWeight_,
+            uint16 minRewardWeight_,
+            uint80 maxReward_
+        ) = pool.getLiquidationParameters();
 
-        assertEq(penaltyWeight, params.penaltyWeight);
-        assertEq(initiationWeight, params.initiationWeight);
-        assertEq(terminationWeight, params.terminationWeight);
-        assertEq(minRewardWeight, params.minRewardWeight);
-        assertEq(maxInitiationReward, params.maxInitiationReward);
-        assertEq(maxTerminationReward, params.maxTerminationReward);
+        assertEq(penaltyWeight_, penaltyWeight);
+        assertEq(initiationWeight_, initiationWeight);
+        assertEq(terminationWeight_, terminationWeight);
+        assertEq(minRewardWeight_, minRewardWeight);
+        assertEq(maxReward_, maxReward);
     }
 }

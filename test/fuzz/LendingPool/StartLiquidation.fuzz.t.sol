@@ -73,8 +73,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         // Given: Account has debt
@@ -92,9 +91,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -119,12 +116,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And : Liquidation incentives should have been added to openDebt of Account
         uint256 initiationReward = uint256(amountLoanedStack + 1).mulDivDown(initiationWeightStack, 10_000);
-        initiationReward = initiationReward > maxInitiationReward ? maxInitiationReward : initiationReward;
+        initiationReward = initiationReward > maxReward ? maxReward : initiationReward;
         uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 10_000);
         uint256 terminationReward = (uint256(amountLoanedStack + 1)).mulDivDown(terminationWeightStack, 10_000);
-        terminationReward = terminationReward > maxTerminationReward ? maxTerminationReward : terminationReward;
+        terminationReward = terminationReward > maxReward ? maxReward : terminationReward;
 
-        // And: Returned amount should be equal to maxInitiationReward
+        // And: Returned amount should be equal to maxReward
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
             (amountLoanedStack + 1) + initiationReward + liquidationPenalty + terminationReward
@@ -136,8 +133,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         address liquidationInitiator
     ) public {
         // Given: Account has debt
@@ -155,9 +151,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -191,12 +185,12 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And : Liquidation incentives should have been added to openDebt of Account
         uint256 initiationReward = uint256(amountLoanedStack + 1).mulDivDown(initiationWeightStack, 10_000);
-        initiationReward = initiationReward > maxInitiationReward ? maxInitiationReward : initiationReward;
+        initiationReward = initiationReward > maxReward ? maxReward : initiationReward;
         uint256 liquidationPenalty = (uint256(amountLoanedStack + 1)).mulDivUp(penaltyWeightStack, 10_000);
         uint256 terminationReward = (uint256(amountLoanedStack + 1)).mulDivDown(terminationWeightStack, 10_000);
-        terminationReward = terminationReward > maxTerminationReward ? maxTerminationReward : terminationReward;
+        terminationReward = terminationReward > maxReward ? maxReward : terminationReward;
 
-        // And: Returned amount should be equal to maxInitiationReward
+        // And: Returned amount should be equal to maxReward
         assertEq(
             pool.getOpenPosition(address(proxyAccount)),
             (amountLoanedStack + 1) + initiationReward + liquidationPenalty + terminationReward
@@ -208,8 +202,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 initiationWeight,
         uint16 penaltyWeight,
         uint16 terminationWeight,
-        uint80 maxInitiationReward,
-        uint80 maxTerminationReward,
+        uint80 maxReward,
         uint16 auctionsInProgress,
         address liquidationInitiator
     ) public {
@@ -228,9 +221,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Liquidation parameters are set.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(
-            initiationWeight, penaltyWeight, terminationWeight, 0, maxInitiationReward, maxTerminationReward
-        );
+        pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
