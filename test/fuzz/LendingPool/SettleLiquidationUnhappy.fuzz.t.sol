@@ -146,16 +146,16 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         }
 
         // Then: Terminator should be able to claim his rewards for liquidation termination
-        assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
+        assertEq(pool.liquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.liquidityOf(address(srTranche)), liquidity);
 
         // And: The jr tranche will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
+        assertEq(pool.liquidityOf(address(jrTranche)), liqPenaltyJunior);
         // And: treasury will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
+        assertEq(pool.liquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remainder should be claimable by the original owner
-        assertEq(pool.realisedLiquidityOf(users.accountOwner), 0);
+        assertEq(pool.liquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationFee + auctionTerminationReward);
 
@@ -216,15 +216,15 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
 
         // Then: Terminator should be able to claim his rewards for liquidation termination
-        assertEq(pool.realisedLiquidityOf(auctionTerminator), leftAuctionTerminationReward);
+        assertEq(pool.liquidityOf(auctionTerminator), leftAuctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.liquidityOf(address(srTranche)), liquidity);
         // And: The jr tranche will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
+        assertEq(pool.liquidityOf(address(jrTranche)), 0);
         // And: treasury will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(treasury)), 0);
+        assertEq(pool.liquidityOf(address(treasury)), 0);
         // And: The remainder should be claimable by the original owner
-        assertEq(pool.realisedLiquidityOf(users.accountOwner), 0);
+        assertEq(pool.liquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
         assertEq(pool.totalRealisedLiquidity(), liquidity + leftAuctionTerminationReward);
 
@@ -292,9 +292,9 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.settleLiquidationUnhappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
 
         // And: Terminator should not be able to claim his rewards for liquidation termination
-        assertEq(pool.realisedLiquidityOf(auctionTerminator), 0);
+        assertEq(pool.liquidityOf(auctionTerminator), 0);
 
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.liquidityOf(address(srTranche)), liquidity);
     }
 }

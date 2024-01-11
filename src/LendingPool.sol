@@ -110,7 +110,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     // Map tranche => realisedLiquidity.
     // Amount of `underlying asset` that is claimable by the liquidity providers.
     // Does not take into account pending interests.
-    mapping(address => uint256) public realisedLiquidityOf;
+    mapping(address => uint256) internal realisedLiquidityOf;
     // Map Account => owner => beneficiary => amount.
     // Stores the credit allowances for a beneficiary per Account and per Owner.
     mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
@@ -154,6 +154,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event MinimumMarginSet(uint96 minimumMargin);
+    event InterestRate(uint80 interestRate);
+    event InterestRateParametersUpdated(
+        uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
+    );
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
     event LiquidationParametersSet(LiquidationParameters liquidationParameters);
@@ -163,10 +167,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event TranchePopped(address tranche);
     event TrancheWeightsUpdated(uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
-    event InterestRate(uint80 interestRate);
-    event InterestRateParametersUpdated(
-        uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
-    );
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS

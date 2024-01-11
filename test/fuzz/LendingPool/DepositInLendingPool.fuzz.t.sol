@@ -65,7 +65,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), amount);
+        assertEq(pool.liquidityOf(address(srTranche)), amount);
         assertEq(pool.totalRealisedLiquidity(), amount);
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
     }
@@ -82,7 +82,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(jrTranche));
         pool.depositInLendingPool(amount1, users.liquidityProvider);
 
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), amount1);
+        assertEq(pool.liquidityOf(address(jrTranche)), amount1);
         assertEq(pool.totalRealisedLiquidity(), totalAmount);
         assertEq(mockERC20.stable1.balanceOf(address(pool)), totalAmount);
     }
