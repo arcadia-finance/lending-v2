@@ -11,11 +11,11 @@ import { IAccount } from "./interfaces/IAccount.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
+import { LendingPoolErrors } from "./libraries/Errors.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
-import { LendingPoolErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Arcadia LendingPool.
@@ -89,20 +89,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     address internal treasury;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
-    // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 public maxInitiationFee;
-    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
-    uint80 public maxTerminationFee;
-    // Fee paid to the Liquidation Initiator.
-    // Defined as a fraction of the openDebt with 4 decimals precision.
-    // Absolute fee can be further capped to a max amount by the creditor.
-    uint16 public initiationWeight;
-    // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
-    // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 public penaltyWeight;
-    // Fee paid to the address that is ending an auction.
-    // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 public terminationWeight;
+
+    // The parameters to calculate the liquidation rewards for an auctioned Account.
+    LiquidationParameters public liquidationParameters;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
@@ -126,6 +115,25 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     // Stores the credit allowances for a beneficiary per Account and per Owner.
     mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
 
+    struct LiquidationParameters {
+        // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
+        uint80 maxInitiationReward;
+        // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
+        uint80 maxTerminationReward;
+        // Minimum initiation and termination reward, relative to the minimumMargin, 4 decimal precision.
+        uint16 minRewardWeight;
+        // Fee paid to the Liquidation Initiator.
+        // Defined as a fraction of the openDebt with 4 decimals precision.
+        // Absolute fee can be further capped to a max amount by the creditor.
+        uint16 initiationWeight;
+        // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
+        // Defined as a fraction of the openDebt with 4 decimals precision.
+        uint16 penaltyWeight;
+        // Fee paid to the address that is ending an auction.
+        // Defined as a fraction of the openDebt with 4 decimals precision.
+        uint16 terminationWeight;
+    }
+
     /* //////////////////////////////////////////////////////////////
                                 EVENTS
     ////////////////////////////////////////////////////////////// */
@@ -148,13 +156,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event LiquidationParametersSet(
-        uint16 initiationWeight,
-        uint16 penaltyWeight,
-        uint16 terminationWeight,
-        uint80 maxInitiationFee,
-        uint80 maxTerminationFee
-    );
+    event LiquidationParametersSet(LiquidationParameters liquidationParameters);
     event OriginationFeeSet(uint8 originationFee);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
@@ -1013,7 +1015,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 badDebt = openDebt - terminationReward - liquidationPenalty;
             }
 
-            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity - badDebt);
+            totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
         } else {
             uint256 remainder = liquidationPenalty + terminationReward - openDebt;
@@ -1134,24 +1136,35 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
      * @param debt The debt amount of the Account at the time of liquidation initiation.
      * @param minimumMargin_ The minimum margin of the Account.
-     * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator fee.
-     * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing fee.
+     * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator reward.
+     * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing reward.
      * @return liquidationPenalty The penalty paid by the Account owner towards the liquidity providers and the protocol treasury.
+     * @dev The rewards for the initiator and terminator should at least cover the gas costs.
+     * -> minimumMargin should be set big enough such that "minimumMargin * minRewardWeight" can cover any possible gas cost to initiate/terminate the liquidation.
+     * @dev Since the initiation/termination costs do not increase with position size, the initiator and terminator rewards can be capped to a maximum value.
      */
     function _calculateRewards(uint256 debt, uint256 minimumMargin_)
         internal
         view
         returns (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty)
     {
-        uint256 maxInitiationFee_ = maxInitiationFee;
-        uint256 maxTerminationFee_ = maxTerminationFee;
-        initiationReward = debt.mulDivDown(initiationWeight, ONE_4);
-        initiationReward = initiationReward > maxInitiationFee_ ? maxInitiationFee_ : initiationReward;
+        LiquidationParameters memory params = liquidationParameters;
 
-        terminationReward = debt.mulDivDown(terminationWeight, ONE_4);
-        terminationReward = terminationReward > maxTerminationFee_ ? maxTerminationFee_ : terminationReward;
+        // The minimum reward, for both the initiation- and terminationReward, is defined as a fixed percentage (25%) of the minimumMargin.
+        uint256 minReward = minimumMargin_.mulDivUp(params.minRewardWeight, ONE_4);
 
-        liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
+        // Initiation reward must be between minReward and maxInitiationReward.
+        initiationReward = debt.mulDivDown(params.initiationWeight, ONE_4);
+        initiationReward = initiationReward > minReward ? initiationReward : minReward;
+        initiationReward = initiationReward > params.maxInitiationReward ? params.maxInitiationReward : initiationReward;
+
+        // Termination reward must be between minReward and maxTerminationReward.
+        terminationReward = debt.mulDivDown(params.terminationWeight, ONE_4);
+        terminationReward = terminationReward > minReward ? terminationReward : minReward;
+        terminationReward =
+            terminationReward > params.maxTerminationReward ? params.maxTerminationReward : terminationReward;
+
+        liquidationPenalty = debt.mulDivUp(params.penaltyWeight, ONE_4);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -1160,44 +1173,39 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     /**
      * @notice Sets the liquidation parameters.
-     * @param initiationWeight_ Fee paid to the Liquidation Initiator.
-     * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @param terminationWeight_ Fee paid to the Liquidation closer.
-     * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
-     * @param maxTerminationFee_ The maximum fee that is paid to the terminator of a liquidation.
+     * @param params The liquidation parameters.
+     *  - initiationWeight Reward paid to the Liquidation Initiator.
+     *  - penaltyWeight Penalty paid by the Account owner to the Creditor.
+     *  - terminationWeight Reward paid to the Liquidation closer.
+     *  - minRewardWeight The minimum reward that is paid to the initiator/terminator of a liquidation.
+     *  - maxInitiationReward The maximum reward that is paid to the initiator of a liquidation.
+     *  - maxTerminationReward The maximum reward that is paid to the terminator of a liquidation.
      * @dev Each weight has 4 decimals precision (50 equals 0,005 or 0,5%).
-     * @dev Each weight sets the % of the debt that is paid to the initiator and terminator of a liquidation.
-     * This fee is capped in absolute value by the maxInitiationFee respectively maxTerminationFee.
+     * @dev Each weight sets the % of the debt that is paid as reward to the initiator and terminator of a liquidation.
+     * This reward is capped in absolute value by the maxInitiationReward respectively maxTerminationReward.
      */
-    function setLiquidationParameters(
-        uint16 initiationWeight_,
-        uint16 penaltyWeight_,
-        uint16 terminationWeight_,
-        uint80 maxInitiationFee_,
-        uint80 maxTerminationFee_
-    ) external onlyOwner {
+    function setLiquidationParameters(LiquidationParameters calldata params) external onlyOwner {
         // When auctions are ongoing, it is not allowed to modify the auction parameters,
         // as that would corrupt the rewards and penalties calculated by _calculateRewards().
         if (auctionsInProgress != 0) revert LendingPoolErrors.AuctionOngoing();
 
-        if (uint256(initiationWeight_) + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
+        // Total penalties/rewards, paid by the Account cannot exceed MAX_TOTAL_PENALTY.
+        if (uint256(params.initiationWeight) + params.penaltyWeight + params.terminationWeight > MAX_TOTAL_PENALTY) {
             revert LendingPoolErrors.LiquidationWeightsTooHigh();
         }
 
+        // Sum of the initiationReward and terminationReward cannot exceed minimumMargin of the Account.
+        // -> minRewardWeight is capped to 50%.
+        if (params.minRewardWeight > 5000) revert LendingPoolErrors.LiquidationWeightsTooHigh();
+
         // Store and emit new parameters.
-        emit LiquidationParametersSet(
-            initiationWeight = initiationWeight_,
-            penaltyWeight = penaltyWeight_,
-            terminationWeight = terminationWeight_,
-            maxInitiationFee = maxInitiationFee_,
-            maxTerminationFee = maxTerminationFee_
-        );
+        emit LiquidationParametersSet(liquidationParameters = params);
     }
 
     /**
      * @notice Sets the minimum amount of collateral that must be held in an Account before a position can be opened.
      * @param minimumMargin_ The new minimumMargin.
-     * @dev The minimum margin should be a conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
+     * @dev The minimum margin should be a conservative upper estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
      * The minimumMargin prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
      * network transaction costs while remaining attractive to liquidate.
      */

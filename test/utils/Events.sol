@@ -4,6 +4,8 @@
  */
 pragma solidity 0.8.22;
 
+import { LendingPool } from "../../src/LendingPool.sol";
+
 /// @notice Abstract contract containing all the events emitted by the protocol.
 abstract contract Events {
     /* //////////////////////////////////////////////////////////////
@@ -30,13 +32,7 @@ abstract contract Events {
     event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
     event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event LiquidationParametersSet(
-        uint16 initiationWeight,
-        uint16 penaltyWeight,
-        uint16 terminationWeight,
-        uint80 maxInitiationFee,
-        uint80 maxTerminationFee
-    );
+    event LiquidationParametersSet(LendingPool.LiquidationParameters liquidationParameters);
     event OriginationFeeSet(uint8 originationFee);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheAdded(address indexed tranche, uint8 indexed index);

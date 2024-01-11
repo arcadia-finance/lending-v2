@@ -34,7 +34,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Set the Liquidation parameters.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(100, 500, 50, type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(100, 500, 50, 0, type(uint80).max, type(uint80).max);
     }
 
     /*//////////////////////////////////////////////////////////////
