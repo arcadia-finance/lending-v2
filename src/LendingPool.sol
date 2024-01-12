@@ -1058,6 +1058,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The order of the Tranches is important, the most senior Tranche is at index 0, the most junior at the last index.
      * @dev The most junior tranche will lose its underlying assets first. If all liquidity of a certain Tranche is written off,
      * the complete tranche is locked and removed. If there is still remaining bad debt, the next Tranche starts losing capital.
+     * @dev If all Tranches are written off and there is still remaining badDebt, the accounting of the pool no longer holds 
+     * (sum of all realisedLiquidityOf() balances is bigger then totalRealisedLiquidity).
+     * In this case no new Tranches should be added to restart the LendingPool and any remaining funds should be withdrawn.
      */
     function _processDefault(uint256 badDebt) internal {
         address tranche;
