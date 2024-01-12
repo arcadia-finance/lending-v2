@@ -1125,7 +1125,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param debt The debt amount of the Account at the time of liquidation initiation.
      * @param minimumMargin_ The minimum margin of the Account.
      * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator reward.
-     * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing reward.
+     * @return terminationReward The reward for closing the liquidation process, capped by the maximum termination reward.
      * @return liquidationPenalty The penalty paid by the Account owner towards the liquidity providers and the protocol treasury.
      * @dev The rewards for the initiator and terminator should at least cover the gas costs.
      * -> minimumMargin should be set big enough such that "minimumMargin * minRewardWeight" can cover any possible gas cost to initiate/terminate the liquidation.
