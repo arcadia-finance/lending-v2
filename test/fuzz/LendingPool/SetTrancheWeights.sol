@@ -51,7 +51,7 @@ contract SetTrancheWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.addTranche(address(srTranche), 50, 0);
 
         vm.expectEmit(true, true, true, true);
-        emit TrancheWeightsUpdated(0, 10, 40);
+        emit TrancheWeightsUpdated(address(srTranche), 0, 10, 40);
         pool.setTrancheWeights(0, 10, 40);
         vm.stopPrank();
 
