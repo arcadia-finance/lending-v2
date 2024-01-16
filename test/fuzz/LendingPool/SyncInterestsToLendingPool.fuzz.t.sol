@@ -45,6 +45,6 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         assertEq(pool.liquidityOf(address(srTranche)), interestSr);
         assertEq(pool.liquidityOf(address(jrTranche)), interestJr);
         assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
-        assertEq(pool.totalRealisedLiquidity(), interests);
+        assertEq(pool.totalLiquidity(), interests);
     }
 }

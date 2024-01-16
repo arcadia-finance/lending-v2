@@ -6,10 +6,10 @@ pragma solidity 0.8.22;
 
 interface ILendingPool {
     /**
-     * @notice returns the total realised liquidity of the Lending Pool.
-     * @return totalRealisedLiquidity The total realised liquidity of the Lending Pool.
+     * @notice Returns the total redeemable amount of liquidity in the underlying asset.
+     * @return totalLiquidity The total redeemable amount of liquidity in the underlying asset.
      */
-    function totalRealisedLiquidity() external view returns (uint128);
+    function totalLiquidity() external view returns (uint256);
 
     /**
      * @notice Deposit assets in the Lending Pool.
@@ -38,12 +38,6 @@ interface ILendingPool {
      * @return assets The redeemable amount of liquidity in the underlying asset.
      */
     function liquidityOfAndSync(address owner) external returns (uint256);
-
-    /**
-     * @notice Calculates the unrealised debt (interests).
-     * @return unrealisedDebt The unrealised debt.
-     */
-    function calcUnrealisedDebt() external view returns (uint256);
 
     /**
      * @notice Repays debt via an auction.

@@ -106,7 +106,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.liquidityOf(users.accountOwner), surplus);
         // And: The total realised liquidity should be updated
         assertEq(
-            pool.totalRealisedLiquidity(),
+            pool.totalLiquidity(),
             liquidity + initiationReward + auctionTerminationReward + liquidationPenalty + surplus
         );
 

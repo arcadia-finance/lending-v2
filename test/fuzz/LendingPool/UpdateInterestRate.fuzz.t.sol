@@ -58,7 +58,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.liquidityOf(address(srTranche)), interestSr);
         assertEq(pool.liquidityOf(address(jrTranche)), interestJr);
         assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
-        assertEq(pool.totalRealisedLiquidity(), realisedLiquidity + interest);
+        assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 
     function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(

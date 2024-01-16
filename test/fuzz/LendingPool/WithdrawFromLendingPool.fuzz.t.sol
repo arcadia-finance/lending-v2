@@ -92,7 +92,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.stopPrank();
 
         assertEq(pool.liquidityOf(address(srTranche)), assetsDeposited - assetsWithdrawn);
-        assertEq(pool.totalRealisedLiquidity(), assetsDeposited - assetsWithdrawn);
+        assertEq(pool.totalLiquidity(), assetsDeposited - assetsWithdrawn);
         assertEq(mockERC20.stable1.balanceOf(address(pool)), assetsDeposited - assetsWithdrawn);
         assertEq(mockERC20.stable1.balanceOf(receiver), assetsWithdrawn);
     }
