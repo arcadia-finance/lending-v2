@@ -66,7 +66,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amount, users.liquidityProvider);
 
         assertEq(pool.liquidityOf(address(srTranche)), amount);
-        assertEq(pool.totalRealisedLiquidity(), amount);
+        assertEq(pool.totalLiquidity(), amount);
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
     }
 
@@ -83,7 +83,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(amount1, users.liquidityProvider);
 
         assertEq(pool.liquidityOf(address(jrTranche)), amount1);
-        assertEq(pool.totalRealisedLiquidity(), totalAmount);
+        assertEq(pool.totalLiquidity(), totalAmount);
         assertEq(mockERC20.stable1.balanceOf(address(pool)), totalAmount);
     }
 }

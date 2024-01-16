@@ -81,7 +81,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     uint16 internal liquidationWeightTreasury;
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
-    uint128 public totalRealisedLiquidity;
+    uint128 internal totalRealisedLiquidity;
     // The minimum amount of collateral that must be held in an Account before a position can be opened.
     uint96 internal minimumMargin;
 
@@ -633,6 +633,23 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     }
 
     /**
+     * @notice Returns the total redeemable amount of liquidity in the underlying asset.
+     * @return totalLiquidity_ The total redeemable amount of liquidity in the underlying asset.
+     */
+    function totalLiquidity() external view returns (uint256 totalLiquidity_) {
+        // Avoid a second calculation of unrealised debt (expensive)
+        // if interests are already synced this block.
+        if (lastSyncedTimestamp != uint32(block.timestamp)) {
+            // The total liquidity equals the sum of the realised liquidity, and the pending interests.
+            unchecked {
+                totalLiquidity_ = totalRealisedLiquidity + calcUnrealisedDebt();
+            }
+        } else {
+            totalLiquidity_ = totalRealisedLiquidity;
+        }
+    }
+
+    /**
      * @notice Returns the redeemable amount of liquidity in the underlying asset of an address.
      * @param owner_ The address of the liquidity provider.
      * @return assets The redeemable amount of liquidity in the underlying asset.
@@ -808,13 +825,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Updates the interest rate.
      * @param totalDebt Total amount of debt.
-     * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
+     * @param totalLiquidity_ Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
      */
-    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
+    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity_) internal {
         uint256 utilisation; // 4 decimals precision
         unchecked {
             // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
-            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
+            if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
 
         emit InterestRate(interestRate = _calculateInterestRate(utilisation));

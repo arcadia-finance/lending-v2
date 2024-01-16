@@ -345,14 +345,14 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         uint256 treasuryBalancePre = pool.liquidityOf(treasury);
-        uint256 totalRealisedLiquidityPre = pool.totalRealisedLiquidity();
+        uint256 totalRealisedLiquidityPre = pool.totalLiquidity();
 
         vm.startPrank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, ref);
         vm.stopPrank();
 
         uint256 treasuryBalancePost = pool.liquidityOf(treasury);
-        uint256 totalRealisedLiquidityPost = pool.totalRealisedLiquidity();
+        uint256 totalRealisedLiquidityPost = pool.totalLiquidity();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(to), amountLoaned);

@@ -157,7 +157,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // And: The remainder should be claimable by the original owner
         assertEq(pool.liquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
-        assertEq(pool.totalRealisedLiquidity(), liquidity + liquidationFee + auctionTerminationReward);
+        assertEq(pool.totalLiquidity(), liquidity + liquidationFee + auctionTerminationReward);
 
         assertEq(pool.getAuctionsInProgress(), 0);
         assertFalse(jrTranche.auctionInProgress());
@@ -226,7 +226,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // And: The remainder should be claimable by the original owner
         assertEq(pool.liquidityOf(users.accountOwner), 0);
         // And: The total realised liquidity should be updated
-        assertEq(pool.totalRealisedLiquidity(), liquidity + leftAuctionTerminationReward);
+        assertEq(pool.totalLiquidity(), liquidity + leftAuctionTerminationReward);
 
         assertEq(pool.getAuctionsInProgress(), 0);
         assertFalse(jrTranche.auctionInProgress());
