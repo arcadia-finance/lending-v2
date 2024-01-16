@@ -37,7 +37,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert(Unauthorized.selector);
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -50,7 +50,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         surplus = uint128(bound(surplus, 1, type(uint128).max));
         vm.assume(startDebt > 0);
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(startDebt);
+            pool.getCalculateRewards(startDebt, 0);
         vm.assume(uint256(liquidity) >= startDebt + initiationReward + auctionTerminationReward + liquidationPenalty);
         vm.assume(
             uint256(liquidity) + surplus + initiationReward + auctionTerminationReward + liquidationPenalty
@@ -73,7 +73,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator, surplus);
+        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator, surplus);
 
         // round up
         uint256 liqPenaltyTreasury =
@@ -95,15 +95,15 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         }
 
         // Then: Terminator should be able to claim his rewards for liquidation termination
-        assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
+        assertEq(pool.liquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.liquidityOf(address(srTranche)), liquidity);
         // And: The jr tranche will get its part of the liquidationpenalty
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
+        assertEq(pool.liquidityOf(address(jrTranche)), liqPenaltyJunior);
         // And: treasury will get its part of the liquidationpenalty
-        assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
+        assertEq(pool.liquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remaindershould be claimable by the original owner
-        assertEq(pool.realisedLiquidityOf(users.accountOwner), surplus);
+        assertEq(pool.liquidityOf(users.accountOwner), surplus);
         // And: The total realised liquidity should be updated
         assertEq(
             pool.totalRealisedLiquidity(),

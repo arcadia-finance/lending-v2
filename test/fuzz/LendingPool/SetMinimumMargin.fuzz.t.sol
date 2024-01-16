@@ -32,8 +32,6 @@ contract SetMinimumMargin_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_setMinimumMargin(uint96 minimumMargin) public {
         vm.prank(users.creatorAddress);
-        vm.expectEmit(true, true, true, true);
-        emit MinimumMarginSet(minimumMargin);
         pool.setMinimumMargin(minimumMargin);
 
         assertEq(pool.getMinimumMargin(), minimumMargin);

@@ -21,7 +21,21 @@ contract SyncLiquidationFeeToLiquidityProviders_LendingPool_Fuzz_Test is Lending
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_syncLiquidationFeeToLiquidityProviders(
+    function testFuzz_Success_syncLiquidationFeeToLiquidityProviders_ZeroTotalPenaltyWeight(uint128 penalty) public {
+        vm.startPrank(users.creatorAddress);
+        pool.setTrancheWeights(0, 10, 0);
+        pool.setTrancheWeights(1, 10, 0);
+        pool.setTreasuryWeights(10, 0);
+        vm.stopPrank();
+
+        pool.syncLiquidationFeeToLiquidityProviders(penalty);
+
+        assertEq(pool.liquidityOf(address(srTranche)), 0);
+        assertEq(pool.liquidityOf(address(jrTranche)), 0);
+        assertEq(pool.liquidityOf(address(treasury)), penalty);
+    }
+
+    function testFuzz_Success_syncLiquidationFeeToLiquidityProviders_NonZeroTotalPenaltyWeight(
         uint128 penalty,
         uint8 weightSr,
         uint8 weightJr,
@@ -41,8 +55,8 @@ contract SyncLiquidationFeeToLiquidityProviders_LendingPool_Fuzz_Test is Lending
         uint256 penaltyJr = uint256(penalty) * weightJr / totalPenaltyWeight;
         uint256 penaltyTreasury = penalty - penaltySr - penaltyJr;
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), penaltySr);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), penaltyJr);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), penaltyTreasury);
+        assertEq(pool.liquidityOf(address(srTranche)), penaltySr);
+        assertEq(pool.liquidityOf(address(jrTranche)), penaltyJr);
+        assertEq(pool.liquidityOf(address(treasury)), penaltyTreasury);
     }
 }

@@ -142,7 +142,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint112 amountLoaned) public {
         vm.startPrank(users.creatorAddress);
-        pool.setLiquidationParameters(2, 2, 5, type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(2, 2, 5, 0, type(uint80).max);
 
         // Given: The account auction is initiated
         vm.assume(bidder != address(0));

@@ -63,14 +63,16 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         uint32 cutoffTimeStamp;
         // The timestamp the auction started.
         uint32 startTime;
+        // The contract address of the Creditor.
+        address creditor;
+        // The minimum margin of the Account.
+        uint96 minimumMargin;
         // Sets the begin price of the auction, 4 decimals precision.
         uint16 startPriceMultiplier;
         // Sets the minimum price the auction converges to, 4 decimals precision.
         uint16 minPriceMultiplier;
         // Flag indicating if the auction is still ongoing.
         bool inAuction;
-        // The time after which the auction is considered not successful, in seconds.
-        address creditor;
         // The contract address of each asset in the Account, at the moment the liquidation was initiated.
         address[] assetAddresses;
         // The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
@@ -220,6 +222,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
             address creditor,
+            uint96 minimumMargin,
             uint256 debt,
             AssetValueAndRiskFactors[] memory assetValues
         ) = IAccount(account).startLiquidation(msg.sender);
@@ -229,6 +232,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         auctionInformation_.assetIds = assetIds;
         auctionInformation_.assetAmounts = assetAmounts;
         auctionInformation_.creditor = creditor;
+        auctionInformation_.minimumMargin = minimumMargin;
         auctionInformation_.startDebt = uint128(debt);
 
         // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
@@ -290,8 +294,9 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         uint128 startDebt = auctionInformation_.startDebt;
-        bool earlyTerminate =
-            ILendingPool(auctionInformation_.creditor).auctionRepay(startDebt, price, account, msg.sender);
+        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
+            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
+        );
 
         // Transfer the assets to the bidder.
         IAccount(account).auctionBid(
@@ -329,9 +334,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // unchecked: Exposure limits are capped to a uint112.
-        // So if askedAssetAmounts are passed such that totalShare overflows,
-        // then the withdraw in the Account will always revert.
+        // When askedAssetAmounts[i] is greater than assetAmounts[i], _withdraw() will revert in the Account.
         for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
                 totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
@@ -436,20 +439,23 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
+        uint96 minimumMargin = auctionInformation_.minimumMargin;
 
         uint256 collateralValue = IAccount(account).getCollateralValue();
         uint256 usedMargin = IAccount(account).getUsedMargin();
 
         // Check the different conditions to end the auction.
-        if (collateralValue >= usedMargin) {
+        if (collateralValue >= usedMargin || usedMargin == minimumMargin) {
             // Happy flow: Account is back in a healthy state.
-            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, msg.sender);
+            // An Account is healthy if the collateral value is equal or greater than the used margin.
+            // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
+            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (collateralValue == 0) {
             // Unhappy flow: All collateral is sold.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
             IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
