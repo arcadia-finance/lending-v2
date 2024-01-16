@@ -334,9 +334,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // unchecked: Exposure limits are capped to a uint112.
-        // So if askedAssetAmounts are passed such that totalShare overflows,
-        // then the withdraw in the Account will always revert.
+        // When askedAssetAmounts[i] is greater than assetAmounts[i], _withdraw() will revert in the Account.
         for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
                 totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
