@@ -277,9 +277,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(amountLoaned + 1, 0);
 
-        // By setting the minUsdValue of creditor to uint256 max value, remaining assets value should be 0.
+        // By setting the minUsdValue of creditor to uint128 max value, remaining assets value will be 0.
+        vm.assume(proxyAccount.getAccountValue(address(0)) <= type(uint128).max);
         vm.prank(pool.riskManager());
-        registryExtension.setMinUsdValue(address(pool), type(uint256).max);
+        registryExtension.setRiskParameters(address(pool), type(uint128).max, 0, type(uint64).max);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
@@ -331,6 +332,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);
+
+        // Update oracle to avoid InactiveOracle().
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
         vm.startPrank(randomAddress);

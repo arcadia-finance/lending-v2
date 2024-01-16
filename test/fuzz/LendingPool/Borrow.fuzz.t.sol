@@ -130,7 +130,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         registryExtension.setRiskParametersOfPrimaryAsset(
             address(pool_), address(mockERC20.stable1), 0, type(uint112).max, 100, 100
         );
-        registryExtension.setMaxRecursiveCalls(address(pool_), type(uint256).max);
+        registryExtension.setRiskParameters(address(pool_), 0, 15 minutes, type(uint64).max);
         vm.stopPrank();
 
         vm.startPrank(users.accountOwner);
