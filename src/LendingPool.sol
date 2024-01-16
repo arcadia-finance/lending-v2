@@ -830,7 +830,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity_) internal {
         uint256 utilisation; // 4 decimals precision
         unchecked {
-            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
+            // This doesn't overflow since totalDebt is a uint128: uint128 * 10_000 < type(uint256).max.
             if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
 
