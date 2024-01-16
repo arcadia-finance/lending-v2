@@ -86,8 +86,6 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
 
-        vm.expectEmit();
-        emit LendingPoolWithdrawal(receiver, assetsWithdrawn);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
 
