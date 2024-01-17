@@ -27,9 +27,8 @@ abstract contract Events {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event InterestRate(uint80 interestRate);
     event InterestSynced(uint256 interest);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event PoolStateUpdated(uint256 totalDebt, uint256 totalLiquidity, uint80 interestRate);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheWeightsUpdated(
         address indexed tranche, uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight

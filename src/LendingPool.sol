@@ -145,9 +145,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event InterestRate(uint80 interestRate);
     event InterestSynced(uint256 interest);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
+    event PoolStateUpdated(uint256 totalDebt, uint256 totalLiquidity, uint80 interestRate);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TranchePopped(address tranche);
     event TrancheWeightsUpdated(
@@ -355,8 +354,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             realisedLiquidityOf[msg.sender] += assets;
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(assets + totalRealisedLiquidity);
         }
-
-        // Event emitted by Tranche.
     }
 
     /**
@@ -409,8 +406,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         asset.safeTransfer(receiver, assets);
-
-        emit LendingPoolWithdrawal(receiver, assets);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -834,7 +829,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
 
-        emit InterestRate(interestRate = _calculateInterestRate(utilisation));
+        emit PoolStateUpdated(totalDebt, totalLiquidity_, interestRate = _calculateInterestRate(utilisation));
     }
 
     /**
