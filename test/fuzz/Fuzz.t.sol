@@ -59,6 +59,9 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
                                       HELPERS
     //////////////////////////////////////////////////////////////////////////*/
     function deployArcadiaLendingWithoutAccounts() internal virtual {
+        // Warp to have a timestamp of at least two days old.
+        vm.warp(2 days);
+
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
