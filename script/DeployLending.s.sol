@@ -49,7 +49,7 @@ contract ArcadiaLendingDeployment is Test {
             address(factory),
             address(liquidator)
         );
-        srTranche_weth = new Tranche(address(pool_weth), "Senior", "sr");
+        srTranche_weth = new Tranche(address(pool_weth), 10 ** 8, "Senior", "sr");
 
         pool_weth.setOriginationFee(10);
         pool_weth.setLiquidationParameters(100, 500, 50, 3 * 10 ** 18, 3 * 10 ** 18);
@@ -66,7 +66,7 @@ contract ArcadiaLendingDeployment is Test {
             address(factory),
             address(liquidator)
         );
-        srTranche_usdc = new Tranche(address(pool_usdc), "Senior", "sr");
+        srTranche_usdc = new Tranche(address(pool_usdc), 10 ** 6, "Senior", "sr");
 
         pool_usdc.setOriginationFee(10);
         pool_weth.setLiquidationParameters(100, 500, 50, 5000 * 10 ** 6, 5000 * 10 ** 6);
