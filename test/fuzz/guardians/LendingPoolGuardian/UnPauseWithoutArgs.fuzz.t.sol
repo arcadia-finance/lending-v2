@@ -69,15 +69,15 @@ contract UnPause_WithoutArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardia
         // When: A "sender" un-pauses.
         vm.startPrank(sender);
         vm.expectEmit(true, true, true, true);
-        emit PauseFlagsUpdated(false, false, false, false, false);
+        emit PauseFlagsUpdated(false, false, initialFlags.borrowPaused, initialFlags.depositPaused, false);
         lendingPoolGuardian.unpause();
         vm.stopPrank();
 
         // Then: All flags are set to False.
         assertFalse(lendingPoolGuardian.repayPaused());
         assertFalse(lendingPoolGuardian.withdrawPaused());
-        assertFalse(lendingPoolGuardian.borrowPaused());
-        assertFalse(lendingPoolGuardian.depositPaused());
+        assertEq(lendingPoolGuardian.borrowPaused(), initialFlags.borrowPaused);
+        assertEq(lendingPoolGuardian.depositPaused(), initialFlags.depositPaused);
         assertFalse(lendingPoolGuardian.liquidationPaused());
     }
 }

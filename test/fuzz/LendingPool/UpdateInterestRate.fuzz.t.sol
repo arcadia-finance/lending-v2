@@ -49,15 +49,11 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.updateInterestRate();
 
         uint256 interest = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
-        uint256 interestSr = interest * 50 / 100;
-        uint256 interestJr = interest * 40 / 100;
-        uint256 interestTreasury = interest - interestSr - interestJr;
 
         assertEq(debt.totalAssets(), realisedDebt + interest);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
-        assertEq(pool.liquidityOf(address(srTranche)), interestSr);
-        assertEq(pool.liquidityOf(address(jrTranche)), interestJr);
-        assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
+        // Pools have no liquidity -> all interests go to the Treasury.
+        assertEq(pool.liquidityOf(address(treasury)), interest);
         assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 

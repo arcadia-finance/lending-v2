@@ -13,6 +13,7 @@ import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+import { Tranche } from "../../src/Tranche.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -63,8 +64,8 @@ contract LendingPoolExtension is LendingPool {
         _syncInterestsToLiquidityProviders(assets);
     }
 
-    function syncLiquidationFeeToLiquidityProviders(uint128 assets) public {
-        _syncLiquidationFeeToLiquidityProviders(assets);
+    function syncLiquidationFee(uint256 assets) public {
+        _syncLiquidationFee(assets);
     }
 
     function processDefault(uint256 assets) public {
@@ -127,12 +128,12 @@ contract LendingPoolExtension is LendingPool {
         interestWeightTreasury_ = interestWeightTreasury;
     }
 
-    function getTotalLiquidationWeight() public view returns (uint24 totalLiquidationWeight_) {
-        totalLiquidationWeight_ = totalLiquidationWeight;
-    }
-
     function getLiquidationWeightTreasury() public view returns (uint16 liquidationWeightTreasury_) {
         liquidationWeightTreasury_ = liquidationWeightTreasury;
+    }
+
+    function getLiquidationWeightTranche() public view returns (uint16 liquidationWeightTranche_) {
+        liquidationWeightTranche_ = liquidationWeightTranche;
     }
 
     function getMinimumMargin() public view returns (uint96) {
@@ -157,10 +158,6 @@ contract LendingPoolExtension is LendingPool {
 
     function getInterestWeightTranches(uint16 id) public view returns (uint16) {
         return interestWeightTranches[id];
-    }
-
-    function getLiquidationWeightTranches(uint16 id) public view returns (uint16) {
-        return liquidationWeightTranches[id];
     }
 
     function getTranches(uint16 id) public view returns (address) {
@@ -241,6 +238,20 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
         borrowPaused = borrowPaused_;
         depositPaused = depositPaused_;
         liquidationPaused = liquidationPaused_;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
+                        TRANCHE
+////////////////////////////////////////////////////////////// */
+
+contract TrancheExtension is Tranche {
+    constructor(address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
+        Tranche(lendingPool_, vas, prefix_, prefixSymbol_)
+    { }
+
+    function getVas() public view returns (uint256 vas) {
+        vas = VAS;
     }
 }
 

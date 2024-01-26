@@ -55,7 +55,9 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedValue = initialLiquidity + interest;
 
         uint256 actualValue = pool.liquidityOf(address(srTranche));
+        uint256 actualValue_ = pool.liquidityOfAndSync(address(srTranche));
 
         assertEq(actualValue, expectedValue);
+        assertEq(actualValue, actualValue_);
     }
 }

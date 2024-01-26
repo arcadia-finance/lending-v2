@@ -13,10 +13,10 @@ import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtTokenExtension } from "../utils/Extensions.sol";
-import { LendingPoolExtension, LendingPool } from "../utils/Extensions.sol";
+import { LendingPoolExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
-import { Tranche } from "../../src/Tranche.sol";
+import { TrancheExtension } from "../utils/Extensions.sol";
 
 /**
  * @notice Common logic needed by all fuzz tests.
@@ -67,8 +67,8 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         asset = new Asset("Asset", "ASSET", 18);
         liquidator = new LiquidatorExtension(address(factory));
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
-        srTranche = new Tranche(address(pool), "Senior", "SR");
-        jrTranche = new Tranche(address(pool), "Junior", "JR");
+        srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
+        jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
         vm.stopPrank();
 
         // Set the Guardian.
@@ -98,8 +98,8 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
-        srTranche = new Tranche(address(pool), "Senior", "SR");
-        jrTranche = new Tranche(address(pool), "Junior", "JR");
+        srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
+        jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
         vm.stopPrank();
 
         // Set the Liquidation parameters.

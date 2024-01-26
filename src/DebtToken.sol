@@ -15,9 +15,6 @@ import { DebtTokenErrors } from "./libraries/Errors.sol";
  * @dev Protocol is according the ERC4626 standard, with a certain ERC20 as underlying.
  * @dev Implementation slightly deviates from the ERC4626 specifications,
  * maxDeposit() and maxMint() are not implemented.
- * @dev Implementation not vulnerable to ERC4626 inflation attacks,
- * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
- * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
 abstract contract DebtToken is ERC4626 {
     using FixedPointMathLib for uint256;

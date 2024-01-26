@@ -29,10 +29,9 @@ abstract contract Events {
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
     event InterestSynced(uint256 interest);
     event PoolStateUpdated(uint256 totalDebt, uint256 totalLiquidity, uint80 interestRate);
+    event LiquidationWeightTrancheUpdated(uint16 liquidationWeight);
     event Repay(address indexed account, address indexed from, uint256 amount);
-    event TrancheWeightsUpdated(
-        address indexed tranche, uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight
-    );
+    event InterestWeightTrancheUpdated(address indexed tranche, uint8 indexed trancheIndex, uint16 interestWeight);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
     event TranchePopped(address tranche);
     event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);

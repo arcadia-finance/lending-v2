@@ -143,17 +143,11 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * @dev This function will unpause the functionality to:
      * - Repay debt.
      * - Withdraw liquidity.
-     * - Borrow.
-     * - Deposit liquidity.
      * - Liquidate positions.
      */
     function unpause() external override afterCoolDownOf(30 days) {
         emit PauseFlagsUpdated(
-            repayPaused = false,
-            withdrawPaused = false,
-            borrowPaused = false,
-            depositPaused = false,
-            liquidationPaused = false
+            repayPaused = false, withdrawPaused = false, borrowPaused, depositPaused, liquidationPaused = false
         );
     }
 }

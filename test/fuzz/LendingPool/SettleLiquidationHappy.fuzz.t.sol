@@ -64,7 +64,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
 
         // Given: Liquidity is deposited in Lending Pool
-        vm.prank(address(srTranche));
+        vm.prank(address(jrTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         pool.setAuctionsInProgress(1);
@@ -76,20 +76,21 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator, surplus);
 
         // round up
+        uint256 totalLiquidationWeight = pool.getLiquidationWeightTreasury() + pool.getLiquidationWeightTranche();
         uint256 liqPenaltyTreasury =
-            uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
                 < uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury()
         ) {
             liqPenaltyTreasury++;
         }
 
         uint256 liqPenaltyJunior =
-            uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTranche() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1)
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
+                < uint256(liquidationPenalty) * pool.getLiquidationWeightTranche()
         ) {
             liqPenaltyTreasury--;
         }
@@ -97,9 +98,9 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Then: Terminator should be able to claim his rewards for liquidation termination
         assertEq(pool.liquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.liquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.liquidityOf(address(srTranche)), 0);
         // And: The jr tranche will get its part of the liquidationpenalty
-        assertEq(pool.liquidityOf(address(jrTranche)), liqPenaltyJunior);
+        assertEq(pool.liquidityOf(address(jrTranche)), liquidity + liqPenaltyJunior);
         // And: treasury will get its part of the liquidationpenalty
         assertEq(pool.liquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remaindershould be claimable by the original owner
