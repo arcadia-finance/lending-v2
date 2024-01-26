@@ -740,12 +740,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 remainingAssets = assets;
 
         uint256 trancheShare;
-        uint24 totalInterestWeight_ = totalInterestWeight;
+        uint256 realisedLiquidity;
+        uint256 totalInterestWeight_ = totalInterestWeight;
         uint256 trancheLength = tranches.length;
         for (uint256 i; i < trancheLength; ++i) {
+            realisedLiquidity = realisedLiquidityOf[tranches[i]];
+            // Don't pay interests to Tranches without liquidity.
+            // Interests will go to treasury instead.
+            if (realisedLiquidity == 0) continue;
             trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
             unchecked {
-                realisedLiquidityOf[tranches[i]] += trancheShare;
+                realisedLiquidityOf[tranches[i]] = realisedLiquidity + trancheShare;
                 remainingAssets -= trancheShare;
             }
         }
@@ -1077,10 +1082,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Sync fee to the most Junior Tranche (last index).
         if (totalWeight > 0 && length > 0) {
-            uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
-            unchecked {
-                realisedLiquidityOf[tranches[length - 1]] += trancheFee;
-                assets -= trancheFee;
+            uint256 realisedLiquidity = realisedLiquidityOf[tranches[length - 1]];
+            // Don't pay fees to a Tranche without liquidity.
+            // Interests will go to treasury instead.
+            if (realisedLiquidity > 0) {
+                uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
+                unchecked {
+                    realisedLiquidityOf[tranches[length - 1]] = realisedLiquidity + trancheFee;
+                    assets -= trancheFee;
+                }
             }
         }
 
