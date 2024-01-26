@@ -292,17 +292,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     /**
      * @notice Changes the interest and liquidation weight of the Treasury.
-     * @param interestWeightTreasury_ The new interestWeight of the treasury.
-     * @param liquidationWeightTreasury_ The new liquidationWeight of the treasury.
+     * @param interestWeight_ The new interestWeight of the treasury.
+     * @param liquidationWeight The new liquidationWeight of the treasury.
      * @dev The interestWeight determines the relative share of the yield (interest payments) that goes to the protocol treasury.
      * @dev Setting interestWeightTreasury to a very high value will cause the treasury to collect all interest fees from that moment on.
      * Although this will affect the future profits of liquidity providers, no funds nor realized interest are at risk for LPs.
      */
-    function setTreasuryWeights(uint16 interestWeightTreasury_, uint16 liquidationWeightTreasury_) external onlyOwner {
-        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeightTreasury_;
+    function setTreasuryWeights(uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner processInterests {
+        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeight_;
 
         emit TreasuryWeightsUpdated(
-            interestWeightTreasury = interestWeightTreasury_, liquidationWeightTreasury = liquidationWeightTreasury_
+            interestWeightTreasury = interestWeight_, liquidationWeightTreasury = liquidationWeight
         );
     }
 
