@@ -127,20 +127,20 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint256 liquidationFee = liquidationPenalty - openDebt;
 
         // round up
+        uint256 totalLiquidationWeight = pool.getLiquidationWeightTreasury() + pool.getLiquidationWeightTranche();
         uint256 liqPenaltyTreasury =
-            liquidationFee * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
+            uint256(liquidationFee) * pool.getLiquidationWeightTreasury() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < liquidationFee * pool.getLiquidationWeightTreasury()
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
+                < uint256(liquidationFee) * pool.getLiquidationWeightTreasury()
         ) {
             liqPenaltyTreasury++;
         }
 
-        uint256 liqPenaltyJunior =
-            liquidationFee * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
+        uint256 liqPenaltyJunior = uint256(liquidationFee) * pool.getLiquidationWeightTranche() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < liquidationFee * pool.getLiquidationWeightTranches(1)
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
+                < uint256(liquidationFee) * pool.getLiquidationWeightTranche()
         ) {
             liqPenaltyTreasury--;
         }

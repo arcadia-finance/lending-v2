@@ -23,14 +23,11 @@ contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_popTranche() public {
         vm.prank(users.creatorAddress);
-        pool.setTrancheWeights(0, 50, 10);
+        pool.setInterestWeightTranche(0, 50);
 
         assertEq(pool.getTotalInterestWeight(), 100);
         assertEq(pool.getInterestWeightTranches(0), 50);
         assertEq(pool.getInterestWeightTranches(1), 40);
-        assertEq(pool.getTotalLiquidationWeight(), 110);
-        assertEq(pool.getLiquidationWeightTranches(0), 10);
-        assertEq(pool.getLiquidationWeightTranches(1), 20);
         assertTrue(pool.getIsTranche(address(srTranche)));
         assertTrue(pool.getIsTranche(address(jrTranche)));
 
@@ -40,10 +37,8 @@ contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(pool.getTotalInterestWeight(), 60);
         assertEq(pool.getInterestWeightTranches(0), 50);
-        assertEq(pool.getTotalLiquidationWeight(), 90);
-        assertEq(pool.getLiquidationWeightTranches(0), 10);
         assertEq(pool.getTranches(0), address(srTranche));
         assertTrue(pool.getIsTranche(address(srTranche)));
-        assertTrue(!pool.getIsTranche(address(jrTranche)));
+        assertFalse(pool.getIsTranche(address(jrTranche)));
     }
 }

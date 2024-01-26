@@ -36,7 +36,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithAccounts();
 
         vm.prank(users.creatorAddress);
-        pool.addTranche(address(tranche), 50, 0);
+        pool.addTranche(address(tranche), 50);
 
         // Deposit funds in the pool.
         deal(address(mockERC20.stable1), users.liquidityProvider, type(uint128).max, true);

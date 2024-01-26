@@ -76,20 +76,21 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, auctionTerminator, surplus);
 
         // round up
+        uint256 totalLiquidationWeight = pool.getLiquidationWeightTreasury() + pool.getLiquidationWeightTranche();
         uint256 liqPenaltyTreasury =
-            uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury() / pool.getTotalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
                 < uint256(liquidationPenalty) * pool.getLiquidationWeightTreasury()
         ) {
             liqPenaltyTreasury++;
         }
 
         uint256 liqPenaltyJunior =
-            uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1) / pool.getTotalLiquidationWeight();
+            uint256(liquidationPenalty) * pool.getLiquidationWeightTranche() / totalLiquidationWeight;
         if (
-            uint256(liqPenaltyTreasury) * pool.getTotalLiquidationWeight()
-                < uint256(liquidationPenalty) * pool.getLiquidationWeightTranches(1)
+            uint256(liqPenaltyTreasury) * totalLiquidationWeight
+                < uint256(liquidationPenalty) * pool.getLiquidationWeightTranche()
         ) {
             liqPenaltyTreasury--;
         }

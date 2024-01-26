@@ -37,10 +37,11 @@ abstract contract Events {
         uint80 maxInitiationFee,
         uint80 maxTerminationFee
     );
+    event LiquidationWeightTrancheUpdated(uint16 liquidationWeight);
     event OriginationFeeSet(uint8 originationFee);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
-    event TrancheWeightsUpdated(uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight);
+    event InterestWeightTrancheUpdated(uint8 indexed trancheIndex, uint16 interestWeight);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
     event TranchePopped(address tranche);
     event ValidAccountVersionsUpdated(uint256 indexed accountVersion, bool valid);

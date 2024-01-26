@@ -31,8 +31,8 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         vm.assume(totalInterestWeight > 0);
 
         vm.startPrank(users.creatorAddress);
-        pool.setTrancheWeights(0, weightSr, 0);
-        pool.setTrancheWeights(1, weightJr, 10);
+        pool.setInterestWeightTranche(0, weightSr);
+        pool.setInterestWeightTranche(1, weightJr);
         pool.setTreasuryWeights(weightTreasury, 10);
         vm.stopPrank();
 

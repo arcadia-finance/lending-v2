@@ -72,10 +72,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     uint24 internal totalInterestWeight;
     // Fraction (interestWeightTreasury / totalInterestWeight) of the interest fees that go to the treasury.
     uint16 internal interestWeightTreasury;
-    // Sum of the liquidation weights of the tranches + treasury.
-    uint24 internal totalLiquidationWeight;
     // Fraction (liquidationWeightTreasury / totalLiquidationWeight) of the liquidation fees that goes to the treasury.
     uint16 internal liquidationWeightTreasury;
+    // Fraction (liquidationWeightTranche / totalLiquidationWeight) of the liquidation fees that goes to the most Junior Tranche.
+    uint16 internal liquidationWeightTranche;
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
     uint128 public totalRealisedLiquidity;
@@ -104,9 +104,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
     uint16[] internal interestWeightTranches;
-    // Array of the liquidation weights of each Tranche.
-    // Fraction (liquidationWeightTranches[i] / totalLiquidationWeight) of the liquidation fees that go to Tranche i.
-    uint16[] internal liquidationWeightTranches;
     // Array of the contract addresses of the Tranches.
     address[] internal tranches;
 
@@ -152,11 +149,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint80 maxInitiationFee,
         uint80 maxTerminationFee
     );
+    event LiquidationWeightTrancheUpdated(uint16 liquidationWeight);
     event OriginationFeeSet(uint8 originationFee);
     event Repay(address indexed account, address indexed from, uint256 amount);
     event TrancheAdded(address indexed tranche, uint8 indexed index);
     event TranchePopped(address tranche);
-    event TrancheWeightsUpdated(uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight);
+    event InterestWeightTrancheUpdated(uint8 indexed trancheIndex, uint16 interestWeight);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
     event InterestRate(uint80 interestRate);
     event InterestRateParametersUpdated(
@@ -225,17 +223,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Adds a tranche to the Lending Pool.
      * @param tranche The address of the Tranche.
      * @param interestWeight_ The interest weight of the specific Tranche.
-     * @param liquidationWeight The liquidation weight of the specific Tranche.
      * @dev The order of the tranches is important, the most senior tranche is added first at index 0, the most junior at the last index.
      * @dev Each Tranche is an ERC4626 contract.
      * @dev The interest weight of each Tranche determines the relative share of the yield (interest payments) that goes to its Liquidity providers.
-     * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
-    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight)
-        external
-        onlyOwner
-        processInterests
-    {
+    function addTranche(address tranche, uint16 interestWeight_) external onlyOwner processInterests {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
@@ -243,38 +235,36 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         interestWeightTranches.push(interestWeight_);
         interestWeight[tranche] = interestWeight_;
 
-        totalLiquidationWeight += liquidationWeight;
-        liquidationWeightTranches.push(liquidationWeight);
-
         uint8 trancheIndex = uint8(tranches.length);
         tranches.push(tranche);
         isTranche[tranche] = true;
 
         emit TrancheAdded(tranche, trancheIndex);
-        emit TrancheWeightsUpdated(trancheIndex, interestWeight_, liquidationWeight);
+        emit InterestWeightTrancheUpdated(trancheIndex, interestWeight_);
     }
 
     /**
      * @notice Changes the interest weight of a specific Tranche.
      * @param index The index of the Tranche for which a new interest weight is being set.
      * @param interestWeight_ The new interest weight of the Tranche at the index.
-     * @param liquidationWeight The new liquidation weight of the Tranche at the index.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
-    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight)
-        external
-        onlyOwner
-        processInterests
-    {
+    function setInterestWeightTranche(uint256 index, uint16 interestWeight_) external onlyOwner processInterests {
         if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + interestWeight_;
         interestWeightTranches[index] = interestWeight_;
         interestWeight[tranches[index]] = interestWeight_;
 
-        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + liquidationWeight;
-        liquidationWeightTranches[index] = liquidationWeight;
+        emit InterestWeightTrancheUpdated(uint8(index), interestWeight_);
+    }
 
-        emit TrancheWeightsUpdated(uint8(index), interestWeight_, liquidationWeight);
+    /**
+     * @notice Changes the liquidation weight of the most Junior Tranche.
+     * @param liquidationWeight The new liquidation weight of the Tranche at the index.
+     * @dev The liquidation weight determines the relative share of liquidation fees that goes to the most Junior Tranche.
+     */
+    function setLiquidationWeightTranche(uint16 liquidationWeight) external onlyOwner {
+        emit LiquidationWeightTrancheUpdated(liquidationWeightTranche = liquidationWeight);
     }
 
     /**
@@ -288,10 +278,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function _popTranche(uint256 index, address tranche) internal {
         totalInterestWeight -= interestWeightTranches[index];
-        totalLiquidationWeight -= liquidationWeightTranches[index];
         isTranche[tranche] = false;
         interestWeightTranches.pop();
-        liquidationWeightTranches.pop();
         tranches.pop();
         interestWeight[tranche] = 0;
 
@@ -303,7 +291,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Changes the fraction of the interest payments that go to the treasury.
+     * @notice Changes the interest and liquidation weight of the Treasury.
      * @param interestWeightTreasury_ The new interestWeight of the treasury.
      * @param liquidationWeightTreasury_ The new liquidationWeight of the treasury.
      * @dev The interestWeight determines the relative share of the yield (interest payments) that goes to the protocol treasury.
@@ -312,7 +300,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function setTreasuryWeights(uint16 interestWeightTreasury_, uint16 liquidationWeightTreasury_) external onlyOwner {
         totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeightTreasury_;
-        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTreasury + liquidationWeightTreasury_;
 
         emit TreasuryWeightsUpdated(
             interestWeightTreasury = interestWeightTreasury_, liquidationWeightTreasury = liquidationWeightTreasury_
@@ -938,8 +925,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     {
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
 
-        // Pay out the "liquidationPenalty" to the LPs and Treasury.
-        _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
+        // Pay out the "liquidationPenalty" to the most Junior Tranche and Treasury.
+        _syncLiquidationFee(liquidationPenalty);
 
         totalRealisedLiquidity =
             SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
@@ -1002,9 +989,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 realisedLiquidityOf[terminator] += remainder;
             } else {
                 // "openDebt" is smaller than the "liquidationPenalty".
-                // Fully pay out the "terminator" and partially pay out the "liquidationPenalty" to Lps.
+                // Fully pay out the "terminator" and partially pay out the "liquidationPenalty".
                 realisedLiquidityOf[terminator] += terminationReward;
-                _syncLiquidationFeeToLiquidityProviders(remainder - terminationReward);
+                _syncLiquidationFee(remainder - terminationReward);
             }
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }
@@ -1079,33 +1066,27 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
     }
 
-    /**
-     * @notice Syncs liquidation penalties to the Lending providers and the treasury.
-     * @param assets The total amount of underlying assets to be paid out as liquidation fee.
-     * @dev The liquidationWeight of each Tranche determines the relative share of yield (liquidation penalties)
-     * that goes to its Liquidity providers.
-     */
-    function _syncLiquidationFeeToLiquidityProviders(uint256 assets) internal {
-        uint256 remainingAssets = assets;
-
-        uint256 trancheShare;
-        uint256 weightOfTranche;
+    function _syncLiquidationFee(uint256 assets) internal {
+        // Cache storage variables.
         uint256 length = tranches.length;
-        for (uint256 i; i < length; ++i) {
-            weightOfTranche = liquidationWeightTranches[i];
+        uint256 weightTranche = liquidationWeightTranche;
+        uint256 totalWeight;
+        unchecked {
+            totalWeight = weightTranche + liquidationWeightTreasury;
+        }
 
-            if (weightOfTranche != 0) {
-                trancheShare = assets.mulDivDown(weightOfTranche, totalLiquidationWeight);
-                unchecked {
-                    realisedLiquidityOf[tranches[i]] += trancheShare;
-                    remainingAssets -= trancheShare;
-                }
+        // Sync fee to the most Junior Tranche (last index).
+        if (totalWeight > 0 && length > 0) {
+            uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
+            unchecked {
+                realisedLiquidityOf[tranches[length - 1]] += trancheFee;
+                assets -= trancheFee;
             }
         }
 
+        // Add the remaining fee to the treasury balance.
         unchecked {
-            // Add the remainingAssets to the treasury balance.
-            realisedLiquidityOf[treasury] += remainingAssets;
+            realisedLiquidityOf[treasury] += assets;
         }
     }
 

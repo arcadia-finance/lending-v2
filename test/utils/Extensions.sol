@@ -63,8 +63,8 @@ contract LendingPoolExtension is LendingPool {
         _syncInterestsToLiquidityProviders(assets);
     }
 
-    function syncLiquidationFeeToLiquidityProviders(uint128 assets) public {
-        _syncLiquidationFeeToLiquidityProviders(assets);
+    function syncLiquidationFee(uint256 assets) public {
+        _syncLiquidationFee(assets);
     }
 
     function processDefault(uint256 assets) public {
@@ -127,12 +127,12 @@ contract LendingPoolExtension is LendingPool {
         interestWeightTreasury_ = interestWeightTreasury;
     }
 
-    function getTotalLiquidationWeight() public view returns (uint24 totalLiquidationWeight_) {
-        totalLiquidationWeight_ = totalLiquidationWeight;
-    }
-
     function getLiquidationWeightTreasury() public view returns (uint16 liquidationWeightTreasury_) {
         liquidationWeightTreasury_ = liquidationWeightTreasury;
+    }
+
+    function getLiquidationWeightTranche() public view returns (uint16 liquidationWeightTranche_) {
+        liquidationWeightTranche_ = liquidationWeightTranche;
     }
 
     function getMinimumMargin() public view returns (uint96) {
@@ -165,10 +165,6 @@ contract LendingPoolExtension is LendingPool {
 
     function getInterestWeightTranches(uint16 id) public view returns (uint16) {
         return interestWeightTranches[id];
-    }
-
-    function getLiquidationWeightTranches(uint16 id) public view returns (uint16) {
-        return liquidationWeightTranches[id];
     }
 
     function getTranches(uint16 id) public view returns (address) {
