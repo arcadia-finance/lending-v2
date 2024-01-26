@@ -740,11 +740,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function _syncInterestsToLiquidityProviders(uint256 assets) internal {
         uint256 remainingAssets = assets;
 
-        uint256 trancheShare;
-        uint256 realisedLiquidity;
         uint256 totalInterestWeight_ = totalInterestWeight;
-        uint256 trancheLength = tranches.length;
         if (totalInterestWeight_ > 0) {
+            uint256 realisedLiquidity;
+            uint256 trancheShare;
+            uint256 trancheLength = tranches.length;
             for (uint256 i; i < trancheLength; ++i) {
                 realisedLiquidity = realisedLiquidityOf[tranches[i]];
                 // Don't pay interests to Tranches without liquidity.

@@ -24,7 +24,34 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_syncInterestsToLiquidityProviders_ZeroLiquidity(
+    function testFuzz_Success_syncInterestsToLiquidityProviders_ZeroTotalWeight(
+        uint128 interests,
+        uint128 liquiditySr,
+        uint128 liquidityJr
+    ) public {
+        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
+            liquiditySr
+        );
+        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(jrTranche)).checked_write(
+            liquidityJr
+        );
+
+        vm.startPrank(users.creatorAddress);
+        pool.setInterestWeightTranche(0, 0);
+        pool.setInterestWeightTranche(1, 0);
+        pool.setTreasuryWeights(0, 0);
+        vm.stopPrank();
+
+        pool.syncInterestsToLendingPool(interests);
+
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquiditySr);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liquidityJr);
+        assertEq(pool.realisedLiquidityOf(address(treasury)), interests);
+        // We did not set initial totalRealisedLiquidity.
+        assertEq(pool.totalRealisedLiquidity(), interests);
+    }
+
+    function testFuzz_Success_syncInterestsToLiquidityProviders_NonZeroTotalWeight_ZeroLiquidity(
         uint128 interests,
         uint8 weightSr,
         uint8 weightJr,
@@ -48,7 +75,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         assertEq(pool.totalRealisedLiquidity(), interests);
     }
 
-    function testFuzz_Success_syncInterestsToLiquidityProviders_NonZeroLiquidity(
+    function testFuzz_Success_syncInterestsToLiquidityProviders_NonZeroTotalWeight_NonZeroLiquidity(
         uint128 interests,
         uint8 weightSr,
         uint8 weightJr,
