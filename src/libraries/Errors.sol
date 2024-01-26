@@ -51,7 +51,7 @@ library LendingPoolErrors {
     error LiquidationWeightsTooHigh();
     // Thrown when a specific tranche does not exist.
     error NonExistingTranche();
-    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
+    // Thrown when an Account would become unhealthy OR the Creditor of the Account is not the specific lending pool OR the Account version would not be valid.
     error InvalidVersion();
     // Thrown when the tranche of the lending pool already exists.
     error TrancheAlreadyExists();

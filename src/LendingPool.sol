@@ -372,7 +372,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev Can be used by anyone to donate assets to the Lending Pool.
      * It is supposed to serve as a way to compensate the jrTranche after an
      * auction didn't get sold and was manually liquidated after cutoffTime.
-     * @dev Inflation attacks by the first depositor in the Tranches have to prevented with virtual assets/shares.
+     * @dev Inflation attacks by the first depositor in the Tranches have to be prevented with virtual assets/shares.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
         if (assets == 0) revert LendingPoolErrors.ZeroAmount();
