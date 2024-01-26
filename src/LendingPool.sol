@@ -292,17 +292,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     /**
      * @notice Changes the interest and liquidation weight of the Treasury.
-     * @param interestWeightTreasury_ The new interestWeight of the treasury.
-     * @param liquidationWeightTreasury_ The new liquidationWeight of the treasury.
+     * @param interestWeight_ The new interestWeight of the treasury.
+     * @param liquidationWeight The new liquidationWeight of the treasury.
      * @dev The interestWeight determines the relative share of the yield (interest payments) that goes to the protocol treasury.
      * @dev Setting interestWeightTreasury to a very high value will cause the treasury to collect all interest fees from that moment on.
      * Although this will affect the future profits of liquidity providers, no funds nor realized interest are at risk for LPs.
      */
-    function setTreasuryWeights(uint16 interestWeightTreasury_, uint16 liquidationWeightTreasury_) external onlyOwner {
-        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeightTreasury_;
+    function setTreasuryWeights(uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner processInterests {
+        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeight_;
 
         emit TreasuryWeightsUpdated(
-            interestWeightTreasury = interestWeightTreasury_, liquidationWeightTreasury = liquidationWeightTreasury_
+            interestWeightTreasury = interestWeight_, liquidationWeightTreasury = liquidationWeight
         );
     }
 
@@ -735,18 +735,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param assets The total amount of underlying assets to be paid out as interests.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments)
      * that goes to its liquidity providers.
+     * @dev If the total interest weight is 0, all interests will go to the treasury.
      */
     function _syncInterestsToLiquidityProviders(uint256 assets) internal {
         uint256 remainingAssets = assets;
 
-        uint256 trancheShare;
-        uint24 totalInterestWeight_ = totalInterestWeight;
-        uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength; ++i) {
-            trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
-            unchecked {
-                realisedLiquidityOf[tranches[i]] += trancheShare;
-                remainingAssets -= trancheShare;
+        uint256 totalInterestWeight_ = totalInterestWeight;
+        if (totalInterestWeight_ > 0) {
+            uint256 realisedLiquidity;
+            uint256 trancheShare;
+            uint256 trancheLength = tranches.length;
+            for (uint256 i; i < trancheLength; ++i) {
+                realisedLiquidity = realisedLiquidityOf[tranches[i]];
+                // Don't pay interests to Tranches without liquidity.
+                // Interests will go to treasury instead.
+                if (realisedLiquidity == 0) continue;
+                trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
+                unchecked {
+                    realisedLiquidityOf[tranches[i]] = realisedLiquidity + trancheShare;
+                    remainingAssets -= trancheShare;
+                }
             }
         }
         unchecked {
@@ -1084,10 +1092,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Sync fee to the most Junior Tranche (last index).
         if (totalWeight > 0 && length > 0) {
-            uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
-            unchecked {
-                realisedLiquidityOf[tranches[length - 1]] += trancheFee;
-                assets -= trancheFee;
+            uint256 realisedLiquidity = realisedLiquidityOf[tranches[length - 1]];
+            // Don't pay fees to a Tranche without liquidity.
+            // Interests will go to treasury instead.
+            if (realisedLiquidity > 0) {
+                uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
+                unchecked {
+                    realisedLiquidityOf[tranches[length - 1]] = realisedLiquidity + trancheFee;
+                    assets -= trancheFee;
+                }
             }
         }
 

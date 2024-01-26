@@ -108,7 +108,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         openDebt = uint128(bound(openDebt, 1, liquidationPenalty - 1));
 
         // Given: Liquidity is deposited in Lending Pool
-        vm.prank(address(srTranche));
+        vm.prank(address(jrTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         pool.setAuctionsInProgress(1);
@@ -148,10 +148,10 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // Then: Terminator should be able to claim his rewards for liquidation termination
         assertEq(pool.realisedLiquidityOf(auctionTerminator), auctionTerminationReward);
         // And: The liquidity amount from the most senior tranche should remain the same
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquidity);
+        assertEq(pool.realisedLiquidityOf(address(srTranche)), 0);
 
         // And: The jr tranche will get its part of the liquidation penalty
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liqPenaltyJunior);
+        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liquidity + liqPenaltyJunior);
         // And: treasury will get its part of the liquidation penalty
         assertEq(pool.realisedLiquidityOf(address(treasury)), liqPenaltyTreasury);
         // And: The remainder should be claimable by the original owner
