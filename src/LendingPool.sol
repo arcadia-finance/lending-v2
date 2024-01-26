@@ -26,9 +26,6 @@ import { LendingPoolErrors } from "./libraries/Errors.sol";
  * - Management of issuing and repaying debt.
  * - Management of interest payments.
  * - Settlement of liquidations and default events.
- * @dev Implementation not vulnerable to ERC4626 inflation attacks,
- * since totalAssets() cannot be manipulated by the first minter.
- * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
 contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     using FixedPointMathLib for uint256;
@@ -375,9 +372,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev Can be used by anyone to donate assets to the Lending Pool.
      * It is supposed to serve as a way to compensate the jrTranche after an
      * auction didn't get sold and was manually liquidated after cutoffTime.
-     * @dev First minter of a tranche could abuse this function by minting only 1 share,
-     * frontrun next minter by calling this function and inflate the share price.
-     * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
+     * @dev Inflation attacks by the first depositor in the Tranches have to prevented with virtual assets/shares.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
         if (assets == 0) revert LendingPoolErrors.ZeroAmount();
@@ -387,10 +382,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Need to transfer before donating or ERC777s could reenter.
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), assets);
-
-        // Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
-        // See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
-        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPoolErrors.InsufficientShares();
 
         unchecked {
             realisedLiquidityOf[tranche] += assets; //[̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]

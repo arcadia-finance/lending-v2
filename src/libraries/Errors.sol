@@ -43,8 +43,6 @@ library LendingPoolErrors {
     error AmountExceedsBalance();
     // Thrown when an auction is in process.
     error AuctionOngoing();
-    // Thrown when less than 1 share outstanding to mitigate share manipulation.
-    error InsufficientShares();
     // Thrown when account specified is not an Arcadia Account.
     error IsNotAnAccount();
     // Thrown when an account has zero debt.
