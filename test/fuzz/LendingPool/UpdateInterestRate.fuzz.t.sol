@@ -53,8 +53,8 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.totalAssets(), realisedDebt + interest);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
         // Pools have no liquidity -> all interests go to the Treasury.
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interest);
-        assertEq(pool.totalRealisedLiquidity(), realisedLiquidity + interest);
+        assertEq(pool.liquidityOf(address(treasury)), interest);
+        assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 
     function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(
@@ -96,7 +96,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertTrue(expectedInterestRate <= type(uint80).max);
 
         vm.expectEmit();
-        emit InterestRate(uint80(expectedInterestRate));
+        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -125,7 +125,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate = baseRate_;
 
         vm.expectEmit();
-        emit InterestRate(uint80(expectedInterestRate));
+        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 

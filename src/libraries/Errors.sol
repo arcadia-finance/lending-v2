@@ -43,6 +43,8 @@ library LendingPoolErrors {
     error AmountExceedsBalance();
     // Thrown when an auction is in process.
     error AuctionOngoing();
+    // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
+    error InvalidVersion();
     // Thrown when account specified is not an Arcadia Account.
     error IsNotAnAccount();
     // Thrown when an account has zero debt.
@@ -51,16 +53,14 @@ library LendingPoolErrors {
     error LiquidationWeightsTooHigh();
     // Thrown when a specific tranche does not exist.
     error NonExistingTranche();
-    // Thrown when an Account would become unhealthy OR the Creditor of the Account is not the specific lending pool OR the Account version would not be valid.
-    error InvalidVersion();
+    // Thrown when address has an open position
+    error OpenPositionNonZero();
     // Thrown when the tranche of the lending pool already exists.
     error TrancheAlreadyExists();
     // Thrown when caller is not authorized.
     error Unauthorized();
     // Thrown when asset amount in input is zero.
     error ZeroAmount();
-    // Thrown when address has an open position
-    error OpenPositionNonZero();
 }
 
 library TrancheErrors {

@@ -34,7 +34,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Set the Liquidation parameters.
         vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(100, 500, 50, type(uint80).max, type(uint80).max);
+        pool.setLiquidationParameters(100, 500, 50, 0, type(uint80).max);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -68,9 +68,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(srTranche), 0);
-        vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(0, interestWeight);
+        emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeight);
         pool_.addTranche(address(srTranche), interestWeight);
         vm.stopPrank();
 
@@ -84,15 +82,11 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_addTranche_MultipleTranches(uint16 interestWeightSr, uint16 interestWeightJr) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(srTranche), 0);
-        vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(0, interestWeightSr);
+        emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeightSr);
         pool_.addTranche(address(srTranche), interestWeightSr);
 
         vm.expectEmit(true, true, true, true);
-        emit TrancheAdded(address(jrTranche), 1);
-        vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(1, interestWeightJr);
+        emit InterestWeightTrancheUpdated(address(jrTranche), 1, interestWeightJr);
         pool_.addTranche(address(jrTranche), interestWeightJr);
         vm.stopPrank();
 

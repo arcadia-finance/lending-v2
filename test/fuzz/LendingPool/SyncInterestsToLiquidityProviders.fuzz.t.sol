@@ -6,13 +6,10 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-
 /**
  * @notice Fuzz tests for the function "syncInterestsToLendingPool" of contract "LendingPool".
  */
 contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
-    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -29,12 +26,8 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         uint128 liquiditySr,
         uint128 liquidityJr
     ) public {
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
-            liquiditySr
-        );
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(jrTranche)).checked_write(
-            liquidityJr
-        );
+        pool.setRealisedLiquidityOf(address(srTranche), liquiditySr);
+        pool.setRealisedLiquidityOf(address(jrTranche), liquidityJr);
 
         vm.startPrank(users.creatorAddress);
         pool.setInterestWeightTranche(0, 0);
@@ -44,11 +37,11 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         pool.syncInterestsToLendingPool(interests);
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquiditySr);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liquidityJr);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(srTranche)), liquiditySr);
+        assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr);
+        assertEq(pool.liquidityOf(address(treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
-        assertEq(pool.totalRealisedLiquidity(), interests);
+        assertEq(pool.totalLiquidity(), interests);
     }
 
     function testFuzz_Success_syncInterestsToLiquidityProviders_NonZeroTotalWeight_ZeroLiquidity(
@@ -68,11 +61,11 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         pool.syncInterestsToLendingPool(interests);
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), 0);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), 0);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(srTranche)), 0);
+        assertEq(pool.liquidityOf(address(jrTranche)), 0);
+        assertEq(pool.liquidityOf(address(treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
-        assertEq(pool.totalRealisedLiquidity(), interests);
+        assertEq(pool.totalLiquidity(), interests);
     }
 
     function testFuzz_Success_syncInterestsToLiquidityProviders_NonZeroTotalWeight_NonZeroLiquidity(
@@ -102,19 +95,15 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         liquiditySr = uint128(bound(liquiditySr, 1, type(uint128).max - interestSr));
         liquidityJr = uint128(bound(liquidityJr, 1, type(uint128).max - interestJr));
 
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
-            liquiditySr
-        );
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(jrTranche)).checked_write(
-            liquidityJr
-        );
+        pool.setRealisedLiquidityOf(address(srTranche), liquiditySr);
+        pool.setRealisedLiquidityOf(address(jrTranche), liquidityJr);
 
         pool.syncInterestsToLendingPool(interests);
 
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), liquiditySr + interestSr);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), liquidityJr + interestJr);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interestTreasury);
+        assertEq(pool.liquidityOf(address(srTranche)), liquiditySr + interestSr);
+        assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr + interestJr);
+        assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
         // We did not set initial totalRealisedLiquidity.
-        assertEq(pool.totalRealisedLiquidity(), interests);
+        assertEq(pool.totalLiquidity(), interests);
     }
 }

@@ -45,7 +45,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(sender);
         pool.skim();
 
-        assertEq(pool.totalRealisedLiquidity(), balanceOf + totalDebt);
-        assertEq(pool.realisedLiquidityOf(treasury), balanceOf + totalDebt - totalLiquidity);
+        assertEq(pool.totalLiquidity(), balanceOf + totalDebt);
+        assertEq(pool.liquidityOf(treasury), balanceOf + totalDebt - totalLiquidity);
     }
 }

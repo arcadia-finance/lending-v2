@@ -10,6 +10,7 @@ import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
 import { Tranche } from "../../src/Tranche.sol";
@@ -139,14 +140,6 @@ contract LendingPoolExtension is LendingPool {
         return minimumMargin;
     }
 
-    function getMaxInitiationFee() public view returns (uint80) {
-        return maxInitiationFee;
-    }
-
-    function getMaxTerminationFee() public view returns (uint80) {
-        return maxTerminationFee;
-    }
-
     function getAuctionsInProgress() public view returns (uint16) {
         return auctionsInProgress;
     }
@@ -191,31 +184,22 @@ contract LendingPoolExtension is LendingPool {
         balanceOf[account] = amount;
     }
 
-    function setMaxLiquidationFees_(uint80 maxInitiationFee_, uint80 maxTerminationFee_) public {
-        maxInitiationFee = maxInitiationFee_;
-        maxTerminationFee = maxTerminationFee_;
-    }
-
-    function getPenaltyWeight() public view returns (uint16) {
-        return penaltyWeight;
-    }
-
-    function getInitiationRewardWeight() public view returns (uint16) {
-        return initiationWeight;
-    }
-
-    function getTerminationRewardWeight() public view returns (uint16) {
-        return terminationWeight;
-    }
-
-    function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
-        return _calculateRewards(amount);
-    }
-
-    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
-        external
+    function getCalculateRewards(uint256 amount, uint256 minimumMargin_)
+        public
+        view
+        returns (uint256, uint256, uint256)
     {
-        _settleLiquidationHappyFlow(account, startDebt, terminator, surplus);
+        return _calculateRewards(amount, minimumMargin_);
+    }
+
+    function settleLiquidationHappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator,
+        uint256 surplus
+    ) external {
+        _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, terminator, surplus);
     }
 
     function getInterestRateVariables() public view returns (uint256, uint256, uint256, uint256) {

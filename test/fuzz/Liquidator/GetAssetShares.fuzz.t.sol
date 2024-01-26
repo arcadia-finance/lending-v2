@@ -31,7 +31,21 @@ contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(assetShares.length, 0);
     }
 
-    function testFuzz_Success_getAssetShare_NonEmptyArray(AssetValueAndRiskFactors[] memory assetValues) public {
+    function testFuzz_Success_getAssetShare_NonEmptyArray_ZeroTotalValue(uint8 length) public {
+        AssetValueAndRiskFactors[] memory assetValues = new AssetValueAndRiskFactors[](length);
+
+        // When: getAssetShares is called.
+        uint32[] memory assetShares = liquidator.getAssetShares(assetValues);
+
+        // Then: The asset shares are 0.
+        for (uint256 i; i < assetValues.length; ++i) {
+            assertEq(assetShares[i], 0);
+        }
+    }
+
+    function testFuzz_Success_getAssetShare_NonEmptyArray_NonZeroTotalValue(
+        AssetValueAndRiskFactors[] memory assetValues
+    ) public {
         // Given: all values per asset are smaller as type(uint112).max.
         uint256 totalValue;
         vm.assume(assetValues.length > 0);
@@ -40,6 +54,8 @@ contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             totalValue += assetValues[i].assetValue;
         }
         vm.assume(totalValue > 0);
+
+        vm.assume(totalValue != 0);
 
         // When: getAssetShares is called.
         uint32[] memory assetShares = liquidator.getAssetShares(assetValues);
