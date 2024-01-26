@@ -260,7 +260,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     /**
      * @notice Changes the liquidation weight of the most Junior Tranche.
-     * @param liquidationWeight The new liquidation weight of the Tranche at the index.
+     * @param liquidationWeight The new liquidation weight of the Tranche at the highest index.
      * @dev The liquidation weight determines the relative share of liquidation fees that goes to the most Junior Tranche.
      */
     function setLiquidationWeightTranche(uint16 liquidationWeight) external onlyOwner {
@@ -1066,6 +1066,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
     }
 
+    /**
+     * @notice Syncs liquidation penalties to the most Junior Tranche and the treasury.
+     * @param assets The total amount of underlying assets to be paid out as liquidation fee.
+     * @dev The liquidationWeightTranche and liquidationWeightTreasury determines the relative share of yield (liquidation penalties)
+     * that goes to the most Junior Tranche and the treasury.
+     * @dev If the total liquidation weight is 0, the liquidation fee is added to the treasury.
+     */
     function _syncLiquidationFee(uint256 assets) internal {
         // Cache storage variables.
         uint256 length = tranches.length;
