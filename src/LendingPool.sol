@@ -735,6 +735,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param assets The total amount of underlying assets to be paid out as interests.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments)
      * that goes to its liquidity providers.
+     * @dev If the total interest weight is 0, all interests will go to the treasury.
      */
     function _syncInterestsToLiquidityProviders(uint256 assets) internal {
         uint256 remainingAssets = assets;
@@ -743,15 +744,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint256 realisedLiquidity;
         uint256 totalInterestWeight_ = totalInterestWeight;
         uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength; ++i) {
-            realisedLiquidity = realisedLiquidityOf[tranches[i]];
-            // Don't pay interests to Tranches without liquidity.
-            // Interests will go to treasury instead.
-            if (realisedLiquidity == 0) continue;
-            trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
-            unchecked {
-                realisedLiquidityOf[tranches[i]] = realisedLiquidity + trancheShare;
-                remainingAssets -= trancheShare;
+        if (totalInterestWeight_ > 0) {
+            for (uint256 i; i < trancheLength; ++i) {
+                realisedLiquidity = realisedLiquidityOf[tranches[i]];
+                // Don't pay interests to Tranches without liquidity.
+                // Interests will go to treasury instead.
+                if (realisedLiquidity == 0) continue;
+                trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
+                unchecked {
+                    realisedLiquidityOf[tranches[i]] = realisedLiquidity + trancheShare;
+                    remainingAssets -= trancheShare;
+                }
             }
         }
         unchecked {
