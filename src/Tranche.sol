@@ -393,6 +393,7 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
+     * @notice Returns the amount of underlying assets redeemed that correspond to a certain amount of shares withdrawn.
      * @param shares The amount of shares redeemed.
      * @return assets The amount of underlying assets withdrawn.
      * @dev This function is a modification of previewRedeem() where interests are realized (state modification).
