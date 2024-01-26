@@ -12,10 +12,9 @@ import { DeployAddresses } from "./Constants/DeployConstants.sol";
 import { Factory } from "../lib/accounts-v2/src/Factory.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 
-import { ERC20, DebtToken } from "../src/DebtToken.sol";
+import { ERC20 } from "../src/DebtToken.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
-import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 
 contract ArcadiaLendingDeployment is Test {
     Factory public factory;
