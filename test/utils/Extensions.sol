@@ -12,6 +12,7 @@ import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+import { Tranche } from "../../src/Tranche.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -257,6 +258,20 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
         borrowPaused = borrowPaused_;
         depositPaused = depositPaused_;
         liquidationPaused = liquidationPaused_;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
+                        TRANCHE
+////////////////////////////////////////////////////////////// */
+
+contract TrancheExtension is Tranche {
+    constructor(address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
+        Tranche(lendingPool_, vas, prefix_, prefixSymbol_)
+    { }
+
+    function getVas() public view returns (uint256 vas) {
+        vas = VAS;
     }
 }
 

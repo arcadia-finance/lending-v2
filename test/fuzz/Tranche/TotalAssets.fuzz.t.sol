@@ -28,5 +28,6 @@ contract TotalAssets_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         pool.setRealisedLiquidityOf(address(tranche), assets);
 
         assertEq(tranche.totalAssets(), assets);
+        assertEq(tranche.totalAssetsAndSync(), assets);
     }
 }

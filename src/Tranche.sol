@@ -25,9 +25,6 @@ import { TrancheErrors } from "./libraries/Errors.sol";
  * @dev Each Tranche contract will do the accounting of the balances of its Liquidity Providers,
  * while the Lending Pool will do the accounting of the balances of its Tranches.
  * @dev A Tranche is according the ERC4626 standard, with a certain ERC20 as underlying asset.
- * @dev Implementation not vulnerable to ERC4626 inflation attacks,
- * since totalAssets() cannot be manipulated by first minter when total amount of shares are low.
- * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
  */
 contract Tranche is ITranche, ERC4626, Owned {
     using FixedPointMathLib for uint256;
@@ -36,6 +33,11 @@ contract Tranche is ITranche, ERC4626, Owned {
                                 CONSTANTS
     ////////////////////////////////////////////////////////////// */
 
+    // The amount of Virtual Assets and Shares.
+    // Virtual shares/assets (also ghost shares) prevent against inflation attacks of ERC4626 vaults,
+    // see https://docs.openzeppelin.com/contracts/4.x/erc4626.
+    uint256 internal immutable VAS;
+    // The Lending Pool of the underlying ERC20 token, with the lending logic.
     ILendingPool public immutable LENDING_POOL;
 
     /* //////////////////////////////////////////////////////////////
@@ -53,10 +55,6 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     event LockSet(bool status);
     event AuctionInProgressSet(bool status);
-
-    /* //////////////////////////////////////////////////////////////
-                                ERRORS
-    ////////////////////////////////////////////////////////////// */
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -87,12 +85,13 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice The constructor for a tranche.
-     * @param lendingPool_ the Lending Pool of the underlying ERC20 token, with the lending logic.
+     * @param lendingPool_ The Lending Pool of the underlying ERC20 token, with the lending logic.
+     * @param vas The amount of Virtual Assets and Shares.
      * @param prefix_ The prefix of the contract name (eg. Senior -> Mezzanine -> Junior).
      * @param prefixSymbol_ The prefix of the contract symbol (eg. SR  -> MZ -> JR).
      * @dev The name and symbol of the tranche are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(address lendingPool_, string memory prefix_, string memory prefixSymbol_)
+    constructor(address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
         ERC4626(
             ERC4626(address(lendingPool_)).asset(),
             string(abi.encodePacked(prefix_, " ArcadiaV2 ", ERC4626(lendingPool_).asset().name())),
@@ -101,6 +100,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         Owned(msg.sender)
     {
         LENDING_POOL = ILendingPool(lendingPool_);
+        VAS = vas;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -283,69 +283,122 @@ contract Tranche is ITranche, ERC4626, Owned {
     }
 
     /**
-     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
-     * @return assets The amount of underlying assets.
-     * @dev This function is a modification of convertToShares() where interests are realized (state modification).
+     * @notice Conversion rate from assets to shares.
+     * @param assets The amount of underlying assets.
+     * @return shares The amount of shares.
      */
-    function convertToSharesAndSync(uint256 assets) public returns (uint256) {
-        // Cache totalSupply
+    function convertToShares(uint256 assets) public view override returns (uint256 shares) {
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
-        return supply == 0 ? assets : assets.mulDivDown(supply, totalAssetsAndSync());
+        shares = supply == 0 ? assets : assets.mulDivDown(supply + VAS, totalAssets() + VAS);
     }
 
     /**
-     * @notice Returns the amount of underlying assets, to which a certain amount of shares have a claim.
+     * @notice Conversion rate from assets to shares.
+     * @param assets The amount of underlying assets.
+     * @return shares The amount of shares.
+     * @dev This function is a modification of convertToShares() where interests are realized (state modification).
+     */
+    function convertToSharesAndSync(uint256 assets) public returns (uint256 shares) {
+        // Cache totalSupply.
+        uint256 supply = totalSupply;
+
+        shares = supply == 0 ? assets : assets.mulDivDown(supply + VAS, totalAssetsAndSync() + VAS);
+    }
+
+    /**
+     * @notice Conversion rate from shares to assets.
+     * @param shares The amount of shares.
+     * @return assets The amount of underlying assets.
+     */
+    function convertToAssets(uint256 shares) public view override returns (uint256 assets) {
+        // Cache totalSupply.
+        uint256 supply = totalSupply;
+
+        assets = supply == 0 ? shares : shares.mulDivDown(totalAssets() + VAS, supply + VAS);
+    }
+
+    /**
+     * @notice Conversion rate from shares to assets.
+     * @param shares The amount of shares.
      * @return assets The amount of underlying assets.
      * @dev This function is a modification of convertToAssets() where interests are realized (state modification).
      */
-    function convertToAssetsAndSync(uint256 shares) public returns (uint256) {
-        // Cache totalSupply
+    function convertToAssetsAndSync(uint256 shares) public returns (uint256 assets) {
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
-        return supply == 0 ? shares : shares.mulDivDown(totalAssetsAndSync(), supply);
+        assets = supply == 0 ? shares : shares.mulDivDown(totalAssetsAndSync() + VAS, supply + VAS);
     }
 
     /**
-     * @notice Returns the amount of shares that correspond to a certain amount of underlying assets.
+     * @notice Returns the amount of shares minted that correspond to a certain amount of underlying assets deposited.
+     * @param assets The amount of underlying assets deposited.
      * @return shares The amount of shares minted.
      * @dev This function is a modification of previewDeposit() where interests are realized (state modification).
      */
-    function previewDepositAndSync(uint256 assets) public returns (uint256) {
-        return convertToSharesAndSync(assets);
+    function previewDepositAndSync(uint256 assets) public returns (uint256 shares) {
+        shares = convertToSharesAndSync(assets);
     }
 
     /**
-     * @notice Modification of previewMint() where interests are realized (state modification).
-     * @return assets The corresponding amount of assets of the underlying ERC20 token being deposited.
+     * @notice Returns the amount of underlying assets deposited that correspond to a certain amount of shares minted.
+     * @param shares The amount of shares minted.
+     * @return assets The amount of underlying assets deposited.
+     */
+    function previewMint(uint256 shares) public view override returns (uint256 assets) {
+        // Cache totalSupply.
+        uint256 supply = totalSupply;
+
+        assets = supply == 0 ? shares : shares.mulDivUp(totalAssets() + VAS, supply + VAS);
+    }
+
+    /**
+     * @notice Returns the amount of underlying assets deposited that correspond to a certain amount of shares minted.
+     * @param shares The amount of shares minted.
+     * @return assets The amount of underlying assets deposited.
      * @dev This function is a modification of previewMint() where interests are realized (state modification).
      */
-    function previewMintAndSync(uint256 shares) public returns (uint256) {
-        // Cache totalSupply
+    function previewMintAndSync(uint256 shares) public returns (uint256 assets) {
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
-        return supply == 0 ? shares : shares.mulDivUp(totalAssetsAndSync(), supply);
+        assets = supply == 0 ? shares : shares.mulDivUp(totalAssetsAndSync() + VAS, supply + VAS);
     }
 
     /**
-     * @notice Modification of previewWithdraw() where interests are realized (state modification).
-     * @return assets The amount of assets of the underlying ERC20 token being withdrawn.
+     * @notice Returns the amount of shares redeemed that correspond to a certain amount of underlying assets withdrawn.
+     * @param assets The amount of underlying assets withdrawn.
+     * @return shares The amount of shares redeemed.
+     */
+    function previewWithdraw(uint256 assets) public view override returns (uint256 shares) {
+        // Cache totalSupply.
+        uint256 supply = totalSupply;
+
+        shares = supply == 0 ? assets : assets.mulDivUp(supply + VAS, totalAssets() + VAS);
+    }
+
+    /**
+     * @notice Returns the amount of shares redeemed that correspond to a certain amount of underlying assets withdrawn.
+     * @param assets The amount of underlying assets withdrawn.
+     * @return shares The amount of shares redeemed.
      * @dev This function is a modification of previewWithdraw() where interests are realized (state modification).
      */
-    function previewWithdrawAndSync(uint256 assets) public returns (uint256) {
-        // Cache totalSupply
+    function previewWithdrawAndSync(uint256 assets) public returns (uint256 shares) {
+        // Cache totalSupply.
         uint256 supply = totalSupply;
 
-        return supply == 0 ? assets : assets.mulDivUp(supply, totalAssetsAndSync());
+        shares = supply == 0 ? assets : assets.mulDivUp(supply + VAS, totalAssetsAndSync() + VAS);
     }
 
     /**
-     * @notice Modification of previewRedeem() where interests are realized (state modification).
-     * @return shares The amount of shares being redeemed.
+     * @param shares The amount of shares redeemed.
+     * @return assets The amount of underlying assets withdrawn.
      * @dev This function is a modification of previewRedeem() where interests are realized (state modification).
      */
-    function previewRedeemAndSync(uint256 shares) public returns (uint256) {
-        return convertToAssetsAndSync(shares);
+    function previewRedeemAndSync(uint256 shares) public returns (uint256 assets) {
+        assets = convertToAssetsAndSync(shares);
     }
 
     /*//////////////////////////////////////////////////////////////
