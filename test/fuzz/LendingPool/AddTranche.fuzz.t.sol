@@ -45,15 +45,15 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
-        pool_.addTranche(address(srTranche), 50, 0);
+        pool_.addTranche(address(srTranche), 50);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.creatorAddress);
-        pool_.addTranche(address(srTranche), 50, 0);
+        pool_.addTranche(address(srTranche), 50);
         vm.expectRevert(TrancheAlreadyExists.selector);
-        pool_.addTranche(address(srTranche), 40, 0);
+        pool_.addTranche(address(srTranche), 40);
         vm.stopPrank();
     }
 
@@ -61,46 +61,39 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.creatorAddress);
         pool_.setAuctionsInProgress(1);
         vm.expectRevert(AuctionOngoing.selector);
-        pool_.addTranche(address(srTranche), 50, 0);
+        pool_.addTranche(address(srTranche), 50);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight, uint16 liquidationWeight) public {
+    function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(srTranche), 0);
         vm.expectEmit(true, true, true, true);
-        emit TrancheWeightsUpdated(0, interestWeight, liquidationWeight);
-        pool_.addTranche(address(srTranche), interestWeight, liquidationWeight);
+        emit InterestWeightTrancheUpdated(0, interestWeight);
+        pool_.addTranche(address(srTranche), interestWeight);
         vm.stopPrank();
 
         assertEq(pool_.getTotalInterestWeight(), interestWeight);
         assertEq(pool_.getInterestWeightTranches(0), interestWeight);
         assertEq(pool_.getInterestWeight(address(srTranche)), interestWeight);
-        assertEq(pool_.getTotalLiquidationWeight(), liquidationWeight);
-        assertEq(pool_.getLiquidationWeightTranches(0), liquidationWeight);
         assertEq(pool_.getTranches(0), address(srTranche));
         assertTrue(pool_.getIsTranche(address(srTranche)));
     }
 
-    function testFuzz_Success_addTranche_MultipleTranches(
-        uint16 interestWeightSr,
-        uint16 liquidationWeightSr,
-        uint16 interestWeightJr,
-        uint16 liquidationWeightJr
-    ) public {
+    function testFuzz_Success_addTranche_MultipleTranches(uint16 interestWeightSr, uint16 interestWeightJr) public {
         vm.startPrank(users.creatorAddress);
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(srTranche), 0);
         vm.expectEmit(true, true, true, true);
-        emit TrancheWeightsUpdated(0, interestWeightSr, liquidationWeightSr);
-        pool_.addTranche(address(srTranche), interestWeightSr, liquidationWeightSr);
+        emit InterestWeightTrancheUpdated(0, interestWeightSr);
+        pool_.addTranche(address(srTranche), interestWeightSr);
 
         vm.expectEmit(true, true, true, true);
         emit TrancheAdded(address(jrTranche), 1);
         vm.expectEmit(true, true, true, true);
-        emit TrancheWeightsUpdated(1, interestWeightJr, liquidationWeightJr);
-        pool_.addTranche(address(jrTranche), interestWeightJr, liquidationWeightJr);
+        emit InterestWeightTrancheUpdated(1, interestWeightJr);
+        pool_.addTranche(address(jrTranche), interestWeightJr);
         vm.stopPrank();
 
         assertEq(pool_.getTotalInterestWeight(), uint256(interestWeightSr) + interestWeightJr);
@@ -108,9 +101,6 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool_.getInterestWeightTranches(1), interestWeightJr);
         assertEq(pool_.getInterestWeight(address(srTranche)), interestWeightSr);
         assertEq(pool_.getInterestWeight(address(jrTranche)), interestWeightJr);
-        assertEq(pool_.getTotalLiquidationWeight(), uint256(liquidationWeightSr) + liquidationWeightJr);
-        assertEq(pool_.getLiquidationWeightTranches(0), liquidationWeightSr);
-        assertEq(pool_.getLiquidationWeightTranches(1), liquidationWeightJr);
         assertEq(pool_.getTranches(0), address(srTranche));
         assertEq(pool_.getTranches(1), address(jrTranche));
         assertTrue(pool_.getIsTranche(address(srTranche)));

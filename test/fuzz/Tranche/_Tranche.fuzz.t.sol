@@ -27,7 +27,7 @@ abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithoutAccounts();
 
         vm.prank(users.creatorAddress);
-        pool.addTranche(address(tranche), 50, 0);
+        pool.addTranche(address(tranche), 50);
 
         vm.prank(users.tokenCreatorAddress);
         asset.mint(users.liquidityProvider, type(uint256).max);
@@ -39,7 +39,7 @@ abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
     function setTrancheState(uint256 vas, uint256 totalSupply, uint128 totalAssets) public returns (address tranche_) {
         vm.startPrank(users.creatorAddress);
         tranche = new TrancheExtension(address(pool), vas, "Tranche", "T");
-        pool.addTranche(address(tranche), 0, 0);
+        pool.addTranche(address(tranche), 0);
         vm.stopPrank();
 
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalSupply);
