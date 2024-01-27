@@ -1144,7 +1144,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         returns (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty)
     {
         uint256 maxReward_ = maxReward;
-        // The minimum reward, for both the initiation- and terminationReward, is defined as a fixed percentage (25%) of the minimumMargin.
+        // The minimum reward, for both the initiation- and terminationReward, is defined as a fixed percentage of the minimumMargin.
         uint256 minReward = minimumMargin_.mulDivUp(minRewardWeight, ONE_4);
 
         // Initiation reward must be between minReward and maxReward.
