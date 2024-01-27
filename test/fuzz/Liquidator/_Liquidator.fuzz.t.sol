@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 import { AccountV1 } from "lib/accounts-v2/src/accounts/AccountV1.sol";
-import { ERC20Mock } from "lib/accounts-v2/test/utils/mocks/ERC20Mock.sol";
+import { ERC20Mock } from "lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
 
 /**
  * @notice Common logic needed by all "Liquidator" fuzz tests.
