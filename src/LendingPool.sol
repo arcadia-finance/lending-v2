@@ -416,6 +416,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         whenBorrowNotPaused
         processInterests
     {
+        if (amount == 0) revert LendingPoolErrors.ZeroAmount();
+
         // If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
