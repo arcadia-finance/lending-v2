@@ -44,17 +44,6 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_bid_NotForSale(address bidder, address account_) public {
-        // Given: Account is not in the auction
-        uint256[] memory assetAmounts = new uint256[](1);
-
-        // When Then: Bid is called, It should revert
-        vm.startPrank(bidder);
-        vm.expectRevert(NotForSale.selector);
-        liquidator.getBidPrice(address(account_), assetAmounts);
-        vm.stopPrank();
-    }
-
     function testFuzz_Revert_bid_InvalidBid(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
@@ -66,6 +55,17 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.expectRevert(InvalidBid.selector);
         liquidator.getBidPrice(address(proxyAccount), new uint256[](2));
         vm.stopPrank();
+    }
+
+    function testFuzz_Success_getBidPrice_notInAuction() public {
+        uint256[] memory assetAmounts_ = new uint256[](2);
+
+        // When : Calling getBidPrice on an Account that is not in liquidation
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+
+        // Then : Values should be correct
+        assertEq(inAuction, false);
+        assertEq(price, 0);
     }
 
     function testFuzz_Success_getBidPrice_fullLiquidation_checkValues() public {
@@ -135,9 +135,10 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assetAmounts_[1] = amountToken1;
 
         // When : Calling getBidPrice of full amount
-        uint256 price = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
 
         // Then : Values should be correct
+        assertEq(inAuction, true);
         assertGt(price, startDebt);
         emit log_named_uint("price", price);
 
@@ -145,7 +146,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
-        price = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (price,) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
         assertLt(price, startDebt);
         emit log_named_uint("price", price);
 
@@ -220,9 +221,10 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assetAmounts_[1] = amountToken1 / 2;
 
         // When : Calling getBidPrice of half the initial amounts deposited in the Accounts
-        uint256 price = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
 
         // Then : Values should be correct
+        assertEq(inAuction, true);
         assertGt(price, startDebt / 2);
         emit log_named_uint("price", price);
 
@@ -230,7 +232,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
-        price = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (price,) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
         assertLt(price, startDebt / 2);
         emit log_named_uint("price", price);
 

@@ -321,13 +321,19 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param account The contract address of the Account being liquidated.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
      * @return price The price for which the bid can be purchased, denominated in the Numeraire.
+     * @return inAuction return false when the Account is not being Auctioned.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
      */
-    function getBidPrice(address account, uint256[] memory askedAssetAmounts) public view returns (uint256 price) {
+    function getBidPrice(address account, uint256[] memory askedAssetAmounts)
+        public
+        view
+        returns (uint256 price, bool inAuction)
+    {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
-        if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
+        inAuction = auctionInformation_.inAuction;
+        if (!inAuction) return (0, false);
         // Calculate the current auction price of the assets being bought.
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
         price = _calculateBidPrice(auctionInformation_, totalShare);
