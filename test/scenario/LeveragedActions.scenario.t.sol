@@ -208,7 +208,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         });
 
         withdrawData.assets[0] = address(mockERC20.stable1);
-        withdrawData.assetTypes[0] = 0;
+        withdrawData.assetTypes[0] = 1;
         withdrawData.assetIds[0] = 0;
         withdrawData.assetAmounts[0] = stableCollateral;
 
@@ -220,7 +220,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         });
 
         depositData.assets[0] = address(mockERC20.token1);
-        depositData.assetTypes[0] = 0;
+        depositData.assetTypes[0] = 1;
         withdrawData.assetIds[0] = 0;
 
         ActionData memory transferFromOwner;
@@ -304,7 +304,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         });
 
         withdrawData.assets[0] = address(mockERC20.stable1);
-        withdrawData.assetTypes[0] = 0;
+        withdrawData.assetTypes[0] = 1;
         withdrawData.assetIds[0] = 0;
         withdrawData.assetAmounts[0] = stableCollateral;
 
@@ -316,7 +316,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         });
 
         depositData.assets[0] = address(mockERC20.token1);
-        depositData.assetTypes[0] = 0;
+        depositData.assetTypes[0] = 1;
         withdrawData.assetIds[0] = 0;
 
         ActionData memory transferFromOwner;
@@ -429,7 +429,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             });
 
             withdrawData.assets[0] = address(mockERC20.stable1);
-            withdrawData.assetTypes[0] = 0;
+            withdrawData.assetTypes[0] = 1;
             withdrawData.assetIds[0] = 0;
             withdrawData.assetAmounts[0] = stableCollateral;
 
@@ -441,7 +441,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             });
 
             depositData.assets[0] = address(mockERC20.token1);
-            depositData.assetTypes[0] = 0;
+            depositData.assetTypes[0] = 1;
             withdrawData.assetIds[0] = 0;
 
             ActionData memory transferFromOwner;
