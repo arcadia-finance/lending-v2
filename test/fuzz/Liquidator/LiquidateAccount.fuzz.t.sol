@@ -172,13 +172,13 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGe(pool.getAuctionsInProgress(), 1);
 
         // Then: Auction should be set and started
-        (uint128 startDebt_, uint32 cutoffTimeStamp_, uint32 startTime_, bool inAuction_) =
+        (uint128 startDebt_, uint32 cutoffTime_, uint32 startTime_, bool inAuction_) =
             liquidator.getAuctionInformationPartOne(address(proxyAccount));
 
         assertEq(startDebt_, amountLoanedStack + 1);
         assertEq(inAuction_, true);
         assertEq(startTime_, block.timestamp);
-        assertEq(cutoffTimeStamp_, block.timestamp + liquidator.getCutoffTime());
+        assertEq(cutoffTime_, liquidator.getCutoffTime());
     }
 
     function testFuzz_Success_liquidateAccount_UnhealthyDebt_PartTwo(

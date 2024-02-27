@@ -260,7 +260,17 @@ contract TrancheExtension is Tranche {
 ////////////////////////////////////////////////////////////// */
 
 contract LiquidatorExtension is Liquidator {
-    constructor(address accountFactory) Liquidator(accountFactory) { }
+    constructor(address accountFactory, address sequencerUptimeOracle_)
+        Liquidator(accountFactory, sequencerUptimeOracle_)
+    { }
+
+    function getSequencerUptimeOracle() public view returns (address sequencerUptimeOracle_) {
+        sequencerUptimeOracle_ = sequencerUptimeOracle;
+    }
+
+    function getSequencerUpTime() public view returns (bool success, uint256 startedAt) {
+        return _getSequencerUpTime();
+    }
 
     function setInAuction(address account, address creditor, uint128 startDebt) public {
         auctionInformation[account].inAuction = true;
@@ -279,10 +289,10 @@ contract LiquidatorExtension is Liquidator {
     function getAuctionInformationPartOne(address account_)
         public
         view
-        returns (uint128 startDebt_, uint32 cutoffTimeStamp_, uint32 startTime_, bool inAuction_)
+        returns (uint128 startDebt_, uint32 cutoffTime_, uint32 startTime_, bool inAuction_)
     {
         startDebt_ = auctionInformation[account_].startDebt;
-        cutoffTimeStamp_ = auctionInformation[account_].cutoffTimeStamp;
+        cutoffTime_ = auctionInformation[account_].cutoffTime;
         startTime_ = auctionInformation[account_].startTime;
         inAuction_ = auctionInformation[account_].inAuction;
     }
