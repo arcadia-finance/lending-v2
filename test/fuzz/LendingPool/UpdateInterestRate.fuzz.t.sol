@@ -29,12 +29,14 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint80 interestRate
     ) public {
         // realisedDebt smaller than equal to than 3402823669209384912995114146594816
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //5 year
-        vm.assume(interestRate <= 10 * 10 ** 18);
+        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //1000%
-        vm.assume(realisedDebt <= type(uint128).max / (10 ** 5));
+        vm.assume(interestRate <= 10 * 10 ** 18);
         //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
+        vm.assume(realisedDebt <= type(uint128).max / (10 ** 5));
+
+        // Given: Utilisation below 100% (test-case).
         vm.assume(realisedDebt <= realisedLiquidity);
 
         pool.setTotalRealisedLiquidity(realisedLiquidity);
@@ -57,7 +59,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 
-    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero_UtilizationBelow100Percent(
         uint128 realisedDebt_,
         uint128 totalRealisedLiquidity_,
         uint72 baseRate_,
@@ -65,42 +67,75 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint72 lowSlope_,
         uint16 utilisationThreshold_
     ) public {
-        // Given: totalRealisedLiquidity_ is more than equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
-        vm.assume(totalRealisedLiquidity_ > 0);
-        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4);
-        vm.assume(realisedDebt_ <= totalRealisedLiquidity_);
-        vm.assume(utilisationThreshold_ <= ONE_4);
+        // Given: totalRealisedLiquidity_ is more than equal to 0.
+        totalRealisedLiquidity_ = uint128(bound(totalRealisedLiquidity_, 1, type(uint128).max));
 
-        // When: The InterestConfiguration is set
+        // And: Utilisation is below 100% (test-case).
+        // And: utilisation does not overflow.
+        realisedDebt_ = uint128(bound(realisedDebt_, 0, type(uint128).max / ONE_4));
+        realisedDebt_ = uint128(bound(realisedDebt_, 0, totalRealisedLiquidity_));
+
+        // And: The InterestConfiguration is set.
         vm.prank(users.creatorAddress);
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
-        // And: utilisation is 10_000 multiplied by realisedDebt_ and divided by totalRealisedLiquidity_
-        uint256 utilisation = (ONE_4 * realisedDebt_) / totalRealisedLiquidity_;
-
+        // Calculate expectedInterestRate.
         uint256 expectedInterestRate;
-
+        uint256 utilisation = (ONE_4 * realisedDebt_) / totalRealisedLiquidity_;
         if (utilisation <= utilisationThreshold_) {
-            // And: expectedInterestRate is lowSlope multiplied by utilisation, divided by 10_000 and added to baseRate
             expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
         } else {
-            // And: lowSlopeInterest is utilisationThreshold multiplied by lowSlope,
-            // highSlopeInterest is utilisation minus utilisationThreshold multiplied by highSlope
             uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
             uint256 highSlopeInterest = uint256(utilisation - utilisationThreshold_) * highSlope_;
-
-            // And: expectedInterestRate is baseRate added to lowSlopeInterest added to highSlopeInterest divided by 10_000
             expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
         }
 
         assertTrue(expectedInterestRate <= type(uint80).max);
 
+        // When: interest rate is updated.
         vm.expectEmit();
         emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
         // Then: actualInterestRate should be equal to expectedInterestRate
+        assertEq(actualInterestRate, expectedInterestRate);
+    }
+
+    function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero_UtilizationAbove100Percent(
+        uint128 realisedDebt_,
+        uint128 totalRealisedLiquidity_,
+        uint72 baseRate_,
+        uint72 highSlope_,
+        uint72 lowSlope_,
+        uint16 utilisationThreshold_
+    ) public {
+        // Given: Utilisation is above 100% (test-case).
+        // And: utilisation does not overflow.
+        realisedDebt_ = uint128(bound(realisedDebt_, 2, type(uint128).max / ONE_4));
+        // And: totalRealisedLiquidity_ is more than equal to 0.
+        totalRealisedLiquidity_ = uint128(bound(totalRealisedLiquidity_, 1, realisedDebt_ - 1));
+
+        // And: The InterestConfiguration is set.
+        vm.prank(users.creatorAddress);
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+        pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
+
+        // Calculate expectedInterestRate.
+        uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;
+        uint256 highSlopeInterest = uint256(ONE_4 - utilisationThreshold_) * highSlope_;
+        uint256 expectedInterestRate = uint256(baseRate_) + (lowSlopeInterest + highSlopeInterest) / ONE_4;
+
+        assertTrue(expectedInterestRate <= type(uint80).max);
+
+        // When: interest rate is updated.
+        vm.expectEmit();
+        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
+        uint256 actualInterestRate = pool.interestRate();
+
+        // Then: actualInterestRate should be equal to expectedInterestRate.
         assertEq(actualInterestRate, expectedInterestRate);
     }
 
