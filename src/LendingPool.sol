@@ -288,6 +288,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function setTreasuryWeights(uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner processInterests {
         totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeight_;
+        interestWeight[treasury] = interestWeight_;
 
         emit TreasuryWeightsUpdated(
             interestWeightTreasury = interestWeight_, liquidationWeightTreasury = liquidationWeight
@@ -636,6 +637,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Returns the redeemable amount of liquidity in the underlying asset of an address.
      * @param owner_ The address of the liquidity provider.
      * @return assets The redeemable amount of liquidity in the underlying asset.
+     *  ¨* @dev liquidityOf() might deviate from the actual liquidityOf after interests are synced in the following situations:
+     *   - liquidityOf() the treasury will be slightly underestimated, since all rounding errors of all tranches will go to the treasury.
+     *   - Tranches with 0 liquidity don't earn any interests, interests will go to treasury instead.
+     *   - If totalInterestWeight is 0 (will never happen) all interests will go to treasury instead.
      */
     function liquidityOf(address owner_) external view returns (uint256 assets) {
         // Avoid a second calculation of unrealised debt (expensive).
