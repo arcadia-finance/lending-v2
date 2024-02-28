@@ -10,8 +10,10 @@ import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtToken } from "../../src/DebtToken.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 import { LendingPoolGuardian } from "../../src/guardians/LendingPoolGuardian.sol";
 import { Liquidator } from "../../src/Liquidator.sol";
+import { Tranche } from "../../src/Tranche.sol";
 
 /* //////////////////////////////////////////////////////////////
                         DEBT TOKEN
@@ -62,8 +64,8 @@ contract LendingPoolExtension is LendingPool {
         _syncInterestsToLiquidityProviders(assets);
     }
 
-    function syncLiquidationFeeToLiquidityProviders(uint128 assets) public {
-        _syncLiquidationFeeToLiquidityProviders(assets);
+    function syncLiquidationFee(uint256 assets) public {
+        _syncLiquidationFee(assets);
     }
 
     function processDefault(uint256 assets) public {
@@ -126,24 +128,16 @@ contract LendingPoolExtension is LendingPool {
         interestWeightTreasury_ = interestWeightTreasury;
     }
 
-    function getTotalLiquidationWeight() public view returns (uint24 totalLiquidationWeight_) {
-        totalLiquidationWeight_ = totalLiquidationWeight;
-    }
-
     function getLiquidationWeightTreasury() public view returns (uint16 liquidationWeightTreasury_) {
         liquidationWeightTreasury_ = liquidationWeightTreasury;
     }
 
+    function getLiquidationWeightTranche() public view returns (uint16 liquidationWeightTranche_) {
+        liquidationWeightTranche_ = liquidationWeightTranche;
+    }
+
     function getMinimumMargin() public view returns (uint96) {
         return minimumMargin;
-    }
-
-    function getMaxInitiationFee() public view returns (uint80) {
-        return maxInitiationFee;
-    }
-
-    function getMaxTerminationFee() public view returns (uint80) {
-        return maxTerminationFee;
     }
 
     function getAuctionsInProgress() public view returns (uint16) {
@@ -166,12 +160,12 @@ contract LendingPoolExtension is LendingPool {
         return interestWeightTranches[id];
     }
 
-    function getLiquidationWeightTranches(uint16 id) public view returns (uint16) {
-        return liquidationWeightTranches[id];
-    }
-
     function getTranches(uint16 id) public view returns (address) {
         return tranches[id];
+    }
+
+    function getTranches() public view returns (address[] memory) {
+        return tranches;
     }
 
     function getAccountFactory() public view returns (address) {
@@ -190,31 +184,22 @@ contract LendingPoolExtension is LendingPool {
         balanceOf[account] = amount;
     }
 
-    function setMaxLiquidationFees_(uint80 maxInitiationFee_, uint80 maxTerminationFee_) public {
-        maxInitiationFee = maxInitiationFee_;
-        maxTerminationFee = maxTerminationFee_;
-    }
-
-    function getPenaltyWeight() public view returns (uint16) {
-        return penaltyWeight;
-    }
-
-    function getInitiationRewardWeight() public view returns (uint16) {
-        return initiationWeight;
-    }
-
-    function getTerminationRewardWeight() public view returns (uint16) {
-        return terminationWeight;
-    }
-
-    function getCalculateRewards(uint256 amount) public view returns (uint256, uint256, uint256) {
-        return _calculateRewards(amount);
-    }
-
-    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
-        external
+    function getCalculateRewards(uint256 amount, uint256 minimumMargin_)
+        public
+        view
+        returns (uint256, uint256, uint256)
     {
-        _settleLiquidationHappyFlow(account, startDebt, terminator, surplus);
+        return _calculateRewards(amount, minimumMargin_);
+    }
+
+    function settleLiquidationHappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator,
+        uint256 surplus
+    ) external {
+        _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, terminator, surplus);
     }
 
     function getInterestRateVariables() public view returns (uint256, uint256, uint256, uint256) {
@@ -257,6 +242,20 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
 }
 
 /* //////////////////////////////////////////////////////////////
+                        TRANCHE
+////////////////////////////////////////////////////////////// */
+
+contract TrancheExtension is Tranche {
+    constructor(address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
+        Tranche(lendingPool_, vas, prefix_, prefixSymbol_)
+    { }
+
+    function getVas() public view returns (uint256 vas) {
+        vas = VAS;
+    }
+}
+
+/* //////////////////////////////////////////////////////////////
                         LIQUIDATOR
 ////////////////////////////////////////////////////////////// */
 
@@ -267,6 +266,14 @@ contract LiquidatorExtension is Liquidator {
         auctionInformation[account].inAuction = true;
         auctionInformation[account].creditor = creditor;
         auctionInformation[account].startDebt = startDebt;
+    }
+
+    function setAssetAmounts(address account, uint256[] memory assetAmounts) public {
+        auctionInformation[account].assetAmounts = assetAmounts;
+    }
+
+    function setAssetShares(address account, uint32[] memory assetShares) public {
+        auctionInformation[account].assetShares = assetShares;
     }
 
     function getAuctionInformationPartOne(address account_)

@@ -25,6 +25,11 @@ interface IAccount {
     function getUsedMargin() external view returns (uint256);
 
     /**
+     * @notice Updates the actionTimestamp
+     */
+    function updateActionTimestampByCreditor() external;
+
+    /**
      * @notice Checks if the Account is still healthy for an updated open position.
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
@@ -50,9 +55,10 @@ interface IAccount {
      * @return assetAddresses Array of the contract addresses of the assets in Account.
      * @return assetIds Array of the IDs of the assets in Account.
      * @return assetAmounts Array with the amounts of the assets in Account.
-     * @return creditor_ The creditor, address 0 if no active Creditor.
-     * @return openDebt The open Debt issued against the Account.
-     * @return assetAndRiskValues Array of asset values and corresponding collateral factors.
+     * @return creditor_ The contract address of the Creditor.
+     * @return minimumMargin_ The minimum margin.
+     * @return openPosition The open position (liabilities) issued against the Account.
+     * @return assetAndRiskValues Array of asset values and corresponding collateral and liquidation factors.
      */
     function startLiquidation(address initiator)
         external
@@ -61,6 +67,7 @@ interface IAccount {
             uint256[] memory,
             uint256[] memory,
             address,
+            uint96,
             uint256,
             AssetValueAndRiskFactors[] memory
         );

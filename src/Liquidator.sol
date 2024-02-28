@@ -5,22 +5,25 @@
 pragma solidity 0.8.22;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { LiquidatorErrors } from "./libraries/Errors.sol";
 import { Owned } from "../lib/solmate/src/auth/Owned.sol";
+import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /**
  * @title Liquidator.
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
-contract Liquidator is Owned, ILiquidator {
+contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
+    using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
     /* //////////////////////////////////////////////////////////////
                                CONSTANTS
@@ -60,14 +63,16 @@ contract Liquidator is Owned, ILiquidator {
         uint32 cutoffTimeStamp;
         // The timestamp the auction started.
         uint32 startTime;
+        // The contract address of the Creditor.
+        address creditor;
+        // The minimum margin of the Account.
+        uint96 minimumMargin;
         // Sets the begin price of the auction, 4 decimals precision.
         uint16 startPriceMultiplier;
         // Sets the minimum price the auction converges to, 4 decimals precision.
         uint16 minPriceMultiplier;
         // Flag indicating if the auction is still ongoing.
         bool inAuction;
-        // The time after which the auction is considered not successful, in seconds.
-        address creditor;
         // The contract address of each asset in the Account, at the moment the liquidation was initiated.
         address[] assetAddresses;
         // The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
@@ -191,7 +196,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Initiate the liquidation of an Account.
      * @param account The contract address of the Account to be liquidated.
      */
-    function liquidateAccount(address account) external {
+    function liquidateAccount(address account) external nonReentrant {
         if (!IFactory(ACCOUNT_FACTORY).isAccount(account)) revert LiquidatorErrors.IsNotAnAccount();
 
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
@@ -217,6 +222,7 @@ contract Liquidator is Owned, ILiquidator {
             uint256[] memory assetIds,
             uint256[] memory assetAmounts,
             address creditor,
+            uint96 minimumMargin,
             uint256 debt,
             AssetValueAndRiskFactors[] memory assetValues
         ) = IAccount(account).startLiquidation(msg.sender);
@@ -226,6 +232,7 @@ contract Liquidator is Owned, ILiquidator {
         auctionInformation_.assetIds = assetIds;
         auctionInformation_.assetAmounts = assetAmounts;
         auctionInformation_.creditor = creditor;
+        auctionInformation_.minimumMargin = minimumMargin;
         auctionInformation_.startDebt = uint128(debt);
 
         // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
@@ -255,11 +262,8 @@ contract Liquidator is Owned, ILiquidator {
         if (totalValue == 0) return assetShares;
 
         for (uint256 i; i < length; ++i) {
-            unchecked {
-                // The asset shares are calculated relative to the total value of the Account.
-                // "assetValue" is a uint256 in Numeraire units, will never overflow.
-                assetShares[i] = uint32(assetValues[i].assetValue * ONE_4 / totalValue);
-            }
+            // The asset shares are calculated relative to the total value of the Account.
+            assetShares[i] = uint32(assetValues[i].assetValue.mulDivUp(ONE_4, totalValue));
         }
     }
 
@@ -278,7 +282,7 @@ contract Liquidator is Owned, ILiquidator {
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external {
+    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
@@ -290,8 +294,9 @@ contract Liquidator is Owned, ILiquidator {
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
         uint128 startDebt = auctionInformation_.startDebt;
-        bool earlyTerminate =
-            ILendingPool(auctionInformation_.creditor).auctionRepay(startDebt, price, account, msg.sender);
+        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
+            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
+        );
 
         // Transfer the assets to the bidder.
         IAccount(account).auctionBid(
@@ -329,12 +334,10 @@ contract Liquidator is Owned, ILiquidator {
             revert LiquidatorErrors.InvalidBid();
         }
 
-        // If the AskedAssetAmount is bigger than type(uint224).max, totalShare will overflow.
-        // However askedAssetAmount can't exceed uint112 in the Account since the exposure limits are set to uint112.
-        // This means that when the calculated bid price is faulty, the withdraw in the Account will always revert.
+        // When askedAssetAmounts[i] is greater than assetAmounts[i], _withdraw() will revert in the Account.
         for (uint256 i; i < askedAssetAmounts.length; ++i) {
             unchecked {
-                totalShare += askedAssetAmounts[i] * assetShares[i] / assetAmounts[i];
+                totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
             }
         }
     }
@@ -399,7 +402,7 @@ contract Liquidator is Owned, ILiquidator {
      * @notice Ends an auction and settles the liquidation.
      * @param account The contract address of the account in liquidation.
      */
-    function endAuction(address account) external {
+    function endAuction(address account) external nonReentrant {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
 
         // Check if the account is being auctioned.
@@ -436,20 +439,23 @@ contract Liquidator is Owned, ILiquidator {
         // Cache variables.
         uint256 startDebt = auctionInformation_.startDebt;
         address creditor = auctionInformation_.creditor;
+        uint96 minimumMargin = auctionInformation_.minimumMargin;
 
         uint256 collateralValue = IAccount(account).getCollateralValue();
         uint256 usedMargin = IAccount(account).getUsedMargin();
 
         // Check the different conditions to end the auction.
-        if (collateralValue >= usedMargin) {
+        if (collateralValue >= usedMargin || usedMargin == minimumMargin) {
             // Happy flow: Account is back in a healthy state.
-            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, msg.sender);
+            // An Account is healthy if the collateral value is equal or greater than the used margin.
+            // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
+            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (collateralValue == 0) {
             // Unhappy flow: All collateral is sold.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
         } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
             // Unhappy flow: Auction did not end within the cutoffTime.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, msg.sender);
+            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
             IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);

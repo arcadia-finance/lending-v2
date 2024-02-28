@@ -37,32 +37,12 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.donateToTranche(1, 0);
     }
 
-    function testFuzz_Revert_donateToTranche_InsufficientShares(uint32 initialShares, uint128 assets, address donator)
-        public
-    {
-        vm.assume(assets > 0);
-        vm.assume(assets < type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
-        vm.assume(initialShares < 10 ** pool.decimals());
-
-        vm.startPrank(users.liquidityProvider);
-        srTranche.mint(initialShares, users.liquidityProvider);
-        mockERC20.stable1.transfer(donator, assets);
-        vm.stopPrank();
-
-        vm.startPrank(donator);
-        mockERC20.stable1.approve(address(pool), type(uint256).max);
-        vm.expectRevert(InsufficientShares.selector);
-        pool.donateToTranche(0, assets);
-        vm.stopPrank();
-    }
-
     function testFuzz_Success_donateToTranche(uint8 index, uint128 assets, address donator, uint128 initialShares)
         public
     {
         vm.assume(assets > 0);
-        vm.assume(assets <= type(uint128).max - pool.totalRealisedLiquidity() - initialShares);
+        vm.assume(assets <= type(uint128).max - pool.totalLiquidity() - initialShares);
         vm.assume(index < pool.numberOfTranches());
-        vm.assume(initialShares >= 10 ** pool.decimals());
 
         address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);
@@ -72,8 +52,8 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         uint256 donatorBalancePre = mockERC20.stable1.balanceOf(donator);
         uint256 poolBalancePre = mockERC20.stable1.balanceOf(address(pool));
-        uint256 realisedLiqOfPre = pool.realisedLiquidityOf(tranche_);
-        uint256 totalRealisedLiqPre = pool.totalRealisedLiquidity();
+        uint256 realisedLiqOfPre = pool.liquidityOf(tranche_);
+        uint256 totalRealisedLiqPre = pool.totalLiquidity();
 
         vm.startPrank(donator);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -84,8 +64,8 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         uint256 donatorBalancePost = mockERC20.stable1.balanceOf(donator);
         uint256 poolBalancePost = mockERC20.stable1.balanceOf(address(pool));
-        uint256 realisedLiqOfPost = pool.realisedLiquidityOf(tranche_);
-        uint256 totalRealisedLiqPost = pool.totalRealisedLiquidity();
+        uint256 realisedLiqOfPost = pool.liquidityOf(tranche_);
+        uint256 totalRealisedLiqPost = pool.totalLiquidity();
 
         assertEq(donatorBalancePost + assets, donatorBalancePre);
         assertEq(poolBalancePost - assets, poolBalancePre);

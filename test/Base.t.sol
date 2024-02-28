@@ -10,11 +10,10 @@ import { AccountV1 } from "./utils/mocks/AccountV1.sol";
 import { Asset } from "./utils/mocks/Asset.sol";
 import { Events } from "./utils/Events.sol";
 import { DebtTokenExtension } from "./utils/Extensions.sol";
-import { LendingPool } from "../src/LendingPool.sol";
 import { LendingPoolExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
 import { LiquidatorExtension } from "./utils/Extensions.sol";
-import { Tranche } from "../src/Tranche.sol";
+import { TrancheExtension } from "./utils/Extensions.sol";
 import { Errors } from "./utils/Errors.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
@@ -33,9 +32,9 @@ abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     DebtTokenExtension internal debt;
     LendingPoolExtension internal pool;
     LiquidatorExtension internal liquidator;
-    Tranche internal jrTranche;
-    Tranche internal srTranche;
-    Tranche internal tranche;
+    TrancheExtension internal jrTranche;
+    TrancheExtension internal srTranche;
+    TrancheExtension internal tranche;
 
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION

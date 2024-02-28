@@ -19,7 +19,6 @@ abstract contract Errors {
     error TrancheAlreadyExists();
     error NonExistingTranche();
     error ZeroAmount();
-    error InsufficientShares();
     error AmountExceedsBalance();
     error IsNotAnAccount();
     error InvalidVersion();

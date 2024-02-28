@@ -28,8 +28,9 @@ abstract contract LendingPool_Fuzz_Test is Fuzz_Lending_Test {
 
         vm.startPrank(users.creatorAddress);
         pool.setTreasuryWeights(10, 80);
-        pool.addTranche(address(srTranche), 50, 0);
-        pool.addTranche(address(jrTranche), 40, 20);
+        pool.addTranche(address(srTranche), 50);
+        pool.addTranche(address(jrTranche), 40);
+        pool.setLiquidationWeightTranche(20);
         pool.setAccountVersion(1, true);
         vm.stopPrank();
 

@@ -11,11 +11,11 @@ import { IAccount } from "./interfaces/IAccount.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
+import { LendingPoolErrors } from "./libraries/Errors.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
-import { LendingPoolErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Arcadia LendingPool.
@@ -26,9 +26,6 @@ import { LendingPoolErrors } from "./libraries/Errors.sol";
  * - Management of issuing and repaying debt.
  * - Management of interest payments.
  * - Settlement of liquidations and default events.
- * @dev Implementation not vulnerable to ERC4626 inflation attacks,
- * since totalAssets() cannot be manipulated by the first minter.
- * For more information, see https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706.
  */
 contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     using FixedPointMathLib for uint256;
@@ -75,13 +72,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     uint24 internal totalInterestWeight;
     // Fraction (interestWeightTreasury / totalInterestWeight) of the interest fees that go to the treasury.
     uint16 internal interestWeightTreasury;
-    // Sum of the liquidation weights of the tranches + treasury.
-    uint24 internal totalLiquidationWeight;
     // Fraction (liquidationWeightTreasury / totalLiquidationWeight) of the liquidation fees that goes to the treasury.
     uint16 internal liquidationWeightTreasury;
+    // Fraction (liquidationWeightTranche / totalLiquidationWeight) of the liquidation fees that goes to the most Junior Tranche.
+    uint16 internal liquidationWeightTranche;
 
     // Total amount of `underlying asset` that is claimable by the LPs. Does not take into account pending interests.
-    uint128 public totalRealisedLiquidity;
+    uint128 internal totalRealisedLiquidity;
     // The minimum amount of collateral that must be held in an Account before a position can be opened.
     uint96 internal minimumMargin;
 
@@ -89,27 +86,24 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     address internal treasury;
     // Number of auctions that are currently in progress.
     uint16 internal auctionsInProgress;
-    // Maximum amount of `underlying asset` that is paid as fee to the initiator of a liquidation.
-    uint80 public maxInitiationFee;
-    // Maximum amount of `underlying asset` that is paid as fee to the terminator of a liquidation.
-    uint80 public maxTerminationFee;
+    // Maximum amount of `underlying asset` that is paid as fee to the initiator/terminator of a liquidation.
+    uint80 internal maxReward;
+    // Minimum initiation and termination reward, relative to the minimumMargin, 4 decimal precision.
+    uint16 internal minRewardWeight;
     // Fee paid to the Liquidation Initiator.
     // Defined as a fraction of the openDebt with 4 decimals precision.
     // Absolute fee can be further capped to a max amount by the creditor.
-    uint16 public initiationWeight;
+    uint16 internal initiationWeight;
     // Penalty the Account owner has to pay to the Creditor on top of the open Debt for being liquidated.
     // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 public penaltyWeight;
+    uint16 internal penaltyWeight;
     // Fee paid to the address that is ending an auction.
     // Defined as a fraction of the openDebt with 4 decimals precision.
-    uint16 public terminationWeight;
+    uint16 internal terminationWeight;
 
     // Array of the interest weights of each Tranche.
     // Fraction (interestWeightTranches[i] / totalInterestWeight) of the interest fees that go to Tranche i.
     uint16[] internal interestWeightTranches;
-    // Array of the liquidation weights of each Tranche.
-    // Fraction (liquidationWeightTranches[i] / totalLiquidationWeight) of the liquidation fees that go to Tranche i.
-    uint16[] internal liquidationWeightTranches;
     // Array of the contract addresses of the Tranches.
     address[] internal tranches;
 
@@ -121,7 +115,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     // Map tranche => realisedLiquidity.
     // Amount of `underlying asset` that is claimable by the liquidity providers.
     // Does not take into account pending interests.
-    mapping(address => uint256) public realisedLiquidityOf;
+    mapping(address => uint256) internal realisedLiquidityOf;
     // Map Account => owner => beneficiary => amount.
     // Stores the credit allowances for a beneficiary per Account and per Owner.
     mapping(address => mapping(address => mapping(address => uint256))) public creditAllowance;
@@ -145,26 +139,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address indexed account, address indexed by, address to, uint256 amount, uint256 fee, bytes3 indexed referrer
     );
     event CreditApproval(address indexed account, address indexed owner, address indexed beneficiary, uint256 amount);
-    event MinimumMarginSet(uint96 minimumMargin);
     event InterestSynced(uint256 interest);
-    event LendingPoolWithdrawal(address indexed receiver, uint256 assets);
-    event LiquidationParametersSet(
-        uint16 initiationWeight,
-        uint16 penaltyWeight,
-        uint16 terminationWeight,
-        uint80 maxInitiationFee,
-        uint80 maxTerminationFee
-    );
-    event OriginationFeeSet(uint8 originationFee);
+    event InterestWeightTrancheUpdated(address indexed tranche, uint8 indexed trancheIndex, uint16 interestWeight);
+    event LiquidationWeightTrancheUpdated(uint16 liquidationWeight);
+    event PoolStateUpdated(uint256 totalDebt, uint256 totalLiquidity, uint80 interestRate);
     event Repay(address indexed account, address indexed from, uint256 amount);
-    event TrancheAdded(address indexed tranche, uint8 indexed index);
     event TranchePopped(address tranche);
-    event TrancheWeightsUpdated(uint8 indexed trancheIndex, uint16 interestWeight, uint16 liquidationWeight);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
-    event InterestRate(uint80 interestRate);
-    event InterestRateParametersUpdated(
-        uint72 baseRatePerYear, uint72 lowSlopePerYear, uint72 highSlopePerYear, uint16 utilisationThreshold
-    );
 
     /* //////////////////////////////////////////////////////////////
                                 MODIFIERS
@@ -192,8 +173,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     modifier processInterests() {
         _syncInterests();
         _;
-        //_updateInterestRate() modifies the state (effect), but can safely be called after interactions.
-        //Cannot be exploited by re-entrancy attack.
+        // _updateInterestRate() modifies the state (effect), but can safely be called after interactions.
+        // Cannot be exploited by re-entrancy attack.
         _updateInterestRate(realisedDebt, totalRealisedLiquidity);
     }
 
@@ -228,13 +209,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Adds a tranche to the Lending Pool.
      * @param tranche The address of the Tranche.
      * @param interestWeight_ The interest weight of the specific Tranche.
-     * @param liquidationWeight The liquidation weight of the specific Tranche.
      * @dev The order of the tranches is important, the most senior tranche is added first at index 0, the most junior at the last index.
      * @dev Each Tranche is an ERC4626 contract.
      * @dev The interest weight of each Tranche determines the relative share of the yield (interest payments) that goes to its Liquidity providers.
-     * @dev The liquidation weight of each Tranche determines the relative share of the liquidation fee that goes to its Liquidity providers.
      */
-    function addTranche(address tranche, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function addTranche(address tranche, uint16 interestWeight_) external onlyOwner processInterests {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
 
@@ -242,34 +221,36 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         interestWeightTranches.push(interestWeight_);
         interestWeight[tranche] = interestWeight_;
 
-        totalLiquidationWeight += liquidationWeight;
-        liquidationWeightTranches.push(liquidationWeight);
-
         uint8 trancheIndex = uint8(tranches.length);
         tranches.push(tranche);
         isTranche[tranche] = true;
 
-        emit TrancheAdded(tranche, trancheIndex);
-        emit TrancheWeightsUpdated(trancheIndex, interestWeight_, liquidationWeight);
+        emit InterestWeightTrancheUpdated(tranche, trancheIndex, interestWeight_);
     }
 
     /**
      * @notice Changes the interest weight of a specific Tranche.
      * @param index The index of the Tranche for which a new interest weight is being set.
      * @param interestWeight_ The new interest weight of the Tranche at the index.
-     * @param liquidationWeight The new liquidation weight of the Tranche at the index.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments) that goes to its Liquidity providers.
      */
-    function setTrancheWeights(uint256 index, uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner {
+    function setInterestWeightTranche(uint256 index, uint16 interestWeight_) external onlyOwner processInterests {
         if (index >= tranches.length) revert LendingPoolErrors.NonExistingTranche();
         totalInterestWeight = totalInterestWeight - interestWeightTranches[index] + interestWeight_;
         interestWeightTranches[index] = interestWeight_;
-        interestWeight[tranches[index]] = interestWeight_;
+        address tranche = tranches[index];
+        interestWeight[tranche] = interestWeight_;
 
-        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTranches[index] + liquidationWeight;
-        liquidationWeightTranches[index] = liquidationWeight;
+        emit InterestWeightTrancheUpdated(tranche, uint8(index), interestWeight_);
+    }
 
-        emit TrancheWeightsUpdated(uint8(index), interestWeight_, liquidationWeight);
+    /**
+     * @notice Changes the liquidation weight of the most Junior Tranche.
+     * @param liquidationWeight The new liquidation weight of the Tranche at the highest index.
+     * @dev The liquidation weight determines the relative share of liquidation fees that goes to the most Junior Tranche.
+     */
+    function setLiquidationWeightTranche(uint16 liquidationWeight) external onlyOwner {
+        emit LiquidationWeightTrancheUpdated(liquidationWeightTranche = liquidationWeight);
     }
 
     /**
@@ -282,11 +263,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * No need to check if index and Tranche are indeed of the last tranche since function is only called by _processDefault.
      */
     function _popTranche(uint256 index, address tranche) internal {
-        totalInterestWeight -= interestWeightTranches[index];
-        totalLiquidationWeight -= liquidationWeightTranches[index];
+        unchecked {
+            totalInterestWeight -= interestWeightTranches[index];
+        }
         isTranche[tranche] = false;
         interestWeightTranches.pop();
-        liquidationWeightTranches.pop();
         tranches.pop();
         interestWeight[tranche] = 0;
 
@@ -298,19 +279,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Changes the fraction of the interest payments that go to the treasury.
-     * @param interestWeightTreasury_ The new interestWeight of the treasury.
-     * @param liquidationWeightTreasury_ The new liquidationWeight of the treasury.
+     * @notice Changes the interest and liquidation weight of the Treasury.
+     * @param interestWeight_ The new interestWeight of the treasury.
+     * @param liquidationWeight The new liquidationWeight of the treasury.
      * @dev The interestWeight determines the relative share of the yield (interest payments) that goes to the protocol treasury.
      * @dev Setting interestWeightTreasury to a very high value will cause the treasury to collect all interest fees from that moment on.
      * Although this will affect the future profits of liquidity providers, no funds nor realized interest are at risk for LPs.
      */
-    function setTreasuryWeights(uint16 interestWeightTreasury_, uint16 liquidationWeightTreasury_) external onlyOwner {
-        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeightTreasury_;
-        totalLiquidationWeight = totalLiquidationWeight - liquidationWeightTreasury + liquidationWeightTreasury_;
+    function setTreasuryWeights(uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner processInterests {
+        totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeight_;
 
         emit TreasuryWeightsUpdated(
-            interestWeightTreasury = interestWeightTreasury_, liquidationWeightTreasury = liquidationWeightTreasury_
+            interestWeightTreasury = interestWeight_, liquidationWeightTreasury = liquidationWeight
         );
     }
 
@@ -329,7 +309,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * 4 decimal precision (10 = 0.1%).
      */
     function setOriginationFee(uint8 originationFee_) external onlyOwner {
-        emit OriginationFeeSet(originationFee = originationFee_);
+        originationFee = originationFee_;
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -356,8 +336,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             realisedLiquidityOf[msg.sender] += assets;
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(assets + totalRealisedLiquidity);
         }
-
-        // Event emitted by Tranche.
     }
 
     /**
@@ -367,18 +345,15 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev Can be used by anyone to donate assets to the Lending Pool.
      * It is supposed to serve as a way to compensate the jrTranche after an
      * auction didn't get sold and was manually liquidated after cutoffTime.
-     * @dev First minter of a tranche could abuse this function by minting only 1 share,
-     * frontrun next minter by calling this function and inflate the share price.
-     * This is mitigated by checking that there are at least 10 ** decimals shares outstanding.
+     * @dev Inflation attacks by the first depositor in the Tranches have to be prevented with virtual assets/shares.
      */
     function donateToTranche(uint256 trancheIndex, uint256 assets) external whenDepositNotPaused processInterests {
         if (assets == 0) revert LendingPoolErrors.ZeroAmount();
 
         address tranche = tranches[trancheIndex];
-        // Mitigate share manipulation, where first Liquidity Provider mints just 1 share.
-        // See https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706 for more information.
-        if (ERC4626(tranche).totalSupply() < 10 ** decimals) revert LendingPoolErrors.InsufficientShares();
 
+        // Need to transfer before donating or ERC777s could reenter.
+        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         unchecked {
@@ -403,14 +378,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         unchecked {
             realisedLiquidityOf[msg.sender] -= assets;
+            totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity - assets);
         }
-        totalRealisedLiquidity -= SafeCastLib.safeCastTo128(assets);
 
         asset.safeTransfer(receiver, assets);
-
-        // Event emitted by Tranche.
-
-        emit LendingPoolWithdrawal(receiver, assets);
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -498,7 +469,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, msg.sender, amount);
     }
@@ -506,13 +477,14 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Repays debt via an auction.
      * @param startDebt The amount of debt of the Account the moment the liquidation was initiated.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param amount The amount repaid by a bidder during the auction.
      * @param account The contract address of the Arcadia Account backing the debt.
      * @param bidder The address of the bidder.
      * @return earlyTerminate Bool indicating whether the full amount of debt was repaid.
      * @dev This function allows a liquidator to repay a specified amount of debt for a user.
      */
-    function auctionRepay(uint256 startDebt, uint256 amount, address account, address bidder)
+    function auctionRepay(uint256 startDebt, uint256 minimumMargin_, uint256 amount, address account, address bidder)
         external
         whenLiquidationNotPaused
         onlyLiquidator
@@ -529,11 +501,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             // The amount recovered by selling assets during the auction is bigger than the total debt of the Account.
             // -> Terminate the auction and make the surplus available to the Account-Owner.
             earlyTerminate = true;
-            _settleLiquidationHappyFlow(account, startDebt, bidder, (amount - accountDebt));
+            unchecked {
+                _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, bidder, (amount - accountDebt));
+            }
             amount = accountDebt;
         }
 
-        _withdraw(amount, account, account);
+        _withdraw(amount, address(this), account);
 
         emit Repay(account, bidder, amount);
     }
@@ -585,6 +559,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
+        // Need to update the actionTimestamp before transferring tokens,
+        // or ERC777s could reenter to frontrun Account transfers.
+        IAccount(account).updateActionTimestampByCreditor();
+
         // Send Borrowed funds to the actionTarget.
         asset.safeTransfer(actionTarget, amountBorrowed);
 
@@ -600,7 +578,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
         }
 
-        emit Borrow(account, msg.sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
+        unchecked {
+            emit Borrow(
+                account, msg.sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer
+            );
+        }
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -618,6 +600,23 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             totalDebt = realisedDebt + calcUnrealisedDebt();
         } else {
             totalDebt = realisedDebt;
+        }
+    }
+
+    /**
+     * @notice Returns the total redeemable amount of liquidity in the underlying asset.
+     * @return totalLiquidity_ The total redeemable amount of liquidity in the underlying asset.
+     */
+    function totalLiquidity() external view returns (uint256 totalLiquidity_) {
+        // Avoid a second calculation of unrealised debt (expensive)
+        // if interests are already synced this block.
+        if (lastSyncedTimestamp != uint32(block.timestamp)) {
+            // The total liquidity equals the sum of the realised liquidity, and the pending interests.
+            unchecked {
+                totalLiquidity_ = totalRealisedLiquidity + calcUnrealisedDebt();
+            }
+        } else {
+            totalLiquidity_ = totalRealisedLiquidity;
         }
     }
 
@@ -644,7 +643,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity of a tranche equals the sum of the realised liquidity
             // of the tranche, and its pending interests.
-            uint256 interest = calcUnrealisedDebt().mulDivUp(interestWeight[owner_], totalInterestWeight);
+            uint256 interest = calcUnrealisedDebt().mulDivDown(interestWeight[owner_], totalInterestWeight);
             unchecked {
                 assets = realisedLiquidityOf[owner_] + interest;
             }
@@ -742,18 +741,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param assets The total amount of underlying assets to be paid out as interests.
      * @dev The interest weight of each Tranche determines the relative share of yield (interest payments)
      * that goes to its liquidity providers.
+     * @dev If the total interest weight is 0, all interests will go to the treasury.
      */
     function _syncInterestsToLiquidityProviders(uint256 assets) internal {
         uint256 remainingAssets = assets;
 
-        uint256 trancheShare;
-        uint24 totalInterestWeight_ = totalInterestWeight;
-        uint256 trancheLength = tranches.length;
-        for (uint256 i; i < trancheLength; ++i) {
-            trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
-            unchecked {
-                realisedLiquidityOf[tranches[i]] += trancheShare;
-                remainingAssets -= trancheShare;
+        uint256 totalInterestWeight_ = totalInterestWeight;
+        if (totalInterestWeight_ > 0) {
+            uint256 realisedLiquidity;
+            uint256 trancheShare;
+            uint256 trancheLength = tranches.length;
+            for (uint256 i; i < trancheLength; ++i) {
+                realisedLiquidity = realisedLiquidityOf[tranches[i]];
+                // Don't pay interests to Tranches without liquidity.
+                // Interests will go to treasury instead.
+                if (realisedLiquidity == 0) continue;
+                trancheShare = assets.mulDivDown(interestWeightTranches[i], totalInterestWeight_);
+                unchecked {
+                    realisedLiquidityOf[tranches[i]] = realisedLiquidity + trancheShare;
+                    remainingAssets -= trancheShare;
+                }
             }
         }
         unchecked {
@@ -774,8 +781,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @param lowSlopePerYear_ The slope of the interest rate per year when the utilization rate is below the utilization threshold.
      * @param highSlopePerYear_ The slope of the interest rate per year when the utilization rate exceeds the utilization threshold.
      * @param utilisationThreshold_ The utilization threshold for determining the interest rate slope change.
-     * @dev This function can only be called by the contract owner and is intended to be used internally to adjust the interest rate parameters in response to market conditions.
-     * @dev After setting the interest configuration, the function emits an `InterestRateParametersUpdated` event to reflect the updated values.
+     * @dev We cannot use a struct to store all variables, since this would cause the contract size to exceed the maximum size.
      */
     function setInterestParameters(
         uint72 baseRatePerYear_,
@@ -783,12 +789,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         uint72 highSlopePerYear_,
         uint16 utilisationThreshold_
     ) external processInterests onlyOwner {
-        emit InterestRateParametersUpdated(
-            baseRatePerYear = baseRatePerYear_,
-            lowSlopePerYear = lowSlopePerYear_,
-            highSlopePerYear = highSlopePerYear_,
-            utilisationThreshold = utilisationThreshold_
-        );
+        baseRatePerYear = baseRatePerYear_;
+        lowSlopePerYear = lowSlopePerYear_;
+        highSlopePerYear = highSlopePerYear_;
+        utilisationThreshold = utilisationThreshold_;
     }
 
     /**
@@ -800,18 +804,16 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Updates the interest rate.
      * @param totalDebt Total amount of debt.
-     * @param totalLiquidity Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
+     * @param totalLiquidity_ Total amount of Liquidity (sum of borrowed out assets and assets still available in the Lending Pool).
      */
-    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity) internal {
+    function _updateInterestRate(uint256 totalDebt, uint256 totalLiquidity_) internal {
         uint256 utilisation; // 4 decimals precision
         unchecked {
-            // This doesn't overflow since totalDebt uint128. uint128 * 10_000 < type(uint256).max.
-            if (totalLiquidity > 0) utilisation = totalDebt * ONE_4 / totalLiquidity;
+            // This doesn't overflow since totalDebt is a uint128: uint128 * 10_000 < type(uint256).max.
+            if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
 
-        //Calculates and stores interestRate as a uint256, emits interestRate as a uint80 (interestRate is maximally equal to uint72 + uint72).
-        //_updateInterestRate() will be called a lot, saves a read from from storage or a write+read from memory.
-        emit InterestRate(uint80(interestRate = _calculateInterestRate(utilisation)));
+        emit PoolStateUpdated(totalDebt, totalLiquidity_, interestRate = _calculateInterestRate(utilisation));
     }
 
     /**
@@ -847,6 +849,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Initiates the liquidation process for an Account.
      * @param initiator The address of the liquidation initiator.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @return startDebt The initial debt of the liquidated Account.
      * @dev This function is only callable by an Arcadia Account with debt.
      * The liquidation process involves assessing the Account's debt and calculating liquidation incentives,
@@ -855,7 +858,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev Only Accounts with non-zero balances can have debt, and debtTokens are non-transferrable.
      * @dev If the provided Account has a debt balance of 0, the function reverts with the error "IsNotAnAccountWithDebt."
      */
-    function startLiquidation(address initiator)
+    function startLiquidation(address initiator, uint256 minimumMargin_)
         external
         override
         whenLiquidationNotPaused
@@ -870,7 +873,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Calculate liquidation incentives which have to be paid by the Account owner and are minted
         // as extra debt to the Account.
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
         // Mint the liquidation incentives as extra debt towards the Account.
         _deposit(initiationReward + liquidationPenalty + terminationReward, msg.sender);
@@ -882,7 +886,11 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + initiationReward);
 
         // If this is the sole ongoing auction, prevent any deposits and withdrawals in the most jr tranche
-        if (auctionsInProgress == 0) ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
+        if (auctionsInProgress == 0 && tranches.length > 0) {
+            unchecked {
+                ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
+            }
+        }
 
         unchecked {
             ++auctionsInProgress;
@@ -896,24 +904,26 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the liquidation terminator.
      * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
      *  to bring the Account in a healthy position, and pay out all liquidation incentives to the
      *  relevant actors.
      */
-    function settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator)
+    function settleLiquidationHappyFlow(address account, uint256 startDebt, uint256 minimumMargin_, address terminator)
         external
         whenLiquidationNotPaused
         onlyLiquidator
         processInterests
     {
-        _settleLiquidationHappyFlow(account, startDebt, terminator, 0);
+        _settleLiquidationHappyFlow(account, startDebt, minimumMargin_, terminator, 0);
     }
 
     /**
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the liquidation terminator.
      * @param surplus The surplus amount obtained from the liquidation process.
      * @dev In the happy flow, the auction proceeds are sufficient to pay off enough debt
@@ -925,13 +935,18 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *   - If there are still remaining assets after paying off all debt and incentives,
      *   the surplus goes towards the owner of the account.
      */
-    function _settleLiquidationHappyFlow(address account, uint256 startDebt, address terminator, uint256 surplus)
-        internal
-    {
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+    function _settleLiquidationHappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator,
+        uint256 surplus
+    ) internal {
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
-        // Pay out the "liquidationPenalty" to the LPs and Treasury.
-        _syncLiquidationFeeToLiquidityProviders(liquidationPenalty);
+        // Pay out the "liquidationPenalty" to the most Junior Tranche and Treasury.
+        _syncLiquidationFee(liquidationPenalty);
 
         totalRealisedLiquidity =
             SafeCastLib.safeCastTo128(totalRealisedLiquidity + terminationReward + liquidationPenalty + surplus);
@@ -954,6 +969,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Ends the liquidation process for a specific Account and settles the liquidation incentives/bad debt.
      * @param account The address of the Account undergoing liquidation settlement.
      * @param startDebt The initial debt amount of the liquidated Account.
+     * @param minimumMargin_ The minimum margin of the Account.
      * @param terminator The address of the auction terminator.
      * @dev In the unhappy flow, the auction proceeds are not sufficient to pay out all liquidation incentives
      *  and maybe not even to pay off all debt.
@@ -964,18 +980,19 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      *   - Next, the underlying assets of LPs in the second most junior Tranche are written off pro rata.
      *   - etc.
      */
-    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, address terminator)
-        external
-        whenLiquidationNotPaused
-        onlyLiquidator
-        processInterests
-    {
-        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) = _calculateRewards(startDebt);
+    function settleLiquidationUnhappyFlow(
+        address account,
+        uint256 startDebt,
+        uint256 minimumMargin_,
+        address terminator
+    ) external whenLiquidationNotPaused onlyLiquidator processInterests {
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            _calculateRewards(startDebt, minimumMargin_);
 
         // Any remaining debt that was not recovered during the auction must be written off.
         // Depending on the size of the remaining debt, different stakeholders will be impacted.
-        uint256 shares = balanceOf[account];
-        uint256 openDebt = convertToAssets(shares);
+        uint256 debtShares = balanceOf[account];
+        uint256 openDebt = convertToAssets(debtShares);
         uint256 badDebt;
         if (openDebt > terminationReward + liquidationPenalty) {
             // "openDebt" is bigger than pending liquidation incentives.
@@ -994,17 +1011,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 realisedLiquidityOf[terminator] += remainder;
             } else {
                 // "openDebt" is smaller than the "liquidationPenalty".
-                // Fully pay out the "terminator" and partially pay out the "liquidationPenalty" to Lps.
+                // Fully pay out the "terminator" and partially pay out the "liquidationPenalty".
                 realisedLiquidityOf[terminator] += terminationReward;
-                _syncLiquidationFeeToLiquidityProviders(remainder - terminationReward);
+                _syncLiquidationFee(remainder - terminationReward);
             }
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }
 
         // Remove the remaining debt from the Account now that it is written off from the liquidation incentives/Liquidity Providers.
-        _burn(account, shares);
+        _burn(account, debtShares);
         realisedDebt -= openDebt;
-        emit Withdraw(msg.sender, account, account, openDebt, shares);
+        emit Withdraw(msg.sender, account, account, openDebt, debtShares);
 
         _endLiquidation();
 
@@ -1025,10 +1042,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Hook to the most junior Tranche.
         if (auctionsInProgress == 0 && tranches.length > 0) {
-            ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+            unchecked {
+                ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
+            }
         }
-
-        // Event emitted by Liquidator.
     }
 
     /**
@@ -1037,6 +1054,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The order of the Tranches is important, the most senior Tranche is at index 0, the most junior at the last index.
      * @dev The most junior tranche will lose its underlying assets first. If all liquidity of a certain Tranche is written off,
      * the complete tranche is locked and removed. If there is still remaining bad debt, the next Tranche starts losing capital.
+     * @dev If all Tranches are written off and there is still remaining badDebt, the accounting of the pool no longer holds
+     * (sum of all realisedLiquidityOf() balances is bigger then totalRealisedLiquidity).
+     * In this case no new Tranches should be added to restart the LendingPool and any remaining funds should be withdrawn.
      */
     function _processDefault(uint256 badDebt) internal {
         address tranche;
@@ -1072,54 +1092,70 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     }
 
     /**
-     * @notice Syncs liquidation penalties to the Lending providers and the treasury.
+     * @notice Syncs liquidation penalties to the most Junior Tranche and the treasury.
      * @param assets The total amount of underlying assets to be paid out as liquidation fee.
-     * @dev The liquidationWeight of each Tranche determines the relative share of yield (liquidation penalties)
-     * that goes to its Liquidity providers.
+     * @dev The liquidationWeightTranche and liquidationWeightTreasury determines the relative share of yield (liquidation penalties)
+     * that goes to the most Junior Tranche and the treasury.
+     * @dev If the total liquidation weight is 0, the liquidation fee is added to the treasury.
      */
-    function _syncLiquidationFeeToLiquidityProviders(uint256 assets) internal {
-        uint256 remainingAssets = assets;
-
-        uint256 trancheShare;
-        uint256 weightOfTranche;
+    function _syncLiquidationFee(uint256 assets) internal {
+        // Cache storage variables.
         uint256 length = tranches.length;
-        for (uint256 i; i < length; ++i) {
-            weightOfTranche = liquidationWeightTranches[i];
+        uint256 weightTranche = liquidationWeightTranche;
+        uint256 totalWeight;
+        unchecked {
+            totalWeight = weightTranche + liquidationWeightTreasury;
+        }
 
-            if (weightOfTranche != 0) {
-                trancheShare = assets.mulDivDown(weightOfTranche, totalLiquidationWeight);
+        // Sync fee to the most Junior Tranche (last index).
+        if (totalWeight > 0 && length > 0) {
+            uint256 realisedLiquidity = realisedLiquidityOf[tranches[length - 1]];
+            // Don't pay fees to a Tranche without liquidity.
+            // Interests will go to treasury instead.
+            if (realisedLiquidity > 0) {
+                uint256 trancheFee = assets.mulDivDown(weightTranche, totalWeight);
                 unchecked {
-                    realisedLiquidityOf[tranches[i]] += trancheShare;
-                    remainingAssets -= trancheShare;
+                    realisedLiquidityOf[tranches[length - 1]] = realisedLiquidity + trancheFee;
+                    assets -= trancheFee;
                 }
             }
         }
 
+        // Add the remaining fee to the treasury balance.
         unchecked {
-            // Add the remainingAssets to the treasury balance.
-            realisedLiquidityOf[treasury] += remainingAssets;
+            realisedLiquidityOf[treasury] += assets;
         }
     }
 
     /**
      * @notice Calculates the rewards and penalties for the liquidation process based on the given debt amount.
      * @param debt The debt amount of the Account at the time of liquidation initiation.
-     * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator fee.
-     * @return terminationReward The reward for closing the liquidation process, capped by the maximum closing fee.
+     * @param minimumMargin_ The minimum margin of the Account.
+     * @return initiationReward The reward for the liquidation initiator, capped by the maximum initiator reward.
+     * @return terminationReward The reward for closing the liquidation process, capped by the maximum termination reward.
      * @return liquidationPenalty The penalty paid by the Account owner towards the liquidity providers and the protocol treasury.
+     * @dev The rewards for the initiator and terminator should at least cover the gas costs.
+     * -> minimumMargin should be set big enough such that "minimumMargin * minRewardWeight" can cover any possible gas cost to initiate/terminate the liquidation.
+     * @dev Since the initiation/termination costs do not increase with position size, the initiator and terminator rewards can be capped to a maximum value.
      */
-    function _calculateRewards(uint256 debt)
+    function _calculateRewards(uint256 debt, uint256 minimumMargin_)
         internal
         view
         returns (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty)
     {
-        uint256 maxInitiationFee_ = maxInitiationFee;
-        uint256 maxTerminationFee_ = maxTerminationFee;
-        initiationReward = debt.mulDivDown(initiationWeight, ONE_4);
-        initiationReward = initiationReward > maxInitiationFee_ ? maxInitiationFee_ : initiationReward;
+        uint256 maxReward_ = maxReward;
+        // The minimum reward, for both the initiation- and terminationReward, is defined as a fixed percentage of the minimumMargin.
+        uint256 minReward = minimumMargin_.mulDivUp(minRewardWeight, ONE_4);
 
+        // Initiation reward must be between minReward and maxReward.
+        initiationReward = debt.mulDivDown(initiationWeight, ONE_4);
+        initiationReward = initiationReward > minReward ? initiationReward : minReward;
+        initiationReward = initiationReward > maxReward_ ? maxReward_ : initiationReward;
+
+        // Termination reward must be between minReward and maxReward.
         terminationReward = debt.mulDivDown(terminationWeight, ONE_4);
-        terminationReward = terminationReward > maxTerminationFee_ ? maxTerminationFee_ : terminationReward;
+        terminationReward = terminationReward > minReward ? terminationReward : minReward;
+        terminationReward = terminationReward > maxReward_ ? maxReward_ : terminationReward;
 
         liquidationPenalty = debt.mulDivUp(penaltyWeight, ONE_4);
     }
@@ -1130,49 +1166,53 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
     /**
      * @notice Sets the liquidation parameters.
-     * @param initiationWeight_ Fee paid to the Liquidation Initiator.
+     * @param initiationWeight_ Reward paid to the Liquidation Initiator.
      * @param penaltyWeight_ Penalty paid by the Account owner to the Creditor.
-     * @param terminationWeight_ Fee paid to the Liquidation closer.
-     * @param maxInitiationFee_ The maximum fee that is paid to the initiator of a liquidation.
-     * @param maxTerminationFee_ The maximum fee that is paid to the terminator of a liquidation.
+     * @param terminationWeight_ Reward paid to the Liquidation closer.
+     * @param minRewardWeight_ The minimum reward that is paid to the initiator/terminator of a liquidation.
+     * @param maxReward_ The maximum reward that is paid to the initiator/terminator of a liquidation.
      * @dev Each weight has 4 decimals precision (50 equals 0,005 or 0,5%).
-     * @dev Each weight sets the % of the debt that is paid to the initiator and terminator of a liquidation.
-     * This fee is capped in absolute value by the maxInitiationFee respectively maxTerminationFee.
+     * @dev Each weight sets the % of the debt that is paid as reward to the initiator and terminator of a liquidation.
+     * This reward is capped in absolute value by the maxReward respectively maxReward.
+     * @dev We cannot use a struct to store all variables, since this would cause the contract size to exceed the maximum size.
      */
     function setLiquidationParameters(
         uint16 initiationWeight_,
         uint16 penaltyWeight_,
         uint16 terminationWeight_,
-        uint80 maxInitiationFee_,
-        uint80 maxTerminationFee_
+        uint16 minRewardWeight_,
+        uint80 maxReward_
     ) external onlyOwner {
         // When auctions are ongoing, it is not allowed to modify the auction parameters,
         // as that would corrupt the rewards and penalties calculated by _calculateRewards().
         if (auctionsInProgress != 0) revert LendingPoolErrors.AuctionOngoing();
 
+        // Total penalties/rewards, paid by the Account cannot exceed MAX_TOTAL_PENALTY.
         if (uint256(initiationWeight_) + penaltyWeight_ + terminationWeight_ > MAX_TOTAL_PENALTY) {
             revert LendingPoolErrors.LiquidationWeightsTooHigh();
         }
 
-        // Store and emit new parameters.
-        emit LiquidationParametersSet(
-            initiationWeight = initiationWeight_,
-            penaltyWeight = penaltyWeight_,
-            terminationWeight = terminationWeight_,
-            maxInitiationFee = maxInitiationFee_,
-            maxTerminationFee = maxTerminationFee_
-        );
+        // Sum of the initiationReward and terminationReward cannot exceed minimumMargin of the Account.
+        // -> minRewardWeight is capped to 50%.
+        if (minRewardWeight_ > 5000) revert LendingPoolErrors.LiquidationWeightsTooHigh();
+
+        // Store new parameters.
+        initiationWeight = initiationWeight_;
+        penaltyWeight = penaltyWeight_;
+        terminationWeight = terminationWeight_;
+        minRewardWeight = minRewardWeight_;
+        maxReward = maxReward_;
     }
 
     /**
      * @notice Sets the minimum amount of collateral that must be held in an Account before a position can be opened.
      * @param minimumMargin_ The new minimumMargin.
-     * @dev The minimum margin should be a conservative estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
+     * @dev The minimum margin should be a conservative upper estimate of the maximal gas cost to liquidate a position (fixed cost, independent of openDebt).
      * The minimumMargin prevents dusting attacks, and ensures that upon liquidations positions are big enough to cover
      * network transaction costs while remaining attractive to liquidate.
      */
     function setMinimumMargin(uint96 minimumMargin_) external onlyOwner {
-        emit MinimumMarginSet(minimumMargin = minimumMargin_);
+        minimumMargin = minimumMargin_;
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -1239,5 +1279,17 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function getInterestRateConfig() external view returns (uint72, uint72, uint72, uint16) {
         return (baseRatePerYear, lowSlopePerYear, highSlopePerYear, utilisationThreshold);
+    }
+
+    /**
+     * @notice Returns the liquidation parameters.
+     * @return initiationWeight Reward paid to the Liquidation Initiator.
+     * @return penaltyWeight Penalty paid by the Account owner to the Creditor.
+     * @return terminationWeight Reward paid to the Liquidation closer.
+     * @return minRewardWeight The minimum reward that is paid to the initiator/terminator of a liquidation.
+     * @return maxReward The maximum reward that is paid to the initiator/terminator of a liquidation.
+     */
+    function getLiquidationParameters() external view returns (uint16, uint16, uint16, uint16, uint80) {
+        return (initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
     }
 }

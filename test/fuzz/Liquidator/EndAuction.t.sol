@@ -24,10 +24,19 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                         HELPER FUNCTIONS
     /////////////////////////////////////////////////////////////// */
 
-    function initiateLiquidation(uint112 amountLoaned) public {
+    function initiateLiquidation(uint96 minimumMargin, uint112 amountLoaned) public {
+        // Given: Account has a minimumMargin.
+        vm.prank(users.creatorAddress);
+        pool.setMinimumMargin(minimumMargin);
+        vm.startPrank(users.accountOwner);
+        proxyAccount.closeMarginAccount();
+        proxyAccount.openMarginAccount(address(pool));
+        vm.stopPrank();
+
         // Account has debt
         bytes3 emptyBytes3;
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        uint256 collateralValue = uint256(minimumMargin) + amountLoaned;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -37,7 +46,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
             amountLoaned + 1
         );
         pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
@@ -62,7 +71,9 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint112 amountLoaned
+        uint112 usedMargin,
+        uint96 minimumMargin,
+        address randomAddress
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
         cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60), (8 * 60 * 60))); // > 1 hour && < 8 hours
@@ -70,19 +81,19 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100)); // No overflow when debt is increased
-
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
-        initiateLiquidation(amountLoaned);
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
 
         // Warp to a timestamp when auction is not yet expired.
         vm.warp(block.timestamp + timePassed);
 
         // call should revert.
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(randomAddress);
         vm.expectRevert(EndAuctionFailed.selector);
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
@@ -114,7 +125,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         );
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
         debt.setRealisedDebt(uint256(totalDebt));
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
             liquidity
         );
         pool.setTotalRealisedLiquidity(uint128(liquidity));
@@ -144,7 +155,8 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint112 amountLoaned,
+        uint112 usedMargin,
+        uint96 minimumMargin,
         address randomAddress
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -152,23 +164,74 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100));
-
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
-        initiateLiquidation(amountLoaned);
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
 
         // Account becomes Healthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned));
-        stdstore.target(address(pool)).sig(pool.realisedLiquidityOf.selector).with_key(address(srTranche)).checked_write(
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
             amountLoaned
         );
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
+
+        // endAuctionNoRemainingValue() should succeed.
+        vm.startPrank(randomAddress);
+        vm.expectEmit(true, true, true, true);
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool),
+            uint128(amountLoaned + 1),
+            initiationReward,
+            terminationReward,
+            liquidationPenalty,
+            0,
+            0
+        );
+        liquidator.endAuction(address(proxyAccount));
+        vm.stopPrank();
+
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+    }
+
+    function testFuzz_Success_endAuction_NoOpenPosition(
+        uint32 halfLifeTime,
+        uint32 cutoffTime,
+        uint16 startPriceMultiplier,
+        uint8 minPriceMultiplier,
+        uint112 usedMargin,
+        uint96 minimumMargin,
+        address randomAddress
+    ) public {
+        halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
+        cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60), (8 * 60 * 60))); // > 1 hour && < 8 hours
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
+        minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
+
+        vm.prank(users.creatorAddress);
+        liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
+
+        // Given: The account auction is initiated.
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
+
+        // Account becomes Healthy (open position is zero)
+        debt.setRealisedDebt(0);
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
+            uint256(0)
+        );
+        pool.setTotalRealisedLiquidity(0);
+
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
@@ -194,7 +257,8 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint112 amountLoaned,
+        uint112 usedMargin,
+        uint96 minimumMargin,
         address randomAddress
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -202,16 +266,16 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100));
-
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
-        initiateLiquidation(amountLoaned);
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // By setting the minUsdValue of creditor to uint128 max value, remaining assets value will be 0.
         vm.assume(proxyAccount.getAccountValue(address(0)) <= type(uint128).max);
@@ -244,7 +308,9 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
-        uint112 amountLoaned
+        uint112 usedMargin,
+        uint96 minimumMargin,
+        address randomAddress
     ) public {
         // Preprocess: Set up the fuzzed variables
         halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
@@ -253,16 +319,16 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        amountLoaned = uint112(bound(amountLoaned, 1, (type(uint112).max / 150) * 100)); // No overflow when debt is increased
-
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
-        initiateLiquidation(amountLoaned);
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
-            pool.getCalculateRewards(amountLoaned + 1);
+            pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);
@@ -272,7 +338,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
         emit AuctionFinished(
             address(proxyAccount),

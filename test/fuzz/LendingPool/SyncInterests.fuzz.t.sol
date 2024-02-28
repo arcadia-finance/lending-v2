@@ -62,7 +62,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 interests = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
 
         // Then: Total redeemable interest of LP providers and total open debt of borrowers should increase with interests
-        assertEq(pool.totalRealisedLiquidity(), realisedLiquidity + interests);
+        assertEq(pool.totalLiquidity(), realisedLiquidity + interests);
         assertEq(debt.maxWithdraw(address(proxyAccount)), realisedDebt + interests);
         assertEq(debt.maxRedeem(address(proxyAccount)), realisedDebt);
         assertEq(debt.totalAssets(), realisedDebt + interests);

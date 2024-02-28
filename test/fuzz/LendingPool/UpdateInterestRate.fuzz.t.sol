@@ -49,16 +49,12 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.updateInterestRate();
 
         uint256 interest = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
-        uint256 interestSr = interest * 50 / 100;
-        uint256 interestJr = interest * 40 / 100;
-        uint256 interestTreasury = interest - interestSr - interestJr;
 
         assertEq(debt.totalAssets(), realisedDebt + interest);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
-        assertEq(pool.realisedLiquidityOf(address(srTranche)), interestSr);
-        assertEq(pool.realisedLiquidityOf(address(jrTranche)), interestJr);
-        assertEq(pool.realisedLiquidityOf(address(treasury)), interestTreasury);
-        assertEq(pool.totalRealisedLiquidity(), realisedLiquidity + interest);
+        // Pools have no liquidity -> all interests go to the Treasury.
+        assertEq(pool.liquidityOf(address(treasury)), interest);
+        assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 
     function testFuzz_Success_updateInterestRate_totalRealisedLiquidityMoreThanZero(
@@ -100,7 +96,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertTrue(expectedInterestRate <= type(uint80).max);
 
         vm.expectEmit();
-        emit InterestRate(uint80(expectedInterestRate));
+        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -129,7 +125,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate = baseRate_;
 
         vm.expectEmit();
-        emit InterestRate(uint80(expectedInterestRate));
+        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 

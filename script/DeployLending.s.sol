@@ -12,10 +12,9 @@ import { DeployAddresses } from "./Constants/DeployConstants.sol";
 import { Factory } from "../lib/accounts-v2/src/Factory.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 
-import { ERC20, DebtToken } from "../src/DebtToken.sol";
+import { ERC20 } from "../src/DebtToken.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
-import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 
 contract ArcadiaLendingDeployment is Test {
     Factory public factory;
@@ -49,12 +48,13 @@ contract ArcadiaLendingDeployment is Test {
             address(factory),
             address(liquidator)
         );
-        srTranche_weth = new Tranche(address(pool_weth), "Senior", "sr");
+        srTranche_weth = new Tranche(address(pool_weth), 10 ** 8, "Senior", "sr");
 
         pool_weth.setOriginationFee(10);
-        pool_weth.setLiquidationParameters(100, 500, 50, 3 * 10 ** 18, 3 * 10 ** 18);
+        pool_weth.setLiquidationParameters(100, 500, 50, 2500, 3 * 10 ** 18);
         pool_weth.setMinimumMargin(0.002 * 10 ** 18);
-        pool_weth.addTranche(address(srTranche_weth), 85, 10);
+        pool_weth.addTranche(address(srTranche_weth), 85);
+        pool_weth.setLiquidationWeightTranche(10);
         pool_weth.setTreasuryWeights(15, 90);
         pool_weth.setInterestParameters(15_000_000_000_000_000, 70_000_000_000_000_000, 1_250_000_000_000_000_000, 7000);
         pool_weth.changeGuardian(vm.addr(deployerPrivateKey));
@@ -66,12 +66,13 @@ contract ArcadiaLendingDeployment is Test {
             address(factory),
             address(liquidator)
         );
-        srTranche_usdc = new Tranche(address(pool_usdc), "Senior", "sr");
+        srTranche_usdc = new Tranche(address(pool_usdc), 10 ** 6, "Senior", "sr");
 
         pool_usdc.setOriginationFee(10);
-        pool_weth.setLiquidationParameters(100, 500, 50, 5000 * 10 ** 6, 5000 * 10 ** 6);
+        pool_usdc.setLiquidationParameters(100, 500, 50, 2500, 5000 * 10 ** 6);
         pool_usdc.setMinimumMargin(2 * 10 ** 6);
-        pool_usdc.addTranche(address(srTranche_usdc), 85, 10);
+        pool_usdc.addTranche(address(srTranche_usdc), 85);
+        pool_usdc.setLiquidationWeightTranche(10);
         pool_usdc.setTreasuryWeights(15, 90);
         pool_usdc.setInterestParameters(10_000_000_000_000_000, 55_000_000_000_000_000, 1_000_000_000_000_000_000, 8000);
         pool_usdc.changeGuardian(vm.addr(deployerPrivateKey));

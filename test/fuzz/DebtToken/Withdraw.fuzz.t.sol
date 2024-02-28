@@ -53,6 +53,10 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         debt_.withdraw_(assets, owner, owner);
     }
 
+    event Withdraw(
+        address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares
+    );
+
     function testFuzz_Success_withdraw_Internal(
         uint256 assetsWithdrawn,
         address owner,
@@ -74,6 +78,8 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         debt_.setRealisedDebt(totalDebt);
 
+        vm.expectEmit(true, true, true, false);
+        emit Withdraw(address(this), owner, owner, assetsWithdrawn, 0);
         debt_.withdraw_(assetsWithdrawn, owner, owner);
 
         assertEq(debt_.balanceOf(owner), initialShares - sharesRedeemed);

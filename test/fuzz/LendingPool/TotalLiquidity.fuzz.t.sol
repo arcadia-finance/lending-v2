@@ -9,9 +9,9 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
- * @notice Fuzz tests for the function "liquidityOf" of contract "LendingPool".
+ * @notice Fuzz tests for the function "totalLiquidity" of contract "LendingPool".
  */
-contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -23,7 +23,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_liquidityOf(
+    function testFuzz_Success_totalLiquidity(
         uint80 interestRate,
         uint24 deltaTimestamp,
         uint112 realisedDebt,
@@ -49,15 +49,11 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.creatorAddress);
         pool.setInterestRate(interestRate);
 
-        uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
-        uint256 interest = unrealisedDebt * 50 / 100;
-        // interest for a tranche is rounded down
+        uint256 interest = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
         uint256 expectedValue = initialLiquidity + interest;
 
-        uint256 actualValue = pool.liquidityOf(address(srTranche));
-        uint256 actualValue_ = pool.liquidityOfAndSync(address(srTranche));
+        uint256 actualValue = pool.totalLiquidity();
 
         assertEq(actualValue, expectedValue);
-        assertEq(actualValue, actualValue_);
     }
 }
