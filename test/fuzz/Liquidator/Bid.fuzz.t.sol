@@ -6,6 +6,7 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
+import { Bidder } from "../../utils/mocks/Bidder.sol";
 
 /**
  * @notice Fuzz tests for the function "bid" of contract "Liquidator".
@@ -42,7 +43,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_bid_NotForSale(address bidder, address account_) public {
+    function testFuzz_Revert_bid_NotForSale(address bidder, address account_, bytes memory data) public {
         // Given: Account is not in the auction
         uint256[] memory assetAmounts = new uint256[](1);
         bool endAuction = false;
@@ -50,11 +51,11 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When Then: Bid is called, It should revert
         vm.startPrank(bidder);
         vm.expectRevert(NotForSale.selector);
-        liquidator.bid(address(account_), assetAmounts, endAuction);
+        liquidator.bid(address(account_), assetAmounts, endAuction, data);
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_InvalidBid(address bidder, uint112 amountLoaned) public {
+    function testFuzz_Revert_bid_InvalidBid(address bidder, uint112 amountLoaned, bytes memory data) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
@@ -64,30 +65,58 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         vm.startPrank(bidder);
         vm.expectRevert(InvalidBid.selector);
-        liquidator.bid(address(proxyAccount), new uint256[](2), endAuction);
+        liquidator.bid(address(proxyAccount), new uint256[](2), endAuction, data);
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_NoFundsBidder(address bidder, uint112 amountLoaned) public {
-        // Given: The account auction is initiated
+    function testFuzz_Revert_bid_FromContract_InterfaceNotImplemented(uint112 amountLoaned, bytes memory data) public {
+        // Given: bidder is a contract without correct interface.
+        address bidder = address(srTranche);
+
+        // And: The account auction is initiated
+        vm.assume(amountLoaned > 3);
+        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        initiateLiquidation(amountLoaned);
+        bool endAuction = false;
+
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        bidAssetAmounts[0] = amountLoaned / 4;
+
+        vm.startPrank(bidder);
+        vm.expectRevert(bytes(""));
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_bid_FromEOA_NoFundsBidder(address bidder, uint112 amountLoaned, bytes memory data)
+        public
+    {
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        // And: The account auction is initiated
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
         vm.assume(amountLoaned > 3);
         vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
-        // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         uint256[] memory bidAssetAmounts = new uint256[](1);
         bidAssetAmounts[0] = amountLoaned / 4;
 
         vm.startPrank(bidder);
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_NotApprovedLending(address bidder, uint112 amountLoaned) public {
-        // Given: The account auction is initiated
+    function testFuzz_Revert_bid_FromEOA_NotApprovedLending(address bidder, uint112 amountLoaned, bytes memory data)
+        public
+    {
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        // And: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
         vm.assume(amountLoaned > 3);
@@ -103,12 +132,15 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Then: Bid fails because the bidder has not approved the lending pool
         vm.startPrank(bidder);
         vm.expectRevert("TRANSFER_FROM_FAILED");
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
         vm.stopPrank();
     }
 
-    function testFuzz_Success_bid_partially(address bidder, uint112 amountLoaned) public {
-        // Given: The account auction is initiated
+    function testFuzz_Success_bid_FromEOA_partially(address bidder, uint112 amountLoaned, bytes memory data) public {
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        // And: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 12);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
@@ -127,7 +159,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
@@ -140,11 +172,16 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(inAuction, true);
     }
 
-    function testFuzz_Success_bid_full_earlyTerminate(address bidder, uint112 amountLoaned) public {
+    function testFuzz_Success_bid_FromEOA_full_earlyTerminate(address bidder, uint112 amountLoaned, bytes memory data)
+        public
+    {
         vm.startPrank(users.creatorAddress);
         pool.setLiquidationParameters(2, 2, 5, 0, type(uint80).max);
 
-        // Given: The account auction is initiated
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        // And: The account auction is initiated
         vm.assume(bidder != address(0));
         vm.assume(amountLoaned > 2);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
@@ -167,7 +204,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertGt(askPrice_, uint256(amountLoaned));
 
         // When: Bidder bids for the asset
-        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
         vm.stopPrank();
 
         // Then: The bidder should have the asset, and left assets should be diminished
@@ -178,5 +215,36 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: Auction should be ended since the bidder paid all the debt
         bool inAuction = liquidator.getInAuction(address(proxyAccount));
         assertEq(inAuction, false);
+    }
+
+    function testFuzz_Success_bid_FromContract(uint112 amountLoaned, bytes memory data) public {
+        Bidder bidder = new Bidder();
+
+        // And: The account auction is initiated
+        vm.assume(amountLoaned > 12);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        initiateLiquidation(amountLoaned);
+        bool endAuction = false;
+
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
+        uint256 originalAmount = originalAssetAmounts[0];
+
+        // And: Bidder has enough funds and approved the lending pool for repay
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        uint256 bidAssetAmount = originalAmount / 3;
+        bidAssetAmounts[0] = bidAssetAmount;
+        deal(address(mockERC20.stable1), address(bidder), type(uint128).max);
+        vm.startPrank(address(bidder));
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+
+        // When: Bidder bids for the asset
+        bytes memory data_ = abi.encodeCall(bidder.bidCallback, (data));
+        vm.expectCall(address(bidder), data_);
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
+        vm.stopPrank();
+
+        // And: Auction is still going on since the bidder did not choose the end the endAuction
+        bool inAuction = liquidator.getInAuction(address(proxyAccount));
+        assertEq(inAuction, true);
     }
 }

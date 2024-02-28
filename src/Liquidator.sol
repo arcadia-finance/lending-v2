@@ -8,6 +8,7 @@ import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/Asset
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { IBidCallback } from "./interfaces/IBidCallback.sol";
 import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
@@ -276,13 +277,18 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param account The contract address of the Account being liquidated.
      * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
      * @param endAuction_ Bool indicating that the auction can be ended after the bid.
+     * @param data Data passed through back to the bidder via the bidCallback() call.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
+     * @dev If the bidder is a contract, it must implement the IBidCallback interface.
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
+    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_, bytes calldata data)
+        external
+        nonReentrant
+    {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
@@ -290,17 +296,19 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
         uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
 
-        // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
-        // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
-        // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
-        uint128 startDebt = auctionInformation_.startDebt;
-        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
-            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
-        );
-
         // Transfer the assets to the bidder.
         IAccount(account).auctionBid(
             auctionInformation_.assetAddresses, auctionInformation_.assetIds, askedAssetAmounts, msg.sender
+        );
+
+        // Hook back to the bidder, bidders can optionally first liquidate the assets before repaying the debt.
+        if (msg.sender.code.length > 0) IBidCallback(msg.sender).bidCallback(data);
+
+        // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
+        // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
+        // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
+        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
+            auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
         );
 
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
