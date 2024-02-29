@@ -814,6 +814,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             // This doesn't overflow since totalDebt is a uint128: uint128 * 10_000 < type(uint256).max.
             if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
+        // Cap utilisation to 100%.
+        utilisation = utilisation <= ONE_4 ? utilisation : ONE_4;
 
         emit PoolStateUpdated(totalDebt, totalLiquidity_, interestRate = _calculateInterestRate(utilisation));
     }
