@@ -375,7 +375,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), bidAssetAmounts);
         uint256 price = liquidator.calculateBidPrice(address(proxyAccount), totalShare);
         // Debt must decrease.
-        vm.assume(srTranche.previewWithdraw(price) > 0);
+        vm.assume(pool.previewWithdraw(price) > 0);
         bytes memory data_ = abi.encodeCall(bidder.bidCallback, (bidAssetAmounts, price, data));
 
         // Get Initial balances.
@@ -423,7 +423,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), originalAssetAmounts);
         uint256 price = liquidator.calculateBidPrice(address(proxyAccount), totalShare);
         // Debt must decrease.
-        vm.assume(srTranche.previewWithdraw(price) > 0);
+        vm.assume(pool.previewWithdraw(price) > 0);
         bytes memory data_ = abi.encodeCall(bidder.bidCallback, (originalAssetAmounts, price, data));
 
         // Get Initial balances.
