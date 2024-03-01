@@ -288,6 +288,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function setTreasuryWeights(uint16 interestWeight_, uint16 liquidationWeight) external onlyOwner processInterests {
         totalInterestWeight = totalInterestWeight - interestWeightTreasury + interestWeight_;
+        interestWeight[treasury] = interestWeight_;
 
         emit TreasuryWeightsUpdated(
             interestWeightTreasury = interestWeight_, liquidationWeightTreasury = liquidationWeight
@@ -416,6 +417,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         whenBorrowNotPaused
         processInterests
     {
+        if (amount == 0) revert LendingPoolErrors.ZeroAmount();
+
         // If Account is not an actual address of an Account, ownerOfAccount(address) will return the zero address.
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
@@ -537,18 +540,47 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address accountOwner = IFactory(ACCOUNT_FACTORY).ownerOfAccount(account);
         if (accountOwner == address(0)) revert LendingPoolErrors.IsNotAnAccount();
 
-        uint256 amountBorrowedWithFee = amountBorrowed + amountBorrowed.mulDivUp(originationFee, ONE_4);
-
         // Check allowances to take debt.
         if (accountOwner != msg.sender) {
-            // Since calling accountManagementAction() gives the sender full control over all assets in the Account,
+            // Calling flashActionByCreditor() gives the sender full control over all assets in the Account,
             // Only Beneficiaries with maximum allowance can call the flashAction function.
             if (creditAllowance[account][accountOwner][msg.sender] != type(uint256).max) {
                 revert LendingPoolErrors.Unauthorized();
             }
         }
 
-        // Mint debt tokens to the Account, debt must be minted before the actions in the Account are performed.
+        // Prepare callback of the Account.
+        // The borrowing of funds during a flashAction has to be executed via a callback of the Account.
+        // As such the Account cannot be reentered in between the time that funds are borrowed and the final health check is done.
+        callbackAccount = account;
+        bytes memory callbackData = abi.encode(amountBorrowed, actionTarget, msg.sender, referrer);
+
+        // The Action Target will use the borrowed funds (optionally with additional assets withdrawn from the Account)
+        // to execute one or more actions (swap, deposit, mint...).
+        // Next the action Target will deposit any of the remaining funds or any of the recipient token
+        // resulting from the actions back into the Account.
+        // As last step, after all assets are deposited back into the Account a final health check is done:
+        // The Collateral Value of all assets in the Account must be bigger than the total liabilities against the Account (including the debt taken during this function).
+        // flashActionByCreditor also checks that the Account indeed has opened a margin account for this Lending Pool.
+        {
+            uint256 accountVersion = IAccount(account).flashActionByCreditor(callbackData, actionTarget, actionData);
+            if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
+        }
+    }
+
+    /**
+     * @notice Callback of the Account during a flashAction.
+     * @param account The contract address of the Arcadia Account.
+     * @param callbackData The data for the borrow during a flashAction.
+     * @dev During the callback, the Account cannot be reentered and the actionTimestamp is updated.
+     */
+    function _flashActionCallback(address account, bytes calldata callbackData) internal override {
+        (uint256 amountBorrowed, address actionTarget, address sender, bytes3 referrer) =
+            abi.decode(callbackData, (uint256, address, address, bytes3));
+
+        uint256 amountBorrowedWithFee = amountBorrowed + amountBorrowed.mulDivUp(originationFee, ONE_4);
+
+        // Mint debt tokens to the Account.
         _deposit(amountBorrowedWithFee, account);
 
         // Add origination fee to the treasury.
@@ -559,29 +591,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             }
         }
 
-        // Need to update the actionTimestamp before transferring tokens,
-        // or ERC777s could reenter to frontrun Account transfers.
-        IAccount(account).updateActionTimestampByCreditor();
-
         // Send Borrowed funds to the actionTarget.
+        // Transfer fails if there is insufficient liquidity in the pool.
         asset.safeTransfer(actionTarget, amountBorrowed);
 
-        // The Action Target will use the borrowed funds (optionally with additional assets withdrawn from the Account)
-        // to execute one or more actions (swap, deposit, mint...).
-        // Next the action Target will deposit any of the remaining funds or any of the recipient token
-        // resulting from the actions back into the Account.
-        // As last step, after all assets are deposited back into the Account a final health check is done:
-        // The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the debt taken during this function).
-        // flashActionByCreditor also checks that the Account indeed has opened a margin account for this Lending Pool.
-        {
-            uint256 accountVersion = IAccount(account).flashActionByCreditor(actionTarget, actionData);
-            if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
-        }
-
         unchecked {
-            emit Borrow(
-                account, msg.sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer
-            );
+            emit Borrow(account, sender, actionTarget, amountBorrowed, amountBorrowedWithFee - amountBorrowed, referrer);
         }
     }
 
@@ -636,6 +651,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Returns the redeemable amount of liquidity in the underlying asset of an address.
      * @param owner_ The address of the liquidity provider.
      * @return assets The redeemable amount of liquidity in the underlying asset.
+     *  ¨* @dev liquidityOf() might deviate from the actual liquidityOf after interests are synced in the following situations:
+     *   - liquidityOf() the treasury will be slightly underestimated, since all rounding errors of all tranches will go to the treasury.
+     *   - Tranches with 0 liquidity don't earn any interests, interests will go to treasury instead.
+     *   - If totalInterestWeight is 0 (will never happen) all interests will go to treasury instead.
      */
     function liquidityOf(address owner_) external view returns (uint256 assets) {
         // Avoid a second calculation of unrealised debt (expensive).
@@ -812,6 +831,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             // This doesn't overflow since totalDebt is a uint128: uint128 * 10_000 < type(uint256).max.
             if (totalLiquidity_ > 0) utilisation = totalDebt * ONE_4 / totalLiquidity_;
         }
+        // Cap utilisation to 100%.
+        utilisation = utilisation <= ONE_4 ? utilisation : ONE_4;
 
         emit PoolStateUpdated(totalDebt, totalLiquidity_, interestRate = _calculateInterestRate(utilisation));
     }

@@ -94,8 +94,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_flashAction_InsufficientLiquidity(
         uint128 amountLoaned,
         uint112 collateralValue,
-        uint128 liquidity,
-        bytes calldata actionData
+        uint128 liquidity
     ) public {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
@@ -110,7 +109,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), actionData, emptyBytes3);
+        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
     }
 
