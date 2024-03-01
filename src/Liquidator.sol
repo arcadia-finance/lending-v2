@@ -8,6 +8,7 @@ import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/Asset
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { IBidCallback } from "./interfaces/IBidCallback.sol";
 import { IChainLinkData } from "../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
 import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
@@ -332,15 +333,21 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice Places a bid.
      * @param account The contract address of the Account being liquidated.
-     * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
+     * @param bidAmounts Array with the assets-amounts the bidder wants to buy.
      * @param endAuction_ Bool indicating that the auction can be ended after the bid.
+     * @param data Data passed through back to the bidder via the bidCallback() call.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
-     * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
+     * @dev The "bidAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
+     * If the length of "bidAmounts" does not equal "assetAmounts", the function will revert in the Registry.
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
+     * @dev If the bidder is a contract, it must implement the IBidCallback interface.
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
+    function bid(address account, uint256[] memory bidAmounts, bool endAuction_, bytes calldata data)
+        external
+        nonReentrant
+    {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
@@ -350,21 +357,27 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
             auctionInformation_.startTime = uint32(sequencerStartedAt);
         }
 
-        // Calculate the current auction price of the assets being bought.
-        uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
+        // Transfer the assets to the bidder, returns updated bidAmounts with the actual bought assets.
+        // The actual bought assets are equal or smaller than the asked assets.
+        bidAmounts = IAccount(account).auctionBid(
+            auctionInformation_.assetAddresses, auctionInformation_.assetIds, bidAmounts, msg.sender
+        );
+
+        // Calculate the current auction price of the assets bought.
+        uint256 totalShare = _calculateTotalShare(auctionInformation_, bidAmounts);
         uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
+
+        // Hook back to the bidder with the actual amounts of bought assets and the actual bid price.
+        // Bidders can optionally first liquidate the assets before repaying the debt.
+        // Bidders should NOT call a LendingPool.repay() or LendingPool.auctionRepay() within the callback,
+        // as this will cause the bidder to pay twice!
+        if (msg.sender.code.length > 0) IBidCallback(msg.sender).bidCallback(bidAmounts, price, data);
 
         // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
-        uint128 startDebt = auctionInformation_.startDebt;
         bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
-            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
-        );
-
-        // Transfer the assets to the bidder.
-        IAccount(account).auctionBid(
-            auctionInformation_.assetAddresses, auctionInformation_.assetIds, askedAssetAmounts, msg.sender
+            auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
         );
 
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
@@ -383,25 +396,22 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice Calculates the share of the initial assets the bidder wants to buy.
      * @param auctionInformation_ The auction information.
-     * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
+     * @param bidAmounts Array with the assets-amounts the bidder wants to buy.
      * @return totalShare The share of initial assets the bidder wants to buy, 4 decimals precision.
      * @dev totalShare is calculated based on the relative value of the assets when the auction was initiated.
      */
-    function _calculateTotalShare(AuctionInformation storage auctionInformation_, uint256[] memory askedAssetAmounts)
+    function _calculateTotalShare(AuctionInformation storage auctionInformation_, uint256[] memory bidAmounts)
         internal
         view
         returns (uint256 totalShare)
     {
         uint256[] memory assetAmounts = auctionInformation_.assetAmounts;
         uint32[] memory assetShares = auctionInformation_.assetShares;
-        if (assetAmounts.length != askedAssetAmounts.length) {
-            revert LiquidatorErrors.InvalidBid();
-        }
 
-        // When askedAssetAmounts[i] is greater than assetAmounts[i], _withdraw() will revert in the Account.
-        for (uint256 i; i < askedAssetAmounts.length; ++i) {
+        // If the length of "bidAmounts" did not equal "assetAmounts", the function would have reverted on the withdraw in the Registry.
+        for (uint256 i; i < assetAmounts.length; ++i) {
             unchecked {
-                totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
+                totalShare += bidAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
             }
         }
     }
@@ -493,7 +503,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
      *  3) There are no remaining assets in the Account left to sell.
      *  4) All open debt was repaid (not checked within this function).
-     * @dev If the third condition is met, an emergency process is triggered.
+     * @dev If the first condition is met, an emergency process is triggered.
      * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
      * The Tranches of the liquidity pool will pay for the bad debt.
      * The protocol will sell/auction the assets manually to recover the debt.

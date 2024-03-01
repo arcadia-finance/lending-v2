@@ -23,19 +23,6 @@ contract CalculateTotalShare_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_calculateTotalShare_InvalidBid(
-        address account_,
-        uint256[] memory askedAssetAmounts,
-        uint256[] memory assetAmounts
-    ) public {
-        vm.assume(askedAssetAmounts.length != assetAmounts.length);
-
-        liquidator.setAssetAmounts(account_, assetAmounts);
-
-        vm.expectRevert(InvalidBid.selector);
-        liquidator.calculateTotalShare(account_, askedAssetAmounts);
-    }
-
     function testFuzz_Success_calculateTotalShare(
         address account_,
         uint256 askedAssetAmountsSeed,
