@@ -7,6 +7,8 @@ pragma solidity 0.8.22;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
+import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
  */
@@ -18,6 +20,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function setUp() public override {
         Liquidator_Fuzz_Test.setUp();
+
+        // Set grace period to 0.
+        vm.prank(users.riskManager);
+        registryExtension.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
     }
 
     /* ///////////////////////////////////////////////////////////////
@@ -65,8 +71,63 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_endAuction_Failed(
+    function testFuzz_Revert_endAuction_SequencerDown(address caller, uint112 amountLoaned, uint32 startedAt) public {
+        // Given: The account auction is initiated
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        initiateLiquidation(0, amountLoaned);
+
+        // And: The sequencer is down.
+        sequencerUptimeOracle.setLatestRoundData(1, startedAt);
+
+        // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
+        vm.prank(caller);
+        vm.expectRevert(LiquidatorErrors.SequencerDown.selector);
+        liquidator.endAuction(address(proxyAccount));
+    }
+
+    function testFuzz_Revert_endAuction_Failed_SequencerUpDuringAuction(
         uint32 halfLifeTime,
+        uint32 sequencerStartedAt,
+        uint32 timePassed,
+        uint32 cutoffTime,
+        uint16 startPriceMultiplier,
+        uint8 minPriceMultiplier,
+        uint112 usedMargin,
+        uint96 minimumMargin,
+        address randomAddress
+    ) public {
+        halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
+        cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60), (8 * 60 * 60))); // > 1 hour && < 8 hours
+        timePassed = uint32(bound(timePassed, 0, cutoffTime - 1));
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
+        minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
+
+        vm.prank(users.creatorAddress);
+        liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
+
+        // Given: Sequencer did not go down during the auction.
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, 0, block.timestamp));
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
+        // And: The account auction is initiated.
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
+
+        // Warp to a timestamp when auction is not yet expired.
+        vm.warp(block.timestamp + timePassed);
+
+        // call should revert.
+        vm.startPrank(randomAddress);
+        vm.expectRevert(EndAuctionFailed.selector);
+        liquidator.endAuction(address(proxyAccount));
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_endAuction_Failed_SequencerDownDuringAuction(
+        uint32 halfLifeTime,
+        uint32 sequencerStartedAt,
         uint32 timePassed,
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
@@ -89,8 +150,15 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint112 amountLoaned = usedMargin - minimumMargin;
         initiateLiquidation(minimumMargin, amountLoaned);
 
+        // And: Sequencer did go down during the auction.
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, block.timestamp, type(uint32).max - cutoffTime));
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
         // Warp to a timestamp when auction is not yet expired.
-        vm.warp(block.timestamp + timePassed);
+        vm.warp(sequencerStartedAt + timePassed);
+        // We transmit price to token 1 oracle in order to have the oracle active.
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call should revert.
         vm.startPrank(randomAddress);
@@ -302,8 +370,9 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assertEq(proxyAccount.inAuction(), false);
     }
 
-    function testFuzz_Success_endAuction_AfterCutoff(
+    function testFuzz_Success_endAuction_AfterCutoff_SequencerUpDuringAuction(
         uint32 halfLifeTime,
+        uint32 sequencerStartedAt,
         uint32 timePassed,
         uint32 cutoffTime,
         uint16 startPriceMultiplier,
@@ -322,7 +391,11 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.creatorAddress);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
-        // Given: The account auction is initiated.
+        // Given: Sequencer did not go down during the auction.
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, 0, block.timestamp));
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
+        // And: The account auction is initiated.
         usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
         uint112 amountLoaned = usedMargin - minimumMargin;
         initiateLiquidation(minimumMargin, amountLoaned);
@@ -332,6 +405,71 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Warp to a timestamp when auction is expired
         vm.warp(block.timestamp + timePassed);
+
+        // Update oracle to avoid InactiveOracle().
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
+
+        // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
+        vm.startPrank(randomAddress);
+        vm.expectEmit(true, true, true, false); //ignore exact calculations
+        emit AuctionFinished(
+            address(proxyAccount),
+            address(pool),
+            uint128(amountLoaned + 1),
+            initiationReward,
+            terminationReward,
+            liquidationPenalty,
+            0,
+            0
+        );
+        liquidator.endAuction(address(proxyAccount));
+        vm.stopPrank();
+
+        // The Account should be transferred to the Account recipient.
+        assertEq(proxyAccount.owner(), liquidator.getAssetRecipient(address(pool)));
+        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(proxyAccount.inAuction(), false);
+    }
+
+    function testFuzz_Success_endAuction_AfterCutoff_SequencerDownDuringAuction(
+        uint32 halfLifeTime,
+        uint32 sequencerStartedAt,
+        uint32 timePassed,
+        uint32 cutoffTime,
+        uint16 startPriceMultiplier,
+        uint8 minPriceMultiplier,
+        uint112 usedMargin,
+        uint96 minimumMargin,
+        address randomAddress
+    ) public {
+        // Preprocess: Set up the fuzzed variables
+        halfLifeTime = uint32(bound(halfLifeTime, (10 * 60), (8 * 60 * 60))); // > 10 min && < 8 hours
+        cutoffTime = uint32(bound(cutoffTime, (1 * 60 * 60), (8 * 60 * 60))); // > 1 hour && < 8 hours
+        timePassed = uint32(bound(timePassed, cutoffTime + 1, type(uint32).max - block.timestamp));
+        startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
+        minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
+
+        vm.prank(users.creatorAddress);
+        liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
+
+        // Given: The account auction is initiated.
+        usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
+        uint112 amountLoaned = usedMargin - minimumMargin;
+        initiateLiquidation(minimumMargin, amountLoaned);
+
+        (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
+            pool.getCalculateRewards(amountLoaned + 1, 0);
+
+        // And: Sequencer did go down during the auction.
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, block.timestamp, type(uint32).max - timePassed));
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
+        // Warp to a timestamp when auction is not yet expired.
+        vm.warp(sequencerStartedAt + timePassed);
+        // We transmit price to token 1 oracle in order to have the oracle active.
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // Update oracle to avoid InactiveOracle().
         vm.prank(users.defaultTransmitter);

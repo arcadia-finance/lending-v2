@@ -39,7 +39,7 @@ contract ArcadiaLendingDeployment is Test {
         vm.startBroadcast(deployerPrivateKey);
 
         factory = new Factory();
-        liquidator = new Liquidator(address(factory));
+        liquidator = new Liquidator(address(factory), DeployAddresses.sequencerUptimeOracle_base);
 
         pool_weth = new LendingPool(
             vm.addr(deployerPrivateKey),
