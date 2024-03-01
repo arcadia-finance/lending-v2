@@ -42,7 +42,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     // The base of the auction price curve (decreasing power function).
     // Determines in what time the auction price halves, 18 decimals precision.
     uint64 internal base;
-    // The time after which the auction is considered not failed and can be bought in, in seconds.
+    // The time duration after which the auction is considered failed and can be bought in, in seconds.
     uint32 internal cutoffTime;
     // Sets the begin price of the auction, 4 decimals precision.
     uint16 internal startPriceMultiplier;
@@ -63,7 +63,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         uint128 startDebt;
         // The base of the auction price curve.
         uint64 base;
-        // The time after which the auction is considered not failed and can be bought in, in seconds.
+        // The time duration after which the auction is considered failed and can be bought in, in seconds.
         uint32 cutoffTime;
         // The timestamp the auction started.
         uint32 startTime;
@@ -489,9 +489,9 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param auctionInformation_ The struct containing all the auction information.
      * @dev There are four different conditions on which an auction can be successfully ended.
      * This function will check three of the four conditions (the fourth is already checked in the bid-function):
-     *  1) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
-     *  2) There are no remaining assets in the Account left to sell.
-     *  3) The Auction did not finish within the cutoff-period.
+     *  1) The Auction did not finish within the cutoff-period.
+     *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
+     *  3) There are no remaining assets in the Account left to sell.
      *  4) All open debt was repaid (not checked within this function).
      * @dev If the third condition is met, an emergency process is triggered.
      * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
