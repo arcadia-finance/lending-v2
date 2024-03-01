@@ -548,7 +548,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Prepare callback of the Account.
         // The borrowing of funds during a flashAction has to be executed via a callback of the Account.
-        // As such the Account cannot be reentered in between the funds are borrowed and the final health check is done.
+        // As such the Account cannot be reentered in between the time that funds are borrowed and the final health check is done.
         callbackAccount = account;
         bytes memory callbackData = abi.encode(amountBorrowed, actionTarget, msg.sender, referrer);
 
@@ -557,7 +557,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Next the action Target will deposit any of the remaining funds or any of the recipient token
         // resulting from the actions back into the Account.
         // As last step, after all assets are deposited back into the Account a final health check is done:
-        // The Collateral Value of all assets in the Account is bigger than the total liabilities against the Account (including the debt taken during this function).
+        // The Collateral Value of all assets in the Account must be bigger than the total liabilities against the Account (including the debt taken during this function).
         // flashActionByCreditor also checks that the Account indeed has opened a margin account for this Lending Pool.
         {
             uint256 accountVersion = IAccount(account).flashActionByCreditor(callbackData, actionTarget, actionData);
