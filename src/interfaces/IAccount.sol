@@ -25,11 +25,6 @@ interface IAccount {
     function getUsedMargin() external view returns (uint256);
 
     /**
-     * @notice Updates the actionTimestamp
-     */
-    function updateActionTimestampByCreditor() external;
-
-    /**
      * @notice Checks if the Account is still healthy for an updated open position.
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
@@ -47,7 +42,9 @@ interface IAccount {
      * The second bytes object contains the encoded input for the actionTarget.
      * @return accountVersion The current Account version.
      */
-    function flashActionByCreditor(address actionTarget, bytes calldata actionData) external returns (uint256);
+    function flashActionByCreditor(bytes calldata callbackData, address actionTarget, bytes calldata actionData)
+        external
+        returns (uint256);
 
     /**
      * @notice Checks if an Account is liquidatable and continues the liquidation flow.

@@ -5,8 +5,10 @@
 pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+
 import { AccountExtension } from "../../../lib/accounts-v2/test/utils/Extensions.sol";
 import { Bidder } from "../../utils/mocks/Bidder.sol";
+import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 import { RegistryErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
@@ -20,6 +22,10 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function setUp() public override {
         Liquidator_Fuzz_Test.setUp();
+
+        // Set grace period to 0.
+        vm.prank(users.riskManager);
+        registryExtension.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
     }
 
     function initiateLiquidation(uint112 amountLoaned) public {
@@ -55,6 +61,26 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.expectRevert(NotForSale.selector);
         liquidator.bid(address(account_), assetAmounts, endAuction, data);
         vm.stopPrank();
+    }
+
+    function testFuzz_Revert_bid_SequencerDown(
+        address bidder,
+        uint112 amountLoaned,
+        uint32 startedAt,
+        bytes memory data
+    ) public {
+        // Given: The account auction is initiated
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        initiateLiquidation(amountLoaned);
+
+        // And: The sequencer is down.
+        sequencerUptimeOracle.setLatestRoundData(1, startedAt);
+
+        // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
+        vm.prank(bidder);
+        vm.expectRevert(LiquidatorErrors.SequencerDown.selector);
+        liquidator.bid(address(proxyAccount), new uint256[](1), false, data);
     }
 
     function testFuzz_Revert_bid_FromContract_AssetAmountsShorter(uint112 amountLoaned, bytes memory data) public {
@@ -152,6 +178,103 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.expectRevert("TRANSFER_FROM_FAILED");
         liquidator.bid(address(proxyAccount), bidAssetAmounts, endAuction, data);
         vm.stopPrank();
+    }
+
+    function testFuzz_Success_bid_FromEOA_SequencerUpDuringAuction(
+        address bidder,
+        uint112 amountLoaned,
+        uint32 liquidationStartTime,
+        uint32 sequencerStartedAt,
+        bytes memory data
+    ) public {
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        vm.assume(bidder != address(0));
+        vm.assume(amountLoaned > 12);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+
+        // Given: Sequencer did not go down during the auction.
+        liquidationStartTime =
+            uint32(bound(liquidationStartTime, 2 days, type(uint32).max - liquidator.getCutoffTime()));
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, 2 days, liquidationStartTime));
+
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
+        // And: The account auction is initiated
+        // We transmit price to token 1 oracle in order to have the oracle active.
+        vm.warp(liquidationStartTime);
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
+        initiateLiquidation(amountLoaned);
+
+        // And: Bidder has enough funds and approved the lending pool for repay
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
+        uint256 originalAmount = originalAssetAmounts[0];
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        uint256 bidAssetAmount = originalAmount / 3;
+        bidAssetAmounts[0] = bidAssetAmount;
+        deal(address(mockERC20.stable1), bidder, type(uint128).max);
+        vm.startPrank(bidder);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+
+        // When: Bidder bids for the asset
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, false, data);
+        vm.stopPrank();
+
+        // Then: The auction did not restart.
+        (,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(proxyAccount));
+        assertEq(startTime, liquidationStartTime);
+    }
+
+    function testFuzz_Success_bid_FromEOA_SequencerDownDuringAuction(
+        address bidder,
+        uint112 amountLoaned,
+        uint32 liquidationStartTime,
+        uint32 sequencerStartedAt,
+        bytes memory data
+    ) public {
+        // Given: Bidder is not a contract.
+        vm.assume(bidder.code.length == 0);
+
+        vm.assume(bidder != address(0));
+        vm.assume(amountLoaned > 12);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+
+        // Given: Sequencer did go down during the auction.
+        sequencerStartedAt = uint32(bound(sequencerStartedAt, 2 days + 1, type(uint32).max));
+        liquidationStartTime = uint32(bound(liquidationStartTime, 2 days, sequencerStartedAt - 1));
+        liquidationStartTime =
+            uint32(bound(liquidationStartTime, 2 days, type(uint32).max - liquidator.getCutoffTime()));
+
+        // And: The account auction is initiated
+        // We transmit price to token 1 oracle in order to have the oracle active.
+        vm.warp(liquidationStartTime);
+        vm.prank(users.defaultTransmitter);
+        mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
+        initiateLiquidation(amountLoaned);
+
+        // And: Sequencer went down
+        vm.warp(sequencerStartedAt);
+        sequencerUptimeOracle.setLatestRoundData(0, sequencerStartedAt);
+
+        // And: Bidder has enough funds and approved the lending pool for repay
+        uint256[] memory originalAssetAmounts = liquidator.getAuctionAssetAmounts(address(proxyAccount));
+        uint256 originalAmount = originalAssetAmounts[0];
+        uint256[] memory bidAssetAmounts = new uint256[](1);
+        uint256 bidAssetAmount = originalAmount / 3;
+        bidAssetAmounts[0] = bidAssetAmount;
+        deal(address(mockERC20.stable1), bidder, type(uint128).max);
+        vm.startPrank(bidder);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+
+        // When: Bidder bids for the asset
+        liquidator.bid(address(proxyAccount), bidAssetAmounts, false, data);
+        vm.stopPrank();
+
+        // Then: The auction did not restart.
+        (,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(proxyAccount));
+        assertEq(startTime, sequencerStartedAt);
     }
 
     function testFuzz_Success_bid_FromEOA_partially(address bidder, uint112 amountLoaned, bytes memory data) public {
@@ -252,7 +375,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), bidAssetAmounts);
         uint256 price = liquidator.calculateBidPrice(address(proxyAccount), totalShare);
         // Debt must decrease.
-        vm.assume(srTranche.convertToShares(price) > 0);
+        vm.assume(srTranche.previewWithdraw(price) > 0);
         bytes memory data_ = abi.encodeCall(bidder.bidCallback, (bidAssetAmounts, price, data));
 
         // Get Initial balances.
@@ -300,7 +423,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), originalAssetAmounts);
         uint256 price = liquidator.calculateBidPrice(address(proxyAccount), totalShare);
         // Debt must decrease.
-        vm.assume(srTranche.convertToShares(price) > 0);
+        vm.assume(srTranche.previewWithdraw(price) > 0);
         bytes memory data_ = abi.encodeCall(bidder.bidCallback, (originalAssetAmounts, price, data));
 
         // Get Initial balances.
