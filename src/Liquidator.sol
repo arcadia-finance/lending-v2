@@ -369,6 +369,8 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
 
         // Hook back to the bidder with the actual amounts of bought assets and the actual bid price.
         // Bidders can optionally first liquidate the assets before repaying the debt.
+        // Bidders should NOT call a LendingPool.repay() or LendingPool.auctionRepay() within the callback,
+        // as this will cause the bidder to pay twice!
         if (msg.sender.code.length > 0) IBidCallback(msg.sender).bidCallback(bidAmounts, price, data);
 
         // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
