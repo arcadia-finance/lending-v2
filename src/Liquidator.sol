@@ -503,7 +503,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
      *  3) There are no remaining assets in the Account left to sell.
      *  4) All open debt was repaid (not checked within this function).
-     * @dev If the third condition is met, an emergency process is triggered.
+     * @dev If the first condition is met, an emergency process is triggered.
      * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
      * The Tranches of the liquidity pool will pay for the bad debt.
      * The protocol will sell/auction the assets manually to recover the debt.
