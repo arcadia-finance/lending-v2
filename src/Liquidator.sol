@@ -176,6 +176,10 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param creditor The contract address of the Creditor for which the Account recipient is set.
      * @param accountRecipient The address of the new Account recipient for a given creditor.
      * @dev This function can only be called by the Risk Manager of the Creditor.
+     * @dev Accounts themselves must never be set as accountRecipient,
+     * since ownership transfers of Accounts to themselves will revert.
+     * A check on "isAccount()" would not be sufficient to prevent this from happening,
+     * since account addresses can be pre-computed before deployment.
      */
     function setAccountRecipient(address creditor, address accountRecipient) external {
         if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();

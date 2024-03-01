@@ -52,6 +52,14 @@ contract LendingPoolExtension is LendingPool {
         LendingPool(riskManager_, asset_, treasury_, account_factory, liquidator_)
     { }
 
+    function getCallbackAccount() public view returns (address callbackAccount_) {
+        callbackAccount_ = callbackAccount;
+    }
+
+    function setCallbackAccount(address callbackAccount_) public {
+        callbackAccount = callbackAccount_;
+    }
+
     function getMaxTotalPenalty() public pure returns (uint256 maxTotalPenalty) {
         maxTotalPenalty = MAX_TOTAL_PENALTY;
     }
