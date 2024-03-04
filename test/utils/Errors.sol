@@ -30,7 +30,6 @@ abstract contract Errors {
     //////////////////////////////////////////////////////////////////////////*/
 
     error NotForSale();
-    error InvalidBid();
     error HalfLifeTimeTooLow();
     error HalfLifeTimeTooHigh();
     error CutOffTooLow();

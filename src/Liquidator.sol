@@ -8,6 +8,8 @@ import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/Asset
 import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
+import { IBidCallback } from "./interfaces/IBidCallback.sol";
+import { IChainLinkData } from "../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
 import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
@@ -41,15 +43,18 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     // The base of the auction price curve (decreasing power function).
     // Determines in what time the auction price halves, 18 decimals precision.
     uint64 internal base;
-    // The time after which the auction is considered not successful, in seconds.
+    // The time duration after which the auction is considered failed and can be bought in, in seconds.
     uint32 internal cutoffTime;
     // Sets the begin price of the auction, 4 decimals precision.
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
+
+    // The contract address of the sequencer uptime oracle.
+    address internal sequencerUptimeOracle;
+
     // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
     mapping(address => address) internal creditorToAccountRecipient;
-
     // Map Account => auctionInformation.
     mapping(address => AuctionInformation) public auctionInformation;
 
@@ -59,8 +64,8 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         uint128 startDebt;
         // The base of the auction price curve.
         uint64 base;
-        // The timestamp after which the auction is considered not successful.
-        uint32 cutoffTimeStamp;
+        // The time duration after which the auction is considered failed and can be bought in, in seconds.
+        uint32 cutoffTime;
         // The timestamp the auction started.
         uint32 startTime;
         // The contract address of the Creditor.
@@ -99,9 +104,15 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice The constructor for the Liquidator.
      * @param accountFactory The contract address of the Arcadia Account Factory.
+     * @param sequencerUptimeOracle_ The contract address of the sequencer uptime oracle.
      */
-    constructor(address accountFactory) Owned(msg.sender) {
+    constructor(address accountFactory, address sequencerUptimeOracle_) Owned(msg.sender) {
         ACCOUNT_FACTORY = accountFactory;
+        sequencerUptimeOracle = sequencerUptimeOracle_;
+
+        // Check that the sequencer uptime oracle is not reverting.
+        (bool success,) = _getSequencerUpTime();
+        if (!success) revert LiquidatorErrors.OracleReverting();
 
         // Half life of 3600s.
         base = 999_807_477_651_317_446;
@@ -116,6 +127,48 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     }
 
     /*///////////////////////////////////////////////////////////////
+                             L2 LOGIC
+    ///////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Checks that the sequencer is not down, and returns the last time the sequencer went back up.
+     * @return success Boolean indicating whether the sequencer uptime oracle is not reverting.
+     * @return startedAt Timestamp of the last time the sequencer went back up.
+     * @dev This check guarantees that ongoing auctions do not continue while the sequencer is down.
+     * @dev If the sequencer uptime oracle itself is reverting, the sequencer is assumed to be still up,
+     * startedAt will be 0 in this case.
+     */
+    function _getSequencerUpTime() internal view returns (bool success, uint256 startedAt) {
+        try IChainLinkData(sequencerUptimeOracle).latestRoundData() returns (
+            uint80, int256 answer, uint256 startedAt_, uint256, uint80
+        ) {
+            if (answer == 1) revert LiquidatorErrors.SequencerDown();
+
+            success = true;
+            startedAt = startedAt_;
+        } catch {
+            // If sequencer uptime oracle itself is reverting, startedAt is 0.
+        }
+    }
+
+    /**
+     * @notice Sets a new sequencer uptime oracle in the case the current oracle is reverting.
+     * @param sequencerUptimeOracle_ The contract address of the new sequencer uptime oracle.
+     */
+    function setSequencerUptimeOracle(address sequencerUptimeOracle_) external onlyOwner {
+        // Check that the current sequencer uptime oracle is reverting.
+        (bool success,) = _getSequencerUpTime();
+        if (success) revert LiquidatorErrors.OracleNotReverting();
+
+        // Set the new sequencer uptime oracle.
+        sequencerUptimeOracle = sequencerUptimeOracle_;
+
+        // Check that the new sequencer uptime oracle is not reverting.
+        (success,) = _getSequencerUpTime();
+        if (!success) revert LiquidatorErrors.OracleReverting();
+    }
+
+    /*///////////////////////////////////////////////////////////////
                     AUCTION ACCOUNT RECIPIENT
     ///////////////////////////////////////////////////////////////*/
 
@@ -124,6 +177,10 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param creditor The contract address of the Creditor for which the Account recipient is set.
      * @param accountRecipient The address of the new Account recipient for a given creditor.
      * @dev This function can only be called by the Risk Manager of the Creditor.
+     * @dev Accounts themselves must never be set as accountRecipient,
+     * since ownership transfers of Accounts to themselves will revert.
+     * A check on "isAccount()" would not be sufficient to prevent this from happening,
+     * since account addresses can be pre-computed before deployment.
      */
     function setAccountRecipient(address creditor, address accountRecipient) external {
         if (msg.sender != ICreditor(creditor).riskManager()) revert LiquidatorErrors.NotAuthorized();
@@ -211,12 +268,14 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
         auctionInformation_.base = base;
         auctionInformation_.startTime = uint32(block.timestamp);
-        auctionInformation_.cutoffTimeStamp = uint32(block.timestamp) + cutoffTime;
+        auctionInformation_.cutoffTime = cutoffTime;
         auctionInformation_.startPriceMultiplier = startPriceMultiplier;
         auctionInformation_.minPriceMultiplier = minPriceMultiplier;
 
         // Check if the Account is insolvent and if it is, start the liquidation in the Account.
         // startLiquidation will revert if the Account is still solvent.
+        // startLiquidation will revert if the sequencer is down, or if less then the grace period,
+        // set by the Creditor, has passed.
         (
             address[] memory assetAddresses,
             uint256[] memory assetIds,
@@ -274,33 +333,51 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice Places a bid.
      * @param account The contract address of the Account being liquidated.
-     * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
+     * @param bidAmounts Array with the assets-amounts the bidder wants to buy.
      * @param endAuction_ Bool indicating that the auction can be ended after the bid.
+     * @param data Data passed through back to the bidder via the bidCallback() call.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
-     * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
+     * @dev The "bidAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
+     * If the length of "bidAmounts" does not equal "assetAmounts", the function will revert in the Registry.
      * @dev The bidder is not obliged to set endAuction to True if the account is healthy after the bid,
      * but they are incentivised to do so by earning an additional "auctionTerminationReward".
+     * @dev If the bidder is a contract, it must implement the IBidCallback interface.
      */
-    function bid(address account, uint256[] memory askedAssetAmounts, bool endAuction_) external nonReentrant {
+    function bid(address account, uint256[] memory bidAmounts, bool endAuction_, bytes calldata data)
+        external
+        nonReentrant
+    {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
-        // Calculate the current auction price of the assets being bought.
-        uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
+        // Restart pending auctions if the sequencer went down during the auction.
+        (, uint256 sequencerStartedAt) = _getSequencerUpTime();
+        if (sequencerStartedAt > auctionInformation_.startTime) {
+            auctionInformation_.startTime = uint32(sequencerStartedAt);
+        }
+
+        // Transfer the assets to the bidder, returns updated bidAmounts with the actual bought assets.
+        // The actual bought assets are equal or smaller than the asked assets.
+        bidAmounts = IAccount(account).auctionBid(
+            auctionInformation_.assetAddresses, auctionInformation_.assetIds, bidAmounts, msg.sender
+        );
+
+        // Calculate the current auction price of the assets bought.
+        uint256 totalShare = _calculateTotalShare(auctionInformation_, bidAmounts);
         uint256 price = _calculateBidPrice(auctionInformation_, totalShare);
+
+        // Hook back to the bidder with the actual amounts of bought assets and the actual bid price.
+        // Bidders can optionally first liquidate the assets before repaying the debt.
+        // Bidders should NOT call a LendingPool.repay() or LendingPool.auctionRepay() within the callback,
+        // as this will cause the bidder to pay twice!
+        if (msg.sender.code.length > 0) IBidCallback(msg.sender).bidCallback(bidAmounts, price, data);
 
         // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
-        uint128 startDebt = auctionInformation_.startDebt;
         bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
-            startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
-        );
-
-        // Transfer the assets to the bidder.
-        IAccount(account).auctionBid(
-            auctionInformation_.assetAddresses, auctionInformation_.assetIds, askedAssetAmounts, msg.sender
+            auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
         );
 
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
@@ -319,25 +396,22 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice Calculates the share of the initial assets the bidder wants to buy.
      * @param auctionInformation_ The auction information.
-     * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
+     * @param bidAmounts Array with the assets-amounts the bidder wants to buy.
      * @return totalShare The share of initial assets the bidder wants to buy, 4 decimals precision.
      * @dev totalShare is calculated based on the relative value of the assets when the auction was initiated.
      */
-    function _calculateTotalShare(AuctionInformation storage auctionInformation_, uint256[] memory askedAssetAmounts)
+    function _calculateTotalShare(AuctionInformation storage auctionInformation_, uint256[] memory bidAmounts)
         internal
         view
         returns (uint256 totalShare)
     {
         uint256[] memory assetAmounts = auctionInformation_.assetAmounts;
         uint32[] memory assetShares = auctionInformation_.assetShares;
-        if (assetAmounts.length != askedAssetAmounts.length) {
-            revert LiquidatorErrors.InvalidBid();
-        }
 
-        // When askedAssetAmounts[i] is greater than assetAmounts[i], _withdraw() will revert in the Account.
-        for (uint256 i; i < askedAssetAmounts.length; ++i) {
+        // If the length of "bidAmounts" did not equal "assetAmounts", the function would have reverted on the withdraw in the Registry.
+        for (uint256 i; i < assetAmounts.length; ++i) {
             unchecked {
-                totalShare += askedAssetAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
+                totalShare += bidAmounts[i].mulDivUp(assetShares[i], assetAmounts[i]);
             }
         }
     }
@@ -408,6 +482,12 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         // Check if the account is being auctioned.
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
 
+        // Restart pending auctions if the sequencer went down during the auction.
+        (, uint256 sequencerStartedAt) = _getSequencerUpTime();
+        if (sequencerStartedAt > auctionInformation_.startTime) {
+            auctionInformation_.startTime = uint32(sequencerStartedAt);
+        }
+
         if (!_settleAuction(account, auctionInformation_)) revert LiquidatorErrors.EndAuctionFailed();
 
         _endAuction(account);
@@ -419,11 +499,11 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @param auctionInformation_ The struct containing all the auction information.
      * @dev There are four different conditions on which an auction can be successfully ended.
      * This function will check three of the four conditions (the fourth is already checked in the bid-function):
-     *  1) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
-     *  2) There are no remaining assets in the Account left to sell.
-     *  3) The Auction did not finish within the cutoff-period.
+     *  1) The Auction did not finish within the cutoff-period.
+     *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
+     *  3) There are no remaining assets in the Account left to sell.
      *  4) All open debt was repaid (not checked within this function).
-     * @dev If the third condition is met, an emergency process is triggered.
+     * @dev If the first condition is met, an emergency process is triggered.
      * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
      * The Tranches of the liquidity pool will pay for the bad debt.
      * The protocol will sell/auction the assets manually to recover the debt.
@@ -441,29 +521,30 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         address creditor = auctionInformation_.creditor;
         uint96 minimumMargin = auctionInformation_.minimumMargin;
 
-        uint256 collateralValue = IAccount(account).getCollateralValue();
-        uint256 usedMargin = IAccount(account).getUsedMargin();
-
         // Check the different conditions to end the auction.
-        if (collateralValue >= usedMargin || usedMargin == minimumMargin) {
-            // Happy flow: Account is back in a healthy state.
-            // An Account is healthy if the collateral value is equal or greater than the used margin.
-            // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
-            ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
-        } else if (collateralValue == 0) {
-            // Unhappy flow: All collateral is sold.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
-        } else if (block.timestamp > auctionInformation_.cutoffTimeStamp) {
+        if (block.timestamp > auctionInformation_.startTime + auctionInformation_.cutoffTime) {
             // Unhappy flow: Auction did not end within the cutoffTime.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
             // All remaining assets are transferred to the asset recipient,
             // and a manual (trusted) liquidation has to be done.
             IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
         } else {
-            // None of the conditions to end the auction are met.
-            return false;
+            uint256 collateralValue = IAccount(account).getCollateralValue();
+            uint256 usedMargin = IAccount(account).getUsedMargin();
+            if (collateralValue >= usedMargin || usedMargin == minimumMargin) {
+                // Happy flow: Account is back in a healthy state.
+                // An Account is healthy if the collateral value is equal or greater than the used margin.
+                // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
+                ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
+            } else if (collateralValue == 0) {
+                // Unhappy flow: All collateral is sold.
+                ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+            } else {
+                // None of the conditions to end the auction are met.
+                return false;
+            }
         }
-
+        // One of the conditions to end the auction was met.
         return true;
     }
 
