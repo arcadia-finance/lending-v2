@@ -29,6 +29,12 @@ library LiquidatorErrors {
     error NotForSale();
     // Thrown when not authorized.
     error NotAuthorized();
+    // Thrown when the sequencer uptime oracle is not reverting.
+    error OracleNotReverting();
+    // Thrown when the sequencer uptime oracle is reverting.
+    error OracleReverting();
+    // Thrown when the sequencer is down.
+    error SequencerDown();
 }
 
 library DebtTokenErrors {

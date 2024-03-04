@@ -16,6 +16,7 @@ import { DebtTokenExtension } from "../utils/Extensions.sol";
 import { LendingPoolExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
 import { LiquidatorExtension } from "../utils/Extensions.sol";
+import { SequencerUptimeOracle } from "../../lib/accounts-v2/test/utils/mocks/oracles/SequencerUptimeOracle.sol";
 import { TrancheExtension } from "../utils/Extensions.sol";
 
 /**
@@ -59,13 +60,16 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
                                       HELPERS
     //////////////////////////////////////////////////////////////////////////*/
     function deployArcadiaLendingWithoutAccounts() internal virtual {
+        // Deploy the sequencer uptime oracle.
+        sequencerUptimeOracle = new SequencerUptimeOracle();
+
         // Warp to have a timestamp of at least two days old.
         vm.warp(2 days);
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
         asset = new Asset("Asset", "ASSET", 18);
-        liquidator = new LiquidatorExtension(address(factory));
+        liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
         srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
         jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
@@ -94,7 +98,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
 
         // Deploy the base test contracts.
         vm.startPrank(users.creatorAddress);
-        liquidator = new LiquidatorExtension(address(factory));
+        liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
