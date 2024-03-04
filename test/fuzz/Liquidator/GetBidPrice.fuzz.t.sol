@@ -8,6 +8,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
 /**
  * @notice Fuzz tests for the function "getBidPrice" of contract "Liquidator".
@@ -44,7 +45,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_bid_InvalidBid(address bidder, uint112 amountLoaned) public {
+    function testFuzz_Revert_bid_AssetAmountsShorter(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
@@ -52,8 +53,8 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         vm.startPrank(bidder);
-        vm.expectRevert(InvalidBid.selector);
-        liquidator.getBidPrice(address(proxyAccount), new uint256[](2));
+        vm.expectRevert(stdError.indexOOBError);
+        liquidator.getBidPrice(address(proxyAccount), new uint256[](0));
         vm.stopPrank();
     }
 
