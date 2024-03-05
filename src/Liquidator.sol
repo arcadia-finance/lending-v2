@@ -327,13 +327,15 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     }
 
     /**
-     * @notice Gets the bid price for amount of assets asked.
+     * @notice Gets the asset arrays from a liquidated Account.
      * @param account The contract address of the Account being liquidated.
      * @return assetAddresses The contract address of each asset in the Account, at the moment the liquidation was initiated.
      * @return assetIds The ids of each asset in the Account, at the moment the liquidation was initiated.
      * @return assetAmounts The amount of each asset in the Account, at the moment the liquidation was initiated.
      * @return assetShares The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
      * at the moment the liquidation was initiated, 4 decimals precision.
+     * @dev We need a separate getter functions for the dynamic arrays,
+     * since public mappings of structs with dynamic arrays do not returns the arrays.
      */
     function getAuctionInformationArrays(address account)
         external
