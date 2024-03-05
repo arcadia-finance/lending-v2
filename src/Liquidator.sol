@@ -326,6 +326,32 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         }
     }
 
+    /**
+     * @notice Gets the bid price for amount of assets asked.
+     * @param account The contract address of the Account being liquidated.
+     * @return assetAddresses The contract address of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetIds The ids of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetAmounts The amount of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetShares The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
+     * at the moment the liquidation was initiated, 4 decimals precision.
+     */
+    function getAuctionInformationArrays(address account)
+        external
+        view
+        returns (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            uint32[] memory assetShares
+        )
+    {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        assetAddresses = auctionInformation_.assetAddresses;
+        assetIds = auctionInformation_.assetIds;
+        assetAmounts = auctionInformation_.assetAmounts;
+        assetShares = auctionInformation_.assetShares;
+    }
+
     /*///////////////////////////////////////////////////////////////
                       LIQUIDATION BIDS
     ///////////////////////////////////////////////////////////////*/
@@ -406,7 +432,7 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * getBidPrice() will not be accurate if the sequencer went down during the auction.
      */
     function getBidPrice(address account, uint256[] memory askedAssetAmounts)
-        public
+        external
         view
         returns (uint256 price, bool inAuction)
     {
