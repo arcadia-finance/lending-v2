@@ -402,6 +402,8 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
      * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
+     * @dev Only use as off-chain view function!
+     * getBidPrice() will not be accurate if the sequencer went down during the auction.
      */
     function getBidPrice(address account, uint256[] memory askedAssetAmounts)
         public
