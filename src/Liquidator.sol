@@ -326,6 +326,34 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         }
     }
 
+    /**
+     * @notice Gets the asset arrays from a liquidated Account.
+     * @param account The contract address of the Account being liquidated.
+     * @return assetAddresses The contract address of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetIds The ids of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetAmounts The amount of each asset in the Account, at the moment the liquidation was initiated.
+     * @return assetShares The relative value of each asset in the Account (the "assetShare") with respect to the total value of the Account,
+     * at the moment the liquidation was initiated, 4 decimals precision.
+     * @dev We need a separate getter functions for the dynamic arrays,
+     * since public mappings of structs with dynamic arrays do not returns the arrays.
+     */
+    function getAuctionInformationArrays(address account)
+        external
+        view
+        returns (
+            address[] memory assetAddresses,
+            uint256[] memory assetIds,
+            uint256[] memory assetAmounts,
+            uint32[] memory assetShares
+        )
+    {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        assetAddresses = auctionInformation_.assetAddresses;
+        assetIds = auctionInformation_.assetIds;
+        assetAmounts = auctionInformation_.assetAmounts;
+        assetShares = auctionInformation_.assetShares;
+    }
+
     /*///////////////////////////////////////////////////////////////
                       LIQUIDATION BIDS
     ///////////////////////////////////////////////////////////////*/
@@ -391,6 +419,31 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         else if (endAuction_) {
             if (_settleAuction(account, auctionInformation_)) _endAuction(account);
         }
+    }
+
+    /**
+     * @notice Gets the bid price for amount of assets asked.
+     * @param account The contract address of the Account being liquidated.
+     * @param askedAssetAmounts Array with the assets-amounts the bidder wants to buy.
+     * @return price The price for which the bid can be purchased, denominated in the Numeraire.
+     * @return inAuction return false when the Account is not being Auctioned.
+     * @dev We use a Dutch auction: price of the assets constantly decreases.
+     * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
+     * An amount 0 should be passed for assets the bidder does not want to buy.
+     * @dev Only use as off-chain view function!
+     * getBidPrice() will not be accurate if the sequencer went down during the auction.
+     */
+    function getBidPrice(address account, uint256[] memory askedAssetAmounts)
+        external
+        view
+        returns (uint256 price, bool inAuction)
+    {
+        AuctionInformation storage auctionInformation_ = auctionInformation[account];
+        inAuction = auctionInformation_.inAuction;
+        if (!inAuction) return (0, false);
+        // Calculate the current auction price of the assets being bought.
+        uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
+        price = _calculateBidPrice(auctionInformation_, totalShare);
     }
 
     /**
