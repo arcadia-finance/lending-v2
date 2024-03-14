@@ -81,6 +81,11 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 referrer,
         uint8 originationFee
     ) public {
+        vm.assume(account != users.liquidityProvider);
+        vm.assume(account != address(pool));
+        vm.assume(account != actionTarget);
+        vm.assume(account != treasury);
+
         vm.assume(liquidity >= amountLoaned);
         uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
         vm.assume(liquidity <= type(uint128).max - fee);
