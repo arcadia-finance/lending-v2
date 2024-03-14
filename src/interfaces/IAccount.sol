@@ -25,11 +25,6 @@ interface IAccount {
     function getUsedMargin() external view returns (uint256);
 
     /**
-     * @notice Updates the actionTimestamp
-     */
-    function updateActionTimestampByCreditor() external;
-
-    /**
      * @notice Checks if the Account is still healthy for an updated open position.
      * @param openPosition The new open position.
      * @return accountVersion The current Account version.
@@ -47,7 +42,9 @@ interface IAccount {
      * The second bytes object contains the encoded input for the actionTarget.
      * @return accountVersion The current Account version.
      */
-    function flashActionByCreditor(address actionTarget, bytes calldata actionData) external returns (uint256);
+    function flashActionByCreditor(bytes calldata callbackData, address actionTarget, bytes calldata actionData)
+        external
+        returns (uint256);
 
     /**
      * @notice Checks if an Account is liquidatable and continues the liquidation flow.
@@ -78,13 +75,14 @@ interface IAccount {
      * @param assetIds Array of the IDs of the assets.
      * @param assetAmounts Array with the amounts of the assets.
      * @param bidder The address of the bidder.
+     * @return assetAmounts_ Array with the actual transferred amounts of assets.
      */
     function auctionBid(
         address[] memory assetAddresses,
         uint256[] memory assetIds,
         uint256[] memory assetAmounts,
         address bidder
-    ) external;
+    ) external returns (uint256[] memory);
 
     /**
      * @notice Transfers all assets of the Account in case the auction did not end successful (= Bought In).
