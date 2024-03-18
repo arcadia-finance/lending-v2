@@ -11,4 +11,6 @@ library DeployAddresses {
     address public constant treasury_base = 0xBED53dA1718aDD7E31f42a138231c7783829A3f4; //todo: change for gnosis
 
     address public constant sequencerUptimeOracle_base = 0xBCF85224fc0756B9Fa45aA7892530B47e10b6433;
+
+    address public constant protocolOwner_base = 0x0f518becFC14125F23b8422849f6393D59627ddB;
 }
