@@ -36,7 +36,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
         address deployerAddress = vm.addr(deployerPrivateKey);
-        address protocolOwnerAddress = DeployAddresses.protocolOwner_base; 
+        address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
 
         assertEq(deployerAddress, protocolOwnerAddress);
 
@@ -46,11 +46,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
         liquidator = new Liquidator(address(factory), DeployAddresses.sequencerUptimeOracle_base);
 
         pool_weth = new LendingPool(
-            protocolOwnerAddress,
-            ERC20(address(weth)),
-            protocolOwnerAddress,
-            address(factory),
-            address(liquidator)
+            protocolOwnerAddress, ERC20(address(weth)), protocolOwnerAddress, address(factory), address(liquidator)
         );
         srTranche_weth = new Tranche(address(pool_weth), 10 ** 8, "Senior", "sr");
 
@@ -59,11 +55,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
         pool_weth.changeGuardian(protocolOwnerAddress);
 
         pool_usdc = new LendingPool(
-            protocolOwnerAddress,
-            ERC20(address(usdc)),
-            protocolOwnerAddress,
-            address(factory),
-            address(liquidator)
+            protocolOwnerAddress, ERC20(address(usdc)), protocolOwnerAddress, address(factory), address(liquidator)
         );
         srTranche_usdc = new Tranche(address(pool_usdc), 10 ** 6, "Senior", "sr");
 
@@ -75,7 +67,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
     }
 
     function test_deploy() public {
-        address protocolOwnerAddress = DeployAddresses.protocolOwner_base; 
+        address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
 
         assertEq(pool_weth.name(), string("ArcadiaV2 WETH Debt"));
         assertEq(pool_weth.symbol(), string("darcV2WETH"));
