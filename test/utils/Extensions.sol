@@ -286,6 +286,14 @@ contract LiquidatorExtension is Liquidator {
         auctionInformation[account].startDebt = startDebt;
     }
 
+    function setAssetAddresses(address account, address[] memory assetAddresses) public {
+        auctionInformation[account].assetAddresses = assetAddresses;
+    }
+
+    function setAssetIds(address account, uint256[] memory assetIds) public {
+        auctionInformation[account].assetIds = assetIds;
+    }
+
     function setAssetAmounts(address account, uint256[] memory assetAmounts) public {
         auctionInformation[account].assetAmounts = assetAmounts;
     }

@@ -40,4 +40,27 @@ abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
         vm.prank(users.accountOwner);
         proxyAccount.openMarginAccount(address(pool));
     }
+
+    /* ///////////////////////////////////////////////////////////////
+                        HELPER FUNCTIONS
+    /////////////////////////////////////////////////////////////// */
+
+    function initiateLiquidation(uint112 amountLoaned) public {
+        // Given: Account has debt
+        bytes3 emptyBytes3;
+        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+
+        // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
+        debt.setRealisedDebt(uint256(amountLoaned + 1));
+
+        // When: Liquidation Initiator calls liquidateAccount
+        vm.prank(address(45));
+        liquidator.liquidateAccount(address(proxyAccount));
+    }
 }
