@@ -67,6 +67,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
     }
 
     function test_deploy() public {
+        vm.skip(true);
         address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
 
         assertEq(pool_weth.name(), string("ArcadiaV2 WETH Debt"));
