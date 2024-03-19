@@ -64,18 +64,20 @@ contract ArcadiaLendingDeploymentStep1 is Test {
         pool_usdc.changeGuardian(protocolOwnerAddress);
 
         vm.stopBroadcast();
+
+        test_deploy();
     }
 
     function test_deploy() public {
         vm.skip(true);
         address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
 
-        assertEq(pool_weth.name(), string("ArcadiaV2 WETH Debt"));
+        assertEq(pool_weth.name(), string("ArcadiaV2 Wrapped Ether Debt"));
         assertEq(pool_weth.symbol(), string("darcV2WETH"));
         assertEq(pool_weth.decimals(), 18);
         assertEq(pool_weth.riskManager(), protocolOwnerAddress);
 
-        assertEq(pool_usdc.name(), string("ArcadiaV2 USDC Debt"));
+        assertEq(pool_usdc.name(), string("ArcadiaV2 USD Coin Debt"));
         assertEq(pool_usdc.symbol(), string("darcV2USDC"));
         assertEq(pool_usdc.decimals(), 6);
         assertEq(pool_usdc.riskManager(), protocolOwnerAddress);
