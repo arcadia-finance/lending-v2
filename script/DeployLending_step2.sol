@@ -9,28 +9,23 @@ pragma solidity 0.8.22;
 import "../lib/forge-std/src/Test.sol";
 import { DeployAddresses, DeployPoolSettings } from "./Constants/DeployConstants.sol";
 
-import { Factory } from "../lib/accounts-v2/src/Factory.sol";
-import { Liquidator } from "../src/Liquidator.sol";
-
-import { ERC20 } from "../src/DebtToken.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
+import { Liquidator } from "../src/Liquidator.sol";
 
 contract ArcadiaLendingDeployment is Test {
-    Factory public factory;
-    ERC20 public weth;
-    ERC20 public usdc;
-    Liquidator public liquidator;
-
-    LendingPool public pool_weth;
-    Tranche public srTranche_weth;
-
-    LendingPool public pool_usdc;
-    Tranche public srTranche_usdc;
+    LendingPool internal pool_usdc;
+    LendingPool internal pool_weth;
+    Tranche internal srTranche_usdc;
+    Tranche internal srTranche_weth;
+    Liquidator internal liquidator;
 
     constructor() {
-        weth = ERC20(DeployAddresses.eth_base);
-        usdc = ERC20(DeployAddresses.usdc_base);
+        pool_usdc = LendingPool(0x3ec4a293Fb906DD2Cd440c20dECB250DeF141dF1);
+        pool_weth = LendingPool(0x803ea69c7e87D1d6C86adeB40CB636cC0E6B98E2);
+        srTranche_usdc = Tranche(0xEFE32813dBA3A783059d50e5358b9e3661218daD);
+        srTranche_weth = Tranche(0x393893caeB06B5C16728bb1E354b6c36942b1382);
+        liquidator = Liquidator(0xA4B0b9fD1d91fA2De44F6ABFd59cC14bA1E1a7Af);
     }
 
     function run() public {
@@ -38,15 +33,6 @@ contract ArcadiaLendingDeployment is Test {
         address deployerAddress = vm.addr(deployerPrivateKey);
         address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
         assertEq(deployerAddress, protocolOwnerAddress);
-
-        factory = Factory(0xDa14Fdd72345c4d2511357214c5B89A919768e59);
-        liquidator = Liquidator(0xA4B0b9fD1d91fA2De44F6ABFd59cC14bA1E1a7Af);
-
-        pool_weth = LendingPool(0x803ea69c7e87D1d6C86adeB40CB636cC0E6B98E2);
-        srTranche_weth = Tranche(0x393893caeB06B5C16728bb1E354b6c36942b1382);
-
-        pool_usdc = LendingPool(0x3ec4a293Fb906DD2Cd440c20dECB250DeF141dF1);
-        srTranche_usdc = Tranche(0xEFE32813dBA3A783059d50e5358b9e3661218daD);
 
         vm.startBroadcast(deployerPrivateKey);
         pool_weth.setMinimumMargin(DeployPoolSettings.minimumMargin_eth);
