@@ -42,12 +42,16 @@ contract ArcadiaLendingTransferOwnership is Test {
         lendingPool_usdc.setRiskManager(ArcadiaAddresses.riskManager);
         lendingPool_weth.setRiskManager(ArcadiaAddresses.riskManager);
 
+        // Set treasury
+        lendingPool_usdc.setTreasury(ArcadiaAddresses.treasury);
+        lendingPool_weth.setTreasury(ArcadiaAddresses.treasury);
+
         // Transfer ownership to respected addresses
-        lendingPool_usdc.transferOwnership(ArcadiaAddresses.lendingPoolOwner_usdc);
-        lendingPool_weth.transferOwnership(ArcadiaAddresses.lendingPoolOwner_weth);
-        srTranche_usdc.transferOwnership(ArcadiaAddresses.trancheOwner_usdc);
-        srTranche_weth.transferOwnership(ArcadiaAddresses.trancheOwner_weth);
-        liquidator.transferOwnership(ArcadiaAddresses.liquidatorOwner);
+        lendingPool_usdc.transferOwnership(ArcadiaAddresses.owner);
+        lendingPool_weth.transferOwnership(ArcadiaAddresses.owner);
+        srTranche_usdc.transferOwnership(ArcadiaAddresses.owner);
+        srTranche_weth.transferOwnership(ArcadiaAddresses.owner);
+        liquidator.transferOwnership(ArcadiaAddresses.owner);
         vm.stopBroadcast();
     }
 
@@ -60,10 +64,10 @@ contract ArcadiaLendingTransferOwnership is Test {
         assertEq(lendingPool_usdc.riskManager(), ArcadiaAddresses.riskManager);
         assertEq(lendingPool_usdc.riskManager(), ArcadiaAddresses.riskManager);
 
-        assertEq(lendingPool_usdc.owner(), ArcadiaAddresses.lendingPoolOwner_usdc);
-        assertEq(lendingPool_weth.owner(), ArcadiaAddresses.lendingPoolOwner_weth);
-        assertEq(srTranche_usdc.owner(), ArcadiaAddresses.lendingPoolOwner_usdc);
-        assertEq(srTranche_weth.owner(), ArcadiaAddresses.lendingPoolOwner_weth);
-        assertEq(liquidator.owner(), ArcadiaAddresses.liquidatorOwner);
+        assertEq(lendingPool_usdc.owner(), ArcadiaAddresses.owner);
+        assertEq(lendingPool_weth.owner(), ArcadiaAddresses.owner);
+        assertEq(srTranche_usdc.owner(), ArcadiaAddresses.owner);
+        assertEq(srTranche_weth.owner(), ArcadiaAddresses.owner);
+        assertEq(liquidator.owner(), ArcadiaAddresses.owner);
     }
 }

@@ -13,19 +13,11 @@ library ArcadiaContractAddresses {
 }
 
 library ArcadiaAddresses {
-    // Todo: Update these addresses
-    address public constant multiSig1 = address(0);
-    address public constant multiSig2 = address(0);
-    address public constant multiSig3 = address(0);
-    address public constant accountRecipient = address(0);
+    // Multisigs
+    address public constant owner = address(0xb4d72B1c91e640e4ED7d7397F3244De4D8ACc50B);
+    address public constant guardian = address(0xEdD41f9740b06eCBfe1CE9194Ce2715C28263187);
+    address public constant riskManager = address(0xD5FA6C6e284007743d4263255385eDA78dDa268c);
+    address public constant treasury = address(0xFd6db26eDc581D8F381f46eF4a6396A762b66E95);
 
-    address public constant lendingPoolOwner_usdc = multiSig1;
-    address public constant lendingPoolOwner_weth = multiSig1;
-    address public constant trancheOwner_usdc = multiSig1;
-    address public constant trancheOwner_weth = multiSig1;
-    address public constant liquidatorOwner = multiSig1;
-
-    address public constant guardian = multiSig2;
-
-    address public constant riskManager = multiSig3;
+    address public constant accountRecipient = address(0x0f518becFC14125F23b8422849f6393D59627ddB);
 }
