@@ -13,7 +13,7 @@ import { LendingPool } from "../src/LendingPool.sol";
 import { Tranche } from "../src/Tranche.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 
-contract ArcadiaLendingDeployment is Test {
+contract ArcadiaLendingDeploymentStep2 is Test {
     LendingPool internal pool_usdc;
     LendingPool internal pool_weth;
     Tranche internal srTranche_usdc;
