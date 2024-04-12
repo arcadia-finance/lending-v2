@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
-import { LiquidatorExtension } from "../../utils/Extensions.sol";
+import { LiquidatorExtension } from "../../utils/extensions/LiquidatorExtension.sol";
 import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 
 /**

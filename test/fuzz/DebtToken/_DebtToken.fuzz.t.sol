@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 
-import { DebtTokenExtension } from "../../utils/Extensions.sol";
+import { DebtTokenExtension } from "../../utils/extensions/DebtTokenExtension.sol";
 
 /**
  * @notice Common logic needed by all "DebtToken" fuzz tests.

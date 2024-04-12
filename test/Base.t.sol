@@ -9,11 +9,10 @@ import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 import { AccountV1 } from "./utils/mocks/AccountV1.sol";
 import { Asset } from "./utils/mocks/Asset.sol";
 import { Events } from "./utils/Events.sol";
-import { DebtTokenExtension } from "./utils/Extensions.sol";
-import { LendingPoolExtension } from "./utils/Extensions.sol";
-import { LiquidatorExtension } from "./utils/Extensions.sol";
-import { LiquidatorExtension } from "./utils/Extensions.sol";
-import { TrancheExtension } from "./utils/Extensions.sol";
+import { DebtTokenExtension } from "./utils/extensions/DebtTokenExtension.sol";
+import { LendingPoolExtension } from "./utils/extensions/LendingPoolExtension.sol";
+import { LiquidatorExtension } from "./utils/extensions/LiquidatorExtension.sol";
+import { TrancheExtension } from "./utils/extensions/TrancheExtension.sol";
 import { Errors } from "./utils/Errors.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.

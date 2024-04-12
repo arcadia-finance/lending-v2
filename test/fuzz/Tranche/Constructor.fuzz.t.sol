@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
-import { TrancheExtension } from "../../utils/Extensions.sol";
+import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 
 /**
  * @notice Fuzz tests for the function "constructor" of contract "Tranche".

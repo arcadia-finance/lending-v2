@@ -7,7 +7,7 @@ pragma solidity 0.8.22;
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-import { TrancheExtension } from "../../utils/Extensions.sol";
+import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 
 /**
  * @notice Common logic needed by all "Tranche" fuzz tests.
