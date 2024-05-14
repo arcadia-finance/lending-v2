@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
-import { DebtTokenExtension } from "../../utils/Extensions.sol";
+import { DebtTokenExtension } from "../../utils/extensions/DebtTokenExtension.sol";
 
 /**
  * @notice Fuzz tests for the function "constructor" of contract "DebtToken".

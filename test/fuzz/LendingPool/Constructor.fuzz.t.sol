@@ -8,7 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 
-import { LendingPoolExtension } from "../../utils/Extensions.sol";
+import { LendingPoolExtension } from "../../utils/extensions/LendingPoolExtension.sol";
 import { Constants } from "../../../lib/accounts-v2/test/utils/Constants.sol";
 
 /**

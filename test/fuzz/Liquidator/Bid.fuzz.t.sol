@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
-import { AccountExtension } from "../../../lib/accounts-v2/test/utils/Extensions.sol";
+import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
 import { Bidder } from "../../utils/mocks/Bidder.sol";
 import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 import { RegistryErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
