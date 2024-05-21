@@ -6,10 +6,11 @@ pragma solidity 0.8.22;
 
 import "../lib/forge-std/src/Test.sol";
 
-import { ArcadiaAddresses, ArcadiaContractAddresses } from "./Constants/TransferOwnershipConstants.sol";
+import { ArcadiaContracts, ArcadiaSafes } from "../lib/accounts-v2/script/utils/Constants.sol";
+import { ArcadiaLending, ArcadiaLendingSafes } from "./utils/Constants.sol";
 import { LendingPool } from "../src/LendingPool.sol";
-import { Tranche } from "../src/Tranche.sol";
 import { Liquidator } from "../src/Liquidator.sol";
+import { Tranche } from "../src/Tranche.sol";
 
 contract ArcadiaLendingTransferOwnership is Test {
     LendingPool internal lendingPool_usdc;
@@ -19,11 +20,11 @@ contract ArcadiaLendingTransferOwnership is Test {
     Liquidator internal liquidator;
 
     constructor() {
-        lendingPool_usdc = LendingPool(ArcadiaContractAddresses.lendingPool_usdc);
-        lendingPool_weth = LendingPool(ArcadiaContractAddresses.lendingPool_weth);
-        srTranche_usdc = Tranche(ArcadiaContractAddresses.tranche_usdc);
-        srTranche_weth = Tranche(ArcadiaContractAddresses.tranche_weth);
-        liquidator = Liquidator(ArcadiaContractAddresses.liquidator);
+        lendingPool_usdc = LendingPool(ArcadiaContracts.LENDINGPOOL_USDC);
+        lendingPool_weth = LendingPool(ArcadiaContracts.LENDINGPOOL_WETH);
+        srTranche_usdc = Tranche(ArcadiaLending.TRANCHE_USDC);
+        srTranche_weth = Tranche(ArcadiaLending.TRANCHE_WETH);
+        liquidator = Liquidator(ArcadiaLending.LIQUIDATOR);
     }
 
     function run() public {
@@ -31,43 +32,43 @@ contract ArcadiaLendingTransferOwnership is Test {
         vm.startBroadcast(ownerPrivateKey);
 
         // Set guardian
-        lendingPool_usdc.changeGuardian(ArcadiaAddresses.guardian);
-        lendingPool_weth.changeGuardian(ArcadiaAddresses.guardian);
+        lendingPool_usdc.changeGuardian(ArcadiaSafes.GUARDIAN);
+        lendingPool_weth.changeGuardian(ArcadiaSafes.GUARDIAN);
 
         // Set account recipient
-        liquidator.setAccountRecipient(address(lendingPool_usdc), ArcadiaAddresses.accountRecipient);
-        liquidator.setAccountRecipient(address(lendingPool_weth), ArcadiaAddresses.accountRecipient);
+        liquidator.setAccountRecipient(address(lendingPool_usdc), ArcadiaLending.ACCOUNT_RECIPIENT);
+        liquidator.setAccountRecipient(address(lendingPool_weth), ArcadiaLending.ACCOUNT_RECIPIENT);
 
         // Set risk manager
-        lendingPool_usdc.setRiskManager(ArcadiaAddresses.riskManager);
-        lendingPool_weth.setRiskManager(ArcadiaAddresses.riskManager);
+        lendingPool_usdc.setRiskManager(ArcadiaSafes.RISK_MANAGER);
+        lendingPool_weth.setRiskManager(ArcadiaSafes.RISK_MANAGER);
 
         // Set treasury
-        lendingPool_usdc.setTreasury(ArcadiaAddresses.treasury);
-        lendingPool_weth.setTreasury(ArcadiaAddresses.treasury);
+        lendingPool_usdc.setTreasury(ArcadiaLendingSafes.TREASURY);
+        lendingPool_weth.setTreasury(ArcadiaLendingSafes.TREASURY);
 
         // Transfer ownership to respected addresses
-        lendingPool_usdc.transferOwnership(ArcadiaAddresses.owner);
-        lendingPool_weth.transferOwnership(ArcadiaAddresses.owner);
-        srTranche_usdc.transferOwnership(ArcadiaAddresses.owner);
-        srTranche_weth.transferOwnership(ArcadiaAddresses.owner);
-        liquidator.transferOwnership(ArcadiaAddresses.owner);
+        lendingPool_usdc.transferOwnership(ArcadiaSafes.OWNER);
+        lendingPool_weth.transferOwnership(ArcadiaSafes.OWNER);
+        srTranche_usdc.transferOwnership(ArcadiaSafes.OWNER);
+        srTranche_weth.transferOwnership(ArcadiaSafes.OWNER);
+        liquidator.transferOwnership(ArcadiaSafes.OWNER);
         vm.stopBroadcast();
     }
 
     function test_transferOwnership() public {
         vm.skip(true);
 
-        assertEq(lendingPool_usdc.guardian(), ArcadiaAddresses.guardian);
-        assertEq(lendingPool_weth.guardian(), ArcadiaAddresses.guardian);
+        assertEq(lendingPool_usdc.guardian(), ArcadiaSafes.GUARDIAN);
+        assertEq(lendingPool_weth.guardian(), ArcadiaSafes.GUARDIAN);
 
-        assertEq(lendingPool_usdc.riskManager(), ArcadiaAddresses.riskManager);
-        assertEq(lendingPool_usdc.riskManager(), ArcadiaAddresses.riskManager);
+        assertEq(lendingPool_usdc.riskManager(), ArcadiaSafes.RISK_MANAGER);
+        assertEq(lendingPool_usdc.riskManager(), ArcadiaSafes.RISK_MANAGER);
 
-        assertEq(lendingPool_usdc.owner(), ArcadiaAddresses.owner);
-        assertEq(lendingPool_weth.owner(), ArcadiaAddresses.owner);
-        assertEq(srTranche_usdc.owner(), ArcadiaAddresses.owner);
-        assertEq(srTranche_weth.owner(), ArcadiaAddresses.owner);
-        assertEq(liquidator.owner(), ArcadiaAddresses.owner);
+        assertEq(lendingPool_usdc.owner(), ArcadiaSafes.OWNER);
+        assertEq(lendingPool_weth.owner(), ArcadiaSafes.OWNER);
+        assertEq(srTranche_usdc.owner(), ArcadiaSafes.OWNER);
+        assertEq(srTranche_weth.owner(), ArcadiaSafes.OWNER);
+        assertEq(liquidator.owner(), ArcadiaSafes.OWNER);
     }
 }

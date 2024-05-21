@@ -7,13 +7,12 @@
 pragma solidity 0.8.22;
 
 import "../lib/forge-std/src/Test.sol";
-import { DeployAddresses } from "./Constants/DeployConstants.sol";
 
-import { Factory } from "../lib/accounts-v2/src/Factory.sol";
-import { Liquidator } from "../src/Liquidator.sol";
-
+import { ArcadiaSafes, ExternalContracts, PrimaryAssets } from "../lib/accounts-v2/script/utils/Constants.sol";
 import { ERC20 } from "../src/DebtToken.sol";
+import { Factory } from "../lib/accounts-v2/src/Factory.sol";
 import { LendingPool } from "../src/LendingPool.sol";
+import { Liquidator } from "../src/Liquidator.sol";
 import { Tranche } from "../src/Tranche.sol";
 
 contract ArcadiaLendingDeploymentStep1 is Test {
@@ -29,21 +28,21 @@ contract ArcadiaLendingDeploymentStep1 is Test {
     Tranche public srTranche_usdc;
 
     constructor() {
-        weth = ERC20(DeployAddresses.eth_base);
-        usdc = ERC20(DeployAddresses.usdc_base);
+        weth = ERC20(PrimaryAssets.WETH);
+        usdc = ERC20(PrimaryAssets.USDC);
     }
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
         address deployerAddress = vm.addr(deployerPrivateKey);
-        address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
+        address protocolOwnerAddress = ArcadiaSafes.OWNER;
 
         assertEq(deployerAddress, protocolOwnerAddress);
 
         vm.startBroadcast(deployerPrivateKey);
 
         factory = new Factory();
-        liquidator = new Liquidator(address(factory), DeployAddresses.sequencerUptimeOracle_base);
+        liquidator = new Liquidator(address(factory), ExternalContracts.SEQUENCER_UPTIME_ORACLE);
 
         pool_weth = new LendingPool(
             protocolOwnerAddress, ERC20(address(weth)), protocolOwnerAddress, address(factory), address(liquidator)
@@ -70,7 +69,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
 
     function test_deploy() public {
         vm.skip(true);
-        address protocolOwnerAddress = DeployAddresses.protocolOwner_base;
+        address protocolOwnerAddress = ArcadiaSafes.OWNER;
 
         assertEq(pool_weth.name(), string("ArcadiaV2 Wrapped Ether Debt"));
         assertEq(pool_weth.symbol(), string("darcV2WETH"));
