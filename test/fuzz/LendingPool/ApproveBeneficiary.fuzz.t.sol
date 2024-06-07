@@ -27,7 +27,7 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_approveBeneficiary_NonAccount(address beneficiary, uint256 amount, address nonAccount)
         public
     {
-        vm.assume(nonAccount != address(proxyAccount));
+        vm.assume(nonAccount != address(account));
         vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.approveBeneficiary(beneficiary, amount, nonAccount);
     }
@@ -41,17 +41,17 @@ contract ApproveBeneficiary_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
-        pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
+        pool.approveBeneficiary(beneficiary, amount, address(account));
         vm.stopPrank();
     }
 
     function testFuzz_Success_approveBeneficiary(address beneficiary, uint256 amount) public {
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit LendingPool.CreditApproval(address(proxyAccount), users.accountOwner, beneficiary, amount);
-        pool.approveBeneficiary(beneficiary, amount, address(proxyAccount));
+        emit LendingPool.CreditApproval(address(account), users.accountOwner, beneficiary, amount);
+        pool.approveBeneficiary(beneficiary, amount, address(account));
         vm.stopPrank();
 
-        assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), amount);
+        assertEq(pool.creditAllowance(address(account), users.accountOwner, beneficiary), amount);
     }
 }

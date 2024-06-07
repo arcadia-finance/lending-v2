@@ -52,7 +52,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         vm.stopPrank();
 
         vm.prank(users.accountOwner);
-        proxyAccount.setAssetManager(address(pool), true);
+        account.setAssetManager(address(pool), true);
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
@@ -74,8 +74,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     //////////////////////////////////////////////////////////////*/
     function testScenario_Revert_doActionWithLeverage_DifferentCreditor() public {
         vm.startPrank(users.accountOwner);
-        proxyAccount.closeMarginAccount();
-        proxyAccount.setAssetManager(address(pool), true);
+        account.closeMarginAccount();
+        account.setAssetManager(address(pool), true);
         vm.stopPrank();
 
         //Prepare input parameters
@@ -107,7 +107,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.OnlyCreditor.selector);
-        pool.flashAction(0, address(proxyAccount), address(action), callData, emptyBytes3);
+        pool.flashAction(0, address(account), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -144,7 +144,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(LendingPoolErrors.InvalidVersion.selector);
-        pool.flashAction(0, address(proxyAccount), address(action), callData, emptyBytes3);
+        pool.flashAction(0, address(account), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -172,12 +172,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
         debt.setRealisedDebt(stableDebt);
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            stableDebt
-        );
+        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, stableCollateral);
+        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -191,7 +189,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn,
             uint256(tokenOut)
         );
-        data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
+        data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
         vm.prank(users.tokenCreator);
         mockERC20.token1.mint(address(multiActionMock), tokenOut);
@@ -236,7 +234,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Do swap on leverage
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
-        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
+        pool.flashAction(stableMargin, address(account), address(action), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -268,12 +266,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
         debt.setRealisedDebt(stableDebt);
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            stableDebt
-        );
+        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, stableCollateral);
+        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -287,7 +283,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             stableIn,
             uint256(tokenOut)
         );
-        data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
+        data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
         vm.prank(users.tokenCreator);
         mockERC20.token1.mint(address(multiActionMock), tokenOut);
@@ -331,14 +327,14 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
+        pool.flashAction(stableMargin, address(account), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
-        assertEq(mockERC20.token1.balanceOf(address(proxyAccount)), tokenOut);
-        assertEq(debt.balanceOf(address(proxyAccount)), uint256(stableDebt) + stableMargin);
+        assertEq(mockERC20.token1.balanceOf(address(account)), tokenOut);
+        assertEq(debt.balanceOf(address(account)), uint256(stableDebt) + stableMargin);
 
-        uint256 debtAmount = proxyAccount.getUsedMargin();
+        uint256 debtAmount = account.getUsedMargin();
 
         bytes[] memory dataArr = new bytes[](2);
         dataArr[0] = abi.encodeWithSignature("approve(address,uint256)", address(pool), type(uint256).max);
@@ -346,7 +342,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             "executeRepay(address,address,address,uint256)",
             address(pool),
             address(mockERC20.stable1),
-            address(proxyAccount),
+            address(account),
             0
         );
 
@@ -361,8 +357,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         action.executeAction(abi.encode(ad, tos, dataArr));
         vm.stopPrank();
 
-        assertEq(debt.balanceOf(address(proxyAccount)), 0);
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(debt.balanceOf(address(account)), 0);
+        assertEq(account.getUsedMargin(), 0);
     }
 
     function testScenario_Success_doActionWithLeverage(uint32 stableDebt, uint72 stableCollateral, uint32 tokenOut)
@@ -391,12 +387,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
         debt.setRealisedDebt(stableDebt);
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            stableDebt
-        );
+        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, stableCollateral);
+        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes memory callData;
@@ -412,7 +406,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
                 stableIn,
                 uint256(tokenOut)
             );
-            data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
+            data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
             vm.prank(users.tokenCreator);
             mockERC20.token1.mint(address(multiActionMock), tokenOut);
@@ -456,11 +450,11 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         //Do swap on leverage
         vm.prank(users.accountOwner);
-        pool.flashAction(stableMargin, address(proxyAccount), address(action), callData, emptyBytes3);
+        pool.flashAction(stableMargin, address(account), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
         assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
-        assertEq(mockERC20.token1.balanceOf(address(proxyAccount)), tokenOut);
-        assertEq(debt.balanceOf(address(proxyAccount)), uint256(stableDebt) + stableMargin);
+        assertEq(mockERC20.token1.balanceOf(address(account)), tokenOut);
+        assertEq(debt.balanceOf(address(account)), uint256(stableDebt) + stableMargin);
     }
 }

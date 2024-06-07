@@ -54,7 +54,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals);
@@ -63,7 +63,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
         assertEq(mockERC20.stable1.balanceOf(users.accountOwner), 0);
@@ -83,16 +83,16 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         );
         vm.assume(amountCredit > 0);
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.startPrank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
         vm.roll(block.number + 10);
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
-        pool.borrow(1, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(1, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -111,9 +111,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
-        uint256 freeMargin = proxyAccount.getFreeMargin();
+        uint256 freeMargin = account.getFreeMargin();
         vm.assume(freeMargin > 0);
         amountCredit = uint128(bound(amountCredit, 1, freeMargin));
 
@@ -124,7 +124,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         );
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         address[] memory assets = new address[](1);
         uint256[] memory ids = new uint256[](1);
@@ -133,7 +133,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         amounts[0] = amountTokenWithdrawal;
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
-        proxyAccount.withdraw(assets, ids, amounts);
+        account.withdraw(assets, ids, amounts);
         vm.stopPrank();
     }
 
@@ -143,13 +143,13 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 expectedValue = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals);
 
-        uint256 actualValue = proxyAccount.getFreeMargin();
+        uint256 actualValue = account.getFreeMargin();
 
         assertEq(actualValue, expectedValue);
     }
@@ -163,7 +163,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = (
             (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_ / AssetValuationLib.ONE_4
@@ -174,7 +174,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         vm.startPrank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
         assertEq(mockERC20.stable1.balanceOf(users.accountOwner), amountCredit);
@@ -196,7 +196,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 maxCredit = (
@@ -208,17 +208,17 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         vm.startPrank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
         _yearlyInterestRate = pool.interestRate();
         base = 1e18 + uint128(_yearlyInterestRate);
 
-        uint256 debtAtStart = proxyAccount.getUsedMargin();
+        uint256 debtAtStart = account.getUsedMargin();
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        uint256 actualDebt = proxyAccount.getUsedMargin();
+        uint256 actualDebt = account.getUsedMargin();
 
         uint128 expectedDebt = uint128(
             (
@@ -253,10 +253,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.startPrank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
         vm.prank(users.transmitter);
@@ -267,7 +267,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 expectedAvailableCredit = ((newValueOfOneEth * amountToken) / 10 ** Constants.tokenDecimals)
             * collFactor_ / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals) - amountCredit;
 
-        uint256 actualAvailableCredit = proxyAccount.getFreeMargin();
+        uint256 actualAvailableCredit = account.getFreeMargin();
 
         assertEq(actualAvailableCredit, expectedAvailableCredit); //no blocks pass in foundry
     }
@@ -287,7 +287,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * (amountToken - amountTokenWithdrawal)) / 10 ** Constants.tokenDecimals)
             * collFactor_ / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals);
@@ -296,7 +296,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         address[] memory assets = new address[](1);
         uint256[] memory ids = new uint256[](1);
@@ -304,7 +304,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assets[0] = address(mockERC20.token1);
         amounts[0] = amountTokenWithdrawal;
         vm.startPrank(users.accountOwner);
-        proxyAccount.withdraw(assets, ids, amounts);
+        account.withdraw(assets, ids, amounts);
         vm.stopPrank();
     }
 
@@ -328,10 +328,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         uint256 _yearlyInterestRate = pool.interestRate();
 
@@ -367,24 +367,24 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         vm.roll(block.number + blocksToRoll);
 
-        uint256 openDebt = proxyAccount.getUsedMargin();
+        uint256 openDebt = account.getUsedMargin();
 
         deal(address(mockERC20.stable1), users.accountOwner, openDebt, true);
 
         vm.prank(users.accountOwner);
-        pool.repay(openDebt, address(proxyAccount));
+        pool.repay(openDebt, address(account));
 
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(account.getUsedMargin(), 0);
 
         vm.roll(block.number + uint256(blocksToRoll) * 2);
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(account.getUsedMargin(), 0);
     }
 
     function testScenario_Success_repay_ExessiveDebt(
@@ -410,29 +410,29 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         deal(address(mockERC20.stable1), users.accountOwner, factor * amountCredit, true);
 
         vm.roll(block.number + blocksToRoll);
 
-        uint256 openDebt = proxyAccount.getUsedMargin();
+        uint256 openDebt = account.getUsedMargin();
         uint256 balanceBefore = mockERC20.stable1.balanceOf(users.accountOwner);
 
         vm.startPrank(users.accountOwner);
-        pool.repay(openDebt * factor, address(proxyAccount));
+        pool.repay(openDebt * factor, address(account));
         vm.stopPrank();
 
         uint256 balanceAfter = mockERC20.stable1.balanceOf(users.accountOwner);
 
         assertEq(balanceBefore - openDebt, balanceAfter);
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(account.getUsedMargin(), 0);
 
         vm.roll(block.number + uint256(blocksToRoll) * 2);
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(account.getUsedMargin(), 0);
     }
 
     function testScenario_Success_repay_PartialDebt(
@@ -457,10 +457,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken);
+        depositTokenInAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
-        pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
         uint256 _yearlyInterestRate = pool.interestRate();
 
@@ -473,12 +473,12 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(debt.previewWithdraw(toRepay) > 0);
 
         vm.prank(users.accountOwner);
-        pool.repay(toRepay, address(proxyAccount));
+        pool.repay(toRepay, address(account));
         uint128 base = uint128(_yearlyInterestRate) + 10 ** 18;
         uint128 exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds());
         uint128 expectedDebt = uint128((amountCredit * (LogExpMath.pow(base, exponent))) / 10 ** 18) - toRepay;
 
-        assertEq(proxyAccount.getUsedMargin(), expectedDebt);
+        assertEq(account.getUsedMargin(), expectedDebt);
 
         vm.warp(block.timestamp + deltaTimestamp);
         _yearlyInterestRate = pool.interestRate();
@@ -486,6 +486,6 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         exponent = uint128((uint128(deltaTimestamp) * 10 ** 18) / pool.getYearlySeconds());
         expectedDebt = uint128((expectedDebt * (LogExpMath.pow(base, exponent))) / 10 ** 18);
 
-        assertEq(proxyAccount.getUsedMargin(), expectedDebt);
+        assertEq(account.getUsedMargin(), expectedDebt);
     }
 }

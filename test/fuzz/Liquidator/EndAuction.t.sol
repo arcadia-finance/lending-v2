@@ -36,20 +36,20 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.prank(users.owner);
         pool.setMinimumMargin(minimumMargin);
         vm.startPrank(users.accountOwner);
-        proxyAccount.closeMarginAccount();
-        proxyAccount.openMarginAccount(address(pool));
+        account.closeMarginAccount();
+        account.openMarginAccount(address(pool));
         vm.stopPrank();
 
         // Account has debt
         bytes3 emptyBytes3;
         uint256 collateralValue = uint256(minimumMargin) + amountLoaned;
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
@@ -59,7 +59,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
 
         // Initiate liquidation
-        liquidator.liquidateAccount(address(proxyAccount));
+        liquidator.liquidateAccount(address(account));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_endAuction_NotForSale() public {
         vm.startPrank(users.owner);
         vm.expectRevert(LiquidatorErrors.NotForSale.selector);
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
     }
 
@@ -84,7 +84,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         vm.prank(caller);
         vm.expectRevert(LiquidatorErrors.SequencerDown.selector);
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
     }
 
     function testFuzz_Revert_endAuction_Failed_SequencerUpDuringAuction(
@@ -122,7 +122,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // call should revert.
         vm.startPrank(randomAddress);
         vm.expectRevert(LiquidatorErrors.EndAuctionFailed.selector);
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
     }
 
@@ -164,7 +164,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // call should revert.
         vm.startPrank(randomAddress);
         vm.expectRevert(LiquidatorErrors.EndAuctionFailed.selector);
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
     }
 
@@ -189,9 +189,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         if (shares * totalDebt > assets * totalSupply) assets += 1;
         liquidity = uint128(bound(liquidity, totalDebt, type(uint128).max));
 
-        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(proxyAccount)).checked_write(
-            shares
-        );
+        stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(shares);
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
         debt.setRealisedDebt(uint256(totalDebt));
         stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
@@ -206,17 +204,17 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: Account has no collateral.
 
         // And: Liquidation is initiated.
-        liquidator.setInAuction(address(proxyAccount), proxyAccount.creditor(), startDebt);
+        liquidator.setInAuction(address(account), account.creditor(), startDebt);
         pool.setAuctionsInProgress(1);
 
         // When: liquidation is ended.
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
 
         // Then: Auction is ended.
-        assertFalse(liquidator.getAuctionIsActive(address(proxyAccount)));
+        assertFalse(liquidator.getAuctionIsActive(address(account)));
 
         // And: Account has no debt anymore.
-        assertEq(proxyAccount.getUsedMargin(), 0);
+        assertEq(account.getUsedMargin(), 0);
     }
 
     function testFuzz_Success_endAuction_AccountIsHealthy(
@@ -255,7 +253,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, true);
         emit LendingPool.AuctionFinished(
-            address(proxyAccount),
+            address(account),
             address(pool),
             uint128(amountLoaned + 1),
             initiationReward,
@@ -264,10 +262,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             0,
             0
         );
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
 
-        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(liquidator.getAuctionIsActive(address(account)), false);
     }
 
     function testFuzz_Success_endAuction_NoOpenPosition(
@@ -306,7 +304,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, true);
         emit LendingPool.AuctionFinished(
-            address(proxyAccount),
+            address(account),
             address(pool),
             uint128(amountLoaned + 1),
             initiationReward,
@@ -315,10 +313,10 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             0,
             0
         );
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
 
-        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
+        assertEq(liquidator.getAuctionIsActive(address(account)), false);
     }
 
     function testFuzz_Success_endAuction_NoRemainingValue(
@@ -347,7 +345,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             pool.getCalculateRewards(amountLoaned + 1, 0);
 
         // By setting the minUsdValue of creditor to uint128 max value, remaining assets value will be 0.
-        vm.assume(proxyAccount.getAccountValue(address(0)) <= type(uint128).max);
+        vm.assume(account.getAccountValue(address(0)) <= type(uint128).max);
         vm.prank(pool.riskManager());
         registry.setRiskParameters(address(pool), type(uint128).max, 0, type(uint64).max);
 
@@ -355,7 +353,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
         emit LendingPool.AuctionFinished(
-            address(proxyAccount),
+            address(account),
             address(pool),
             uint128(amountLoaned + 1),
             initiationReward,
@@ -364,11 +362,11 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             0,
             0
         );
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
 
-        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
-        assertEq(proxyAccount.inAuction(), false);
+        assertEq(liquidator.getAuctionIsActive(address(account)), false);
+        assertEq(account.inAuction(), false);
     }
 
     function testFuzz_Success_endAuction_AfterCutoff_SequencerUpDuringAuction(
@@ -415,7 +413,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
         emit LendingPool.AuctionFinished(
-            address(proxyAccount),
+            address(account),
             address(pool),
             uint128(amountLoaned + 1),
             initiationReward,
@@ -424,13 +422,13 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             0,
             0
         );
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
 
         // The Account should be transferred to the Account recipient.
-        assertEq(proxyAccount.owner(), liquidator.getAssetRecipient(address(pool)));
-        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
-        assertEq(proxyAccount.inAuction(), false);
+        assertEq(account.owner(), liquidator.getAssetRecipient(address(pool)));
+        assertEq(liquidator.getAuctionIsActive(address(account)), false);
+        assertEq(account.inAuction(), false);
     }
 
     function testFuzz_Success_endAuction_AfterCutoff_SequencerDownDuringAuction(
@@ -480,7 +478,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
         emit LendingPool.AuctionFinished(
-            address(proxyAccount),
+            address(account),
             address(pool),
             uint128(amountLoaned + 1),
             initiationReward,
@@ -489,12 +487,12 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             0,
             0
         );
-        liquidator.endAuction(address(proxyAccount));
+        liquidator.endAuction(address(account));
         vm.stopPrank();
 
         // The Account should be transferred to the Account recipient.
-        assertEq(proxyAccount.owner(), liquidator.getAssetRecipient(address(pool)));
-        assertEq(liquidator.getAuctionIsActive(address(proxyAccount)), false);
-        assertEq(proxyAccount.inAuction(), false);
+        assertEq(account.owner(), liquidator.getAssetRecipient(address(pool)));
+        assertEq(liquidator.getAuctionIsActive(address(account)), false);
+        assertEq(account.inAuction(), false);
     }
 }

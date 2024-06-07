@@ -33,19 +33,19 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
         // When: the margin account is tried to be closed
         vm.expectRevert(LendingPoolErrors.OpenPositionNonZero.selector);
-        pool.closeMarginAccount(address(proxyAccount));
+        pool.closeMarginAccount(address(account));
     }
 
     function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account) public {
         // Given: account does not have an open position
         vm.assume(account != address(0));
-        vm.assume(account != address(proxyAccount));
+        vm.assume(account != address(account));
 
         // When: the margin account is tried to be closed
         pool.closeMarginAccount(account);

@@ -30,7 +30,7 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setMinimumMargin(minimumMargin);
         vm.stopPrank();
 
-        // When: Account opens a margin proxyAccount
+        // When: Account opens a margin account
         (bool success, address numeraire, address liquidator_, uint256 minimumMargin_) =
             pool.openMarginAccount(accountVersion);
 
@@ -50,7 +50,7 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setMinimumMargin(minimumMargin);
         vm.stopPrank();
 
-        // When: Account opens a margin proxyAccount
+        // When: Account opens a margin account
         (bool success, address numeraire, address liquidator_, uint256 minimumMargin_) =
             pool.openMarginAccount(accountVersion);
 

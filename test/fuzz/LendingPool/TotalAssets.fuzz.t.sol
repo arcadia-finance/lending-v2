@@ -33,10 +33,10 @@ contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(type(uint128).max, users.liquidityProvider);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, realisedDebt);
+        depositTokenInAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
-        pool.borrow(realisedDebt, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
 
         vm.prank(users.owner);
         pool.setInterestRate(interestRate);

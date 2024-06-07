@@ -54,7 +54,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
         vm.stopPrank();
 
         vm.prank(users.accountOwner);
-        proxyAccount.openMarginAccount(address(pool));
+        account.openMarginAccount(address(pool));
     }
 
     /*//////////////////////////////////////////////////////////////////////////
