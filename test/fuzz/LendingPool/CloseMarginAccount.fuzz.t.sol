@@ -9,9 +9,9 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
- * @notice Fuzz tests for the function "openMarginAccount" of contract "LendingPool".
+ * @notice Fuzz tests for the function "closeMarginAccount" of contract "LendingPool".
  */
-contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -42,16 +42,16 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.closeMarginAccount(address(account));
     }
 
-    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account) public {
+    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public {
         // Given: account does not have an open position
-        vm.assume(account != address(0));
-        vm.assume(account != address(account));
+        vm.assume(account_ != address(0));
+        vm.assume(account_ != address(account));
 
         // When: the margin account is tried to be closed
-        pool.closeMarginAccount(account);
+        pool.closeMarginAccount(account_);
 
         // Then: the margin account should be closed
-        assertEq(pool.getOpenPosition(account), 0);
+        assertEq(pool.getOpenPosition(account_), 0);
 
         // Note: Since the closeMarginAccount does not do state changes, we cannot check if the account is closed.
     }
