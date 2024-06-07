@@ -35,7 +35,6 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_liquidateAccount_NotAnAccount(address nonAccount, address caller) public {
         vm.assume(nonAccount != address(account));
         vm.assume(nonAccount != address(accountV1Logic));
-        vm.assume(nonAccount != address(accountV2Logic));
 
         vm.prank(caller);
         vm.expectRevert(LiquidatorErrors.IsNotAnAccount.selector);
