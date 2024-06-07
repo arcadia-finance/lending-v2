@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPool } from "../../../src/LendingPool.sol";
+
 /**
  * @notice Fuzz tests for the function "popTranche" of contract "LendingPool".
  */
@@ -32,7 +34,7 @@ contract PopTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertTrue(pool.getIsTranche(address(jrTranche)));
 
         vm.expectEmit(true, true, true, true);
-        emit TranchePopped(address(jrTranche));
+        emit LendingPool.TranchePopped(address(jrTranche));
         pool.popTranche(1, address(jrTranche));
 
         assertEq(pool.getTotalInterestWeight(), 60);

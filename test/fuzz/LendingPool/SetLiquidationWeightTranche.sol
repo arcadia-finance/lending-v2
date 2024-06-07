@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolExtension } from "../../utils/extensions/LendingPoolExtension.sol";
 
 /**
@@ -39,7 +40,7 @@ contract SetLiquidationWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_T
     function testFuzz_Success_setLiquidationWeightTranche(uint16 liquidationWeight) public {
         vm.prank(users.owner);
         vm.expectEmit();
-        emit LiquidationWeightTrancheUpdated(liquidationWeight);
+        emit LendingPool.LiquidationWeightTrancheUpdated(liquidationWeight);
         pool.setLiquidationWeightTranche(liquidationWeight);
         vm.stopPrank();
 

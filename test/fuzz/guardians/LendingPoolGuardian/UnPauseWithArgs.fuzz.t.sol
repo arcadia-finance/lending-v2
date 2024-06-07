@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPoolGuardian_Fuzz_Test } from "./_LendingPoolGuardian.fuzz.t.sol";
 
+import { LendingPoolGuardian } from "../../../../src/guardians/LendingPoolGuardian.sol";
+
 /**
  * @notice Fuzz tests for the function "unPause" of contract "LendingPoolGuardian".
  */
@@ -55,7 +57,7 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
         // When: A "owner" un-pauses.
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit PauseFlagsUpdated(
+        emit LendingPoolGuardian.PauseFlagsUpdated(
             initialFlags.repayPaused && flags.repayPaused,
             initialFlags.withdrawPaused && flags.withdrawPaused,
             initialFlags.borrowPaused && flags.borrowPaused,

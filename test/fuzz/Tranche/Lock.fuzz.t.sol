@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
+import { Tranche } from "../../../src/Tranche.sol";
+
 /**
  * @notice Fuzz tests for the function "lock" of contract "Tranche".
  */
@@ -36,9 +38,9 @@ contract Lock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
 
         vm.startPrank(address(pool));
         vm.expectEmit(true, true, true, true);
-        emit LockSet(true);
+        emit Tranche.LockSet(true);
         vm.expectEmit(true, true, true, true);
-        emit AuctionInProgressSet(false);
+        emit Tranche.AuctionInProgressSet(false);
         tranche.lock();
         vm.stopPrank();
 

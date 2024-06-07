@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPool } from "../../../src/LendingPool.sol";
+
 /**
  * @notice Fuzz tests for the function "setTreasuryWeights" of contract "LendingPool".
  */
@@ -33,7 +35,7 @@ contract SetTreasuryWeights_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_setTreasuryWeights() public {
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit TreasuryWeightsUpdated(5, 5);
+        emit LendingPool.TreasuryWeightsUpdated(5, 5);
         pool.setTreasuryWeights(5, 5);
         vm.stopPrank();
 

@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { Creditor } from "../../../lib/accounts-v2/src/abstracts/Creditor.sol";
+
 /**
  * @notice Fuzz tests for the function "setAccountVersion" of contract "LendingPool".
  */
@@ -35,7 +37,7 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_setAccountVersion_setValid(uint256 accountVersion) public {
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit ValidAccountVersionsUpdated(accountVersion, true);
+        emit Creditor.ValidAccountVersionsUpdated(accountVersion, true);
         pool.setAccountVersion(accountVersion, true);
         vm.stopPrank();
 

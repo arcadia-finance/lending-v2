@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPool } from "../../../src/LendingPool.sol";
+
 /**
  * @notice Fuzz tests for the function "updateInterestRate" of contract "LendingPool".
  */
@@ -95,7 +97,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -131,7 +135,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -160,7 +166,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate = baseRate_;
 
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 

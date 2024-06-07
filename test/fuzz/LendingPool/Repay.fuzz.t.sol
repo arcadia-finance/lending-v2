@@ -8,6 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
 
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
@@ -140,7 +141,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.expectEmit(true, true, true, true);
-        emit Repay(address(proxyAccount), sender, amountRepaid);
+        emit LendingPool.Repay(address(proxyAccount), sender, amountRepaid);
         pool.repay(amountRepaid, address(proxyAccount));
         vm.stopPrank();
 
@@ -175,7 +176,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(sender);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.expectEmit(true, true, true, true);
-        emit Repay(address(proxyAccount), sender, amountLoaned);
+        emit LendingPool.Repay(address(proxyAccount), sender, amountLoaned);
         pool.repay(amountLoaned, address(proxyAccount));
         vm.stopPrank();
 
@@ -214,7 +215,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.expectEmit(true, true, true, true);
-        emit Repay(address(proxyAccount), sender, amountLoaned);
+        emit LendingPool.Repay(address(proxyAccount), sender, amountLoaned);
         pool.repay(availableFunds, address(proxyAccount));
         vm.stopPrank();
 

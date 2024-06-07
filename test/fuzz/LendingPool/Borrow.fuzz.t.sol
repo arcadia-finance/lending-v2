@@ -6,14 +6,13 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
-import { stdError } from "../../../lib/forge-std/src/StdError.sol";
-import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-
-import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { stdError } from "../../../lib/forge-std/src/StdError.sol";
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
@@ -417,7 +416,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, 0, ref);
+        emit LendingPool.Borrow(address(proxyAccount), users.accountOwner, to, amountLoaned, 0, ref);
         pool.borrow(amountLoaned, address(proxyAccount), to, ref);
         vm.stopPrank();
     }

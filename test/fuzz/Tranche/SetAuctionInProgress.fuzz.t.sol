@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
+import { Tranche } from "../../../src/Tranche.sol";
+
 /**
  * @notice Fuzz tests for the function "setAuctionInProgress" of contract "Tranche".
  */
@@ -33,7 +35,7 @@ contract SetAuctionInProgress_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     function testFuzz_Success_setAuctionInProgress(bool set) public {
         vm.startPrank(address(pool));
         vm.expectEmit(true, true, true, true);
-        emit AuctionInProgressSet(set);
+        emit Tranche.AuctionInProgressSet(set);
         tranche.setAuctionInProgress(set);
         vm.stopPrank();
 

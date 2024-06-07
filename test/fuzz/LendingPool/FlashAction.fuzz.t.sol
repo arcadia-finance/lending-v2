@@ -6,11 +6,11 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
-
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
 
 /**
  * @notice Fuzz tests for the function "flashAction" of contract "LendingPool".
@@ -247,7 +247,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
+        emit LendingPool.Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
         pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, ref);
         vm.stopPrank();
     }

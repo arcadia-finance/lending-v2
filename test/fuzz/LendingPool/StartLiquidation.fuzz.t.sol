@@ -8,6 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
 
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
@@ -101,7 +102,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: Liquidator calls startLiquidation()
         vm.startPrank(address(proxyAccount));
         vm.expectEmit();
-        emit AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
+        emit LendingPool.AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
 
@@ -169,7 +170,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: Liquidator calls startLiquidation()
         vm.startPrank(address(proxyAccount));
         vm.expectEmit();
-        emit AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
+        emit LendingPool.AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
 

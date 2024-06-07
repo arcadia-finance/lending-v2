@@ -7,7 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
-
+import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolExtension } from "../../utils/extensions/LendingPoolExtension.sol";
 
 /**
@@ -68,7 +68,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight) public {
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeight);
+        emit LendingPool.InterestWeightTrancheUpdated(address(srTranche), 0, interestWeight);
         pool_.addTranche(address(srTranche), interestWeight);
         vm.stopPrank();
 
@@ -82,11 +82,11 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_addTranche_MultipleTranches(uint16 interestWeightSr, uint16 interestWeightJr) public {
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeightSr);
+        emit LendingPool.InterestWeightTrancheUpdated(address(srTranche), 0, interestWeightSr);
         pool_.addTranche(address(srTranche), interestWeightSr);
 
         vm.expectEmit(true, true, true, true);
-        emit InterestWeightTrancheUpdated(address(jrTranche), 1, interestWeightJr);
+        emit LendingPool.InterestWeightTrancheUpdated(address(jrTranche), 1, interestWeightJr);
         pool_.addTranche(address(jrTranche), interestWeightJr);
         vm.stopPrank();
 

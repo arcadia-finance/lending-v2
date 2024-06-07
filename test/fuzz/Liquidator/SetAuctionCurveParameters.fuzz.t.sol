@@ -6,6 +6,7 @@ pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
+import { Liquidator } from "../../../src/Liquidator.sol";
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
 /**
@@ -184,7 +185,9 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit AuctionCurveParametersSet(uint64(expectedBase), cutoffTime, startPriceMultiplier, minPriceMultiplier);
+        emit Liquidator.AuctionCurveParametersSet(
+            uint64(expectedBase), cutoffTime, startPriceMultiplier, minPriceMultiplier
+        );
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
 

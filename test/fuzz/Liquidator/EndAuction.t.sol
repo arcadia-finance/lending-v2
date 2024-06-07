@@ -5,9 +5,10 @@
 pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
+import { LendingPool } from "../../../src/LendingPool.sol";
 import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
@@ -253,7 +254,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, true);
-        emit AuctionFinished(
+        emit LendingPool.AuctionFinished(
             address(proxyAccount),
             address(pool),
             uint128(amountLoaned + 1),
@@ -304,7 +305,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, true);
-        emit AuctionFinished(
+        emit LendingPool.AuctionFinished(
             address(proxyAccount),
             address(pool),
             uint128(amountLoaned + 1),
@@ -353,7 +354,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
-        emit AuctionFinished(
+        emit LendingPool.AuctionFinished(
             address(proxyAccount),
             address(pool),
             uint128(amountLoaned + 1),
@@ -413,7 +414,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
-        emit AuctionFinished(
+        emit LendingPool.AuctionFinished(
             address(proxyAccount),
             address(pool),
             uint128(amountLoaned + 1),
@@ -478,7 +479,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
         vm.startPrank(randomAddress);
         vm.expectEmit(true, true, true, false); //ignore exact calculations
-        emit AuctionFinished(
+        emit LendingPool.AuctionFinished(
             address(proxyAccount),
             address(pool),
             uint128(amountLoaned + 1),
