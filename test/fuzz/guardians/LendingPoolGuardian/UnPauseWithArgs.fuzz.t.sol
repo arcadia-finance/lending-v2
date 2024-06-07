@@ -22,7 +22,7 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_unPause_OnlyOwner(address nonOwner, Flags memory flags) public {
-        vm.assume(nonOwner != users.creatorAddress);
+        vm.assume(nonOwner != users.owner);
 
         vm.startPrank(nonOwner);
         vm.expectRevert("UNAUTHORIZED");
@@ -53,7 +53,7 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
         vm.warp(lastPauseTimestamp + timePassed);
 
         // When: A "owner" un-pauses.
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
         emit PauseFlagsUpdated(
             initialFlags.repayPaused && flags.repayPaused,

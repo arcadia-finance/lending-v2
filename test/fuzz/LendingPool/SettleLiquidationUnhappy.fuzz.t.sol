@@ -82,7 +82,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint128 openDebt,
         address auctionTerminator
     ) public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(2, 5, 2, 0, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
@@ -170,7 +170,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint128 openDebt,
         address auctionTerminator
     ) public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(2, 5, 2, 0, type(uint80).max);
 
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
@@ -243,7 +243,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         // Given: collateralValue is smaller than maxExposure.
         liquidity = uint112(bound(liquidity, 0, type(uint112).max - 1));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(2, 5, 2, 0, type(uint80).max);
 
         vm.assume(

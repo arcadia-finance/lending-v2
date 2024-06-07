@@ -20,7 +20,7 @@ contract SetInterestWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
@@ -30,7 +30,7 @@ contract SetInterestWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setInterestWeightTranche_InvalidOwner(address unprivilegedAddress) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -39,14 +39,14 @@ contract SetInterestWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     }
 
     function testFuzz_Revert_setInterestWeightTranche_InexistingTranche(uint256 index) public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(NonExistingTranche.selector);
         pool.setInterestWeightTranche(index, 10);
         vm.stopPrank();
     }
 
     function testFuzz_Success_setInterestWeightTranche() public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.addTranche(address(srTranche), 50);
 
         vm.expectEmit(true, true, true, true);

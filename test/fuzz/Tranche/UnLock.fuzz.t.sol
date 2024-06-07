@@ -22,7 +22,7 @@ contract UnLock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_unlock_Unauthorised(address unprivilegedAddress) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.prank(address(pool));
         tranche.lock();
@@ -39,7 +39,7 @@ contract UnLock_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
         assertTrue(tranche.locked());
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
         emit LockSet(false);
         tranche.unLock();

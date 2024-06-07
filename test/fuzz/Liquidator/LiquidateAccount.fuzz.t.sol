@@ -57,7 +57,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // And: Pool rewards are set to zero
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         vm.prank(liquidationInitiator);
@@ -124,7 +124,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Pool rewards are set to zero
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         // When Then: Liquidation Initiator calls liquidateAccount, Account is not liquidatable
@@ -156,7 +156,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -207,7 +207,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -270,7 +270,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -321,7 +321,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).

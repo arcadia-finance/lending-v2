@@ -24,14 +24,14 @@ abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
         Fuzz_Lending_Test.setUp();
         deployArcadiaLendingWithAccounts();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setTreasuryWeights(10, 80);
         pool.addTranche(address(srTranche), 50);
         pool.addTranche(address(jrTranche), 40);
         pool.setAccountVersion(1, true);
         vm.stopPrank();
 
-        vm.prank(users.tokenCreatorAddress);
+        vm.prank(users.tokenCreator);
         mockERC20.stable1.mint(users.liquidityProvider, type(uint256).max);
 
         vm.prank(users.liquidityProvider);

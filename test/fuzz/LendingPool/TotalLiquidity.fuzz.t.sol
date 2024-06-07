@@ -46,7 +46,7 @@ contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 interest = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);

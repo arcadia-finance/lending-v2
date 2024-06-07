@@ -38,7 +38,7 @@ contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(proxyAccount), users.accountOwner, emptyBytes3);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         vm.warp(block.timestamp + deltaTimestamp);

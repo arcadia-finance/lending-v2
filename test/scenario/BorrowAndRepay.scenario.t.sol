@@ -30,7 +30,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.token1),
             0,
@@ -259,7 +259,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         pool.borrow(amountCredit, address(proxyAccount), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         uint256 newRateTokenToUsd = newPrice * 10 ** Constants.tokenOracleDecimals;
         mockOracles.token1ToUsd.transmit(int256(newRateTokenToUsd));
 

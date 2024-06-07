@@ -30,7 +30,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         uint16 startPriceMultiplier,
         uint16 minPriceMultiplier
     ) public {
-        vm.assume(unprivilegedAddress_ != users.creatorAddress);
+        vm.assume(unprivilegedAddress_ != users.owner);
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
@@ -46,7 +46,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, 28_800 + 1, type(uint32).max));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(HalfLifeTimeTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -60,7 +60,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
     ) public {
         halfLifeTime = uint32(bound(halfLifeTime, 0, 120 - 1));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(HalfLifeTimeTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -76,7 +76,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         cutoffTime = uint32(bound(cutoffTime, 64_800 + 1, type(uint32).max));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(CutOffTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -92,7 +92,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         cutoffTime = uint32(bound(cutoffTime, 0, 3600 - 1));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(CutOffTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -107,7 +107,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         halfLifeTime = uint32(bound(halfLifeTime, 120, 300));
         cutoffTime = uint32(bound(cutoffTime, 64_000, 64_800));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert();
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -125,7 +125,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 30_000 + 1, type(uint16).max));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(MultiplierTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -143,7 +143,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 0, 10_000 - 1));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(MultiplierTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -162,7 +162,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         minPriceMultiplier = uint16(bound(minPriceMultiplier, 9000 + 1, type(uint16).max));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(MultiplierTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
@@ -182,7 +182,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         uint256 expectedBase = 1e18 * 1e18 / LogExpMath.pow(2 * 1e18, uint256(1e18 / halfLifeTime));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
         emit AuctionCurveParametersSet(uint64(expectedBase), cutoffTime, startPriceMultiplier, minPriceMultiplier);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);

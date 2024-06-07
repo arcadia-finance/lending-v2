@@ -28,7 +28,7 @@ contract SetLiquidationWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_T
         address unprivilegedAddress,
         uint16 liquidationWeight
     ) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -37,7 +37,7 @@ contract SetLiquidationWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_T
     }
 
     function testFuzz_Success_setLiquidationWeightTranche(uint16 liquidationWeight) public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         vm.expectEmit();
         emit LiquidationWeightTrancheUpdated(liquidationWeight);
         pool.setLiquidationWeightTranche(liquidationWeight);

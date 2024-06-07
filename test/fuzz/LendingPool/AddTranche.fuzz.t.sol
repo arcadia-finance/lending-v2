@@ -27,13 +27,13 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool_ = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
 
         // Set the Liquidation parameters.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(100, 500, 50, 0, type(uint80).max);
     }
 
@@ -41,7 +41,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_addTranche_InvalidOwner(address unprivilegedAddress) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -50,7 +50,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool_.addTranche(address(srTranche), 50);
         vm.expectRevert(TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40);
@@ -58,7 +58,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_addTranche_AuctionOnGoing() public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool_.setAuctionsInProgress(1);
         vm.expectRevert(AuctionOngoing.selector);
         pool_.addTranche(address(srTranche), 50);
@@ -66,7 +66,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_addTranche_SingleTranche(uint16 interestWeight) public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
         emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeight);
         pool_.addTranche(address(srTranche), interestWeight);
@@ -80,7 +80,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_addTranche_MultipleTranches(uint16 interestWeightSr, uint16 interestWeightJr) public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
         emit InterestWeightTrancheUpdated(address(srTranche), 0, interestWeightSr);
         pool_.addTranche(address(srTranche), interestWeightSr);

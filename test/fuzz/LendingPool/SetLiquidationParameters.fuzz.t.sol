@@ -31,7 +31,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint16 minRewardWeight,
         uint80 maxReward
     ) public {
-        vm.assume(unprivilegedAddress_ != users.creatorAddress);
+        vm.assume(unprivilegedAddress_ != users.owner);
 
         vm.startPrank(unprivilegedAddress_);
         vm.expectRevert("UNAUTHORIZED");
@@ -50,7 +50,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         auctionsInProgress = uint16(bound(auctionsInProgress, 1, type(uint16).max));
         pool.setAuctionsInProgress(auctionsInProgress);
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(AuctionOngoing.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
@@ -65,7 +65,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
     ) public {
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > pool.getMaxTotalPenalty());
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(LiquidationWeightsTooHigh.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
@@ -82,7 +82,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         minRewardWeight = uint16(bound(minRewardWeight, 5000 + 1, type(uint16).max));
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(LiquidationWeightsTooHigh.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
@@ -99,7 +99,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         minRewardWeight = uint16(bound(minRewardWeight, 0, 5000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
 
         (

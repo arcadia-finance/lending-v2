@@ -23,7 +23,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set grace period to 0.
         vm.prank(users.riskManager);
-        registryExtension.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
+        registry.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
     }
 
     /* ///////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function initiateLiquidation(uint96 minimumMargin, uint112 amountLoaned) public {
         // Given: Account has a minimumMargin.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setMinimumMargin(minimumMargin);
         vm.startPrank(users.accountOwner);
         proxyAccount.closeMarginAccount();
@@ -65,7 +65,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_endAuction_NotForSale() public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         vm.expectRevert(NotForSale.selector);
         liquidator.endAuction(address(proxyAccount));
         vm.stopPrank();
@@ -103,7 +103,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: Sequencer did not go down during the auction.
@@ -142,7 +142,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
@@ -157,7 +157,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Warp to a timestamp when auction is not yet expired.
         vm.warp(sequencerStartedAt + timePassed);
         // We transmit price to token 1 oracle in order to have the oracle active.
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call should revert.
@@ -199,7 +199,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         pool.setTotalRealisedLiquidity(uint128(liquidity));
 
         // And: All liquidation parameters are 0 (we do not tests want to test _calculateRewards and want to avoid overflows).
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(0, 0, 0, 0, 0);
 
         // And: Account has no collateral.
@@ -232,7 +232,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
@@ -283,7 +283,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
@@ -334,7 +334,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
@@ -348,7 +348,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // By setting the minUsdValue of creditor to uint128 max value, remaining assets value will be 0.
         vm.assume(proxyAccount.getAccountValue(address(0)) <= type(uint128).max);
         vm.prank(pool.riskManager());
-        registryExtension.setRiskParameters(address(pool), type(uint128).max, 0, type(uint64).max);
+        registry.setRiskParameters(address(pool), type(uint128).max, 0, type(uint64).max);
 
         // endAuctionNoRemainingValue() should succeed.
         vm.startPrank(randomAddress);
@@ -388,7 +388,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: Sequencer did not go down during the auction.
@@ -407,7 +407,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.warp(block.timestamp + timePassed);
 
         // Update oracle to avoid InactiveOracle().
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.
@@ -450,7 +450,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 10_000, 30_000));
         minPriceMultiplier = uint8(bound(minPriceMultiplier, 0, 9000));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // Given: The account auction is initiated.
@@ -468,11 +468,11 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Warp to a timestamp when auction is not yet expired.
         vm.warp(sequencerStartedAt + timePassed);
         // We transmit price to token 1 oracle in order to have the oracle active.
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // Update oracle to avoid InactiveOracle().
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
         // call to endAuctionAfterCutoff() should succeed as the auction is now expired.

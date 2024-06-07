@@ -55,7 +55,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.warp(start_timestamp + deltaTimestamp);
 
         // When: Interests are synced
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
         pool.syncInterests();
 

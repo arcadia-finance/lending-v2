@@ -56,7 +56,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given : No exposure limits
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool), address(mockERC20.token1), 0, type(uint112).max, 1e4, 1e4
         );
 
@@ -76,7 +76,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             assetAmounts_[0] = amountToken1;
             assetAmounts_[1] = amountStable1;
 
-            valueInNumeraire = registryExtension.getTotalValue(
+            valueInNumeraire = registry.getTotalValue(
                 address(mockERC20.stable1), address(pool), assetAddresses_, assetIds_, assetAmounts_
             );
 
@@ -92,7 +92,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         }
 
         // And : Account is liquidatable (price of collateral asset token1 drops)
-        vm.startPrank(users.defaultTransmitter);
+        vm.startPrank(users.transmitter);
         mockOracles.token1ToUsd.transmit(int256(rates.token1ToUsd / 10));
 
         // And : Account gets liquidated and auction is initiated
@@ -141,7 +141,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given : No exposure limits
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool), address(mockERC20.token1), 0, type(uint112).max, 1e4, 1e4
         );
 
@@ -161,7 +161,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             assetAmounts_[0] = amountToken1;
             assetAmounts_[1] = amountStable1;
 
-            valueInNumeraire = registryExtension.getTotalValue(
+            valueInNumeraire = registry.getTotalValue(
                 address(mockERC20.stable1), address(pool), assetAddresses_, assetIds_, assetAmounts_
             );
 
@@ -177,7 +177,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         }
 
         // And : Account is liquidatable (price of collateral asset token1 drops)
-        vm.startPrank(users.defaultTransmitter);
+        vm.startPrank(users.transmitter);
         mockOracles.token1ToUsd.transmit(int256(rates.token1ToUsd / 10));
 
         // And : Account gets liquidated and auction is initiated

@@ -19,7 +19,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setTreasuryWeights(0, 0);
         pool.setInterestWeightTranche(0, 0);
         pool.setInterestWeightTranche(1, 0);
@@ -40,7 +40,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTranche = uint16(bound(interestWeightTranche, 0, totalInterestWeight));
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setInterestWeightTranche(0, interestWeightTranche);
         uint16 interestWeightTreasury = totalInterestWeight - interestWeightTranche;
         pool.setTreasuryWeights(interestWeightTreasury, 0);
@@ -63,7 +63,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
@@ -90,7 +90,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTreasury = uint16(bound(interestWeightTreasury, 0, totalInterestWeight));
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setTreasuryWeights(interestWeightTreasury, 0);
         uint16 interestWeightTranche = totalInterestWeight - interestWeightTreasury;
         pool.setInterestWeightTranche(0, interestWeightTranche);
@@ -115,7 +115,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
@@ -149,7 +149,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestWeightTranche(0, totalInterestWeight);
 
         // Given: collateralValue is smaller than maxExposure.
@@ -170,7 +170,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 actualValue = pool.liquidityOf(user);

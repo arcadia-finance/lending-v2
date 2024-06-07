@@ -32,7 +32,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         actionHandler = new ActionMultiCall();
 
         ActionData memory emptyActionData;
@@ -186,7 +186,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
@@ -234,7 +234,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);

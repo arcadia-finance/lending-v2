@@ -33,8 +33,8 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
 
     function testFuzz_Success_maxMint_Paused(address receiver) public {
         vm.warp(35 days);
-        vm.startPrank(users.creatorAddress);
-        pool.changeGuardian(users.creatorAddress);
+        vm.startPrank(users.owner);
+        pool.changeGuardian(users.owner);
         pool.pause();
         vm.stopPrank();
 
@@ -49,7 +49,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.assume(liquidityOf > 0);
         vm.assume(liquidityOf <= totalLiquidity);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
 
@@ -69,7 +69,7 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         vm.assume(totalShares > 0);
         vm.assume(liquidityOf <= totalLiquidity);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), liquidityOf);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);

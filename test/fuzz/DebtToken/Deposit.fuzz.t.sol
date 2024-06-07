@@ -6,6 +6,7 @@ pragma solidity 0.8.22;
 
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
+import { DebtTokenErrors } from "../../../src/libraries/Errors.sol";
 import { StdStorage, stdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
@@ -26,7 +27,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_deposit_External(uint256 assets, address receiver, address sender) public {
         vm.startPrank(sender);
-        vm.expectRevert(FunctionNotImplemented.selector);
+        vm.expectRevert(DebtTokenErrors.FunctionNotImplemented.selector);
         debt_.deposit(assets, receiver);
         vm.stopPrank();
     }

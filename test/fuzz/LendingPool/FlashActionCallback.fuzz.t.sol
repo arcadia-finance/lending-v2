@@ -91,7 +91,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity <= type(uint128).max - fee);
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
         vm.prank(users.liquidityProvider);

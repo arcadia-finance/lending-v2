@@ -25,7 +25,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Set grace period to 0.
         vm.prank(users.riskManager);
-        registryExtension.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
+        registry.setRiskParameters(address(pool), 0, 0 minutes, type(uint64).max);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -185,7 +185,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: The account auction is initiated
         // We transmit price to token 1 oracle in order to have the oracle active.
         vm.warp(liquidationStartTime);
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
         initiateLiquidation(amountLoaned);
 
@@ -231,7 +231,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: The account auction is initiated
         // We transmit price to token 1 oracle in order to have the oracle active.
         vm.warp(liquidationStartTime);
-        vm.prank(users.defaultTransmitter);
+        vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
         initiateLiquidation(amountLoaned);
 
@@ -292,7 +292,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Success_bid_FromEOA_full_earlyTerminate(address bidder, uint112 amountLoaned, bytes memory data)
         public
     {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setLiquidationParameters(2, 2, 5, 0, type(uint80).max);
 
         // Given: Bidder is not a contract.

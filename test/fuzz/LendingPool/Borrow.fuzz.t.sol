@@ -12,6 +12,7 @@ import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
 
 /**
@@ -130,7 +131,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         LendingPool pool_ = new LendingPool(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
         );
@@ -138,10 +139,10 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool_), address(mockERC20.stable1), 0, type(uint112).max, 100, 100
         );
-        registryExtension.setRiskParameters(address(pool_), 0, 15 minutes, type(uint64).max);
+        registry.setRiskParameters(address(pool_), 0, 15 minutes, type(uint64).max);
         vm.stopPrank();
 
         vm.startPrank(users.accountOwner);
@@ -166,7 +167,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setAccountVersion(1, false);
 
         vm.startPrank(users.accountOwner);
@@ -221,7 +222,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(GuardianErrors.FunctionIsPaused.selector);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
     }
@@ -353,7 +354,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(proxyAccount));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
@@ -405,7 +406,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(proxyAccount));
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(0);
 
         depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);

@@ -46,7 +46,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     function setUp() public override {
         Scenario_Lending_Test.setUp();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         multiActionMock = new MultiActionMock();
         action = new ActionMultiCall();
         vm.stopPrank();
@@ -56,7 +56,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.token1),
             0,
@@ -112,7 +112,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Revert_doActionWithLeverage_BadAccountVersion() public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setAccountVersion(1, false);
 
         //Prepare input parameters
@@ -153,8 +153,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint64 stableCollateral,
         uint64 tokenOut
     ) public {
-        uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-        uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+        uint256 tokenRate = registry.getRateInUsd(oracleToken1ToUsd); //18 decimals
+        uint256 stableRate = registry.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
         uint256 stableIn =
             uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals / stableRate;
@@ -193,7 +193,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         );
         data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
 
-        vm.prank(users.tokenCreatorAddress);
+        vm.prank(users.tokenCreator);
         mockERC20.token1.mint(address(multiActionMock), tokenOut);
 
         to[0] = address(mockERC20.stable1);
@@ -248,8 +248,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registry.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registry.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
@@ -289,7 +289,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         );
         data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
 
-        vm.prank(users.tokenCreatorAddress);
+        vm.prank(users.tokenCreator);
         mockERC20.token1.mint(address(multiActionMock), tokenOut);
 
         to[0] = address(mockERC20.stable1);
@@ -356,7 +356,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
         ActionData memory ad;
 
-        vm.startPrank(users.tokenCreatorAddress);
+        vm.startPrank(users.tokenCreator);
         mockERC20.stable1.mint(address(action), debtAmount);
         action.executeAction(abi.encode(ad, tos, dataArr));
         vm.stopPrank();
@@ -371,8 +371,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 stableIn;
         uint256 collValue;
         {
-            uint256 tokenRate = registryExtension.getRateInUsd(oracleToken1ToUsd); //18 decimals
-            uint256 stableRate = registryExtension.getRateInUsd(oracleStable1ToUsd); //18 decimals
+            uint256 tokenRate = registry.getRateInUsd(oracleToken1ToUsd); //18 decimals
+            uint256 stableRate = registry.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
             stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.tokenDecimals * 10 ** Constants.stableDecimals
                 / stableRate;
@@ -414,7 +414,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             );
             data[2] = abi.encodeWithSignature("approve(address,uint256)", address(proxyAccount), uint256(tokenOut));
 
-            vm.prank(users.tokenCreatorAddress);
+            vm.prank(users.tokenCreator);
             mockERC20.token1.mint(address(multiActionMock), tokenOut);
 
             to[0] = address(mockERC20.stable1);

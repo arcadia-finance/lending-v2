@@ -5,7 +5,9 @@
 pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
+
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
@@ -62,7 +64,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.startPrank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
+        vm.expectRevert(GuardianErrors.FunctionIsPaused.selector);
         vm.startPrank(address(proxyAccount));
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
@@ -90,7 +92,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -150,14 +152,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // And: No tranches are available
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         address[] memory tranches = pool.getTranches();
         for (uint256 i = tranches.length; i > 0; i--) {
             pool.popTranche(i - 1, tranches[i - 1]);
@@ -220,7 +222,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)

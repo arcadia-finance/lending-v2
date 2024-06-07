@@ -66,7 +66,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         vm.warp(2 days);
 
         // Deploy the base test contracts.
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         asset = new Asset("Asset", "ASSET", 18);
         liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
@@ -75,7 +75,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         vm.stopPrank();
 
         // Set the Guardian.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.changeGuardian(users.guardian);
 
         // For clarity, some contracts have a generalised name in some tests.
@@ -96,7 +96,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         Fuzz_Test.setUp();
 
         // Deploy the base test contracts.
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
@@ -106,16 +106,16 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         vm.stopPrank();
 
         // Set the Liquidation parameters.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(100, 500, 50, 0, 0);
 
         // Set the Guardian.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.changeGuardian(users.guardian);
 
         // Set the risk parameters.
         vm.startPrank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool),
             address(mockERC20.stable1),
             0,
@@ -123,7 +123,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
             uint16(AssetValuationLib.ONE_4),
             uint16(AssetValuationLib.ONE_4)
         );
-        registryExtension.setRiskParameters(address(pool), 0, 15 minutes, type(uint64).max);
+        registry.setRiskParameters(address(pool), 0, 15 minutes, type(uint64).max);
         vm.stopPrank();
 
         // Set the Account recipient.

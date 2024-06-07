@@ -35,7 +35,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
         Fuzz_Lending_Test.setUp();
         deployArcadiaLendingWithAccounts();
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.addTranche(address(tranche), 50);
 
         // Deposit funds in the pool.
@@ -46,7 +46,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
         tranche.mint(type(uint128).max, users.liquidityProvider);
         vm.stopPrank();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setAccountVersion(1, true);
         pool.setInterestParameters(
             Constants.interestRate, Constants.interestRate, Constants.interestRate, Constants.utilisationThreshold

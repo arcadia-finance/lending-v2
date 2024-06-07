@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "openMarginAccount" of contract "LendingPool".
  */
@@ -36,7 +38,7 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
 
         // When: the margin account is tried to be closed
-        vm.expectRevert(OpenPositionNonZero.selector);
+        vm.expectRevert(LendingPoolErrors.OpenPositionNonZero.selector);
         pool.closeMarginAccount(address(proxyAccount));
     }
 
