@@ -11,6 +11,7 @@ import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "flashAction" of contract "LendingPool".
@@ -54,7 +55,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes calldata actionData
     ) public {
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert(IsNotAnAccount.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccount.selector);
         pool.flashAction(amount, nonAccount, actionHandler_, actionData, emptyBytes3);
     }
 
@@ -67,7 +68,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.startPrank(beneficiary);
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.flashAction(amount, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
@@ -86,7 +87,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.approveBeneficiary(beneficiary, amountAllowed, address(proxyAccount));
 
         vm.startPrank(beneficiary);
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.flashAction(amountLoaned, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }

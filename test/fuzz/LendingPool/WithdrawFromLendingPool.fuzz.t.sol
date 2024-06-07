@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "withdrawFromLendingPool" of contract "LendingPool".
@@ -35,7 +36,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         pool.depositInLendingPool(assetsWithdrawn, users.liquidityProvider);
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(AmountExceedsBalance.selector);
+        vm.expectRevert(LendingPoolErrors.AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }
@@ -50,7 +51,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
 
-        vm.expectRevert(AmountExceedsBalance.selector);
+        vm.expectRevert(LendingPoolErrors.AmountExceedsBalance.selector);
         pool.withdrawFromLendingPool(assetsWithdrawn, receiver);
         vm.stopPrank();
     }

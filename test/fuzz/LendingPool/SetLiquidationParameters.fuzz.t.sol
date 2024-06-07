@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "setLiquidationParameters" of contract "LendingPool".
@@ -51,7 +52,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setAuctionsInProgress(auctionsInProgress);
 
         vm.startPrank(users.owner);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(LendingPoolErrors.AuctionOngoing.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
@@ -66,7 +67,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > pool.getMaxTotalPenalty());
 
         vm.startPrank(users.owner);
-        vm.expectRevert(LiquidationWeightsTooHigh.selector);
+        vm.expectRevert(LendingPoolErrors.LiquidationWeightsTooHigh.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }
@@ -83,7 +84,7 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         minRewardWeight = uint16(bound(minRewardWeight, 5000 + 1, type(uint16).max));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(LiquidationWeightsTooHigh.selector);
+        vm.expectRevert(LendingPoolErrors.LiquidationWeightsTooHigh.selector);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, minRewardWeight, maxReward);
         vm.stopPrank();
     }

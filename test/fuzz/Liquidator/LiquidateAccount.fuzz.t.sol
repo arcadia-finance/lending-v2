@@ -5,11 +5,13 @@
 pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
-import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 
+import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
+import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
+import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
@@ -36,7 +38,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(nonAccount != address(accountV2Logic));
 
         vm.prank(caller);
-        vm.expectRevert(IsNotAnAccount.selector);
+        vm.expectRevert(LiquidatorErrors.IsNotAnAccount.selector);
         liquidator.liquidateAccount(nonAccount);
     }
 
@@ -70,7 +72,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Liquidation Initiator calls liquidateAccount again, It should revert
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(LiquidatorErrors.AuctionOngoing.selector);
         liquidator.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }
@@ -102,7 +104,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     function testFuzz_Revert_liquidateAccount_NotLiquidatable_NoDebt(address liquidationInitiator) public {
         // Given: Account has no debt
         vm.startPrank(liquidationInitiator);
-        vm.expectRevert(IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccountWithDebt.selector);
         liquidator.liquidateAccount(address(proxyAccount));
         vm.stopPrank();
     }

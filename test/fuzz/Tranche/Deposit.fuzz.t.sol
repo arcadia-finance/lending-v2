@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
+import { TrancheErrors } from "../../../src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "deposit" of contract "Tranche".
  */
@@ -26,14 +28,14 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Locked.selector);
+        vm.expectRevert(TrancheErrors.Locked.selector);
         tranche.deposit(assets, receiver);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_deposit_ZeroShares(address receiver) public {
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(ZeroShares.selector);
+        vm.expectRevert(TrancheErrors.ZeroShares.selector);
         tranche.deposit(0, receiver);
         vm.stopPrank();
     }
@@ -43,7 +45,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         tranche.setAuctionInProgress(true);
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(TrancheErrors.AuctionOngoing.selector);
         tranche.deposit(assets, receiver);
         vm.stopPrank();
     }

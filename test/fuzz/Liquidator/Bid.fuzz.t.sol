@@ -39,7 +39,7 @@ contract Bid_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // When Then: Bid is called, It should revert
         vm.startPrank(bidder);
-        vm.expectRevert(NotForSale.selector);
+        vm.expectRevert(LiquidatorErrors.NotForSale.selector);
         liquidator.bid(address(account_), assetAmounts, endAuction, data);
         vm.stopPrank();
     }

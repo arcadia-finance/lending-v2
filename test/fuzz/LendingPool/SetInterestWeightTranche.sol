@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolExtension } from "../../utils/extensions/LendingPoolExtension.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "setInterestWeightTranche" of contract "LendingPool".
@@ -41,7 +42,7 @@ contract SetInterestWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
     function testFuzz_Revert_setInterestWeightTranche_InexistingTranche(uint256 index) public {
         vm.startPrank(users.owner);
-        vm.expectRevert(NonExistingTranche.selector);
+        vm.expectRevert(LendingPoolErrors.NonExistingTranche.selector);
         pool.setInterestWeightTranche(index, 10);
         vm.stopPrank();
     }

@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 
 import { Liquidator } from "../../../src/Liquidator.sol";
+import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
 
 /**
@@ -48,7 +49,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         halfLifeTime = uint32(bound(halfLifeTime, 28_800 + 1, type(uint32).max));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(HalfLifeTimeTooHigh.selector);
+        vm.expectRevert(LiquidatorErrors.HalfLifeTimeTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -62,7 +63,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         halfLifeTime = uint32(bound(halfLifeTime, 0, 120 - 1));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(HalfLifeTimeTooLow.selector);
+        vm.expectRevert(LiquidatorErrors.HalfLifeTimeTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -78,7 +79,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         cutoffTime = uint32(bound(cutoffTime, 64_800 + 1, type(uint32).max));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(CutOffTooHigh.selector);
+        vm.expectRevert(LiquidatorErrors.CutOffTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -94,7 +95,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         cutoffTime = uint32(bound(cutoffTime, 0, 3600 - 1));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(CutOffTooLow.selector);
+        vm.expectRevert(LiquidatorErrors.CutOffTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -127,7 +128,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 30_000 + 1, type(uint16).max));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(MultiplierTooHigh.selector);
+        vm.expectRevert(LiquidatorErrors.MultiplierTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -145,7 +146,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         startPriceMultiplier = uint16(bound(startPriceMultiplier, 0, 10_000 - 1));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(MultiplierTooLow.selector);
+        vm.expectRevert(LiquidatorErrors.MultiplierTooLow.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }
@@ -164,7 +165,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
         minPriceMultiplier = uint16(bound(minPriceMultiplier, 9000 + 1, type(uint16).max));
 
         vm.startPrank(users.owner);
-        vm.expectRevert(MultiplierTooHigh.selector);
+        vm.expectRevert(LiquidatorErrors.MultiplierTooHigh.selector);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
         vm.stopPrank();
     }

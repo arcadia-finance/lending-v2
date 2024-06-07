@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
@@ -35,14 +36,14 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: startLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(nonAccount);
-        vm.expectRevert(IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt(address liquidationInitiator) public {
         vm.startPrank(address(proxyAccount));
-        vm.expectRevert(IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
     }

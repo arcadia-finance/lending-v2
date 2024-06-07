@@ -11,6 +11,7 @@ import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
@@ -32,7 +33,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_borrow_ZeroAmount(address account, address to) public {
-        vm.expectRevert(ZeroAmount.selector);
+        vm.expectRevert(LendingPoolErrors.ZeroAmount.selector);
         pool.borrow(0, account, to, emptyBytes3);
     }
 
@@ -40,7 +41,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amount > 0);
 
         vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert(IsNotAnAccount.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccount.selector);
         pool.borrow(amount, nonAccount, to, emptyBytes3);
     }
 
@@ -170,7 +171,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setAccountVersion(1, false);
 
         vm.startPrank(users.accountOwner);
-        vm.expectRevert(InvalidVersion.selector);
+        vm.expectRevert(LendingPoolErrors.InvalidVersion.selector);
         pool.borrow(amountLoaned, address(proxyAccount), to, emptyBytes3);
         vm.stopPrank();
     }

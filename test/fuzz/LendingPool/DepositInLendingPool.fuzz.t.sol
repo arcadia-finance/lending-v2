@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "depositInLendingPool" of contract "LendingPool".
@@ -30,7 +31,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(unprivilegedAddress != address(srTranche));
 
         vm.startPrank(unprivilegedAddress);
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.depositInLendingPool(assets, from);
         vm.stopPrank();
     }

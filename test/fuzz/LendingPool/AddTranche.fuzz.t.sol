@@ -8,6 +8,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ERC20 } from "../../../lib/solmate/src/tokens/ERC20.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 import { LendingPoolExtension } from "../../utils/extensions/LendingPoolExtension.sol";
 
 /**
@@ -52,7 +53,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_SingleTrancheTwice() public {
         vm.startPrank(users.owner);
         pool_.addTranche(address(srTranche), 50);
-        vm.expectRevert(TrancheAlreadyExists.selector);
+        vm.expectRevert(LendingPoolErrors.TrancheAlreadyExists.selector);
         pool_.addTranche(address(srTranche), 40);
         vm.stopPrank();
     }
@@ -60,7 +61,7 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_addTranche_AuctionOnGoing() public {
         vm.startPrank(users.owner);
         pool_.setAuctionsInProgress(1);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(LendingPoolErrors.AuctionOngoing.selector);
         pool_.addTranche(address(srTranche), 50);
         vm.stopPrank();
     }

@@ -11,6 +11,7 @@ import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "flashActionCallback" of contract "LendingPool".
@@ -46,7 +47,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setCallbackAccount(account);
 
         vm.prank(sender);
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.flashActionCallback(callbackData);
     }
 
