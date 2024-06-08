@@ -7,12 +7,11 @@ pragma solidity 0.8.22;
 import { Base_Lending_Test } from "../Base.t.sol";
 import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 
-import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
-
 import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtTokenExtension } from "../utils/extensions/DebtTokenExtension.sol";
+import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
 import { LendingPoolExtension } from "../utils/extensions/LendingPoolExtension.sol";
 import { LiquidatorExtension } from "../utils/extensions/LiquidatorExtension.sol";
 import { SequencerUptimeOracle } from "../../lib/accounts-v2/test/utils/mocks/oracles/SequencerUptimeOracle.sol";
