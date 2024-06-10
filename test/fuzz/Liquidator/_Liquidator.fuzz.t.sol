@@ -48,7 +48,7 @@ abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
     function initiateLiquidation(uint112 amountLoaned) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

@@ -54,7 +54,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals);
@@ -83,7 +83,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         );
         vm.assume(amountCredit > 0);
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.startPrank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
@@ -111,7 +111,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         uint256 freeMargin = account.getFreeMargin();
         vm.assume(freeMargin > 0);
@@ -143,7 +143,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 expectedValue = ((valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals) * collFactor_
@@ -163,7 +163,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = (
             (valueOfOneToken * amountToken) / 10 ** Constants.tokenDecimals * collFactor_ / AssetValuationLib.ONE_4
@@ -196,7 +196,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
         uint16 collFactor_ = Constants.tokenToStableCollFactor;
 
         uint256 maxCredit = (
@@ -253,7 +253,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.startPrank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
@@ -287,7 +287,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.tokenOracleDecimals;
         vm.assume(amountToken < type(uint128).max / valueOfOneToken);
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         uint256 maxCredit = ((valueOfOneToken * (amountToken - amountTokenWithdrawal)) / 10 ** Constants.tokenDecimals)
             * collFactor_ / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.stableDecimals);
@@ -328,7 +328,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
@@ -367,7 +367,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
@@ -410,7 +410,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
@@ -457,7 +457,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
-        depositTokenInAccount(account, mockERC20.token1, amountToken);
+        depositERC20InAccount(account, mockERC20.token1, amountToken);
 
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);

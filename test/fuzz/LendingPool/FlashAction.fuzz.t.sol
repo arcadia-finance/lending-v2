@@ -106,7 +106,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
@@ -126,7 +126,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -156,7 +156,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 0);
         vm.assume(beneficiary != users.accountOwner);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -190,7 +190,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -238,7 +238,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(0);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);

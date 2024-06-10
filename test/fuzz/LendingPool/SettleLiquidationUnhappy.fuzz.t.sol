@@ -274,7 +274,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         // And : The Account has some debt
-        depositTokenInAccount(account, mockERC20.stable1, liquidity);
+        depositERC20InAccount(account, mockERC20.stable1, liquidity);
         vm.prank(users.accountOwner);
         pool.borrow(
             uint256(liquidationPenalty) + uint256(auctionTerminationReward),

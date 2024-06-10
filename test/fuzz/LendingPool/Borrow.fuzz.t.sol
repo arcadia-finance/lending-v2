@@ -108,7 +108,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(collateralValue < amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
@@ -129,7 +129,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 0);
         vm.assume(trustedCreditor_ != address(pool));
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.owner);
         LendingPool pool_ = new LendingPool(
@@ -165,7 +165,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(collateralValue >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.owner);
         pool.setAccountVersion(1, false);
@@ -193,7 +193,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
@@ -217,7 +217,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.guardian);
         pool.pause();
@@ -244,7 +244,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(account));
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -281,7 +281,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(account));
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
         vm.prank(users.accountOwner);
@@ -316,7 +316,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(to != address(pool));
         vm.assume(to != address(account));
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
         vm.prank(users.accountOwner);
@@ -355,7 +355,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -407,7 +407,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(0);
 
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

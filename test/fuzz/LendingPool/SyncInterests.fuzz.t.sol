@@ -41,7 +41,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(realisedDebt <= realisedLiquidity);
 
         // And: the users.accountOwner takes realisedDebt debt
-        depositTokenInAccount(account, mockERC20.stable1, realisedDebt);
+        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);

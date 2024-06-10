@@ -61,8 +61,8 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         );
 
         // And : Account has debt
-        depositTokenInAccount(account, mockERC20.stable1, amountStable1);
-        depositTokenInAccount(account, mockERC20.token1, amountToken1);
+        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
+        depositERC20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);
@@ -146,8 +146,8 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         );
 
         // And : Account has debt
-        depositTokenInAccount(account, mockERC20.stable1, amountStable1);
-        depositTokenInAccount(account, mockERC20.token1, amountToken1);
+        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
+        depositERC20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);

@@ -53,7 +53,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -85,7 +85,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -145,7 +145,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -215,7 +215,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(account, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

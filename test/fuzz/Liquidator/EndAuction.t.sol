@@ -43,7 +43,7 @@ contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Account has debt
         bytes3 emptyBytes3;
         uint256 collateralValue = uint256(minimumMargin) + amountLoaned;
-        depositTokenInAccount(account, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

@@ -175,7 +175,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
+        depositERC20InAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -269,7 +269,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
+        depositERC20InAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes[] memory data = new bytes[](3);
@@ -390,7 +390,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(stableDebt);
 
         //Deposit stableCollateral in Account
-        depositTokenInAccount(account, mockERC20.stable1, stableCollateral);
+        depositERC20InAccount(account, mockERC20.stable1, stableCollateral);
 
         //Prepare input parameters
         bytes memory callData;
