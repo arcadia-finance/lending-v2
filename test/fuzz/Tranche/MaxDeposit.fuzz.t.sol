@@ -37,8 +37,8 @@ contract MaxDeposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
 
     function testFuzz_Success_maxDeposit_Paused(address receiver) public {
         vm.warp(35 days);
-        vm.startPrank(users.creatorAddress);
-        pool.changeGuardian(users.creatorAddress);
+        vm.startPrank(users.owner);
+        pool.changeGuardian(users.owner);
         pool.pause();
         vm.stopPrank();
 

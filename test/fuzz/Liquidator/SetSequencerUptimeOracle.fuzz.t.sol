@@ -28,8 +28,8 @@ contract SetSequencerUptimeOracle_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         address unprivilegedAddress,
         address sequencerUptimeOracle_
     ) public {
-        // Given: unprivilegedAddress_ is not users.creatorAddress
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        // Given: unprivilegedAddress_ is not users.owner
+        vm.assume(unprivilegedAddress != users.owner);
 
         // When: unprivilegedAddress_ calls setSequencerUptimeOracle
         // Then: Function reverts with "UNAUTHORIZED"
@@ -40,9 +40,9 @@ contract SetSequencerUptimeOracle_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
     function testFuzz_Revert_setSequencerUptimeOracle_OracleNotReverting(address sequencerUptimeOracle_) public {
         // Given: Current sequencer oracle is active.
-        // When: creatorAddress calls setSequencerUptimeOracle with new oracle.
+        // When: owner calls setSequencerUptimeOracle with new oracle.
         // Then: Function reverts with OracleNotReverting.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         vm.expectRevert(LiquidatorErrors.OracleNotReverting.selector);
         liquidator.setSequencerUptimeOracle(sequencerUptimeOracle_);
     }
@@ -55,9 +55,9 @@ contract SetSequencerUptimeOracle_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         SequencerUptimeOracle sequencerUptimeOracle_ = new SequencerUptimeOracle();
         sequencerUptimeOracle_.setRevertsFlag(true);
 
-        // When: creatorAddress calls setSequencerUptimeOracle with new oracle.
+        // When: owner calls setSequencerUptimeOracle with new oracle.
         // Then: Function reverts with OracleReverting.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         vm.expectRevert(LiquidatorErrors.OracleReverting.selector);
         liquidator.setSequencerUptimeOracle(address(sequencerUptimeOracle_));
     }
@@ -69,8 +69,8 @@ contract SetSequencerUptimeOracle_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // And: New sequencer oracle is active.
         SequencerUptimeOracle sequencerUptimeOracle_ = new SequencerUptimeOracle();
 
-        // When: creatorAddress calls setSequencerUptimeOracle with new oracle.
-        vm.prank(users.creatorAddress);
+        // When: owner calls setSequencerUptimeOracle with new oracle.
+        vm.prank(users.owner);
         liquidator.setSequencerUptimeOracle(address(sequencerUptimeOracle_));
 
         // Then: New sequencer oracle is set.

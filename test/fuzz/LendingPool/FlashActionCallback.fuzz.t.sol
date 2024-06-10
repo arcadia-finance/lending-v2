@@ -6,11 +6,12 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
-
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "flashActionCallback" of contract "LendingPool".
@@ -46,7 +47,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setCallbackAccount(account);
 
         vm.prank(sender);
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
         pool.flashActionCallback(callbackData);
     }
 
@@ -84,14 +85,14 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(account != users.liquidityProvider);
         vm.assume(account != address(pool));
         vm.assume(account != actionTarget);
-        vm.assume(account != treasury);
+        vm.assume(account != users.treasury);
 
         vm.assume(liquidity >= amountLoaned);
         uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
         vm.assume(liquidity <= type(uint128).max - fee);
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
         vm.prank(users.liquidityProvider);
@@ -105,7 +106,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(account);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(account, sender, actionTarget, amountLoaned, fee, referrer);
+        emit LendingPool.Borrow(account, sender, actionTarget, amountLoaned, fee, referrer);
         pool.flashActionCallback(callbackData);
         vm.stopPrank();
 
@@ -113,7 +114,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(actionTarget), amountLoaned);
         assertEq(debt.balanceOf(account), uint256(amountLoaned) + fee);
-        assertEq(pool.liquidityOf(treasury), fee);
+        assertEq(pool.liquidityOf(users.treasury), fee);
         assertEq(pool.totalLiquidity(), liquidity + fee);
     }
 }

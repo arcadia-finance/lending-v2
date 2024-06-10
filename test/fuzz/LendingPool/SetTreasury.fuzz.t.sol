@@ -22,18 +22,18 @@ contract SetTreasury_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setTreasury_InvalidOwner(address unprivilegedAddress) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
-        pool.setTreasury(users.creatorAddress);
+        pool.setTreasury(users.owner);
         vm.stopPrank();
     }
 
     function testFuzz_Success_setTreasury() public {
-        vm.prank(users.creatorAddress);
-        pool.setTreasury(users.creatorAddress);
+        vm.prank(users.owner);
+        pool.setTreasury(users.owner);
 
-        assertEq(pool.getTreasury(), users.creatorAddress);
+        assertEq(pool.getTreasury(), users.owner);
     }
 }

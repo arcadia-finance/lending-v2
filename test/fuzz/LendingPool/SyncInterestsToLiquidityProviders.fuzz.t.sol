@@ -29,7 +29,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         pool.setRealisedLiquidityOf(address(srTranche), liquiditySr);
         pool.setRealisedLiquidityOf(address(jrTranche), liquidityJr);
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setInterestWeightTranche(0, 0);
         pool.setInterestWeightTranche(1, 0);
         pool.setTreasuryWeights(0, 0);
@@ -39,7 +39,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), liquiditySr);
         assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr);
-        assertEq(pool.liquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(users.treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }
@@ -53,7 +53,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         uint256 totalInterestWeight = uint256(weightSr) + uint256(weightJr) + uint256(weightTreasury);
         vm.assume(totalInterestWeight > 0);
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setInterestWeightTranche(0, weightSr);
         pool.setInterestWeightTranche(1, weightJr);
         pool.setTreasuryWeights(weightTreasury, 10);
@@ -63,7 +63,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), 0);
         assertEq(pool.liquidityOf(address(jrTranche)), 0);
-        assertEq(pool.liquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(users.treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }
@@ -79,7 +79,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         uint256 totalInterestWeight = uint256(weightSr) + uint256(weightJr) + uint256(weightTreasury);
         vm.assume(totalInterestWeight > 0);
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setInterestWeightTranche(0, weightSr);
         pool.setInterestWeightTranche(1, weightJr);
         pool.setTreasuryWeights(weightTreasury, 10);
@@ -102,7 +102,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), liquiditySr + interestSr);
         assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr + interestJr);
-        assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
+        assertEq(pool.liquidityOf(address(users.treasury)), interestTreasury);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }

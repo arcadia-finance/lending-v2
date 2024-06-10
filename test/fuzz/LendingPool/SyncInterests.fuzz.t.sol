@@ -41,21 +41,21 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(realisedDebt <= realisedLiquidity);
 
         // And: the users.accountOwner takes realisedDebt debt
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, realisedDebt);
+        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(realisedLiquidity, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(realisedDebt, address(proxyAccount), address(proxyAccount), emptyBytes3);
+        pool.borrow(realisedDebt, address(account), address(account), emptyBytes3);
 
         // And: deltaTimestamp have passed
         uint256 start_timestamp = block.timestamp;
         vm.warp(start_timestamp + deltaTimestamp);
 
         // When: Interests are synced
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
         pool.syncInterests();
 
@@ -63,8 +63,8 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Then: Total redeemable interest of LP providers and total open debt of borrowers should increase with interests
         assertEq(pool.totalLiquidity(), realisedLiquidity + interests);
-        assertEq(debt.maxWithdraw(address(proxyAccount)), realisedDebt + interests);
-        assertEq(debt.maxRedeem(address(proxyAccount)), realisedDebt);
+        assertEq(debt.maxWithdraw(address(account)), realisedDebt + interests);
+        assertEq(debt.maxRedeem(address(account)), realisedDebt);
         assertEq(debt.totalAssets(), realisedDebt + interests);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
     }

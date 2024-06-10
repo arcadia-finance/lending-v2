@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
-
 import { Tranche } from "../../../src/Tranche.sol";
 
 /**
@@ -33,7 +33,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_donateToTranche_zeroAssets() public {
-        vm.expectRevert(ZeroAmount.selector);
+        vm.expectRevert(LendingPoolErrors.ZeroAmount.selector);
         pool.donateToTranche(1, 0);
     }
 

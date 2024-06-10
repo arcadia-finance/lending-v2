@@ -22,7 +22,7 @@ contract SetMinimumMargin_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_setMinimumMargin_Unauthorised(address unprivilegedAddress, uint96 minimumMargin) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -31,7 +31,7 @@ contract SetMinimumMargin_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_setMinimumMargin(uint96 minimumMargin) public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setMinimumMargin(minimumMargin);
 
         assertEq(pool.getMinimumMargin(), minimumMargin);
