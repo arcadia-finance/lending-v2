@@ -39,7 +39,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), liquiditySr);
         assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr);
-        assertEq(pool.liquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(users.treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }
@@ -63,7 +63,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), 0);
         assertEq(pool.liquidityOf(address(jrTranche)), 0);
-        assertEq(pool.liquidityOf(address(treasury)), interests);
+        assertEq(pool.liquidityOf(address(users.treasury)), interests);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }
@@ -102,7 +102,7 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
 
         assertEq(pool.liquidityOf(address(srTranche)), liquiditySr + interestSr);
         assertEq(pool.liquidityOf(address(jrTranche)), liquidityJr + interestJr);
-        assertEq(pool.liquidityOf(address(treasury)), interestTreasury);
+        assertEq(pool.liquidityOf(address(users.treasury)), interestTreasury);
         // We did not set initial totalRealisedLiquidity.
         assertEq(pool.totalLiquidity(), interests);
     }

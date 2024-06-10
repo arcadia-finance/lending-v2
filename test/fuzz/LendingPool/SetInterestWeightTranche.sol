@@ -24,7 +24,7 @@ contract SetInterestWeightTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
 
         vm.prank(users.owner);
         pool = new LendingPoolExtension(
-            users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
+            users.riskManager, ERC20(address(mockERC20.stable1)), users.treasury, address(factory), address(liquidator)
         );
     }
 

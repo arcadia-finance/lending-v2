@@ -198,14 +198,14 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        uint256 treasuryBalancePre = pool.liquidityOf(treasury);
+        uint256 treasuryBalancePre = pool.liquidityOf(users.treasury);
         uint256 totalRealisedLiquidityPre = pool.totalLiquidity();
 
         vm.startPrank(users.accountOwner);
         pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
 
-        uint256 treasuryBalancePost = pool.liquidityOf(treasury);
+        uint256 treasuryBalancePost = pool.liquidityOf(users.treasury);
         uint256 totalRealisedLiquidityPost = pool.totalLiquidity();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);

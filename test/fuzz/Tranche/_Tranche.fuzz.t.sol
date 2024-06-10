@@ -26,9 +26,6 @@ abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
         Fuzz_Lending_Test.setUp();
         deployArcadiaLendingWithoutAccounts();
 
-        vm.prank(users.owner);
-        pool.addTranche(address(tranche), 50);
-
         vm.prank(users.tokenCreator);
         asset.mint(users.liquidityProvider, type(uint256).max);
 

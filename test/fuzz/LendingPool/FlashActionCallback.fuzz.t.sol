@@ -85,7 +85,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(account != users.liquidityProvider);
         vm.assume(account != address(pool));
         vm.assume(account != actionTarget);
-        vm.assume(account != treasury);
+        vm.assume(account != users.treasury);
 
         vm.assume(liquidity >= amountLoaned);
         uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
@@ -114,7 +114,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(actionTarget), amountLoaned);
         assertEq(debt.balanceOf(account), uint256(amountLoaned) + fee);
-        assertEq(pool.liquidityOf(treasury), fee);
+        assertEq(pool.liquidityOf(users.treasury), fee);
         assertEq(pool.totalLiquidity(), liquidity + fee);
     }
 }

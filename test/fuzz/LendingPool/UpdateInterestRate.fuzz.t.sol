@@ -57,7 +57,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.totalAssets(), realisedDebt + interest);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
         // Pools have no liquidity -> all interests go to the Treasury.
-        assertEq(pool.liquidityOf(address(treasury)), interest);
+        assertEq(pool.liquidityOf(address(users.treasury)), interest);
         assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 

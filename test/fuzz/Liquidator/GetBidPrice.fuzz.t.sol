@@ -99,18 +99,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(address(123));
         liquidator.liquidateAccount(address(account));
 
-        (,, uint32[] memory assetShares, uint256[] memory assetAmounts,) =
-            liquidator.getAuctionInformationPartTwo(address(account));
-
-        emit log_named_uint("assetAmounts0FromAuction", assetAmounts[0]);
-        emit log_named_uint("assetAmounts1FromAuction", assetAmounts[1]);
-        emit log_named_uint("assetShare0FromAuction", assetShares[0]);
-        emit log_named_uint("assetShare1FromAuction", assetShares[1]);
-
-        (uint128 startDebt,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(account));
-
-        emit log_named_uint("startDebt", startDebt);
-        emit log_named_uint("startTime", startTime);
+        (uint128 startDebt,,,) = liquidator.getAuctionInformationPartOne(address(account));
 
         // assetAmounts have to be in the right order (inverse order as when deposited)
         assetAmounts_[0] = amountStable1;
@@ -122,15 +111,10 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Then : Values should be correct
         assertEq(inAuction, true);
         assertGt(price, startDebt);
-        emit log_named_uint("price", price);
-
-        uint256 totalShare = liquidator.calculateTotalShare(address(account), assetAmounts_);
-        emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
         (price,) = liquidator.getBidPrice(address(account), assetAmounts_);
         assertLt(price, startDebt);
-        emit log_named_uint("price", price);
 
         vm.stopPrank();
     }
@@ -184,18 +168,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.startPrank(address(123));
         liquidator.liquidateAccount(address(account));
 
-        (,, uint32[] memory assetShares, uint256[] memory assetAmounts,) =
-            liquidator.getAuctionInformationPartTwo(address(account));
-
-        emit log_named_uint("assetAmounts0FromAuction", assetAmounts[0]);
-        emit log_named_uint("assetAmounts1FromAuction", assetAmounts[1]);
-        emit log_named_uint("assetShare0FromAuction", assetShares[0]);
-        emit log_named_uint("assetShare1FromAuction", assetShares[1]);
-
-        (uint128 startDebt,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(account));
-
-        emit log_named_uint("startDebt", startDebt);
-        emit log_named_uint("startTime", startTime);
+        (uint128 startDebt,,,) = liquidator.getAuctionInformationPartOne(address(account));
 
         // assetAmounts have to be in the right order (inverse order as when deposited)
         // We want to liquidate half of the assets in the Account
@@ -208,15 +181,10 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // Then : Values should be correct
         assertEq(inAuction, true);
         assertGt(price, startDebt / 2);
-        emit log_named_uint("price", price);
-
-        uint256 totalShare = liquidator.calculateTotalShare(address(account), assetAmounts_);
-        emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
         (price,) = liquidator.getBidPrice(address(account), assetAmounts_);
         assertLt(price, startDebt / 2);
-        emit log_named_uint("price", price);
 
         vm.stopPrank();
     }

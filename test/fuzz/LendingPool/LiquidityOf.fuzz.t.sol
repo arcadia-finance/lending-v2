@@ -127,8 +127,8 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 actualValue_ = pool.liquidityOfAndSync(pool.getTreasury());
 
         assertEq(actualValue, expectedValue);
-        // liquidityOf() the treasury will be slightly underestimated,
-        // since all rounding errors of all tranches will go to the treasury.
+        // liquidityOf() the users.treasury will be slightly underestimated,
+        // since all rounding errors of all tranches will go to the users.treasury.
         assertGe(actualValue_, actualValue);
         assertApproxEqAbs(actualValue_, actualValue, 10); //0.1% tolerance, rounding errors
     }
