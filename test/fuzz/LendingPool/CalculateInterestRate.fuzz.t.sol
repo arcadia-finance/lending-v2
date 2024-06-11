@@ -80,7 +80,7 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 utilisationThreshold_
     ) public {
         // Given: utilisation is less than 10_000.
-        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4 - 1));
 
         // And: utilisation is above utilisationThreshold_.
         utilisation = uint40(bound(utilisation, utilisationThreshold_ + 1, ONE_4));
