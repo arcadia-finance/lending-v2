@@ -4,8 +4,8 @@
  */
 pragma solidity 0.8.22;
 
-import { ERC20, ERC4626 } from "../lib/solmate/src/mixins/ERC4626.sol";
-import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { ERC20, ERC4626 } from "../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
+import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { DebtTokenErrors } from "./libraries/Errors.sol";
 
 /**

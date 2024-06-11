@@ -5,8 +5,8 @@
 pragma solidity 0.8.22;
 
 import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { ERC20, SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
-import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { ERC20, SafeTransferLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { IBidCallback } from "./interfaces/IBidCallback.sol";
 import { IChainLinkData } from "../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
@@ -16,8 +16,8 @@ import { ILendingPool } from "./interfaces/ILendingPool.sol";
 import { ILiquidator } from "./interfaces/ILiquidator.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
 import { LiquidatorErrors } from "./libraries/Errors.sol";
-import { Owned } from "../lib/solmate/src/auth/Owned.sol";
-import { ReentrancyGuard } from "../lib/solmate/src/utils/ReentrancyGuard.sol";
+import { Owned } from "../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
+import { ReentrancyGuard } from "../lib/accounts-v2/lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /**
  * @title Liquidator.

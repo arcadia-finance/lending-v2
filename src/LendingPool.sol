@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
-import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
@@ -14,8 +14,8 @@ import { ITranche } from "./interfaces/ITranche.sol";
 import { LendingPoolErrors } from "./libraries/Errors.sol";
 import { LendingPoolGuardian } from "./guardians/LendingPoolGuardian.sol";
 import { LogExpMath } from "./libraries/LogExpMath.sol";
-import { SafeCastLib } from "../lib/solmate/src/utils/SafeCastLib.sol";
-import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { SafeCastLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
 
 /**
  * @title Arcadia LendingPool.

@@ -9,7 +9,7 @@ import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
 import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
 import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
 import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";

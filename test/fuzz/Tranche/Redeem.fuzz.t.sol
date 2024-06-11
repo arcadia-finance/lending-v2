@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
-import { stdError } from "../../../lib/forge-std/src/StdError.sol";
+import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 import { TrancheErrors } from "../../../src/libraries/Errors.sol";
 
 /**
