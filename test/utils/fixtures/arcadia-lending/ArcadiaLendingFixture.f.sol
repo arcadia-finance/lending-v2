@@ -6,7 +6,7 @@ pragma solidity 0.8.22;
 
 import { Base_Lending_Test } from "../../../Base.t.sol";
 
-import { ERC20 } from "../../../../lib/solmate/src/tokens/ERC20.sol";
+import { ERC20 } from "../../../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
 import { DebtTokenExtension } from "../../extensions/DebtTokenExtension.sol";
 import { LendingPoolExtension } from "../../extensions/LendingPoolExtension.sol";
 import { LiquidatorExtension } from "../../extensions/LiquidatorExtension.sol";

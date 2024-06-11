@@ -4,7 +4,7 @@
  */
 pragma solidity 0.8.22;
 
-import "../lib/forge-std/src/Test.sol";
+import { Test } from "../lib/accounts-v2/lib/forge-std/src/Test.sol";
 
 import { ArcadiaContracts, ArcadiaSafes } from "../lib/accounts-v2/script/utils/Constants.sol";
 import { ArcadiaLending, ArcadiaLendingSafes } from "./utils/Constants.sol";

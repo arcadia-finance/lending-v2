@@ -6,7 +6,7 @@
  */
 pragma solidity 0.8.22;
 
-import "../lib/forge-std/src/Test.sol";
+import { Test } from "../lib/accounts-v2/lib/forge-std/src/Test.sol";
 
 import { ArcadiaSafes, ExternalContracts, PrimaryAssets } from "../lib/accounts-v2/script/utils/Constants.sol";
 import { ERC20 } from "../src/DebtToken.sol";
