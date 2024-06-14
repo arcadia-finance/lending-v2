@@ -4,7 +4,6 @@ import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 
 import { stdError } from "../../../lib/forge-std/src/StdError.sol";
 
-
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "Tranche Wrapper".
  */
@@ -16,6 +15,7 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
+
     function testFuzz_Revert_redeem_Locked(uint128 shares, address receiver, address owner) public {
         vm.prank(address(pool));
         tranche.lock();
@@ -180,5 +180,4 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         assertEq(asset.balanceOf(address(pool)), sharesMinted - sharesRedeemed);
         assertEq(asset.balanceOf(receiver), sharesRedeemed);
     }
-
 }

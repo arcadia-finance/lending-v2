@@ -17,7 +17,8 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
-     function setUp() public override {
+
+    function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
 

@@ -16,7 +16,8 @@ contract MaxMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
-        function setUp() public override {
+
+    function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
 
@@ -78,5 +79,4 @@ contract MaxMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
         assertEq(trancheWrapper.maxMint(receiver), maxShares);
     }
-    
-    }
+}

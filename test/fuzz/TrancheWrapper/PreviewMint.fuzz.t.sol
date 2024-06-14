@@ -21,7 +21,8 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-function testFuzz_Success_previewMint_NonZeroSupply(
+
+    function testFuzz_Success_previewMint_NonZeroSupply(
         uint80 vas,
         uint256 totalSupply,
         uint128 totalAssets,

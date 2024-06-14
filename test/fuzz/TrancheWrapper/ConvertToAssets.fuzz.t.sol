@@ -18,12 +18,14 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
-        function setUp() public override {
+
+    function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_convertToAssets_NonZeroSupply(
         uint80 vas,
         uint256 totalSupply,

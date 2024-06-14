@@ -19,7 +19,6 @@ import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
  * - All view functions can be called directly on the Tranche view functions.
  * - Deposit and Mint functions approve the LendingPool, not the Tranche.
  */
-
 contract TrancheWrapper is ERC4626 {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
@@ -27,13 +26,16 @@ contract TrancheWrapper is ERC4626 {
     /* //////////////////////////////////////////////////////////////
                                 CONSTANTS
     ////////////////////////////////////////////////////////////// */
-    // Immutable references to the LendingPool and Tranche contracts.
+
+    // Address of the Lending Pool.
     address public immutable LENDING_POOL;
+    // Address of the underlying Tranche.
     address public immutable TRANCHE;
 
     /* //////////////////////////////////////////////////////////////
                               CONSTRUCTOR
     ////////////////////////////////////////////////////////////// */
+
     /**
      * @notice The constructor for a TrancheWrapper.
      * @param asset_ The underlying ERC20 asset.
@@ -41,11 +43,11 @@ contract TrancheWrapper is ERC4626 {
      * @param symbol_ The symbol of the ERC4626 token.
      * @param TRANCHE_ The Tranche contract address.
      */
-    constructor(ERC20 asset_, string memory name_, string memory symbol_, address TRANCHE_, address LENDING_POOL_)
+    constructor(ERC20 asset_, string memory name_, string memory symbol_, address TRANCHE_)
         ERC4626(asset_, name_, symbol_)
     {
         TRANCHE = TRANCHE_;
-        LENDING_POOL = LENDING_POOL_;
+        LENDING_POOL = address(ITranche(TRANCHE_).LENDING_POOL());
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -64,6 +66,7 @@ contract TrancheWrapper is ERC4626 {
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
+        // Approval has to be given to the Lending Pool for the deposit in the Tranche.
         asset.safeApprove(LENDING_POOL, assets);
 
         shares = ERC4626(TRANCHE).deposit(assets, address(this));
@@ -128,7 +131,14 @@ contract TrancheWrapper is ERC4626 {
      * @return assets The corresponding amount of assets withdrawn.
      */
     function redeem(uint256 shares, address receiver, address owner_) public override returns (uint256 assets) {
-        assets = ERC4626(TRANCHE).redeem(shares, receiver, owner_);
+        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
+
+        if (msg.sender != owner_) {
+            // Saves gas for limited approvals.
+            uint256 allowed = allowance[owner_][msg.sender];
+
+            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
+        }
 
         _burn(owner_, shares);
 
@@ -208,7 +218,7 @@ contract TrancheWrapper is ERC4626 {
      * @dev maxWithdraw() according to the Tranche implementation.
      */
     function maxWithdraw(address owner_) public view override returns (uint256 maxAssets) {
-        uint256 supply = totalSupply; 
+        uint256 supply = totalSupply;
         uint256 maxWrapperAssets = ERC4626(TRANCHE).maxWithdraw(address(this));
 
         return supply == 0 ? balanceOf[owner_] : balanceOf[owner_].mulDivDown(maxWrapperAssets, supply);
