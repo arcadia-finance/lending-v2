@@ -14,6 +14,7 @@ import { LendingPoolExtension } from "./utils/extensions/LendingPoolExtension.so
 import { LiquidatorExtension } from "./utils/extensions/LiquidatorExtension.sol";
 import { TrancheExtension } from "./utils/extensions/TrancheExtension.sol";
 import { Errors } from "./utils/Errors.sol";
+import { TrancheWrapper } from "../src/TrancheWrapper.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
 abstract contract Base_Lending_Test is Base_Test, Events, Errors {
@@ -34,6 +35,7 @@ abstract contract Base_Lending_Test is Base_Test, Events, Errors {
     TrancheExtension internal jrTranche;
     TrancheExtension internal srTranche;
     TrancheExtension internal tranche;
+    TrancheWrapper internal trancheWrapper;
 
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION

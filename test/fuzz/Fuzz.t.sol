@@ -17,6 +17,7 @@ import { LendingPoolExtension } from "../utils/extensions/LendingPoolExtension.s
 import { LiquidatorExtension } from "../utils/extensions/LiquidatorExtension.sol";
 import { SequencerUptimeOracle } from "../../lib/accounts-v2/test/utils/mocks/oracles/SequencerUptimeOracle.sol";
 import { TrancheExtension } from "../utils/extensions/TrancheExtension.sol";
+import { TrancheWrapper } from "../../src/TrancheWrapper.sol";
 
 /**
  * @notice Common logic needed by all fuzz tests.
@@ -72,6 +73,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
         srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
         jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
+        trancheWrapper = new TrancheWrapper(asset, "SeniorWrapper", "SRW", address(srTranche), address(pool));
         vm.stopPrank();
 
         // Set the Guardian.
