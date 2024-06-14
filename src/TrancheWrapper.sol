@@ -131,14 +131,14 @@ contract TrancheWrapper is ERC4626 {
      * @return assets The corresponding amount of assets withdrawn.
      */
     function redeem(uint256 shares, address receiver, address owner_) public override returns (uint256 assets) {
-        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
-
         if (msg.sender != owner_) {
             // Saves gas for limited approvals.
             uint256 allowed = allowance[owner_][msg.sender];
 
             if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
+
+        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
 
         _burn(owner_, shares);
 
