@@ -15,4 +15,7 @@ interface ITranche {
      * @param auctionInProgress Flag indicating if there are auctions in progress.
      */
     function setAuctionInProgress(bool auctionInProgress) external;
+
+    function previewMintAndSync(uint256 shares) external returns (uint256 assets);
+
 }
