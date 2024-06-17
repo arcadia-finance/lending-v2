@@ -60,8 +60,12 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
         vm.assume(availableLiquidityOfTranche <= totalLiquidity);
 
-        stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
+        stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(address(trancheWrapper)).checked_write(
+            totalShares
+        );
+        stdstore.target(address(trancheWrapper)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
+        stdstore.target(address(trancheWrapper)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
         stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool)).checked_write(
@@ -91,8 +95,12 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
         vm.assume(availableLiquidityOfTranche <= totalLiquidity);
 
-        stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
+        stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(address(trancheWrapper)).checked_write(
+            totalShares
+        );
+        stdstore.target(address(trancheWrapper)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
+        stdstore.target(address(trancheWrapper)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
         stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool)).checked_write(
