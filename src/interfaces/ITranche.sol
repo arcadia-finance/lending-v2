@@ -4,6 +4,8 @@
  */
 pragma solidity 0.8.22;
 
+import { ILendingPool } from "./ILendingPool.sol";
+
 interface ITranche {
     /**
      * @notice Locks the tranche in case all liquidity of the tranche is written of due to bad debt.
@@ -18,4 +20,5 @@ interface ITranche {
 
     function previewMintAndSync(uint256 shares) external returns (uint256 assets);
 
+    function LENDING_POOL() external returns (ILendingPool lendingPool);
 }

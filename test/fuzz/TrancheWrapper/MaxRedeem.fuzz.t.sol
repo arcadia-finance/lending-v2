@@ -16,7 +16,6 @@ contract MaxRedeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
-    
 
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
@@ -112,5 +111,4 @@ contract MaxRedeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
         assertEq(trancheWrapper.maxRedeem(owner), availableShares);
     }
-    
-    }
+}

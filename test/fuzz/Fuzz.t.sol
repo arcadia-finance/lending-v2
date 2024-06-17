@@ -73,7 +73,7 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
         srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
         jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
-        trancheWrapper = new TrancheWrapper(asset, "SeniorWrapper", "SRW", address(srTranche), address(pool));
+        trancheWrapper = new TrancheWrapper(asset, "SeniorWrapper", "SRW", address(srTranche));
         vm.stopPrank();
 
         // Set the Guardian.

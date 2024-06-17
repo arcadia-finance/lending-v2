@@ -21,6 +21,7 @@ contract ConvertToShares_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_convertToShares_NonZeroSupply(
         uint80 vas,
         uint256 totalSupply,
@@ -60,5 +61,4 @@ contract ConvertToShares_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         assertEq(actualShares, assets);
         assertEq(actualShares, actualShares_);
     }
-
 }
