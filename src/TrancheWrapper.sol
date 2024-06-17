@@ -131,14 +131,14 @@ contract TrancheWrapper is ERC4626 {
      * @return assets The corresponding amount of assets withdrawn.
      */
     function redeem(uint256 shares, address receiver, address owner_) public override returns (uint256 assets) {
+        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
+
         if (msg.sender != owner_) {
             // Saves gas for limited approvals.
             uint256 allowed = allowance[owner_][msg.sender];
 
             if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
         }
-
-        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
 
         _burn(owner_, shares);
 
@@ -218,16 +218,19 @@ contract TrancheWrapper is ERC4626 {
      * @dev maxWithdraw() according to the Tranche implementation.
      */
     function maxWithdraw(address owner_) public view override returns (uint256 maxAssets) {
-        uint256 supply = totalSupply;
-        uint256 maxWrapperAssets = ERC4626(TRANCHE).maxWithdraw(address(this));
+        uint256 availableAssets = ERC4626(TRANCHE).maxWithdraw(address(this));
+        uint256 claimableAssets = convertToAssets(balanceOf[owner_]);
 
-        return supply == 0 ? balanceOf[owner_] : balanceOf[owner_].mulDivDown(maxWrapperAssets, supply);
+        maxAssets = availableAssets < claimableAssets ? availableAssets : claimableAssets;
     }
 
     /**
      * @dev maxRedeem() according to the Tranche implementation.
      */
     function maxRedeem(address owner_) public view override returns (uint256 maxShares) {
-        return balanceOf[owner_];
+        uint256 availableShares = ERC4626(TRANCHE).maxRedeem(address(this));
+        uint256 claimableShares = balanceOf[owner_];
+
+        maxShares = availableShares < claimableShares ? availableShares : claimableShares;
     }
 }
