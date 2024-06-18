@@ -4,17 +4,11 @@
  */
 pragma solidity 0.8.22;
 
+import { ArcadiaLendingFixture } from "../utils/fixtures/arcadia-lending/ArcadiaLendingFixture.f.sol";
 import { Base_Lending_Test } from "../Base.t.sol";
 import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 
-import { ERC20 } from "../../lib/solmate/src/tokens/ERC20.sol";
-
-import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
-import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { DebtTokenExtension } from "../utils/extensions/DebtTokenExtension.sol";
-import { LendingPoolExtension } from "../utils/extensions/LendingPoolExtension.sol";
-import { LiquidatorExtension } from "../utils/extensions/LiquidatorExtension.sol";
 import { SequencerUptimeOracle } from "../../lib/accounts-v2/test/utils/mocks/oracles/SequencerUptimeOracle.sol";
 import { TrancheExtension } from "../utils/extensions/TrancheExtension.sol";
 import { TrancheWrapper } from "../../src/TrancheWrapper.sol";
@@ -28,32 +22,21 @@ import { TrancheWrapper } from "../../src/TrancheWrapper.sol";
  * (eg. a uint256 from 0 to type(uint256).max), unless the parameter/variable is bound by an invariant.
  * If this case, said invariant must be explicitly tested in the invariant tests.
  */
-abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
-    /*//////////////////////////////////////////////////////////////////////////
-                                     CONSTANTS
-    //////////////////////////////////////////////////////////////////////////*/
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     VARIABLES
-    //////////////////////////////////////////////////////////////////////////*/
-
-    // ToDo : move to Types users
-    address internal treasury;
-
+abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test, ArcadiaLendingFixture {
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
+
+    Asset internal asset;
+    TrancheExtension internal jrTranche;
+    TrancheExtension internal srTranche;
 
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override(Base_Lending_Test, Fuzz_Test) {
-        // ToDo : move to Types users
         Base_Lending_Test.setUp();
-        treasury = address(34_567);
-
-        vm.label({ account: treasury, newLabel: "Treasury" });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -66,82 +49,33 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test {
         // Warp to have a timestamp of at least two days old.
         vm.warp(2 days);
 
-        // Deploy the base test contracts.
-        vm.startPrank(users.creatorAddress);
+        // Deploy the underlying asset.
+        vm.prank(users.tokenCreator);
         asset = new Asset("Asset", "ASSET", 18);
-        liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
-        pool = new LendingPoolExtension(users.riskManager, asset, treasury, address(factory), address(liquidator));
-        srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
-        jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
+        vm.label({ account: address(asset), newLabel: "Asset" });
+
+        // Deploy the base test contracts.
+        deployArcadiaLending(address(asset));
+        srTranche = createTranche("Senior", "SR", 50);
+        jrTranche = createTranche("Junior", "JR", 40);
         trancheWrapper = new TrancheWrapper(asset, "SeniorWrapper", "SRW", address(srTranche));
-        vm.stopPrank();
-
-        // Set the Guardian.
-        vm.prank(users.creatorAddress);
-        pool.changeGuardian(users.guardian);
-
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
-
-        // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
-        debt = DebtTokenExtension(address(pool));
-
-        // Label the base test contracts.
-        vm.label({ account: address(asset), newLabel: "Asset" });
-        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
-        vm.label({ account: address(pool), newLabel: "Lending Pool" });
-        vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });
-        vm.label({ account: address(jrTranche), newLabel: "Junior Tranche" });
     }
 
     function deployArcadiaLendingWithAccounts() internal {
+        // Deploy Arcadia Accounts contracts and assets.
         Fuzz_Test.setUp();
 
         // Deploy the base test contracts.
-        vm.startPrank(users.creatorAddress);
-        liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
-        pool = new LendingPoolExtension(
-            users.riskManager, ERC20(address(mockERC20.stable1)), treasury, address(factory), address(liquidator)
-        );
-        srTranche = new TrancheExtension(address(pool), 0, "Senior", "SR");
-        jrTranche = new TrancheExtension(address(pool), 0, "Junior", "JR");
-        vm.stopPrank();
+        deployArcadiaLending(address(mockERC20.stable1));
+        srTranche = createTranche("Senior", "SR", 50);
+        jrTranche = createTranche("Junior", "JR", 40);
 
-        // Set the Liquidation parameters.
-        vm.prank(users.creatorAddress);
-        pool.setLiquidationParameters(100, 500, 50, 0, 0);
-
-        // Set the Guardian.
-        vm.prank(users.creatorAddress);
-        pool.changeGuardian(users.guardian);
-
-        // Set the risk parameters.
-        vm.startPrank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
-            address(pool),
-            address(mockERC20.stable1),
-            0,
-            type(uint112).max,
-            uint16(AssetValuationLib.ONE_4),
-            uint16(AssetValuationLib.ONE_4)
-        );
-        registryExtension.setRiskParameters(address(pool), 0, 15 minutes, type(uint64).max);
-        vm.stopPrank();
-
-        // Set the Account recipient.
-        vm.prank(users.riskManager);
-        liquidator.setAccountRecipient(address(pool), users.riskManager);
+        // Initialise parameters.
+        initArcadiaLending();
 
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
-
-        // For clarity, some contracts with multiple functionalities (in different abstract contracts) have a different name in some tests.
-        debt = DebtTokenExtension(address(pool));
-
-        // Label the base test contracts.
-        vm.label({ account: address(liquidator), newLabel: "Liquidator" });
-        vm.label({ account: address(pool), newLabel: "Lending Pool" });
-        vm.label({ account: address(srTranche), newLabel: "Senior Tranche" });
-        vm.label({ account: address(jrTranche), newLabel: "Junior Tranche" });
     }
 }

@@ -31,12 +31,12 @@ contract GetOpenPosition_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
         // When: the Account fetches its open position
-        uint256 openPosition = pool.getOpenPosition(address(proxyAccount));
+        uint256 openPosition = pool.getOpenPosition(address(account));
 
         // Then: The open position should equal the amount loaned
         assertEq(amountLoaned, openPosition);

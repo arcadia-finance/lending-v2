@@ -19,7 +19,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setTreasuryWeights(0, 0);
         pool.setInterestWeightTranche(0, 0);
         pool.setInterestWeightTranche(1, 0);
@@ -40,7 +40,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTranche = uint16(bound(interestWeightTranche, 0, totalInterestWeight));
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setInterestWeightTranche(0, interestWeightTranche);
         uint16 interestWeightTreasury = totalInterestWeight - interestWeightTranche;
         pool.setTreasuryWeights(interestWeightTreasury, 0);
@@ -56,14 +56,14 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, realisedDebt);
+        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
-        pool.borrow(realisedDebt, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
@@ -90,7 +90,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTreasury = uint16(bound(interestWeightTreasury, 0, totalInterestWeight));
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.setTreasuryWeights(interestWeightTreasury, 0);
         uint16 interestWeightTranche = totalInterestWeight - interestWeightTreasury;
         pool.setInterestWeightTranche(0, interestWeightTranche);
@@ -108,14 +108,14 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);
         pool.setRealisedLiquidityOf(pool.getTreasury(), initialLiquidityTreasury);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, realisedDebt);
+        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
-        pool.borrow(realisedDebt, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 unrealisedDebt = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
@@ -127,8 +127,8 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 actualValue_ = pool.liquidityOfAndSync(pool.getTreasury());
 
         assertEq(actualValue, expectedValue);
-        // liquidityOf() the treasury will be slightly underestimated,
-        // since all rounding errors of all tranches will go to the treasury.
+        // liquidityOf() the users.treasury will be slightly underestimated,
+        // since all rounding errors of all tranches will go to the users.treasury.
         assertGe(actualValue_, actualValue);
         assertApproxEqAbs(actualValue_, actualValue, 10); //0.1% tolerance, rounding errors
     }
@@ -149,7 +149,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestWeightTranche(0, totalInterestWeight);
 
         // Given: collateralValue is smaller than maxExposure.
@@ -163,14 +163,14 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);
         pool.setRealisedLiquidityOf(user, initialLiquidityUser);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, realisedDebt);
+        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
-        pool.borrow(realisedDebt, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
 
         vm.warp(block.timestamp + deltaTimestamp);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestRate(interestRate);
 
         uint256 actualValue = pool.liquidityOf(user);

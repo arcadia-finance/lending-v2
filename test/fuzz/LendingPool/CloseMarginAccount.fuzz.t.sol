@@ -6,10 +6,12 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
+
 /**
- * @notice Fuzz tests for the function "openMarginAccount" of contract "LendingPool".
+ * @notice Fuzz tests for the function "closeMarginAccount" of contract "LendingPool".
  */
-contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
+contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -31,25 +33,25 @@ contract OpenMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes3);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
         // When: the margin account is tried to be closed
-        vm.expectRevert(OpenPositionNonZero.selector);
-        pool.closeMarginAccount(address(proxyAccount));
+        vm.expectRevert(LendingPoolErrors.OpenPositionNonZero.selector);
+        pool.closeMarginAccount(address(account));
     }
 
-    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account) public {
+    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public {
         // Given: account does not have an open position
-        vm.assume(account != address(0));
-        vm.assume(account != address(proxyAccount));
+        vm.assume(account_ != address(0));
+        vm.assume(account_ != address(account));
 
         // When: the margin account is tried to be closed
-        pool.closeMarginAccount(account);
+        pool.closeMarginAccount(account_);
 
         // Then: the margin account should be closed
-        assertEq(pool.getOpenPosition(account), 0);
+        assertEq(pool.getOpenPosition(account_), 0);
 
         // Note: Since the closeMarginAccount does not do state changes, we cannot check if the account is closed.
     }

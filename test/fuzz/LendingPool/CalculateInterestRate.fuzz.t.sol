@@ -32,7 +32,7 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // And: Repay is paused.
@@ -61,7 +61,7 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         utilisation = uint40(bound(utilisation, 0, utilisationThreshold_));
 
         // When: The InterestConfiguration is set
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // When: Interest is calculated.
@@ -80,13 +80,13 @@ contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 utilisationThreshold_
     ) public {
         // Given: utilisation is less than 10_000.
-        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4 - 1));
 
         // And: utilisation is above utilisationThreshold_.
         utilisation = uint40(bound(utilisation, utilisationThreshold_ + 1, ONE_4));
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // And: lowSlopeInterest is utilisationThreshold multiplied by lowSlope, highSlopeInterest is utilisation minus utilisationThreshold multiplied by highSlope

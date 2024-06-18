@@ -5,7 +5,11 @@
 pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+
+import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
+import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
@@ -27,19 +31,19 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_StartLiquidation_NonAccount(address nonAccount, address liquidationInitiator) public {
         // Given: unprivilegedAddress is not the liquidator
         vm.assume(nonAccount != address(liquidator));
-        vm.assume(nonAccount != address(proxyAccount));
+        vm.assume(nonAccount != address(account));
 
         // When: unprivilegedAddress settles a liquidation
         // Then: startLiquidation should revert with error LendingPool_OnlyLiquidator
         vm.startPrank(nonAccount);
-        vm.expectRevert(IsNotAnAccountWithDebt.selector);
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
     }
 
     function testFuzz_Revert_StartLiquidation_NotAnAccountWithDebt(address liquidationInitiator) public {
-        vm.startPrank(address(proxyAccount));
-        vm.expectRevert(IsNotAnAccountWithDebt.selector);
+        vm.startPrank(address(account));
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccountWithDebt.selector);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
     }
@@ -49,21 +53,21 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 emptyBytes4;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes4);
 
         // And: guardian soft start has passed
         vm.warp(35 days);
         vm.startPrank(users.guardian);
         pool.pause();
 
-        vm.expectRevert(FunctionIsPaused.selector);
-        vm.startPrank(address(proxyAccount));
+        vm.expectRevert(GuardianErrors.FunctionIsPaused.selector);
+        vm.startPrank(address(account));
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
     }
@@ -81,25 +85,25 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // When: Liquidator calls startLiquidation()
-        vm.startPrank(address(proxyAccount));
+        vm.startPrank(address(account));
         vm.expectEmit();
-        emit AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
+        emit LendingPool.AuctionStarted(address(account), address(pool), amountLoaned + 1);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
 
@@ -123,7 +127,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Returned amount should be equal to maxReward
         assertEq(
-            pool.getOpenPosition(address(proxyAccount)),
+            pool.getOpenPosition(address(account)),
             (amountLoanedStack + 1) + initiationReward + liquidationPenalty + terminationReward
         );
     }
@@ -141,23 +145,23 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         // And: No tranches are available
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         address[] memory tranches = pool.getTranches();
         for (uint256 i = tranches.length; i > 0; i--) {
             pool.popTranche(i - 1, tranches[i - 1]);
@@ -165,9 +169,9 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
 
         // When: Liquidator calls startLiquidation()
-        vm.startPrank(address(proxyAccount));
+        vm.startPrank(address(account));
         vm.expectEmit();
-        emit AuctionStarted(address(proxyAccount), address(pool), amountLoaned + 1);
+        emit LendingPool.AuctionStarted(address(account), address(pool), amountLoaned + 1);
         pool.startLiquidation(liquidationInitiator, 0);
         vm.stopPrank();
 
@@ -192,7 +196,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Returned amount should be equal to maxReward
         assertEq(
-            pool.getOpenPosition(address(proxyAccount)),
+            pool.getOpenPosition(address(account)),
             (amountLoanedStack + 1) + initiationReward + liquidationPenalty + terminationReward
         );
     }
@@ -211,16 +215,16 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
         vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountLoaned);
+        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
         vm.prank(users.accountOwner);
-        pool.borrow(amountLoaned, address(proxyAccount), users.accountOwner, emptyBytes4);
+        pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes4);
 
         // And: Liquidation parameters are set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value)
@@ -234,7 +238,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         jrTranche.setAuctionInProgress(true);
 
         // When: Liquidator calls startLiquidation()
-        vm.prank(address(proxyAccount));
+        vm.prank(address(account));
         pool.startLiquidation(liquidationInitiator, 0);
 
         // Then: auctionsInProgress should increase

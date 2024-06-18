@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
+
 /**
  * @notice Fuzz tests for the function "skim" of contract "LendingPool".
  */
@@ -26,7 +28,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setAuctionsInProgress(auctionsInProgress_);
 
         vm.startPrank(sender);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(LendingPoolErrors.AuctionOngoing.selector);
         pool.skim();
         vm.stopPrank();
     }
@@ -46,6 +48,6 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.skim();
 
         assertEq(pool.totalLiquidity(), balanceOf + totalDebt);
-        assertEq(pool.liquidityOf(treasury), balanceOf + totalDebt - totalLiquidity);
+        assertEq(pool.liquidityOf(users.treasury), balanceOf + totalDebt - totalLiquidity);
     }
 }

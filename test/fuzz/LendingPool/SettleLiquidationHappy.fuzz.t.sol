@@ -6,7 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { stdError } from "../../../lib/forge-std/src/StdError.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
+import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
@@ -36,8 +37,8 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // When: unprivilegedAddress settles a liquidation
         // Then: settleLiquidation should revert with "UNAUTHORIZED"
         vm.startPrank(unprivilegedAddress_);
-        vm.expectRevert(Unauthorized.selector);
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
+        pool.settleLiquidationHappyFlow(address(account), startDebt, 0, auctionTerminator);
         vm.stopPrank();
     }
 
@@ -73,7 +74,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: Liquidator settles a liquidation
         vm.prank(address(liquidator));
-        pool.settleLiquidationHappyFlow(address(proxyAccount), startDebt, 0, auctionTerminator, surplus);
+        pool.settleLiquidationHappyFlow(address(account), startDebt, 0, auctionTerminator, surplus);
 
         // round up
         uint256 totalLiquidationWeight = pool.getLiquidationWeightTreasury() + pool.getLiquidationWeightTranche();
@@ -101,8 +102,8 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(pool.liquidityOf(address(srTranche)), 0);
         // And: The jr tranche will get its part of the liquidationpenalty
         assertEq(pool.liquidityOf(address(jrTranche)), liquidity + liqPenaltyJunior);
-        // And: treasury will get its part of the liquidationpenalty
-        assertEq(pool.liquidityOf(address(treasury)), liqPenaltyTreasury);
+        // And: users.treasury will get its part of the liquidationpenalty
+        assertEq(pool.liquidityOf(address(users.treasury)), liqPenaltyTreasury);
         // And: The remaindershould be claimable by the original owner
         assertEq(pool.liquidityOf(users.accountOwner), surplus);
         // And: The total realised liquidity should be updated
