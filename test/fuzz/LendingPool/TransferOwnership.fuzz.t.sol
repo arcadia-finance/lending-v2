@@ -22,7 +22,7 @@ contract TransferOwnership_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_transferOwnership_nonOwner(address unprivilegedAddress, address newOwner) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -31,7 +31,7 @@ contract TransferOwnership_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_transferOwnership(address newOwner) public {
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         pool.transferOwnership(newOwner);
         vm.stopPrank();
 

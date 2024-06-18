@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
 
-import { LendingPoolGuardianExtension } from "../../../utils/Extensions.sol";
 import { BaseGuardian, GuardianErrors } from "../../../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
+import { LendingPoolGuardianExtension } from "../../../utils/extensions/LendingPoolGuardianExtension.sol";
 
 /**
  * @notice Common logic needed by all "LendingPoolGuardian" fuzz tests.
@@ -39,7 +39,7 @@ abstract contract LendingPoolGuardian_Fuzz_Test is Fuzz_Lending_Test {
         Fuzz_Lending_Test.setUp();
         deployArcadiaLendingWithoutAccounts();
 
-        vm.startPrank(users.creatorAddress);
+        vm.startPrank(users.owner);
         lendingPoolGuardian = new LendingPoolGuardianExtension();
         lendingPoolGuardian.changeGuardian(users.guardian);
         vm.stopPrank();

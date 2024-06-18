@@ -6,6 +6,8 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
+import { LendingPool } from "../../../src/LendingPool.sol";
+
 /**
  * @notice Fuzz tests for the function "updateInterestRate" of contract "LendingPool".
  */
@@ -55,7 +57,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.totalAssets(), realisedDebt + interest);
         assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
         // Pools have no liquidity -> all interests go to the Treasury.
-        assertEq(pool.liquidityOf(address(treasury)), interest);
+        assertEq(pool.liquidityOf(address(users.treasury)), interest);
         assertEq(pool.totalLiquidity(), realisedLiquidity + interest);
     }
 
@@ -76,7 +78,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         realisedDebt_ = uint128(bound(realisedDebt_, 0, totalRealisedLiquidity_));
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
@@ -95,7 +97,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -118,7 +122,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         totalRealisedLiquidity_ = uint128(bound(totalRealisedLiquidity_, 1, realisedDebt_ - 1));
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
@@ -131,7 +135,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 
@@ -152,7 +158,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(utilisationThreshold_ <= ONE_4);
 
         // When: The InterestConfiguration is set
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
         // And: The interestRateModule is set for a certain combination of realisedDebt_ and totalRealisedLiquidity_
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
@@ -160,7 +166,9 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate = baseRate_;
 
         vm.expectEmit();
-        emit PoolStateUpdated(uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate));
+        emit LendingPool.PoolStateUpdated(
+            uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
+        );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
         uint256 actualInterestRate = pool.interestRate();
 

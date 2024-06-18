@@ -7,6 +7,7 @@ pragma solidity 0.8.22;
 import { LendingPoolGuardian_Fuzz_Test, BaseGuardian, GuardianErrors } from "./_LendingPoolGuardian.fuzz.t.sol";
 
 import { GuardianErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { LendingPoolGuardian } from "../../../../src/guardians/LendingPoolGuardian.sol";
 
 /**
  * @notice Fuzz tests for the function "pause" of contract "LendingPoolGuardian".
@@ -70,7 +71,7 @@ contract Pause_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_Fuzz_Test {
         // When: the Guardian pauses.
         vm.startPrank(users.guardian);
         vm.expectEmit(true, true, true, true);
-        emit PauseFlagsUpdated(true, true, true, true, true);
+        emit LendingPoolGuardian.PauseFlagsUpdated(true, true, true, true, true);
         lendingPoolGuardian.pause();
         vm.stopPrank();
 

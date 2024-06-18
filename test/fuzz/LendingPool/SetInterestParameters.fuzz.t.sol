@@ -28,7 +28,7 @@ contract SetInterestParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 lowSlope_,
         uint8 utilisationThreshold_
     ) public {
-        vm.assume(unprivilegedAddress != users.creatorAddress);
+        vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);
         vm.expectRevert("UNAUTHORIZED");
@@ -42,7 +42,7 @@ contract SetInterestParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint8 lowSlope_,
         uint8 utilisationThreshold_
     ) public {
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         (uint256 baseRatePerYear, uint256 lowSlopePerYear, uint256 highSlopePerYear, uint256 utilisationThreshold) =

@@ -5,7 +5,7 @@
 pragma solidity 0.8.22;
 
 import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { AccountExtension } from "lib/accounts-v2/test/utils/Extensions.sol";
+import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
@@ -35,7 +35,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
         vm.startPrank(bidder);
         vm.expectRevert(stdError.indexOOBError);
-        liquidator.getBidPrice(address(proxyAccount), new uint256[](0));
+        liquidator.getBidPrice(address(account), new uint256[](0));
         vm.stopPrank();
     }
 
@@ -43,7 +43,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         uint256[] memory assetAmounts_ = new uint256[](2);
 
         // When : Calling getBidPrice on an Account that is not in liquidation
-        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(account), assetAmounts_);
 
         // Then : Values should be correct
         assertEq(inAuction, false);
@@ -56,13 +56,13 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given : No exposure limits
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool), address(mockERC20.token1), 0, type(uint112).max, 1e4, 1e4
         );
 
         // And : Account has debt
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountStable1);
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken1);
+        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
+        depositERC20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);
@@ -76,7 +76,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             assetAmounts_[0] = amountToken1;
             assetAmounts_[1] = amountStable1;
 
-            valueInNumeraire = registryExtension.getTotalValue(
+            valueInNumeraire = registry.getTotalValue(
                 address(mockERC20.stable1), address(pool), assetAddresses_, assetIds_, assetAmounts_
             );
 
@@ -88,49 +88,33 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             // Borrow half of account value
             bytes3 emptyBytes3;
             vm.prank(users.accountOwner);
-            pool.borrow(valueInNumeraire, address(proxyAccount), users.accountOwner, emptyBytes3);
+            pool.borrow(valueInNumeraire, address(account), users.accountOwner, emptyBytes3);
         }
 
         // And : Account is liquidatable (price of collateral asset token1 drops)
-        vm.startPrank(users.defaultTransmitter);
+        vm.startPrank(users.transmitter);
         mockOracles.token1ToUsd.transmit(int256(rates.token1ToUsd / 10));
 
         // And : Account gets liquidated and auction is initiated
         vm.startPrank(address(123));
-        liquidator.liquidateAccount(address(proxyAccount));
+        liquidator.liquidateAccount(address(account));
 
-        (,, uint32[] memory assetShares, uint256[] memory assetAmounts,) =
-            liquidator.getAuctionInformationPartTwo(address(proxyAccount));
-
-        emit log_named_uint("assetAmounts0FromAuction", assetAmounts[0]);
-        emit log_named_uint("assetAmounts1FromAuction", assetAmounts[1]);
-        emit log_named_uint("assetShare0FromAuction", assetShares[0]);
-        emit log_named_uint("assetShare1FromAuction", assetShares[1]);
-
-        (uint128 startDebt,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(proxyAccount));
-
-        emit log_named_uint("startDebt", startDebt);
-        emit log_named_uint("startTime", startTime);
+        (uint128 startDebt,,,) = liquidator.getAuctionInformationPartOne(address(account));
 
         // assetAmounts have to be in the right order (inverse order as when deposited)
         assetAmounts_[0] = amountStable1;
         assetAmounts_[1] = amountToken1;
 
         // When : Calling getBidPrice of full amount
-        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(account), assetAmounts_);
 
         // Then : Values should be correct
         assertEq(inAuction, true);
         assertGt(price, startDebt);
-        emit log_named_uint("price", price);
-
-        uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), assetAmounts_);
-        emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
-        (price,) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (price,) = liquidator.getBidPrice(address(account), assetAmounts_);
         assertLt(price, startDebt);
-        emit log_named_uint("price", price);
 
         vm.stopPrank();
     }
@@ -141,13 +125,13 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
 
         // Given : No exposure limits
         vm.prank(users.riskManager);
-        registryExtension.setRiskParametersOfPrimaryAsset(
+        registry.setRiskParametersOfPrimaryAsset(
             address(pool), address(mockERC20.token1), 0, type(uint112).max, 1e4, 1e4
         );
 
         // And : Account has debt
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, amountStable1);
-        depositTokenInAccount(proxyAccount, mockERC20.token1, amountToken1);
+        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
+        depositERC20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);
@@ -161,7 +145,7 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             assetAmounts_[0] = amountToken1;
             assetAmounts_[1] = amountStable1;
 
-            valueInNumeraire = registryExtension.getTotalValue(
+            valueInNumeraire = registry.getTotalValue(
                 address(mockERC20.stable1), address(pool), assetAddresses_, assetIds_, assetAmounts_
             );
 
@@ -173,29 +157,18 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
             // Borrow half of account value
             bytes3 emptyBytes3;
             vm.prank(users.accountOwner);
-            pool.borrow(valueInNumeraire, address(proxyAccount), users.accountOwner, emptyBytes3);
+            pool.borrow(valueInNumeraire, address(account), users.accountOwner, emptyBytes3);
         }
 
         // And : Account is liquidatable (price of collateral asset token1 drops)
-        vm.startPrank(users.defaultTransmitter);
+        vm.startPrank(users.transmitter);
         mockOracles.token1ToUsd.transmit(int256(rates.token1ToUsd / 10));
 
         // And : Account gets liquidated and auction is initiated
         vm.startPrank(address(123));
-        liquidator.liquidateAccount(address(proxyAccount));
+        liquidator.liquidateAccount(address(account));
 
-        (,, uint32[] memory assetShares, uint256[] memory assetAmounts,) =
-            liquidator.getAuctionInformationPartTwo(address(proxyAccount));
-
-        emit log_named_uint("assetAmounts0FromAuction", assetAmounts[0]);
-        emit log_named_uint("assetAmounts1FromAuction", assetAmounts[1]);
-        emit log_named_uint("assetShare0FromAuction", assetShares[0]);
-        emit log_named_uint("assetShare1FromAuction", assetShares[1]);
-
-        (uint128 startDebt,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(proxyAccount));
-
-        emit log_named_uint("startDebt", startDebt);
-        emit log_named_uint("startTime", startTime);
+        (uint128 startDebt,,,) = liquidator.getAuctionInformationPartOne(address(account));
 
         // assetAmounts have to be in the right order (inverse order as when deposited)
         // We want to liquidate half of the assets in the Account
@@ -203,20 +176,15 @@ contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         assetAmounts_[1] = amountToken1 / 2;
 
         // When : Calling getBidPrice of half the initial amounts deposited in the Accounts
-        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (uint256 price, bool inAuction) = liquidator.getBidPrice(address(account), assetAmounts_);
 
         // Then : Values should be correct
         assertEq(inAuction, true);
         assertGt(price, startDebt / 2);
-        emit log_named_uint("price", price);
-
-        uint256 totalShare = liquidator.calculateTotalShare(address(proxyAccount), assetAmounts_);
-        emit log_named_uint("totalShare", totalShare);
 
         vm.warp(block.timestamp + 2 hours);
-        (price,) = liquidator.getBidPrice(address(proxyAccount), assetAmounts_);
+        (price,) = liquidator.getBidPrice(address(account), assetAmounts_);
         assertLt(price, startDebt / 2);
-        emit log_named_uint("price", price);
 
         vm.stopPrank();
     }

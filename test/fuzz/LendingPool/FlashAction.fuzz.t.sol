@@ -6,11 +6,12 @@ pragma solidity 0.8.22;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
-
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
 import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
+import { LendingPool } from "../../../src/LendingPool.sol";
+import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "flashAction" of contract "LendingPool".
@@ -32,7 +33,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function setUp() public override {
         LendingPool_Fuzz_Test.setUp();
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         actionHandler = new ActionMultiCall();
 
         ActionData memory emptyActionData;
@@ -53,8 +54,8 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address actionHandler_,
         bytes calldata actionData
     ) public {
-        vm.assume(nonAccount != address(proxyAccount));
-        vm.expectRevert(IsNotAnAccount.selector);
+        vm.assume(nonAccount != address(account));
+        vm.expectRevert(LendingPoolErrors.IsNotAnAccount.selector);
         pool.flashAction(amount, nonAccount, actionHandler_, actionData, emptyBytes3);
     }
 
@@ -67,8 +68,8 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(beneficiary != users.accountOwner);
 
         vm.startPrank(beneficiary);
-        vm.expectRevert(Unauthorized.selector);
-        pool.flashAction(amount, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
+        pool.flashAction(amount, address(account), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -83,11 +84,11 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountAllowed < type(uint256).max);
 
         vm.prank(users.accountOwner);
-        pool.approveBeneficiary(beneficiary, amountAllowed, address(proxyAccount));
+        pool.approveBeneficiary(beneficiary, amountAllowed, address(account));
 
         vm.startPrank(beneficiary);
-        vm.expectRevert(Unauthorized.selector);
-        pool.flashAction(amountLoaned, address(proxyAccount), actionHandler_, actionData, emptyBytes3);
+        vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
+        pool.flashAction(amountLoaned, address(account), actionHandler_, actionData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -105,11 +106,11 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
     }
 
@@ -125,7 +126,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -134,11 +135,11 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         vm.prank(users.accountOwner);
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
-        assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
+        assertEq(debt.balanceOf(address(account)), amountLoaned);
     }
 
     function testFuzz_Success_flashAction_ByMaxAuthorisedAddress(
@@ -155,21 +156,21 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 0);
         vm.assume(beneficiary != users.accountOwner);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         vm.prank(users.accountOwner);
-        pool.approveBeneficiary(beneficiary, type(uint256).max, address(proxyAccount));
+        pool.approveBeneficiary(beneficiary, type(uint256).max, address(account));
 
         vm.prank(beneficiary);
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
-        assertEq(debt.balanceOf(address(proxyAccount)), amountLoaned);
-        assertEq(pool.creditAllowance(address(proxyAccount), users.accountOwner, beneficiary), type(uint256).max);
+        assertEq(debt.balanceOf(address(account)), amountLoaned);
+        assertEq(pool.creditAllowance(address(account), users.accountOwner, beneficiary), type(uint256).max);
     }
 
     function testFuzz_Success_flashAction_originationFeeAvailable(
@@ -186,10 +187,10 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -197,20 +198,20 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        uint256 treasuryBalancePre = pool.liquidityOf(treasury);
+        uint256 treasuryBalancePre = pool.liquidityOf(users.treasury);
         uint256 totalRealisedLiquidityPre = pool.totalLiquidity();
 
         vm.startPrank(users.accountOwner);
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, emptyBytes3);
+        pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, emptyBytes3);
         vm.stopPrank();
 
-        uint256 treasuryBalancePost = pool.liquidityOf(treasury);
+        uint256 treasuryBalancePost = pool.liquidityOf(users.treasury);
         uint256 totalRealisedLiquidityPost = pool.totalLiquidity();
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(address(actionHandler)), amountLoaned);
         assertEq(
-            debt.balanceOf(address(proxyAccount)),
+            debt.balanceOf(address(account)),
             uint256(amountLoaned) + (uint256(amountLoaned).mulDivUp(originationFee, 10_000))
         );
         assertEq(treasuryBalancePre + (uint256(amountLoaned).mulDivUp(originationFee, 10_000)), treasuryBalancePost);
@@ -234,10 +235,10 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        vm.prank(users.creatorAddress);
+        vm.prank(users.owner);
         pool.setOriginationFee(0);
 
-        depositTokenInAccount(proxyAccount, mockERC20.stable1, collateralValue);
+        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -247,8 +248,8 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.startPrank(users.accountOwner);
         vm.expectEmit(true, true, true, true);
-        emit Borrow(address(proxyAccount), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
-        pool.flashAction(amountLoaned, address(proxyAccount), address(actionHandler), callData, ref);
+        emit LendingPool.Borrow(address(account), users.accountOwner, address(actionHandler), amountLoaned, 0, ref);
+        pool.flashAction(amountLoaned, address(account), address(actionHandler), callData, ref);
         vm.stopPrank();
     }
 }
