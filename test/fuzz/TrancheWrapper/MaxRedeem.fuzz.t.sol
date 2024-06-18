@@ -40,8 +40,8 @@ contract MaxRedeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_maxRedeem_Paused(address owner) public {
         vm.warp(35 days);
-        vm.startPrank(users.creatorAddress);
-        pool.changeGuardian(users.creatorAddress);
+        vm.startPrank(users.owner);
+        pool.changeGuardian(users.owner);
         pool.pause();
         vm.stopPrank();
 

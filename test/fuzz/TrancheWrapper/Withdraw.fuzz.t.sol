@@ -1,8 +1,8 @@
 pragma solidity 0.8.22;
 
-import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
-
 import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
+import { TrancheErrors } from "../../../src/libraries/Errors.sol";
+import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "Tranche Wrapper".
@@ -25,7 +25,7 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Locked.selector);
+        vm.expectRevert(TrancheErrors.Locked.selector);
         trancheWrapper.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }
@@ -35,7 +35,7 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         tranche.setAuctionInProgress(true);
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(AuctionOngoing.selector);
+        vm.expectRevert(TrancheErrors.AuctionOngoing.selector);
         trancheWrapper.withdraw(assets, receiver, owner);
         vm.stopPrank();
     }

@@ -4,9 +4,9 @@
  */
 pragma solidity 0.8.22;
 
-import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
-
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
+import { TrancheErrors } from "../../../src/libraries/Errors.sol";
+import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 
 /**
  * @notice Fuzz tests for the function "totalAssets" of contract "Tranche".
@@ -29,7 +29,7 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         tranche.lock();
 
         vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(Locked.selector);
+        vm.expectRevert(TrancheErrors.Locked.selector);
         trancheWrapper.mint(shares, receiver);
         vm.stopPrank();
     }
