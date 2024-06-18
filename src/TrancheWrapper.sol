@@ -4,12 +4,12 @@
  */
 pragma solidity 0.8.22;
 
-import { ERC4626 } from "../lib/solmate/src/mixins/ERC4626.sol";
-import { ERC20 } from "../lib/solmate/src/tokens/ERC20.sol";
-import { FixedPointMathLib } from "../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { ERC4626 } from "../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
+import { ERC20 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
+import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { SafeTransferLib } from "../lib/solmate/src/utils/SafeTransferLib.sol";
+import { SafeTransferLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
 
 /**
  * @title Tranche Wrapper

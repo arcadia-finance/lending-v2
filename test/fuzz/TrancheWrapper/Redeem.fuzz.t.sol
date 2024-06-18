@@ -2,7 +2,7 @@ pragma solidity 0.8.22;
 
 import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 
-import { stdError } from "../../../lib/forge-std/src/StdError.sol";
+import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "Tranche Wrapper".
