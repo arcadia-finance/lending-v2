@@ -20,26 +20,6 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_withdraw_Locked(uint128 assets, address receiver, address owner) public {
-        vm.prank(address(pool));
-        tranche.lock();
-
-        vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(TrancheErrors.Locked.selector);
-        trancheWrapper.withdraw(assets, receiver, owner);
-        vm.stopPrank();
-    }
-
-    function testFuzz_Revert_withdraw_AuctionInProgress(uint128 assets, address receiver, address owner) public {
-        vm.prank(address(pool));
-        tranche.setAuctionInProgress(true);
-
-        vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(TrancheErrors.AuctionOngoing.selector);
-        trancheWrapper.withdraw(assets, receiver, owner);
-        vm.stopPrank();
-    }
-
     function testFuzz_Revert_withdraw_Unauthorised(
         uint128 assets,
         address receiver,
@@ -96,6 +76,52 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
         vm.startPrank(owner);
         vm.expectRevert(stdError.arithmeticError);
+        trancheWrapper.withdraw(assetsWithdrawn, receiver, owner);
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_withdraw_Locked(
+        uint128 assetsDeposited,
+        uint128 assetsWithdrawn,
+        address owner,
+        address receiver
+    ) public {
+        vm.assume(assetsDeposited > 0);
+        vm.assume(assetsDeposited >= assetsWithdrawn);
+        vm.assume(receiver != users.liquidityProvider);
+        vm.assume(receiver != address(pool));
+
+        vm.prank(users.liquidityProvider);
+        trancheWrapper.deposit(assetsDeposited, owner);
+
+        vm.prank(address(pool));
+        tranche.lock();
+
+        vm.startPrank(owner);
+        vm.expectRevert(TrancheErrors.Locked.selector);
+        trancheWrapper.withdraw(assetsWithdrawn, receiver, owner);
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_withdraw_AuctionInProgress(
+        uint128 assetsDeposited,
+        uint128 assetsWithdrawn,
+        address owner,
+        address receiver
+    ) public {
+        vm.assume(assetsDeposited > 0);
+        vm.assume(assetsDeposited >= assetsWithdrawn);
+        vm.assume(receiver != users.liquidityProvider);
+        vm.assume(receiver != address(pool));
+
+        vm.prank(users.liquidityProvider);
+        trancheWrapper.deposit(assetsDeposited, owner);
+
+        vm.prank(address(pool));
+        tranche.setAuctionInProgress(true);
+
+        vm.startPrank(owner);
+        vm.expectRevert(TrancheErrors.AuctionOngoing.selector);
         trancheWrapper.withdraw(assetsWithdrawn, receiver, owner);
         vm.stopPrank();
     }

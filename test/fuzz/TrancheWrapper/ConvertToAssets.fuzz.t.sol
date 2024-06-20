@@ -22,6 +22,7 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
+
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
@@ -38,11 +39,11 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         if (uint256(totalAssets) + vas > 0) shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
 
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, totalSupply, totalAssets));
+        setTrancheState(vas, totalSupply, totalAssets);
 
         // When: convertToAssets is called with shares.
-        uint256 actualAssets = tranche.convertToAssets(shares);
-        uint256 actualAssets_ = tranche.convertToAssetsAndSync(shares);
+        uint256 actualAssets = trancheWrapper.convertToAssets(shares);
+        uint256 actualAssets_ = tranche.convertToAssets(shares);
 
         // Then: correct number of shares is returned.
         uint256 expectedAssets = shares * (uint256(totalAssets) + vas) / (totalSupply + vas);
@@ -52,11 +53,11 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_convertToAssets_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 shares) public {
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, 0, totalAssets));
+        setTrancheState(vas, 0, totalAssets);
 
         // When: convertToAssets is called with shares.
-        uint256 actualAssets = tranche.convertToAssets(shares);
-        uint256 actualAssets_ = tranche.convertToAssetsAndSync(shares);
+        uint256 actualAssets = trancheWrapper.convertToAssets(shares);
+        uint256 actualAssets_ = tranche.convertToAssets(shares);
 
         // Then: correct number of shares is returned.
         assertEq(actualAssets, shares);

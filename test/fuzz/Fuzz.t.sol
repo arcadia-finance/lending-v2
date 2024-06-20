@@ -11,7 +11,6 @@ import { Fuzz_Test } from "../../lib/accounts-v2/test/fuzz/Fuzz.t.sol";
 import { Asset } from "../utils/mocks/Asset.sol";
 import { SequencerUptimeOracle } from "../../lib/accounts-v2/test/utils/mocks/oracles/SequencerUptimeOracle.sol";
 import { TrancheExtension } from "../utils/extensions/TrancheExtension.sol";
-import { TrancheWrapper } from "../../src/TrancheWrapper.sol";
 
 /**
  * @notice Common logic needed by all fuzz tests.
@@ -58,7 +57,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test, ArcadiaLend
         deployArcadiaLending(address(asset));
         srTranche = createTranche("Senior", "SR", 50);
         jrTranche = createTranche("Junior", "JR", 40);
-        trancheWrapper = new TrancheWrapper(asset, "SeniorWrapper", "SRW", address(srTranche));
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
     }

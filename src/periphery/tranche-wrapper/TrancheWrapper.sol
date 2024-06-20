@@ -4,12 +4,11 @@
  */
 pragma solidity 0.8.22;
 
-import { ERC4626 } from "../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
-import { ERC20 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
-import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
+import { ERC20 } from "../../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
+import { ERC4626 } from "../../../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
+import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
-import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { SafeTransferLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
+import { SafeTransferLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
 
 /**
  * @title Tranche Wrapper
@@ -38,16 +37,17 @@ contract TrancheWrapper is ERC4626 {
 
     /**
      * @notice The constructor for a TrancheWrapper.
-     * @param asset_ The underlying ERC20 asset.
-     * @param name_ The name of the ERC4626 token.
-     * @param symbol_ The symbol of the ERC4626 token.
-     * @param TRANCHE_ The Tranche contract address.
+     * @param tranche The contract address of the Tranche.
      */
-    constructor(ERC20 asset_, string memory name_, string memory symbol_, address TRANCHE_)
-        ERC4626(asset_, name_, symbol_)
+    constructor(address tranche)
+        ERC4626(
+            ERC4626(tranche).asset(),
+            string(abi.encodePacked("Wrapped ", ERC4626(tranche).asset().name())),
+            string(abi.encodePacked("w", ERC4626(tranche).asset().symbol()))
+        )
     {
-        TRANCHE = TRANCHE_;
-        LENDING_POOL = address(ITranche(TRANCHE_).LENDING_POOL());
+        TRANCHE = tranche;
+        LENDING_POOL = ITranche(tranche).LENDING_POOL();
     }
 
     /* //////////////////////////////////////////////////////////////
@@ -55,13 +55,10 @@ contract TrancheWrapper is ERC4626 {
     ////////////////////////////////////////////////////////////// */
 
     /**
-     * @notice Compliant with the standard ERC-4626 deposit implementation.
+     * @notice Deposits assets in the underlying Tranche.
      * @param assets The amount of assets of the underlying ERC20 token being deposited.
      * @param receiver The address that receives the minted shares.
      * @return shares The amount of shares minted.
-     * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
-     * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         asset.safeTransferFrom(msg.sender, address(this), assets);
@@ -77,13 +74,10 @@ contract TrancheWrapper is ERC4626 {
     }
 
     /**
-     * @notice Compliant with the standard ERC-4626 mint implementation.
+     * @notice Mints shares of the underlying Tranche.
      * @param shares The amount of shares minted.
      * @param receiver The address that receives the minted shares.
      * @return assets The amount of assets of the underlying ERC20 token being deposited.
-     * @dev This contract does not directly transfer the underlying assets from the sender to the receiver.
-     * Instead it calls the deposit of the Lending Pool which calls the transferFrom of the underlying assets.
-     * Hence the sender should not give this contract an allowance to transfer the underlying asset but the Lending Pool instead.
      */
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         assets = ITranche(TRANCHE).previewMintAndSync(shares);
@@ -92,7 +86,7 @@ contract TrancheWrapper is ERC4626 {
 
         asset.safeApprove(LENDING_POOL, assets);
 
-        ERC4626(TRANCHE).deposit(assets, address(this));
+        ERC4626(TRANCHE).mint(shares, address(this));
 
         _mint(receiver, shares);
 
@@ -100,14 +94,14 @@ contract TrancheWrapper is ERC4626 {
     }
 
     /**
-     * @notice Compliant with the standard ERC-4626 withdraw implementation.
+     * @notice Withdraws assets from the underlying Tranche.
      * @param assets The amount of assets of the underlying ERC20 token being withdrawn.
      * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the assets being withdrawn.
      * @return shares The corresponding amount of shares redeemed.
      */
     function withdraw(uint256 assets, address receiver, address owner_) public override returns (uint256 shares) {
-        shares = ERC4626(TRANCHE).withdraw(assets, address(this), address(this));
+        shares = ITranche(TRANCHE).previewWithdrawAndSync(assets);
 
         if (msg.sender != owner_) {
             // Saves gas for limited approvals.
@@ -117,6 +111,8 @@ contract TrancheWrapper is ERC4626 {
         }
 
         _burn(owner_, shares);
+
+        ERC4626(TRANCHE).withdraw(assets, address(this), address(this));
 
         asset.safeTransfer(receiver, assets);
 
@@ -124,15 +120,13 @@ contract TrancheWrapper is ERC4626 {
     }
 
     /**
-     * @notice Compliant with the standard ERC-4626 redeem implementation.
+     * @notice Redeems shares of the underlying Tranche.
      * @param shares The amount of shares being redeemed.
      * @param receiver The address of the receiver of the underlying ERC20 tokens.
      * @param owner_ The address of the owner of the shares being redeemed.
      * @return assets The corresponding amount of assets withdrawn.
      */
     function redeem(uint256 shares, address receiver, address owner_) public override returns (uint256 assets) {
-        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
-
         if (msg.sender != owner_) {
             // Saves gas for limited approvals.
             uint256 allowed = allowance[owner_][msg.sender];
@@ -141,6 +135,8 @@ contract TrancheWrapper is ERC4626 {
         }
 
         _burn(owner_, shares);
+
+        assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
 
         asset.safeTransfer(receiver, assets);
 

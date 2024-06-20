@@ -21,6 +21,10 @@ contract MaxDeposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         TrancheWrapper_Fuzz_Test.setUp();
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              TESTS
+    //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_maxDeposit_Locked(address receiver) public {
         vm.prank(address(pool));
         tranche.lock();

@@ -18,7 +18,5 @@ interface ITranche {
      */
     function setAuctionInProgress(bool auctionInProgress) external;
 
-    function previewMintAndSync(uint256 shares) external returns (uint256 assets);
-
     function LENDING_POOL() external returns (ILendingPool lendingPool);
 }

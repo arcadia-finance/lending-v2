@@ -24,12 +24,11 @@ contract TotalAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_totalAssets(uint128 assets) public {
         pool.setRealisedLiquidityOf(address(tranche), assets);
 
         assertEq(trancheWrapper.totalAssets(), assets);
-
-        //this is redundant, right? totalAssetsAndSync is not a function of the tranche wrapper
-        assertEq(tranche.totalAssetsAndSync(), assets);
+        assertEq(trancheWrapper.totalAssets(), tranche.totalAssets());
     }
 }

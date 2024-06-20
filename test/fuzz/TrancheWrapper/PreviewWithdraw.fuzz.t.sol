@@ -22,6 +22,10 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         TrancheWrapper_Fuzz_Test.setUp();
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              TESTS
+    //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_previewWithdraw_NonZeroSupply(
         uint80 vas,
         uint256 totalSupply,
@@ -37,11 +41,11 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(uint256(totalAssets) + vas > 0);
 
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, totalSupply, totalAssets));
+        setTrancheState(vas, totalSupply, totalAssets);
 
         // When: previewWithdraw is called with assets.
-        uint256 actualShares = tranche.previewWithdraw(assets);
-        uint256 actualShares_ = tranche.previewWithdrawAndSync(assets);
+        uint256 actualShares = trancheWrapper.previewWithdraw(assets);
+        uint256 actualShares_ = tranche.previewWithdraw(assets);
 
         // Then: correct number of shares is returned.
         uint256 expectedShares = assets * (totalSupply + vas) / (uint256(totalAssets) + vas);
@@ -53,11 +57,11 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_previewWithdraw_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 assets) public {
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, 0, totalAssets));
+        setTrancheState(vas, 0, totalAssets);
 
         // When: previewWithdraw is called with assets.
-        uint256 actualShares = tranche.previewWithdraw(assets);
-        uint256 actualShares_ = tranche.previewWithdrawAndSync(assets);
+        uint256 actualShares = trancheWrapper.previewWithdraw(assets);
+        uint256 actualShares_ = tranche.previewWithdraw(assets);
 
         // Then: correct number of shares is returned.
         assertEq(actualShares, assets);

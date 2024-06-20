@@ -24,6 +24,7 @@ contract MaxMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_maxMint_AuctionInProgress(address receiver) public {
         vm.prank(address(pool));
         tranche.setAuctionInProgress(true);

@@ -20,6 +20,7 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
+
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/

@@ -16,15 +16,9 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         TrancheWrapper_Fuzz_Test.setUp();
     }
 
-    function testFuzz_Revert_redeem_Locked(uint128 shares, address receiver, address owner) public {
-        vm.prank(address(pool));
-        tranche.lock();
-
-        vm.startPrank(users.liquidityProvider);
-        vm.expectRevert(TrancheErrors.Locked.selector);
-        trancheWrapper.redeem(shares, receiver, owner);
-        vm.stopPrank();
-    }
+    /*//////////////////////////////////////////////////////////////
+                              TESTS
+    //////////////////////////////////////////////////////////////*/
 
     function testFuzz_Revert_redeem_ZeroAssets(address receiver, address owner) public {
         vm.startPrank(users.liquidityProvider);
@@ -88,6 +82,30 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
         vm.startPrank(owner);
         vm.expectRevert(stdError.arithmeticError);
+        trancheWrapper.redeem(sharesRedeemed, receiver, owner);
+        vm.stopPrank();
+    }
+
+    function testFuzz_Revert_redeem_Locked(
+        uint128 sharesMinted,
+        uint128 sharesRedeemed,
+        address owner,
+        address receiver
+    ) public {
+        vm.assume(sharesMinted > 0);
+        vm.assume(sharesRedeemed > 0);
+        vm.assume(sharesMinted >= sharesRedeemed);
+        vm.assume(receiver != users.liquidityProvider);
+        vm.assume(receiver != address(pool));
+
+        vm.prank(users.liquidityProvider);
+        trancheWrapper.mint(sharesMinted, owner);
+
+        vm.prank(address(pool));
+        tranche.lock();
+
+        vm.startPrank(owner);
+        vm.expectRevert(TrancheErrors.Locked.selector);
         trancheWrapper.redeem(sharesRedeemed, receiver, owner);
         vm.stopPrank();
     }

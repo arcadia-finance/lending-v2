@@ -18,6 +18,7 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
+
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
@@ -34,11 +35,11 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         if (uint256(totalAssets) + vas > 0) shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
 
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, totalSupply, totalAssets));
+        setTrancheState(vas, totalSupply, totalAssets);
 
         // When: previewMint is called with shares.
-        uint256 actualAssets = tranche.previewMint(shares);
-        uint256 actualAssets_ = tranche.previewMintAndSync(shares);
+        uint256 actualAssets = trancheWrapper.previewMint(shares);
+        uint256 actualAssets_ = tranche.previewMint(shares);
 
         // Then: correct number of shares is returned.
         uint256 expectedAssets = shares * (uint256(totalAssets) + vas) / (totalSupply + vas);
@@ -50,11 +51,11 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_previewMint_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 shares) public {
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, 0, totalAssets));
+        setTrancheState(vas, 0, totalAssets);
 
         // When: previewMint is called with shares.
-        uint256 actualAssets = tranche.previewMint(shares);
-        uint256 actualAssets_ = tranche.previewMintAndSync(shares);
+        uint256 actualAssets = trancheWrapper.previewMint(shares);
+        uint256 actualAssets_ = tranche.previewMint(shares);
 
         // Then: correct number of shares is returned.
         assertEq(actualAssets, shares);

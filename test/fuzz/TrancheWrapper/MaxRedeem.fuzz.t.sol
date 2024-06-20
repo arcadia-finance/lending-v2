@@ -24,6 +24,7 @@ contract MaxRedeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_maxRedeem_Locked(address owner) public {
         vm.prank(address(pool));
         tranche.lock();

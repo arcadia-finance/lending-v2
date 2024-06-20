@@ -18,6 +18,7 @@ contract ConvertToShares_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     function setUp() public override {
         TrancheWrapper_Fuzz_Test.setUp();
     }
+
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
@@ -37,11 +38,11 @@ contract ConvertToShares_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(uint256(totalAssets) + vas > 0);
 
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, totalSupply, totalAssets));
+        setTrancheState(vas, totalSupply, totalAssets);
 
         // When: convertToShares is called with assets.
-        uint256 actualShares = tranche.convertToShares(assets);
-        uint256 actualShares_ = tranche.convertToSharesAndSync(assets);
+        uint256 actualShares = trancheWrapper.convertToShares(assets);
+        uint256 actualShares_ = tranche.convertToShares(assets);
 
         // Then: correct number of shares is returned.
         uint256 expectedShares = assets * (totalSupply + vas) / (uint256(totalAssets) + vas);
@@ -51,11 +52,11 @@ contract ConvertToShares_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_convertToShares_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 assets) public {
         // And: Tranche state is set.
-        tranche = TrancheExtension(setTrancheState(vas, 0, totalAssets));
+        setTrancheState(vas, 0, totalAssets);
 
         // When: convertToShares is called with assets.
-        uint256 actualShares = tranche.convertToShares(assets);
-        uint256 actualShares_ = tranche.convertToSharesAndSync(assets);
+        uint256 actualShares = trancheWrapper.convertToShares(assets);
+        uint256 actualShares_ = tranche.convertToShares(assets);
 
         // Then: correct number of shares is returned.
         assertEq(actualShares, assets);

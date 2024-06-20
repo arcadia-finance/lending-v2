@@ -24,6 +24,7 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
+
     function testFuzz_Success_maxWithdraw_Locked(address owner) public {
         vm.prank(address(pool));
         tranche.lock();
