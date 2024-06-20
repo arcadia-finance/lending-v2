@@ -85,12 +85,15 @@ contract Deposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint256 actualShares = trancheWrapper.deposit(depositedAssets, receiver);
 
         assertEq(actualShares, expectedShares);
-        assertEq(trancheWrapper.totalAssets(), initialAssets + depositedAssets);
         assertEq(tranche.totalAssets(), initialAssets + depositedAssets);
         assertEq(trancheWrapper.totalSupply(), wrapperShares + actualShares);
         assertEq(tranche.totalSupply(), initialShares + actualShares);
         assertEq(tranche.balanceOf(address(trancheWrapper)), wrapperShares + actualShares);
         assertEq(trancheWrapper.balanceOf(receiver), actualShares);
+
+        if (initialAssets + depositedAssets <= type(uint256).max / (wrapperShares + actualShares)) {
+            assertEq(trancheWrapper.totalAssets(), tranche.convertToAssets(wrapperShares + actualShares));
+        }
     }
 
     function testFuzz_Success_deposit_sync(uint128 assets, address receiver) public {

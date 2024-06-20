@@ -12,11 +12,10 @@ import { SafeTransferLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/
 
 /**
  * @title Tranche Wrapper
- * @notice This contract wraps a Tranche to make it ERC4626 compliant.
- * @dev This contract acts as a wrapper for interactions with the Tranche, ensuring ERC4626-compliance.
- * - Shares minted via the wrapper have a 1:1 ratio to shares minted on the Tranche.
- * - All view functions can be called directly on the Tranche view functions.
- * - Deposit and Mint functions approve the LendingPool, not the Tranche.
+ * @notice This contract wraps an Arcadia Tranche to make it ERC4626 compliant.
+ * @dev Shares minted via the wrapper have a 1:1 ratio to shares minted on the Tranche.
+ * All view functions can be called directly on the Tranche view functions.
+ * @dev Deposit and Mint functions approve the LendingPool, not the Tranche.
  */
 contract TrancheWrapper is ERC4626 {
     using FixedPointMathLib for uint256;
@@ -26,9 +25,9 @@ contract TrancheWrapper is ERC4626 {
                                 CONSTANTS
     ////////////////////////////////////////////////////////////// */
 
-    // Address of the Lending Pool.
+    // The contract address of the underlying Arcadia Lending Pool.
     address public immutable LENDING_POOL;
-    // Address of the underlying Tranche.
+    // The contract address of the underlying Arcadia Tranche.
     address public immutable TRANCHE;
 
     /* //////////////////////////////////////////////////////////////
@@ -142,7 +141,7 @@ contract TrancheWrapper is ERC4626 {
      * @return assets The total amount of underlying assets.
      */
     function totalAssets() public view override returns (uint256 assets) {
-        assets = ERC4626(TRANCHE).totalAssets();
+        assets = ERC4626(TRANCHE).convertToAssets(totalSupply);
     }
 
     /**

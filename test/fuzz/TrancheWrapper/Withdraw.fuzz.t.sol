@@ -182,7 +182,7 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint256 actualShares = trancheWrapper.withdraw(withdrawnAssets, receiver, owner);
 
         assertEq(actualShares, expectedShares);
-        assertEq(trancheWrapper.totalAssets(), initialAssets - withdrawnAssets);
+        assertEq(trancheWrapper.totalAssets(), tranche.convertToAssets(wrapperShares - actualShares));
         assertEq(tranche.totalAssets(), initialAssets - withdrawnAssets);
         assertEq(trancheWrapper.totalSupply(), wrapperShares - actualShares);
         assertEq(tranche.totalSupply(), initialShares - actualShares);

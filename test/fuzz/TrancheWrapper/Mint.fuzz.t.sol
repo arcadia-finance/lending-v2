@@ -55,7 +55,7 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address receiver
     ) public {
         initialShares = uint128(bound(initialShares, 1, type(uint128).max - 1));
-        wrapperShares = uint128(bound(initialShares, 0, initialShares));
+        wrapperShares = uint128(bound(wrapperShares, 0, initialShares));
         mintedShares = uint128(bound(mintedShares, 1, type(uint128).max - initialShares));
         initialAssets = uint128(bound(initialAssets, 1, type(uint128).max));
 
@@ -68,11 +68,14 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint256 actualAssets = trancheWrapper.mint(mintedShares, receiver);
 
         assertEq(actualAssets, expectedAssets);
-        assertEq(trancheWrapper.totalAssets(), initialAssets + actualAssets);
         assertEq(tranche.totalAssets(), initialAssets + actualAssets);
         assertEq(trancheWrapper.totalSupply(), wrapperShares + mintedShares);
         assertEq(tranche.totalSupply(), initialShares + mintedShares);
         assertEq(tranche.balanceOf(address(trancheWrapper)), wrapperShares + mintedShares);
         assertEq(trancheWrapper.balanceOf(receiver), mintedShares);
+
+        if (initialAssets + actualAssets <= type(uint256).max / (wrapperShares + mintedShares)) {
+            assertEq(trancheWrapper.totalAssets(), tranche.convertToAssets(wrapperShares + mintedShares));
+        }
     }
 }

@@ -25,10 +25,24 @@ contract TotalAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Success_totalAssets(uint128 assets) public {
-        pool.setRealisedLiquidityOf(address(tranche), assets);
+    function testFuzz_Success_totalAssets_NonZeroSupply(
+        uint128 initialShares,
+        uint128 wrapperShares,
+        uint128 initialAssets
+    ) public {
+        initialShares = uint128(bound(initialShares, 1, type(uint128).max));
+        wrapperShares = uint128(bound(wrapperShares, 0, initialShares));
 
-        assertEq(trancheWrapper.totalAssets(), assets);
-        assertEq(trancheWrapper.totalAssets(), tranche.totalAssets());
+        setTrancheState(initialShares, wrapperShares, initialAssets);
+
+        uint256 expectedAssets = uint256(wrapperShares) * initialAssets / initialShares;
+
+        assertEq(trancheWrapper.totalAssets(), expectedAssets);
+    }
+
+    function testFuzz_Success_totalAssets_ZeroSupply(uint128 initialAssets) public {
+        setTrancheState(0, 0, initialAssets);
+
+        assertEq(trancheWrapper.totalAssets(), 0);
     }
 }

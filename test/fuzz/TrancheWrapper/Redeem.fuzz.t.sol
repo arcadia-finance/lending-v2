@@ -148,7 +148,7 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address receiver
     ) public {
         initialShares = uint128(bound(initialShares, 1, type(uint128).max));
-        wrapperShares = uint128(bound(initialShares, 1, initialShares));
+        wrapperShares = uint128(bound(wrapperShares, 1, initialShares));
         ownerShares = uint128(bound(ownerShares, 1, wrapperShares));
         redeemedShares = uint128(bound(redeemedShares, 1, ownerShares));
         initialAssets = uint128(bound(initialAssets, 1, type(uint128).max));
@@ -167,7 +167,7 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint256 actualAssets = trancheWrapper.redeem(redeemedShares, receiver, owner);
 
         assertEq(actualAssets, expectedAssets);
-        assertEq(trancheWrapper.totalAssets(), initialAssets - actualAssets);
+        assertEq(trancheWrapper.totalAssets(), tranche.convertToAssets(wrapperShares - redeemedShares));
         assertEq(tranche.totalAssets(), initialAssets - actualAssets);
         assertEq(trancheWrapper.totalSupply(), wrapperShares - redeemedShares);
         assertEq(tranche.totalSupply(), initialShares - redeemedShares);
