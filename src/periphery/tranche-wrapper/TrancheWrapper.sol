@@ -67,7 +67,6 @@ contract TrancheWrapper is ERC4626 {
         asset.safeApprove(LENDING_POOL, assets);
 
         shares = ERC4626(TRANCHE).deposit(assets, address(this));
-
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
@@ -81,13 +80,12 @@ contract TrancheWrapper is ERC4626 {
      */
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         assets = ITranche(TRANCHE).previewMintAndSync(shares);
-
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
+        // Approval has to be given to the Lending Pool for the deposit in the Tranche.
         asset.safeApprove(LENDING_POOL, assets);
 
         ERC4626(TRANCHE).mint(shares, address(this));
-
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
@@ -97,50 +95,42 @@ contract TrancheWrapper is ERC4626 {
      * @notice Withdraws assets from the underlying Tranche.
      * @param assets The amount of assets of the underlying ERC20 token being withdrawn.
      * @param receiver The address of the receiver of the underlying ERC20 tokens.
-     * @param owner_ The address of the owner of the assets being withdrawn.
+     * @param owner The address of the owner of the assets being withdrawn.
      * @return shares The corresponding amount of shares redeemed.
      */
-    function withdraw(uint256 assets, address receiver, address owner_) public override returns (uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
         shares = ITranche(TRANCHE).previewWithdrawAndSync(assets);
 
-        if (msg.sender != owner_) {
-            // Saves gas for limited approvals.
-            uint256 allowed = allowance[owner_][msg.sender];
-
-            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
+        if (msg.sender != owner) {
+            uint256 allowed = allowance[owner][msg.sender];
+            if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
         }
 
-        _burn(owner_, shares);
-
+        _burn(owner, shares);
         ERC4626(TRANCHE).withdraw(assets, address(this), address(this));
-
         asset.safeTransfer(receiver, assets);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
+        emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
     /**
      * @notice Redeems shares of the underlying Tranche.
      * @param shares The amount of shares being redeemed.
      * @param receiver The address of the receiver of the underlying ERC20 tokens.
-     * @param owner_ The address of the owner of the shares being redeemed.
+     * @param owner The address of the owner of the shares being redeemed.
      * @return assets The corresponding amount of assets withdrawn.
      */
-    function redeem(uint256 shares, address receiver, address owner_) public override returns (uint256 assets) {
-        if (msg.sender != owner_) {
-            // Saves gas for limited approvals.
-            uint256 allowed = allowance[owner_][msg.sender];
-
-            if (allowed != type(uint256).max) allowance[owner_][msg.sender] = allowed - shares;
+    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
+        if (msg.sender != owner) {
+            uint256 allowed = allowance[owner][msg.sender];
+            if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
         }
 
-        _burn(owner_, shares);
-
+        _burn(owner, shares);
         assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
-
         asset.safeTransfer(receiver, assets);
 
-        emit Withdraw(msg.sender, receiver, owner_, assets, shares);
+        emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -148,9 +138,8 @@ contract TrancheWrapper is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice Returns the total amount of underlying assets, to which liquidity providers have a claim.
+     * @notice Returns the total amount of underlying assets.
      * @return assets The total amount of underlying assets.
-     * @dev The Liquidity Pool does the accounting of the outstanding claim on liquidity per tranche.
      */
     function totalAssets() public view override returns (uint256 assets) {
         assets = ERC4626(TRANCHE).totalAssets();
@@ -197,35 +186,43 @@ contract TrancheWrapper is ERC4626 {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev maxDeposit() according to the Tranche implementation.
+     * @notice Returns the maximum amount of assets that can be deposited.
+     * @param owner The address of the depositor.
+     * @return maxAssets The maximum amount of assets that can be deposited.
      */
-    function maxDeposit(address) public view override returns (uint256 maxAssets) {
-        maxAssets = ERC4626(TRANCHE).maxDeposit(msg.sender);
+    function maxDeposit(address owner) public view override returns (uint256 maxAssets) {
+        maxAssets = ERC4626(TRANCHE).maxDeposit(owner);
     }
 
     /**
-     * @dev maxMint() according to the Tranche implementation.
+     * @notice Returns the maximum amount of shares that can be minted.
+     * @param owner The address of the minter.
+     * @return maxShares The maximum amount of shares that can be minted.
      */
-    function maxMint(address) public view override returns (uint256 maxShares) {
-        maxShares = ERC4626(TRANCHE).maxMint(msg.sender);
+    function maxMint(address owner) public view override returns (uint256 maxShares) {
+        maxShares = ERC4626(TRANCHE).maxMint(owner);
     }
 
     /**
-     * @dev maxWithdraw() according to the Tranche implementation.
+     * @notice Returns the maximum amount of assets that can be withdrawn.
+     * @param owner The address from who the assets are withdrawn.
+     * @return maxAssets The maximum amount of assets that can be withdrawn.
      */
-    function maxWithdraw(address owner_) public view override returns (uint256 maxAssets) {
+    function maxWithdraw(address owner) public view override returns (uint256 maxAssets) {
         uint256 availableAssets = ERC4626(TRANCHE).maxWithdraw(address(this));
-        uint256 claimableAssets = convertToAssets(balanceOf[owner_]);
+        uint256 claimableAssets = convertToAssets(balanceOf[owner]);
 
         maxAssets = availableAssets < claimableAssets ? availableAssets : claimableAssets;
     }
 
     /**
-     * @dev maxRedeem() according to the Tranche implementation.
+     * @notice Returns the maximum amount of shares that can be redeemed.
+     * @param owner The address from who the shares are redeemed.
+     * @return maxShares The maximum amount of shares that can be redeemed.
      */
-    function maxRedeem(address owner_) public view override returns (uint256 maxShares) {
+    function maxRedeem(address owner) public view override returns (uint256 maxShares) {
         uint256 availableShares = ERC4626(TRANCHE).maxRedeem(address(this));
-        uint256 claimableShares = balanceOf[owner_];
+        uint256 claimableShares = balanceOf[owner];
 
         maxShares = availableShares < claimableShares ? availableShares : claimableShares;
     }
