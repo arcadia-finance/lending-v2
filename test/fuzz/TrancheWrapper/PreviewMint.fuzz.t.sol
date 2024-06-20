@@ -35,7 +35,7 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         if (uint256(totalAssets) + vas > 0) shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
 
         // And: Tranche state is set.
-        setTrancheState(vas, totalSupply, totalAssets);
+        redeployAndSetTrancheState(vas, totalSupply, totalAssets);
 
         // When: previewMint is called with shares.
         uint256 actualAssets = trancheWrapper.previewMint(shares);
@@ -51,7 +51,7 @@ contract PreviewMint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_previewMint_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 shares) public {
         // And: Tranche state is set.
-        setTrancheState(vas, 0, totalAssets);
+        redeployAndSetTrancheState(vas, 0, totalAssets);
 
         // When: previewMint is called with shares.
         uint256 actualAssets = trancheWrapper.previewMint(shares);

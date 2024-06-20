@@ -65,6 +65,34 @@ contract Deposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         );
     }
 
+    function testFuzz_Success_deposit(
+        uint128 initialShares,
+        uint128 wrapperShares,
+        uint128 initialAssets,
+        uint128 depositedAssets,
+        address receiver
+    ) public {
+        wrapperShares = uint128(bound(initialShares, 0, initialShares));
+        depositedAssets = uint128(bound(depositedAssets, 1, type(uint128).max - 1));
+        initialAssets = uint128(bound(initialAssets, 1, type(uint128).max - depositedAssets));
+
+        setTrancheState(initialShares, wrapperShares, initialAssets);
+
+        uint256 expectedShares = tranche.previewDeposit(depositedAssets);
+        vm.assume(expectedShares > 0);
+
+        vm.prank(users.liquidityProvider);
+        uint256 actualShares = trancheWrapper.deposit(depositedAssets, receiver);
+
+        assertEq(actualShares, expectedShares);
+        assertEq(trancheWrapper.totalAssets(), initialAssets + depositedAssets);
+        assertEq(tranche.totalAssets(), initialAssets + depositedAssets);
+        assertEq(trancheWrapper.totalSupply(), wrapperShares + actualShares);
+        assertEq(tranche.totalSupply(), initialShares + actualShares);
+        assertEq(tranche.balanceOf(address(trancheWrapper)), wrapperShares + actualShares);
+        assertEq(trancheWrapper.balanceOf(receiver), actualShares);
+    }
+
     function testFuzz_Success_deposit_sync(uint128 assets, address receiver) public {
         vm.assume(assets > 3);
 

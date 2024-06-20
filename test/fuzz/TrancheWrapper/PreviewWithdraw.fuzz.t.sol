@@ -41,7 +41,7 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(uint256(totalAssets) + vas > 0);
 
         // And: Tranche state is set.
-        setTrancheState(vas, totalSupply, totalAssets);
+        redeployAndSetTrancheState(vas, totalSupply, totalAssets);
 
         // When: previewWithdraw is called with assets.
         uint256 actualShares = trancheWrapper.previewWithdraw(assets);
@@ -57,7 +57,7 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_previewWithdraw_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 assets) public {
         // And: Tranche state is set.
-        setTrancheState(vas, 0, totalAssets);
+        redeployAndSetTrancheState(vas, 0, totalAssets);
 
         // When: previewWithdraw is called with assets.
         uint256 actualShares = trancheWrapper.previewWithdraw(assets);

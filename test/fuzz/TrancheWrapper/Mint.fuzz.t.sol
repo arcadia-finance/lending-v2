@@ -46,4 +46,33 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         assertEq(trancheWrapper.totalAssets(), shares);
         assertEq(asset.balanceOf(address(pool)), shares);
     }
+
+    function testFuzz_Success_mint(
+        uint128 initialShares,
+        uint128 wrapperShares,
+        uint128 initialAssets,
+        uint128 mintedShares,
+        address receiver
+    ) public {
+        initialShares = uint128(bound(initialShares, 1, type(uint128).max - 1));
+        wrapperShares = uint128(bound(initialShares, 0, initialShares));
+        mintedShares = uint128(bound(mintedShares, 1, type(uint128).max - initialShares));
+        initialAssets = uint128(bound(initialAssets, 1, type(uint128).max));
+
+        setTrancheState(initialShares, wrapperShares, initialAssets);
+
+        uint256 expectedAssets = tranche.previewMint(mintedShares);
+        vm.assume(expectedAssets <= type(uint128).max - initialAssets);
+
+        vm.prank(users.liquidityProvider);
+        uint256 actualAssets = trancheWrapper.mint(mintedShares, receiver);
+
+        assertEq(actualAssets, expectedAssets);
+        assertEq(trancheWrapper.totalAssets(), initialAssets + actualAssets);
+        assertEq(tranche.totalAssets(), initialAssets + actualAssets);
+        assertEq(trancheWrapper.totalSupply(), wrapperShares + mintedShares);
+        assertEq(tranche.totalSupply(), initialShares + mintedShares);
+        assertEq(tranche.balanceOf(address(trancheWrapper)), wrapperShares + mintedShares);
+        assertEq(trancheWrapper.balanceOf(receiver), mintedShares);
+    }
 }

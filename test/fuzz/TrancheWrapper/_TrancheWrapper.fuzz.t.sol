@@ -38,7 +38,7 @@ abstract contract TrancheWrapper_Fuzz_Test is Fuzz_Lending_Test {
         asset.approve(address(trancheWrapper), type(uint256).max);
     }
 
-    function setTrancheState(uint256 vas, uint256 totalSupply, uint128 totalAssets) internal {
+    function redeployAndSetTrancheState(uint256 vas, uint256 totalSupply, uint128 totalAssets) internal {
         vm.startPrank(users.owner);
         tranche = new TrancheExtension(address(pool), vas, "Tranche", "T");
         pool.addTranche(address(tranche), 0);
@@ -46,8 +46,20 @@ abstract contract TrancheWrapper_Fuzz_Test is Fuzz_Lending_Test {
 
         trancheWrapper = new TrancheWrapper(address(tranche));
 
-        stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalSupply);
+        stdstore.target(address(tranche)).sig(tranche.totalSupply.selector).checked_write(totalSupply);
         pool.setTotalRealisedLiquidity(totalAssets);
         pool.setRealisedLiquidityOf(address(tranche), totalAssets);
+    }
+
+    function setTrancheState(uint128 initialShares, uint128 wrapperShares, uint128 initialAssets) internal {
+        pool.setTotalRealisedLiquidity(initialAssets);
+        pool.setRealisedLiquidityOf(address(tranche), initialAssets);
+        stdstore.target(address(tranche)).sig(tranche.totalSupply.selector).checked_write(initialShares);
+        stdstore.target(address(tranche)).sig(tranche.balanceOf.selector).with_key(address(trancheWrapper))
+            .checked_write(wrapperShares);
+        stdstore.target(address(trancheWrapper)).sig(trancheWrapper.totalSupply.selector).checked_write(wrapperShares);
+
+        vm.prank(users.liquidityProvider);
+        asset.transfer(address(pool), initialAssets);
     }
 }

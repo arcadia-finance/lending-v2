@@ -1,13 +1,16 @@
 pragma solidity 0.8.22;
 
-import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
+
+import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
+import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 import { TrancheErrors } from "../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "withdraw" of contract "Tranche Wrapper".
  */
 contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
+    using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
@@ -133,6 +136,44 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         assertEq(trancheWrapper.totalAssets(), sharesMinted - sharesRedeemed);
         assertEq(asset.balanceOf(address(pool)), sharesMinted - sharesRedeemed);
         assertEq(asset.balanceOf(receiver), sharesRedeemed);
+    }
+
+    function testFuzz_Success_redeem_ByOwner(
+        uint128 initialShares,
+        uint128 wrapperShares,
+        uint128 ownerShares,
+        uint128 redeemedShares,
+        uint128 initialAssets,
+        address owner,
+        address receiver
+    ) public {
+        initialShares = uint128(bound(initialShares, 1, type(uint128).max));
+        wrapperShares = uint128(bound(initialShares, 1, initialShares));
+        ownerShares = uint128(bound(ownerShares, 1, wrapperShares));
+        redeemedShares = uint128(bound(redeemedShares, 1, ownerShares));
+        initialAssets = uint128(bound(initialAssets, 1, type(uint128).max));
+        vm.assume(receiver != users.liquidityProvider);
+        vm.assume(receiver != address(pool));
+
+        setTrancheState(initialShares, wrapperShares, initialAssets);
+        stdstore.target(address(trancheWrapper)).sig(tranche.balanceOf.selector).with_key(owner).checked_write(
+            ownerShares
+        );
+
+        uint256 expectedAssets = tranche.previewRedeem(redeemedShares);
+        vm.assume(expectedAssets > 0);
+
+        vm.prank(owner);
+        uint256 actualAssets = trancheWrapper.redeem(redeemedShares, receiver, owner);
+
+        assertEq(actualAssets, expectedAssets);
+        assertEq(trancheWrapper.totalAssets(), initialAssets - actualAssets);
+        assertEq(tranche.totalAssets(), initialAssets - actualAssets);
+        assertEq(trancheWrapper.totalSupply(), wrapperShares - redeemedShares);
+        assertEq(tranche.totalSupply(), initialShares - redeemedShares);
+        assertEq(tranche.balanceOf(address(trancheWrapper)), wrapperShares - redeemedShares);
+        assertEq(trancheWrapper.balanceOf(owner), ownerShares - redeemedShares);
+        assertEq(asset.balanceOf(receiver), actualAssets);
     }
 
     function testFuzz_Success_redeem_ByLimitedAuthorisedAddress(

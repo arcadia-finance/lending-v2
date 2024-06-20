@@ -39,7 +39,7 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         if (uint256(totalAssets) + vas > 0) shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
 
         // And: Tranche state is set.
-        setTrancheState(vas, totalSupply, totalAssets);
+        redeployAndSetTrancheState(vas, totalSupply, totalAssets);
 
         // When: convertToAssets is called with shares.
         uint256 actualAssets = trancheWrapper.convertToAssets(shares);
@@ -53,7 +53,7 @@ contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
 
     function testFuzz_Success_convertToAssets_ZeroSupply(uint80 vas, uint128 totalAssets, uint256 shares) public {
         // And: Tranche state is set.
-        setTrancheState(vas, 0, totalAssets);
+        redeployAndSetTrancheState(vas, 0, totalAssets);
 
         // When: convertToAssets is called with shares.
         uint256 actualAssets = trancheWrapper.convertToAssets(shares);
