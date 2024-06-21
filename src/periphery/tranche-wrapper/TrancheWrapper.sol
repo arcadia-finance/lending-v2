@@ -62,7 +62,7 @@ contract TrancheWrapper is ERC4626 {
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
-        // Approval has to be given to the Lending Pool for the deposit in the Tranche.
+        // Approval has to be given to the Lending Pool, not the Tranche.
         asset.safeApprove(LENDING_POOL, assets);
 
         shares = ERC4626(TRANCHE).deposit(assets, address(this));
@@ -81,7 +81,7 @@ contract TrancheWrapper is ERC4626 {
         assets = ITranche(TRANCHE).previewMintAndSync(shares);
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
-        // Approval has to be given to the Lending Pool for the deposit in the Tranche.
+        // Approval has to be given to the Lending Pool, not the Tranche.
         asset.safeApprove(LENDING_POOL, assets);
 
         ERC4626(TRANCHE).mint(shares, address(this));
