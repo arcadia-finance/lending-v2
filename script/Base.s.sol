@@ -16,8 +16,8 @@ abstract contract Base_Liquidation_Script is Base_Script {
     LendingPool internal lendingPoolUsdc = LendingPool(ArcadiaContracts.LENDINGPOOL_USDC);
     LendingPool internal lendingPoolWeth = LendingPool(ArcadiaContracts.LENDINGPOOL_WETH);
     Liquidator internal liquidator = Liquidator(ArcadiaLending.LIQUIDATOR);
-    Tranche internal srTrancheUsdc = Tranche(ArcadiaLending.TRANCHE_USDC);
-    Tranche internal srTrancheWeth = Tranche(ArcadiaLending.TRANCHE_WETH);
+    Tranche internal trancheUsdc = Tranche(ArcadiaLending.TRANCHE_USDC);
+    Tranche internal trancheWeth = Tranche(ArcadiaLending.TRANCHE_WETH);
 
     constructor() {
         deployer = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
