@@ -12,7 +12,7 @@ import { LendingPool } from "../src/LendingPool.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 import { Tranche } from "../src/Tranche.sol";
 
-abstract contract Base_Liquidation_Script is Base_Script {
+abstract contract Base_Lending_Script is Base_Script {
     LendingPool internal lendingPoolUsdc = LendingPool(ArcadiaContracts.LENDINGPOOL_USDC);
     LendingPool internal lendingPoolWeth = LendingPool(ArcadiaContracts.LENDINGPOOL_WETH);
     Liquidator internal liquidator = Liquidator(ArcadiaLending.LIQUIDATOR);

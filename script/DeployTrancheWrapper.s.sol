@@ -4,15 +4,15 @@
  */
 pragma solidity 0.8.22;
 
-import { Base_Liquidation_Script } from "./Base.s.sol";
+import { Base_Lending_Script } from "./Base.s.sol";
 
 import { TrancheWrapper } from "../src/periphery/tranche-wrapper/TrancheWrapper.sol";
 
-contract DeployTrancheWrapper is Base_Liquidation_Script {
+contract DeployTrancheWrapper is Base_Lending_Script {
     TrancheWrapper internal wrappedTrancheUsdc;
     TrancheWrapper internal wrappedTrancheWeth;
 
-    constructor() Base_Liquidation_Script() { }
+    constructor() Base_Lending_Script() { }
 
     function run() public {
         vm.startBroadcast(deployer);
