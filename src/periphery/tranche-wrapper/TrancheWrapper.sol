@@ -41,8 +41,8 @@ contract TrancheWrapper is ERC4626 {
     constructor(address tranche)
         ERC4626(
             ERC4626(tranche).asset(),
-            string(abi.encodePacked("Wrapped ", ERC4626(tranche).asset().name())),
-            string(abi.encodePacked("w", ERC4626(tranche).asset().symbol()))
+            string(abi.encodePacked("Wrapped ", ERC4626(tranche).name())),
+            string(abi.encodePacked("w", ERC4626(tranche).symbol()))
         )
     {
         TRANCHE = tranche;

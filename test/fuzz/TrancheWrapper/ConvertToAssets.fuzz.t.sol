@@ -11,7 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 
 /**
- * @notice Fuzz tests for the function "totalAssets" of contract "Tranche".
+ * @notice Fuzz tests for the function "totalAssets" of contract "TrancheWrapper".
  */
 contract ConvertToAssets_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     using stdStorage for StdStorage;
