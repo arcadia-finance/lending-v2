@@ -9,8 +9,8 @@ library ArcadiaLending {
     address internal constant LIQUIDATOR = address(0xA4B0b9fD1d91fA2De44F6ABFd59cC14bA1E1a7Af);
     address internal constant TRANCHE_USDC = address(0xEFE32813dBA3A783059d50e5358b9e3661218daD);
     address internal constant TRANCHE_WETH = address(0x393893caeB06B5C16728bb1E354b6c36942b1382);
-    address internal constant WRAPPED_TRANCHE_USDC = address(0);
-    address internal constant WRAPPED_TRANCHE_WETH = address(0);
+    address internal constant WRAPPED_TRANCHE_USDC = address(0xbc10718571fcB3c3F67800e7C0887E450D2Ff398);
+    address internal constant WRAPPED_TRANCHE_WETH = address(0xD82BFa27D49e5a394ba371B293DaE65E9B7a8C60);
 }
 
 library ArcadiaLendingSafes {
