@@ -34,13 +34,20 @@ contract AddCbbtc is Base_Lending_Script {
     }
 
     function run() public {
+        address deployerAddress = vm.addr(deployer);
+
         vm.startBroadcast(deployer);
         lendingPoolCbbtc = new LendingPool(
-            ArcadiaSafes.OWNER, ERC20(address(cbbtc)), ArcadiaSafes.OWNER, ArcadiaContracts.FACTORY, address(liquidator)
+            deployerAddress,
+            ERC20(address(cbbtc)),
+            ArcadiaLendingSafes.TREASURY,
+            ArcadiaContracts.FACTORY,
+            address(liquidator)
         );
         trancheCbbtc = new Tranche(address(lendingPoolCbbtc), VAS.CBBTC, "Senior", "sr");
         wrappedTrancheCbbtc = new TrancheWrapper(address(trancheCbbtc));
 
+        lendingPoolCbbtc.setAccountVersion(1, true);
         lendingPoolCbbtc.setMinimumMargin(MinimumMargins.CBBTC);
         lendingPoolCbbtc.setLiquidationParameters(
             LiquidationParameters.INITIATION_WEIGHT_CBBTC,
@@ -59,7 +66,6 @@ contract AddCbbtc is Base_Lending_Script {
         lendingPoolCbbtc.changeGuardian(ArcadiaSafes.GUARDIAN);
         liquidator.setAccountRecipient(address(lendingPoolCbbtc), ArcadiaLending.ACCOUNT_RECIPIENT);
         lendingPoolCbbtc.setRiskManager(ArcadiaSafes.RISK_MANAGER);
-        lendingPoolCbbtc.setTreasury(ArcadiaLendingSafes.TREASURY);
         lendingPoolCbbtc.transferOwnership(ArcadiaSafes.OWNER);
         trancheCbbtc.transferOwnership(ArcadiaSafes.OWNER);
         vm.stopBroadcast();
@@ -70,14 +76,14 @@ contract AddCbbtc is Base_Lending_Script {
     function test_deploy() public {
         vm.skip(true);
 
-        assertEq(lendingPoolCbbtc.name(), string("ArcadiaV2 Coinbase Wrapped BTC"));
+        assertEq(lendingPoolCbbtc.name(), string("ArcadiaV2 Coinbase Wrapped BTC Debt"));
         assertEq(lendingPoolCbbtc.symbol(), string("darcV2cbBTC"));
         assertEq(lendingPoolCbbtc.decimals(), 8);
-        assertEq(lendingPoolCbbtc.riskManager(), ArcadiaSafes.OWNER);
 
         assertEq(wrappedTrancheCbbtc.LENDING_POOL(), address(lendingPoolCbbtc));
         assertEq(wrappedTrancheCbbtc.TRANCHE(), address(trancheCbbtc));
 
+        assertTrue(lendingPoolCbbtc.isValidVersion(1));
         (,,, uint256 minimumMargin) = lendingPoolCbbtc.openMarginAccount(1);
         assertEq(minimumMargin, MinimumMargins.CBBTC);
 
