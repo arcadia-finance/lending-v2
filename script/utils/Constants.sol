@@ -24,9 +24,7 @@ library InterestRateParameters {
     uint72 internal constant BASE_RATE_CBBTC = 4 * 1e16; // 4%
     uint72 internal constant LOW_SLOPE_CBBTC = 5 * 1e16; //
     uint72 internal constant HIGH_SLOPE_CBBTC = 500 * 1e16;
-    //
-    uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000;
-    // 80%
+    uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
 
     uint72 internal constant BASE_RATE_USDC = 8 * 1e16; // 8%
     uint72 internal constant LOW_SLOPE_USDC = 10 * 1e16; // -> APY goes from 8% to 16% for utilisation of 0 to 80%
@@ -61,7 +59,7 @@ library LiquidationParameters {
 }
 
 library MinimumMargins {
-    uint96 internal constant CBBTC = 0.00001 * 10 ** 8; // ToDo
+    uint96 internal constant CBBTC = 0.00004 * 10 ** 8; // ToDo
     uint96 internal constant USDC = 2 * 10 ** 6;
     uint96 internal constant WETH = 0.002 * 10 ** 18;
 }
