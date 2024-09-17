@@ -47,6 +47,8 @@ contract AddCbbtc is Base_Lending_Script {
         trancheCbbtc = new Tranche(address(lendingPoolCbbtc), VAS.CBBTC, "Senior", "sr");
         wrappedTrancheCbbtc = new TrancheWrapper(address(trancheCbbtc));
 
+        lendingPoolCbbtc.addTranche(address(trancheCbbtc), 100);
+        lendingPoolCbbtc.setLiquidationWeightTranche(100);
         lendingPoolCbbtc.setAccountVersion(1, true);
         lendingPoolCbbtc.setMinimumMargin(MinimumMargins.CBBTC);
         lendingPoolCbbtc.setLiquidationParameters(
