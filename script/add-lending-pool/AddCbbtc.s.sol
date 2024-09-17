@@ -76,6 +76,9 @@ contract AddCbbtc is Base_Lending_Script {
     function test_deploy() public {
         vm.skip(true);
 
+        assertEq(address(lendingPoolCbbtc), ArcadiaContracts.LENDINGPOOL_CBBTC);
+        assertEq(address(trancheCbbtc), ArcadiaLending.TRANCHE_CBBTC);
+        assertEq(address(wrappedTrancheCbbtc), ArcadiaLending.WRAPPED_TRANCHE_CBBTC);
         assertEq(lendingPoolCbbtc.name(), string("ArcadiaV2 Coinbase Wrapped BTC Debt"));
         assertEq(lendingPoolCbbtc.symbol(), string("darcV2cbBTC"));
         assertEq(lendingPoolCbbtc.decimals(), 8);

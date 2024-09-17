@@ -20,7 +20,6 @@ library ArcadiaLendingSafes {
 }
 
 library InterestRateParameters {
-    // ToDo
     uint72 internal constant BASE_RATE_CBBTC = 4 * 1e16; // 4%
     uint72 internal constant LOW_SLOPE_CBBTC = 5 * 1e16; // -> APY goes from 4% to 8% for utilisation of 0 to 80%
     uint72 internal constant HIGH_SLOPE_CBBTC = 500 * 1e16; // -> APY goes from 8% to 108% for utilisation of 80 to 100%
@@ -38,7 +37,6 @@ library InterestRateParameters {
 }
 
 library LiquidationParameters {
-    // ToDo
     uint16 internal constant INITIATION_WEIGHT_CBBTC = 100;
     uint16 internal constant PENALTY_WEIGHT_CBBTC = 500;
     uint16 internal constant TERMINATION_WEIGHT_CBBTC = 50;
@@ -59,13 +57,13 @@ library LiquidationParameters {
 }
 
 library MinimumMargins {
-    uint96 internal constant CBBTC = 0.00004 * 10 ** 8; // ToDo
+    uint96 internal constant CBBTC = 0.00004 * 10 ** 8;
     uint96 internal constant USDC = 2 * 10 ** 6;
     uint96 internal constant WETH = 0.002 * 10 ** 18;
 }
 
 library VAS {
-    uint256 internal constant CBBTC = 10 ** 2; // ToDo
+    uint256 internal constant CBBTC = 10 ** 2;
     uint256 internal constant USDC = 10 ** 6;
     uint256 internal constant WETH = 10 ** 8;
 }
