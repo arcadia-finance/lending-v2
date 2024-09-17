@@ -22,8 +22,8 @@ library ArcadiaLendingSafes {
 library InterestRateParameters {
     // ToDo
     uint72 internal constant BASE_RATE_CBBTC = 4 * 1e16; // 4%
-    uint72 internal constant LOW_SLOPE_CBBTC = 5 * 1e16; //
-    uint72 internal constant HIGH_SLOPE_CBBTC = 500 * 1e16;
+    uint72 internal constant LOW_SLOPE_CBBTC = 5 * 1e16; // -> APY goes from 4% to 8% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_CBBTC = 500 * 1e16; // -> APY goes from 8% to 108% for utilisation of 80 to 100%
     uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
 
     uint72 internal constant BASE_RATE_USDC = 8 * 1e16; // 8%
