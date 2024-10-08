@@ -20,20 +20,20 @@ library ArcadiaLendingSafes {
 }
 
 library InterestRateParameters {
+    uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
     uint72 internal constant BASE_RATE_CBBTC = 4 * 1e16; // 4%
     uint72 internal constant LOW_SLOPE_CBBTC = 5 * 1e16; // -> APY goes from 4% to 8% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_CBBTC = 500 * 1e16; // -> APY goes from 8% to 108% for utilisation of 80 to 100%
-    uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
+    uint72 internal constant HIGH_SLOPE_CBBTC = 200 * 1e16; // -> APY goes from 8% to 48% for utilisation of 80 to 100%
 
-    uint72 internal constant BASE_RATE_USDC = 8 * 1e16; // 8%
-    uint72 internal constant LOW_SLOPE_USDC = 10 * 1e16; // -> APY goes from 8% to 16% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_USDC = 500 * 1e16; // -> APY goes from 16% to 116% for utilisation of 80 to 100%
     uint16 internal constant UTILISATION_THRESHOLD_USDC = 8000; // 80%
+    uint72 internal constant BASE_RATE_USDC = 8 * 1e16; // 8%
+    uint72 internal constant LOW_SLOPE_USDC = 0 * 1e16; // -> APY goes from 8% to 8% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_USDC = 200 * 1e16; // -> APY goes from 8% to 48% for utilisation of 80 to 100%
 
-    uint72 internal constant BASE_RATE_WETH = 6 * 1e16; // 6%
-    uint72 internal constant LOW_SLOPE_WETH = 10 * 1e16; // -> APY goes from 6% to 14% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_WETH = 500 * 1e16; // -> APY goes from 14% to 114% for utilisation of 80 to 100%
     uint16 internal constant UTILISATION_THRESHOLD_WETH = 8000; // 80%
+    uint72 internal constant BASE_RATE_WETH = 6 * 1e16; // 6%
+    uint72 internal constant LOW_SLOPE_WETH = 0 * 1e16; // -> APY goes from 6% to 6% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_WETH = 200 * 1e16; // -> APY goes from 6% to 46% for utilisation of 80 to 100%
 }
 
 library LiquidationParameters {
