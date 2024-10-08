@@ -37,22 +37,22 @@ library InterestRateParameters {
 }
 
 library LiquidationParameters {
-    uint16 internal constant INITIATION_WEIGHT_CBBTC = 100;
-    uint16 internal constant PENALTY_WEIGHT_CBBTC = 500;
-    uint16 internal constant TERMINATION_WEIGHT_CBBTC = 50;
+    uint16 internal constant INITIATION_WEIGHT_CBBTC = 12;
+    uint16 internal constant PENALTY_WEIGHT_CBBTC = 200;
+    uint16 internal constant TERMINATION_WEIGHT_CBBTC = 12;
     uint16 internal constant MIN_REWARD_WEIGHT_CBBTC = 2500;
     uint80 internal constant MAX_REWARD_CBBTC = 0.001 * 10 ** 8;
 
-    uint16 internal constant INITIATION_WEIGHT_USDC = 100;
-    uint16 internal constant PENALTY_WEIGHT_USDC = 500;
-    uint16 internal constant TERMINATION_WEIGHT_USDC = 50;
-    uint16 internal constant MIN_REWARD_WEIGHT_USDC = 2500;
+    uint16 internal constant INITIATION_WEIGHT_USDC = 12;
+    uint16 internal constant PENALTY_WEIGHT_USDC = 200;
+    uint16 internal constant TERMINATION_WEIGHT_USDC = 12;
+    uint16 internal constant MIN_REWARD_WEIGHT_USDC = 3500;
     uint80 internal constant MAX_REWARD_USDC = 4000 * 10 ** 6;
 
-    uint16 internal constant INITIATION_WEIGHT_WETH = 100;
-    uint16 internal constant PENALTY_WEIGHT_WETH = 500;
-    uint16 internal constant TERMINATION_WEIGHT_WETH = 50;
-    uint16 internal constant MIN_REWARD_WEIGHT_WETH = 2500;
+    uint16 internal constant INITIATION_WEIGHT_WETH = 12;
+    uint16 internal constant PENALTY_WEIGHT_WETH = 200;
+    uint16 internal constant TERMINATION_WEIGHT_WETH = 12;
+    uint16 internal constant MIN_REWARD_WEIGHT_WETH = 1500;
     uint80 internal constant MAX_REWARD_WETH = 1 * 10 ** 18;
 }
 
