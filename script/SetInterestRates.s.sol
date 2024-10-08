@@ -15,6 +15,17 @@ contract SetInterestRates is Base_Lending_Script {
     function run() public {
         // Set interest rates.
         bytes memory calldata_ = abi.encodeCall(
+            lendingPoolCbbtc.setInterestParameters,
+            (
+                InterestRateParameters.BASE_RATE_CBBTC,
+                InterestRateParameters.LOW_SLOPE_CBBTC,
+                InterestRateParameters.HIGH_SLOPE_CBBTC,
+                InterestRateParameters.UTILISATION_THRESHOLD_CBBTC
+            )
+        );
+        addToBatch(ArcadiaSafes.OWNER, address(lendingPoolCbbtc), calldata_);
+
+        calldata_ = abi.encodeCall(
             lendingPoolUsdc.setInterestParameters,
             (
                 InterestRateParameters.BASE_RATE_USDC,
