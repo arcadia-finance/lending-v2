@@ -15,7 +15,7 @@ contract SetAuctionCurveParameters is Base_Lending_Script {
     function run() public {
         // Set auction parameters.
         bytes memory calldata_ = abi.encodeCall(
-            liquidator.setAuctionCurveParameters(),
+            liquidator.setAuctionCurveParameters,
             (
                 LiquidatorParameters.HALF_LIFE_TIME,
                 LiquidatorParameters.CUTOFF_TIME,
