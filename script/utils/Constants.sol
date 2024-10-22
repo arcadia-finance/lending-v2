@@ -72,5 +72,5 @@ library LiquidatorParameters {
     uint32 internal constant HALF_LIFE_TIME = 40 * 60; // 40 minutes.
     uint32 internal constant CUTOFF_TIME = 14_400; // 1 hour.
     uint16 internal constant START_PRICE_MULTIPLIER = 16_000; // 160%. 1.6x
-    uint16 internal constant MIN_PRICE_MULTIPLIER = 6000; // 60%. 6x
+    uint16 internal constant MIN_PRICE_MULTIPLIER = 6000; // 60%. 0.6x
 }
