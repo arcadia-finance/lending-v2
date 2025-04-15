@@ -24,12 +24,12 @@ library Fees {
 }
 
 library TrancheWeights {
-    uint16 internal constant INTEREST = 90;
+    uint16 internal constant INTEREST = 85;
     uint16 internal constant LIQUIDATION = 50;
 }
 
 library TreasuryWeights {
-    uint16 internal constant INTEREST = 10;
+    uint16 internal constant INTEREST = 15;
     uint16 internal constant LIQUIDATION = 50;
 }
 
