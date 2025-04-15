@@ -19,6 +19,20 @@ library ArcadiaLendingSafes {
     address internal constant TREASURY = address(0xFd6db26eDc581D8F381f46eF4a6396A762b66E95);
 }
 
+library Fees {
+    uint256 internal constant ORIGINATION = 0;
+}
+
+library TrancheWeights {
+    uint16 internal constant INTEREST = 90;
+    uint16 internal constant LIQUIDATION = 50;
+}
+
+library TreasuryWeights {
+    uint16 internal constant INTEREST = 10;
+    uint16 internal constant LIQUIDATION = 50;
+}
+
 library InterestRateParameters {
     uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
     uint72 internal constant BASE_RATE_CBBTC = 2 * 1e16; // 2%
