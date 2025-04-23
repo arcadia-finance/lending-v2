@@ -35,19 +35,19 @@ library TreasuryWeights {
 
 library InterestRateParameters {
     uint16 internal constant UTILISATION_THRESHOLD_CBBTC = 8000; // 80%
-    uint72 internal constant BASE_RATE_CBBTC = 2 * 1e16; // 2%
-    uint72 internal constant LOW_SLOPE_CBBTC = 0 * 1e16; // -> Interest rate goes from 2% to 2% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_CBBTC = 200 * 1e16; // -> Interest rate goes from 2% to 42% for utilisation of 80 to 100%
+    uint72 internal constant BASE_RATE_CBBTC = 3 * 1e16; // 3%
+    uint72 internal constant LOW_SLOPE_CBBTC = 0 * 1e16; // -> Interest rate goes from 3% to 3% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_CBBTC = 200 * 1e16; // -> Interest rate goes from 3% to 43% for utilisation of 80 to 100%
 
     uint16 internal constant UTILISATION_THRESHOLD_USDC = 8000; // 80%
-    uint72 internal constant BASE_RATE_USDC = 6 * 1e16; // 8%
-    uint72 internal constant LOW_SLOPE_USDC = 0 * 1e16; // -> Interest rate goes from 6% to 6% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_USDC = 200 * 1e16; // -> Interest rate goes from 6% to 46% for utilisation of 80 to 100%
+    uint72 internal constant BASE_RATE_USDC = 8 * 1e16; // 8%
+    uint72 internal constant LOW_SLOPE_USDC = 0 * 1e16; // -> Interest rate goes from 8% to 8% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_USDC = 200 * 1e16; // -> Interest rate goes from 8% to 48% for utilisation of 80 to 100%
 
     uint16 internal constant UTILISATION_THRESHOLD_WETH = 8000; // 80%
-    uint72 internal constant BASE_RATE_WETH = 4 * 1e16; // 4%
-    uint72 internal constant LOW_SLOPE_WETH = 0 * 1e16; // -> Interest rate goes from 4% to 4% for utilisation of 0 to 80%
-    uint72 internal constant HIGH_SLOPE_WETH = 200 * 1e16; // -> Interest rate goes from 4% to 44% for utilisation of 80 to 100%
+    uint72 internal constant BASE_RATE_WETH = 6 * 1e16; // 6%
+    uint72 internal constant LOW_SLOPE_WETH = 0 * 1e16; // -> Interest rate goes from 6% to 6% for utilisation of 0 to 80%
+    uint72 internal constant HIGH_SLOPE_WETH = 200 * 1e16; // -> Interest rate goes from 6% to 46% for utilisation of 80 to 100%
 }
 
 library LiquidationParameters {
