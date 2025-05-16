@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { Base_Lending_Script } from "./Base.s.sol";
 
-import { ArcadiaSafes } from "../lib/accounts-v2/script/utils/Constants.sol";
-import { InterestRateParameters } from "./utils/Constants.sol";
+import { ArcadiaSafes } from "../lib/accounts-v2/script/utils/ConstantsBase.sol";
+import { InterestRateParameters } from "./utils/ConstantsBase.sol";
 
 contract SetInterestRates is Base_Lending_Script {
     constructor() Base_Lending_Script() { }

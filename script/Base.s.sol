@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { Base_Script } from "../lib/accounts-v2/script/Base.s.sol";
 
-import { ArcadiaContracts } from "../lib/accounts-v2/script/utils/Constants.sol";
-import { ArcadiaLending } from "./utils/Constants.sol";
+import { ArcadiaContracts } from "../lib/accounts-v2/script/utils/ConstantsBase.sol";
+import { ArcadiaLending } from "./utils/ConstantsBase.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 import { Tranche } from "../src/Tranche.sol";
@@ -22,6 +22,6 @@ abstract contract Base_Lending_Script is Base_Script {
     Tranche internal trancheWeth = Tranche(ArcadiaLending.TRANCHE_WETH);
 
     constructor() {
-        deployer = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
+        deployer = vm.envUint("PRIVATE_KEY_DEPLOYER");
     }
 }
