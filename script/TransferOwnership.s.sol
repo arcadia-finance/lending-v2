@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { Test } from "../lib/accounts-v2/lib/forge-std/src/Test.sol";
 
-import { ArcadiaContracts, ArcadiaSafes } from "../lib/accounts-v2/script/utils/Constants.sol";
-import { ArcadiaLending, ArcadiaLendingSafes } from "./utils/Constants.sol";
+import { ArcadiaContracts, ArcadiaSafes } from "../lib/accounts-v2/script/utils/ConstantsBase.sol";
+import { ArcadiaLending, ArcadiaLendingSafes } from "./utils/ConstantsBase.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 import { Tranche } from "../src/Tranche.sol";
@@ -28,7 +28,7 @@ contract ArcadiaLendingTransferOwnership is Test {
     }
 
     function run() public {
-        uint256 ownerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
+        uint256 ownerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER");
         vm.startBroadcast(ownerPrivateKey);
 
         // Set guardian

@@ -8,7 +8,7 @@ pragma solidity 0.8.22;
 
 import { Test } from "../lib/accounts-v2/lib/forge-std/src/Test.sol";
 
-import { ArcadiaSafes, ExternalContracts, PrimaryAssets } from "../lib/accounts-v2/script/utils/Constants.sol";
+import { ArcadiaSafes, ExternalContracts, PrimaryAssets } from "../lib/accounts-v2/script/utils/ConstantsBase.sol";
 import { ERC20 } from "../src/DebtToken.sol";
 import { Factory } from "../lib/accounts-v2/src/Factory.sol";
 import { LendingPool } from "../src/LendingPool.sol";
@@ -33,7 +33,7 @@ contract ArcadiaLendingDeploymentStep1 is Test {
     }
 
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER");
         address deployerAddress = vm.addr(deployerPrivateKey);
         address protocolOwnerAddress = ArcadiaSafes.OWNER;
 

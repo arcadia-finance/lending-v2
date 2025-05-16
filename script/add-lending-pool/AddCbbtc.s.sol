@@ -11,7 +11,7 @@ import {
     ArcadiaSafes,
     ExternalContracts,
     PrimaryAssets
-} from "../../lib/accounts-v2/script/utils/Constants.sol";
+} from "../../lib/accounts-v2/script/utils/ConstantsBase.sol";
 import {
     ArcadiaLending,
     ArcadiaLendingSafes,
@@ -19,7 +19,7 @@ import {
     LiquidationParameters,
     MinimumMargins,
     VAS
-} from "../utils/Constants.sol";
+} from "../utils/ConstantsBase.sol";
 import { ERC20 } from "../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
 import { Tranche } from "../../src/Tranche.sol";

@@ -13,8 +13,10 @@ import {
     ArcadiaSafes,
     ExternalContracts,
     PrimaryAssets
-} from "../lib/accounts-v2/script/utils/Constants.sol";
-import { ArcadiaLending, InterestRateParameters, LiquidationParameters, MinimumMargins } from "./utils/Constants.sol";
+} from "../lib/accounts-v2/script/utils/ConstantsBase.sol";
+import {
+    ArcadiaLending, InterestRateParameters, LiquidationParameters, MinimumMargins
+} from "./utils/ConstantsBase.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { Liquidator } from "../src/Liquidator.sol";
 import { Tranche } from "../src/Tranche.sol";
@@ -35,7 +37,7 @@ contract ArcadiaLendingDeploymentStep2 is Test {
     }
 
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER_BASE");
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOYER");
         address deployerAddress = vm.addr(deployerPrivateKey);
         address protocolOwnerAddress = ArcadiaSafes.OWNER;
         assertEq(deployerAddress, protocolOwnerAddress);
