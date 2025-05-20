@@ -1024,17 +1024,20 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
             totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
+            (terminationReward, liquidationPenalty) = (0, 0);
         } else {
             uint256 remainder = liquidationPenalty + terminationReward - openDebt;
             if (openDebt >= liquidationPenalty) {
                 // "openDebt" is bigger than the "liquidationPenalty" but smaller than the total pending liquidation incentives.
                 // Don't pay out the "liquidationPenalty" to Lps, partially pay out the "terminator".
                 realisedLiquidityOf[terminator] += remainder;
+                (terminationReward, liquidationPenalty) = (remainder, 0);
             } else {
                 // "openDebt" is smaller than the "liquidationPenalty".
                 // Fully pay out the "terminator" and partially pay out the "liquidationPenalty".
                 realisedLiquidityOf[terminator] += terminationReward;
-                _syncLiquidationFee(remainder - terminationReward);
+                liquidationPenalty = remainder - terminationReward;
+                _syncLiquidationFee(liquidationPenalty);
             }
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }
