@@ -19,6 +19,10 @@ library ArcadiaLendingSafes {
     address internal constant TREASURY = address(0xFd6db26eDc581D8F381f46eF4a6396A762b66E95);
 }
 
+library Deployers {
+    address constant ARCADIA = 0x0f518becFC14125F23b8422849f6393D59627ddB;
+}
+
 library Fees {
     uint256 internal constant ORIGINATION = 0;
 }
