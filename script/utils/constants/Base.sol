@@ -16,7 +16,7 @@ import {
     Tranche,
     Treasury
 } from "./shared.sol";
-import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
+import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
 import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/shared.sol";
 
 library AssetModuleRiskParameters {
@@ -864,6 +864,8 @@ library LendingPools {
     function CBBTC() internal pure returns (LendingPool memory) {
         return LendingPool({
             lendingPool: ArcadiaLending.LENDINGPOOL_CBBTC,
+            asset: Assets.CBBTC().asset,
+            liquidationWeightTranche: 85,
             minimumMargin: 0.00004 * 10 ** 8,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.CBBTC(),
@@ -878,6 +880,8 @@ library LendingPools {
     function USDC() internal pure returns (LendingPool memory) {
         return LendingPool({
             lendingPool: ArcadiaLending.LENDINGPOOL_USDC,
+            asset: Assets.USDC().asset,
+            liquidationWeightTranche: 85,
             minimumMargin: 2 * 10 ** 6,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.USDC(),
@@ -892,6 +896,8 @@ library LendingPools {
     function WETH() internal pure returns (LendingPool memory) {
         return LendingPool({
             lendingPool: ArcadiaLending.LENDINGPOOL_WETH,
+            asset: Assets.WETH().asset,
+            liquidationWeightTranche: 85,
             minimumMargin: 0.002 * 10 ** 18,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.WETH(),
@@ -936,10 +942,6 @@ library LiquidationParameters {
     }
 }
 
-library SafesLending {
-    address internal constant TREASURY = 0xFd6db26eDc581D8F381f46eF4a6396A762b66E95;
-}
-
 library Tranches {
     function CBBTC() internal pure returns (Tranche[] memory tranches) {
         tranches = new Tranche[](1);
@@ -959,6 +961,8 @@ library Tranches {
     function CBBTC_SR() internal pure returns (Tranche memory) {
         return Tranche({
             tranche: ArcadiaLending.TRANCHE_CBBTC,
+            prefix: "Senior",
+            prefixSymbol: "sr",
             wrapper: ArcadiaLending.WRAPPED_TRANCHE_CBBTC,
             interestWeight: 85,
             vas: 10 ** 2
@@ -968,6 +972,8 @@ library Tranches {
     function USDC_SR() internal pure returns (Tranche memory) {
         return Tranche({
             tranche: ArcadiaLending.TRANCHE_USDC,
+            prefix: "Senior",
+            prefixSymbol: "sr",
             wrapper: ArcadiaLending.WRAPPED_TRANCHE_USDC,
             interestWeight: 85,
             vas: 10 ** 6
@@ -977,6 +983,8 @@ library Tranches {
     function WETH_SR() internal pure returns (Tranche memory) {
         return Tranche({
             tranche: ArcadiaLending.TRANCHE_WETH,
+            prefix: "Senior",
+            prefixSymbol: "sr",
             wrapper: ArcadiaLending.WRAPPED_TRANCHE_WETH,
             interestWeight: 85,
             vas: 10 ** 8
@@ -986,6 +994,6 @@ library Tranches {
 
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
-        return Treasury({ treasury: SafesLending.TREASURY, interestWeight: 15, liquidationWeight: 50 });
+        return Treasury({ treasury: Safes.TREASURY, interestWeight: 15, liquidationWeight: 50 });
     }
 }

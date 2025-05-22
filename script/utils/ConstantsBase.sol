@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
 
 library ArcadiaLending {
     address internal constant ACCOUNT_RECIPIENT = address(0x0f518becFC14125F23b8422849f6393D59627ddB);

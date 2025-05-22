@@ -63,6 +63,8 @@ struct InterestRateParams {
 
 struct LendingPool {
     address lendingPool;
+    address asset;
+    uint16 liquidationWeightTranche;
     uint96 minimumMargin;
     uint256 originationFee;
     InterestRateParams interestRateParameters;
@@ -97,13 +99,15 @@ struct PoolRiskParams {
 
 struct Tranche {
     address tranche;
+    string prefix;
+    string prefixSymbol;
     address wrapper;
-    uint256 interestWeight;
+    uint16 interestWeight;
     uint256 vas;
 }
 
 struct Treasury {
     address treasury;
-    uint256 interestWeight;
-    uint256 liquidationWeight;
+    uint16 interestWeight;
+    uint16 liquidationWeight;
 }
