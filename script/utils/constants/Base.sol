@@ -865,7 +865,7 @@ library LendingPoolParameters {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_CBBTC,
             asset: Assets.CBBTC().asset,
-            liquidationWeightTranche: 85,
+            liquidationWeightTranche: 50,
             minimumMargin: 0.00004 * 10 ** 8,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.CBBTC(),
@@ -881,7 +881,7 @@ library LendingPoolParameters {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_USDC,
             asset: Assets.USDC().asset,
-            liquidationWeightTranche: 85,
+            liquidationWeightTranche: 50,
             minimumMargin: 2 * 10 ** 6,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.USDC(),
@@ -897,7 +897,7 @@ library LendingPoolParameters {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_WETH,
             asset: Assets.WETH().asset,
-            liquidationWeightTranche: 85,
+            liquidationWeightTranche: 50,
             minimumMargin: 0.002 * 10 ** 18,
             originationFee: 0,
             interestRateParameters: InterestRateParameters.WETH(),
