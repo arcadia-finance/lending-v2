@@ -15,9 +15,9 @@ import {
     PoolRisk,
     TrancheParams,
     Treasury
-} from "./shared.sol";
+} from "./Shared.sol";
 import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Optimism.sol";
-import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/shared.sol";
+import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 library AssetModuleRiskParameters { }
 
