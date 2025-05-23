@@ -9,11 +9,11 @@ import {
     AssetModuleRiskParams,
     AssetRiskParams,
     InterestRateParams,
-    LendingPool,
+    LendingPoolParams,
     LiquidationParams,
-    Liquidators,
+    LiquidatorParameters,
     PoolRisk,
-    Tranche,
+    TrancheParams,
     Treasury
 } from "./shared.sol";
 import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Optimism.sol";
@@ -43,9 +43,9 @@ library InterestRateParameters {
     }
 }
 
-library LendingPools {
-    function USDC() internal pure returns (LendingPool memory) {
-        return LendingPool({
+library LendingPoolParameters {
+    function USDC() internal pure returns (LendingPoolParams memory) {
+        return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_USDC,
             asset: Assets.USDC().asset,
             liquidationWeightTranche: 85,
@@ -55,13 +55,13 @@ library LendingPools {
             liquidationParameters: LiquidationParameters.USDC(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
             treasury: Treasuries.TREASURY(),
-            liquidator: Liquidators.LIQUIDATOR(),
-            tranches: Tranches.USDC()
+            liquidator: LiquidatorParameters.LIQUIDATOR(),
+            tranche: Tranches.USDC_SR()
         });
     }
 
-    function WETH() internal pure returns (LendingPool memory) {
-        return LendingPool({
+    function WETH() internal pure returns (LendingPoolParams memory) {
+        return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_WETH,
             asset: Assets.WETH().asset,
             liquidationWeightTranche: 85,
@@ -71,8 +71,8 @@ library LendingPools {
             liquidationParameters: LiquidationParameters.WETH(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
             treasury: Treasuries.TREASURY(),
-            liquidator: Liquidators.LIQUIDATOR(),
-            tranches: Tranches.USDC()
+            liquidator: LiquidatorParameters.LIQUIDATOR(),
+            tranche: Tranches.WETH_SR()
         });
     }
 }
@@ -100,18 +100,18 @@ library LiquidationParameters {
 }
 
 library Tranches {
-    function USDC() internal pure returns (Tranche[] memory tranches) {
-        tranches = new Tranche[](1);
+    function USDC() internal pure returns (TrancheParams[] memory tranches) {
+        tranches = new TrancheParams[](1);
         tranches[0] = USDC_SR();
     }
 
-    function WETH() internal pure returns (Tranche[] memory tranches) {
-        tranches = new Tranche[](1);
+    function WETH() internal pure returns (TrancheParams[] memory tranches) {
+        tranches = new TrancheParams[](1);
         tranches[0] = WETH_SR();
     }
 
-    function USDC_SR() internal pure returns (Tranche memory) {
-        return Tranche({
+    function USDC_SR() internal pure returns (TrancheParams memory) {
+        return TrancheParams({
             tranche: ArcadiaLending.TRANCHE_USDC,
             prefix: "Senior",
             prefixSymbol: "sr",
@@ -121,8 +121,8 @@ library Tranches {
         });
     }
 
-    function WETH_SR() internal pure returns (Tranche memory) {
-        return Tranche({
+    function WETH_SR() internal pure returns (TrancheParams memory) {
+        return TrancheParams({
             tranche: ArcadiaLending.TRANCHE_WETH,
             prefix: "Senior",
             prefixSymbol: "sr",

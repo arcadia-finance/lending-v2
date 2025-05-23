@@ -17,13 +17,9 @@ library ArcadiaLending {
     address internal constant WRAPPED_TRANCHE_WETH = 0xD82BFa27D49e5a394ba371B293DaE65E9B7a8C60;
 }
 
-library Deployers {
-    address constant ARCADIA = 0x0f518becFC14125F23b8422849f6393D59627ddB;
-}
-
-library Liquidators {
-    function LIQUIDATOR() internal pure returns (Liquidator memory) {
-        return Liquidator({
+library LiquidatorParameters {
+    function LIQUIDATOR() internal pure returns (LiquidatorParams memory) {
+        return LiquidatorParams({
             liquidator: ArcadiaLending.LIQUIDATOR,
             halfLifeTime: 2400, // 40 minutes.
             cutoffTime: 14_400, // 4 hours.
@@ -61,7 +57,7 @@ struct InterestRateParams {
     uint72 highSlopePerYear;
 }
 
-struct LendingPool {
+struct LendingPoolParams {
     address lendingPool;
     address asset;
     uint16 liquidationWeightTranche;
@@ -71,8 +67,8 @@ struct LendingPool {
     LiquidationParams liquidationParameters;
     PoolRiskParams poolRiskParameters;
     Treasury treasury;
-    Liquidator liquidator;
-    Tranche[] tranches;
+    LiquidatorParams liquidator;
+    TrancheParams tranche;
 }
 
 struct LiquidationParams {
@@ -83,7 +79,7 @@ struct LiquidationParams {
     uint80 maxReward;
 }
 
-struct Liquidator {
+struct LiquidatorParams {
     address liquidator;
     uint32 halfLifeTime;
     uint32 cutoffTime;
@@ -97,7 +93,7 @@ struct PoolRiskParams {
     uint64 maxRecursiveCalls;
 }
 
-struct Tranche {
+struct TrancheParams {
     address tranche;
     string prefix;
     string prefixSymbol;
