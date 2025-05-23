@@ -214,7 +214,7 @@ library AssetModuleRiskParameters {
             assetModule: AssetModules.UNISWAPV3,
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
             riskFactor: 9800,
-            maxExposure: 0
+            maxExposure: uint112(2_000_000 * 1e18)
         });
     }
 
