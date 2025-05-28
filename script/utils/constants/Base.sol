@@ -257,6 +257,37 @@ library AssetModuleRiskParameters {
 }
 
 library AssetRiskParameters {
+    // AAVE
+    function AAVE_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.AAVE().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+        });
+    }
+
+    function AAVE_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.AAVE().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+        });
+    }
+
+    function AAVE_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.AAVE().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+        });
+    }
+
     // AERO
     function AERO_CBBTC() internal pure returns (AssetRiskParams memory) {
         return AssetRiskParams({
@@ -452,6 +483,99 @@ library AssetRiskParameters {
             collateralFactor: 8800,
             liquidationFactor: 9600,
             maxExposure: uint112(250 * 10 ** Assets.EZETH().decimals)
+        });
+    }
+
+    // GHO
+    function GHO_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.GHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+        });
+    }
+
+    function GHO_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.GHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+        });
+    }
+
+    function GHO_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.GHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+        });
+    }
+
+    // LBTC
+    function LBTC_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.LBTC().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.LBTC().decimals)
+        });
+    }
+
+    function LBTC_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.LBTC().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.LBTC().decimals)
+        });
+    }
+
+    function LBTC_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.LBTC().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.LBTC().decimals)
+        });
+    }
+
+    // MORPHO
+    function MORPHO_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.MORPHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
+        });
+    }
+
+    function MORPHO_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.MORPHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
+        });
+    }
+
+    function MORPHO_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.MORPHO().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
         });
     }
 
@@ -754,6 +878,37 @@ library AssetRiskParameters {
             collateralFactor: 9125,
             liquidationFactor: 9750,
             maxExposure: uint112(500 * 10 ** Assets.WEETH().decimals)
+        });
+    }
+
+    // WELL
+    function WELL_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.WELL().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
+        });
+    }
+
+    function WELL_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.WELL().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
+        });
+    }
+
+    function WELL_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.WELL().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
         });
     }
 
