@@ -23,9 +23,6 @@ contract SetRiskParameters is Base_Lending_Script {
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_CBBTC()));
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_USDC()));
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_WETH()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.LBTC_CBBTC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.LBTC_USDC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.LBTC_WETH()));
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_CBBTC()));
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_USDC()));
         addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_WETH()));
