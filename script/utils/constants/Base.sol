@@ -542,8 +542,8 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.LBTC().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
+            collateralFactor: 8500,
+            liquidationFactor: 9600,
             maxExposure: uint112(0 * 10 ** Assets.LBTC().decimals)
         });
     }
