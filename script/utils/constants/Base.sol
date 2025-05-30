@@ -262,9 +262,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.AAVE().asset,
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+            collateralFactor: 6800,
+            liquidationFactor: 7800,
+            maxExposure: uint112(3600 * 10 ** Assets.AAVE().decimals)
         });
     }
 
@@ -272,9 +272,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.AAVE().asset,
             creditor: ArcadiaLending.LENDINGPOOL_USDC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+            collateralFactor: 6400,
+            liquidationFactor: 7800,
+            maxExposure: uint112(4200 * 10 ** Assets.AAVE().decimals)
         });
     }
 
@@ -282,9 +282,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.AAVE().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.AAVE().decimals)
+            collateralFactor: 7000,
+            liquidationFactor: 7800,
+            maxExposure: uint112(5500 * 10 ** Assets.AAVE().decimals)
         });
     }
 
@@ -491,9 +491,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.GHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+            collateralFactor: 6800,
+            liquidationFactor: 8525,
+            maxExposure: uint112(40_000 * 10 ** Assets.GHO().decimals)
         });
     }
 
@@ -501,9 +501,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.GHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_USDC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+            collateralFactor: 9000,
+            liquidationFactor: 9500,
+            maxExposure: uint112(50_000 * 10 ** Assets.GHO().decimals)
         });
     }
 
@@ -511,9 +511,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.GHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.GHO().decimals)
+            collateralFactor: 8550,
+            liquidationFactor: 9225,
+            maxExposure: uint112(45_000 * 10 ** Assets.GHO().decimals)
         });
     }
 
@@ -553,9 +553,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.MORPHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
+            collateralFactor: 6400,
+            liquidationFactor: 7800,
+            maxExposure: uint112(70_000 * 10 ** Assets.MORPHO().decimals)
         });
     }
 
@@ -563,9 +563,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.MORPHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_USDC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
+            collateralFactor: 6500,
+            liquidationFactor: 7800,
+            maxExposure: uint112(75_000 * 10 ** Assets.MORPHO().decimals)
         });
     }
 
@@ -573,9 +573,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.MORPHO().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.MORPHO().decimals)
+            collateralFactor: 6500,
+            liquidationFactor: 7800,
+            maxExposure: uint112(140_000 * 10 ** Assets.MORPHO().decimals)
         });
     }
 
@@ -886,9 +886,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.WELL().asset,
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
+            collateralFactor: 6800,
+            liquidationFactor: 7800,
+            maxExposure: uint112(13_000_000 * 10 ** Assets.WELL().decimals)
         });
     }
 
@@ -896,9 +896,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.WELL().asset,
             creditor: ArcadiaLending.LENDINGPOOL_USDC,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
+            collateralFactor: 7000,
+            liquidationFactor: 8000,
+            maxExposure: uint112(15_000_000 * 10 ** Assets.WELL().decimals)
         });
     }
 
@@ -906,9 +906,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.WELL().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.WELL().decimals)
+            collateralFactor: 6900,
+            liquidationFactor: 8000,
+            maxExposure: uint112(14_000_000 * 10 ** Assets.WELL().decimals)
         });
     }
 
