@@ -4,23 +4,23 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 
-import { LendingPool } from "../../../src/LendingPool.sol";
-import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
-import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
+import { LendingPool } from "../../../../src/LendingPool.sol";
+import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
+import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "endAuction" of contract "Liquidator".
+ * @notice Fuzz tests for the function "endAuction" of contract "LiquidatorL2".
  */
-contract EndAuction_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL2_Fuzz_Test.setUp();
 
         // Set grace period to 0.
         vm.prank(users.riskManager);

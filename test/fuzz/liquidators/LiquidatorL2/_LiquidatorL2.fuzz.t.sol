@@ -4,14 +4,14 @@
  */
 pragma solidity 0.8.22;
 
-import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
+import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
 import { AccountV1 } from "lib/accounts-v2/src/accounts/AccountV1.sol";
 import { ERC20Mock } from "lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
 
 /**
- * @notice Common logic needed by all "Liquidator" fuzz tests.
+ * @notice Common logic needed by all "LiquidatorL2" fuzz tests.
  */
-abstract contract Liquidator_Fuzz_Test is Fuzz_Lending_Test {
+abstract contract LiquidatorL2_Fuzz_Test is Fuzz_Lending_Test {
     /* ///////////////////////////////////////////////////////////////
                              VARIABLES
     /////////////////////////////////////////////////////////////// */

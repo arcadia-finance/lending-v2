@@ -4,20 +4,20 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 
 import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
-import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AccountErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
-import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
-import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
-import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
-import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
+import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AccountErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
+import { FixedPointMathLib } from "../../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
+import { LendingPoolErrors } from "../../../../src/libraries/Errors.sol";
+import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
+import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
 
 /**
- * @notice Fuzz tests for the function "liquidateAccount" of contract "Liquidator".
+ * @notice Fuzz tests for the function "liquidateAccount" of contract "LiquidatorL2".
  */
-contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     using FixedPointMathLib for uint256;
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL2_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ contract LiquidateAccount_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         address proxyAddress_NoCreditor = factory.createAccount(2, 0, address(0));
         AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoCreditor);
 
-        // When Then: Liquidator tries to liquidate, It should revert because there is no creditor to call to get the account debt
+        // When Then: LiquidatorL2 tries to liquidate, It should revert because there is no creditor to call to get the account debt
         vm.startPrank(liquidationInitiator);
         vm.expectRevert();
         liquidator.liquidateAccount(address(proxyAccount_));

@@ -4,27 +4,27 @@
  */
 pragma solidity ^0.8.22;
 
-import { AssetValueAndRiskFactors } from "../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { ERC20, SafeTransferLib } from "../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
-import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
-import { IAccount } from "./interfaces/IAccount.sol";
-import { IBidCallback } from "./interfaces/IBidCallback.sol";
-import { IChainLinkData } from "../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
-import { ICreditor } from "../lib/accounts-v2/src/interfaces/ICreditor.sol";
-import { IFactory } from "./interfaces/IFactory.sol";
-import { ILendingPool } from "./interfaces/ILendingPool.sol";
-import { ILiquidator } from "./interfaces/ILiquidator.sol";
-import { LogExpMath } from "./libraries/LogExpMath.sol";
-import { LiquidatorErrors } from "./libraries/Errors.sol";
-import { Owned } from "../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
-import { ReentrancyGuard } from "../lib/accounts-v2/lib/solmate/src/utils/ReentrancyGuard.sol";
+import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { ERC20, SafeTransferLib } from "../../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
+import { IAccount } from "../interfaces/IAccount.sol";
+import { IBidCallback } from "../interfaces/IBidCallback.sol";
+import { IChainLinkData } from "../../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
+import { ICreditor } from "../../lib/accounts-v2/src/interfaces/ICreditor.sol";
+import { IFactory } from "../interfaces/IFactory.sol";
+import { ILendingPool } from "../interfaces/ILendingPool.sol";
+import { ILiquidator } from "../interfaces/ILiquidator.sol";
+import { LogExpMath } from "../libraries/LogExpMath.sol";
+import { LiquidatorErrors } from "../libraries/Errors.sol";
+import { Owned } from "../../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
+import { ReentrancyGuard } from "../../lib/accounts-v2/lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /**
- * @title Liquidator.
+ * @title Liquidator for L1s.
  * @author Pragma Labs
  * @notice The Liquidator manages the Dutch auctions, used to sell collateral of unhealthy Arcadia Accounts.
  */
-contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
+contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
     /* //////////////////////////////////////////////////////////////
@@ -49,9 +49,6 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     uint16 internal startPriceMultiplier;
     // Sets the minimum price the auction converges to, 4 decimals precision.
     uint16 internal minPriceMultiplier;
-
-    // The contract address of the sequencer uptime oracle.
-    address internal sequencerUptimeOracle;
 
     // Map of creditor to address to which all assets are transferred to after an unsuccessful auction.
     mapping(address => address) internal creditorToAccountRecipient;
@@ -104,15 +101,9 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     /**
      * @notice The constructor for the Liquidator.
      * @param accountFactory The contract address of the Arcadia Account Factory.
-     * @param sequencerUptimeOracle_ The contract address of the sequencer uptime oracle.
      */
-    constructor(address accountFactory, address sequencerUptimeOracle_) Owned(msg.sender) {
+    constructor(address accountFactory) Owned(msg.sender) {
         ACCOUNT_FACTORY = accountFactory;
-        sequencerUptimeOracle = sequencerUptimeOracle_;
-
-        // Check that the sequencer uptime oracle is not reverting.
-        (bool success,) = _getSequencerUpTime();
-        if (!success) revert LiquidatorErrors.OracleReverting();
 
         // Half life of 3600s.
         base = 999_807_477_651_317_446;
@@ -124,48 +115,6 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
         minPriceMultiplier = 6000;
 
         emit AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                             L2 LOGIC
-    ///////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice Checks that the sequencer is not down, and returns the last time the sequencer went back up.
-     * @return success Boolean indicating whether the sequencer uptime oracle is not reverting.
-     * @return startedAt Timestamp of the last time the sequencer went back up.
-     * @dev This check guarantees that ongoing auctions do not continue while the sequencer is down.
-     * @dev If the sequencer uptime oracle itself is reverting, the sequencer is assumed to be still up,
-     * startedAt will be 0 in this case.
-     */
-    function _getSequencerUpTime() internal view returns (bool success, uint256 startedAt) {
-        try IChainLinkData(sequencerUptimeOracle).latestRoundData() returns (
-            uint80, int256 answer, uint256 startedAt_, uint256, uint80
-        ) {
-            if (answer == 1) revert LiquidatorErrors.SequencerDown();
-
-            success = true;
-            startedAt = startedAt_;
-        } catch {
-            // If sequencer uptime oracle itself is reverting, startedAt is 0.
-        }
-    }
-
-    /**
-     * @notice Sets a new sequencer uptime oracle in the case the current oracle is reverting.
-     * @param sequencerUptimeOracle_ The contract address of the new sequencer uptime oracle.
-     */
-    function setSequencerUptimeOracle(address sequencerUptimeOracle_) external onlyOwner {
-        // Check that the current sequencer uptime oracle is reverting.
-        (bool success,) = _getSequencerUpTime();
-        if (success) revert LiquidatorErrors.OracleNotReverting();
-
-        // Set the new sequencer uptime oracle.
-        sequencerUptimeOracle = sequencerUptimeOracle_;
-
-        // Check that the new sequencer uptime oracle is not reverting.
-        (success,) = _getSequencerUpTime();
-        if (!success) revert LiquidatorErrors.OracleReverting();
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -274,7 +223,6 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
 
         // Check if the Account is insolvent and if it is, start the liquidation in the Account.
         // startLiquidation will revert if the Account is still solvent.
-        // startLiquidation will revert if the sequencer is down, or if less then the grace period,
         // set by the Creditor, has passed.
         (
             address[] memory assetAddresses,
@@ -378,12 +326,6 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
     {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
-
-        // Restart pending auctions if the sequencer went down during the auction.
-        (, uint256 sequencerStartedAt) = _getSequencerUpTime();
-        if (sequencerStartedAt > auctionInformation_.startTime) {
-            auctionInformation_.startTime = uint32(sequencerStartedAt);
-        }
 
         // Transfer the assets to the bidder, returns updated bidAmounts with the actual bought assets.
         // The actual bought assets are equal or smaller than the asked assets.
@@ -534,12 +476,6 @@ contract Liquidator is Owned, ReentrancyGuard, ILiquidator {
 
         // Check if the account is being auctioned.
         if (!auctionInformation_.inAuction) revert LiquidatorErrors.NotForSale();
-
-        // Restart pending auctions if the sequencer went down during the auction.
-        (, uint256 sequencerStartedAt) = _getSequencerUpTime();
-        if (sequencerStartedAt > auctionInformation_.startTime) {
-            auctionInformation_.startTime = uint32(sequencerStartedAt);
-        }
 
         if (!_settleAuction(account, auctionInformation_)) revert LiquidatorErrors.EndAuctionFailed();
 

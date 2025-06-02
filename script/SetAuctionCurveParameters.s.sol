@@ -5,7 +5,7 @@
 pragma solidity ^0.8.22;
 
 import { Base_Lending_Script } from "./Base.s.sol";
-import { Liquidator } from "../src/Liquidator.sol";
+import { LiquidatorL2 } from "../src/liquidators/LiquidatorL2.sol";
 import { LiquidatorParameters, LiquidatorParams } from "./utils/constants/Shared.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
@@ -29,7 +29,7 @@ contract SetAuctionCurveParameters is Base_Lending_Script {
         returns (bytes memory calldata_)
     {
         calldata_ = abi.encodeCall(
-            Liquidator.setAuctionCurveParameters,
+            LiquidatorL2.setAuctionCurveParameters,
             (
                 liquidator_.halfLifeTime,
                 liquidator_.cutoffTime,

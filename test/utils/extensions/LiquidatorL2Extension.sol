@@ -5,11 +5,11 @@
 pragma solidity ^0.8.22;
 
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { Liquidator } from "../../../src/Liquidator.sol";
+import { LiquidatorL2 } from "../../../src/liquidators/LiquidatorL2.sol";
 
-contract LiquidatorExtension is Liquidator {
+contract LiquidatorL2Extension is LiquidatorL2 {
     constructor(address accountFactory, address sequencerUptimeOracle_)
-        Liquidator(accountFactory, sequencerUptimeOracle_)
+        LiquidatorL2(accountFactory, sequencerUptimeOracle_)
     { }
 
     function getSequencerUptimeOracle() public view returns (address sequencerUptimeOracle_) {

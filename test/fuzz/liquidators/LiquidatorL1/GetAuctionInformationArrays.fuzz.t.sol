@@ -4,22 +4,22 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
+import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
+import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { AssetValuationLib } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
 /**
- * @notice Fuzz tests for the function "getAuctionInformationArrays" of contract "Liquidator".
+ * @notice Fuzz tests for the function "getAuctionInformationArrays" of contract "LiquidatorL1".
  */
-contract GetAuctionInformationArrays_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract GetAuctionInformationArrays_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL1_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -33,17 +33,17 @@ contract GetAuctionInformationArrays_Liquidator_Fuzz_Test is Liquidator_Fuzz_Tes
         uint256[] memory assetAmounts,
         uint32[] memory assetShares
     ) public {
-        liquidator.setAssetAddresses(account_, assetAddresses);
-        liquidator.setAssetIds(account_, assetIds);
-        liquidator.setAssetAmounts(account_, assetAmounts);
-        liquidator.setAssetShares(account_, assetShares);
+        liquidator_.setAssetAddresses(account_, assetAddresses);
+        liquidator_.setAssetIds(account_, assetIds);
+        liquidator_.setAssetAmounts(account_, assetAmounts);
+        liquidator_.setAssetShares(account_, assetShares);
 
         (
             address[] memory assetAddresses_,
             uint256[] memory assetIds_,
             uint256[] memory assetAmounts_,
             uint32[] memory assetShares_
-        ) = liquidator.getAuctionInformationArrays(account_);
+        ) = liquidator_.getAuctionInformationArrays(account_);
 
         for (uint256 i; i < assetAddresses.length; ++i) {
             assertEq(assetAddresses[i], assetAddresses_[i]);
