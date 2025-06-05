@@ -4,22 +4,22 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
+import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 
-import { Liquidator } from "../../../src/Liquidator.sol";
-import { LiquidatorErrors } from "../../../src/libraries/Errors.sol";
-import { LogExpMath } from "../../../src/libraries/LogExpMath.sol";
+import { LiquidatorL2 } from "../../../../src/liquidators/LiquidatorL2.sol";
+import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
+import { LogExpMath } from "../../../../src/libraries/LogExpMath.sol";
 
 /**
- * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "Liquidator".
+ * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "LiquidatorL2".
  */
-contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract SetAuctionCurveParameters_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL2_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ contract SetAuctionCurveParameters_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test 
 
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit Liquidator.AuctionCurveParametersSet(
+        emit LiquidatorL2.AuctionCurveParametersSet(
             uint64(expectedBase), cutoffTime, startPriceMultiplier, minPriceMultiplier
         );
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);

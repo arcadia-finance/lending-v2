@@ -4,22 +4,22 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
+import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
+import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { AssetValuationLib } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
 /**
- * @notice Fuzz tests for the function "getBidPrice" of contract "Liquidator".
+ * @notice Fuzz tests for the function "getBidPrice" of contract "LiquidatorL2".
  */
-contract GetBidPrice_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract GetBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL2_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -9,13 +9,13 @@ import { Base_Lending_Test } from "../../../Base.t.sol";
 import { ERC20 } from "../../../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
 import { DebtTokenExtension } from "../../extensions/DebtTokenExtension.sol";
 import { LendingPoolExtension } from "../../extensions/LendingPoolExtension.sol";
-import { LiquidatorExtension } from "../../extensions/LiquidatorExtension.sol";
+import { LiquidatorL2Extension } from "../../extensions/LiquidatorL2Extension.sol";
 import { TrancheExtension } from "../../extensions/TrancheExtension.sol";
 
 contract ArcadiaLendingFixture is Base_Lending_Test {
     function deployArcadiaLending(address numeraire) internal {
         vm.startPrank(users.owner);
-        liquidator = new LiquidatorExtension(address(factory), address(sequencerUptimeOracle));
+        liquidator = new LiquidatorL2Extension(address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(
             users.riskManager, ERC20(numeraire), users.treasury, address(factory), address(liquidator)
         );

@@ -4,20 +4,20 @@
  */
 pragma solidity 0.8.22;
 
-import { Liquidator_Fuzz_Test } from "./_Liquidator.fuzz.t.sol";
-import { AccountV1Extension } from "../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
+import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
+import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
- * @notice Fuzz tests for the function "getAssetShares" of contract "Liquidator".
+ * @notice Fuzz tests for the function "getAssetShares" of contract "LiquidatorL1".
  */
-contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
+contract GetAssetShares_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
     /////////////////////////////////////////////////////////////// */
 
     function setUp() public override {
-        Liquidator_Fuzz_Test.setUp();
+        LiquidatorL1_Fuzz_Test.setUp();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_getAssetShare_EmptyArray() public {
         // When: getAssetShares is called.
-        uint32[] memory assetShares = liquidator.getAssetShares(new AssetValueAndRiskFactors[](0));
+        uint32[] memory assetShares = liquidator_.getAssetShares(new AssetValueAndRiskFactors[](0));
 
         // Then: Empty asset shares array is returned.
         assertEq(assetShares.length, 0);
@@ -35,7 +35,7 @@ contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         AssetValueAndRiskFactors[] memory assetValues = new AssetValueAndRiskFactors[](length);
 
         // When: getAssetShares is called.
-        uint32[] memory assetShares = liquidator.getAssetShares(assetValues);
+        uint32[] memory assetShares = liquidator_.getAssetShares(assetValues);
 
         // Then: The asset shares are 0.
         for (uint256 i; i < assetValues.length; ++i) {
@@ -58,7 +58,7 @@ contract GetAssetShares_Liquidator_Fuzz_Test is Liquidator_Fuzz_Test {
         vm.assume(totalValue != 0);
 
         // When: getAssetShares is called.
-        uint32[] memory assetShares = liquidator.getAssetShares(assetValues);
+        uint32[] memory assetShares = liquidator_.getAssetShares(assetValues);
 
         // Then: The asset shares are correctly calculated.
         uint256 expectedValue;
