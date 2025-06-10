@@ -885,9 +885,9 @@ library AssetRiskParameters {
         return AssetRiskParams({
             asset: Assets.VVV().asset,
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
-            collateralFactor: 0,
-            liquidationFactor: 0,
-            maxExposure: uint112(0 * 10 ** Assets.VVV().decimals)
+            collateralFactor: 6200,
+            liquidationFactor: 8000,
+            maxExposure: uint112(200_000 * 10 ** Assets.VVV().decimals)
         });
     }
 
