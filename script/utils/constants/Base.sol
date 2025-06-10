@@ -860,6 +860,37 @@ library AssetRiskParameters {
         });
     }
 
+    // VVV
+    function VVV_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.VVV().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.VVV().decimals)
+        });
+    }
+
+    function VVV_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.VVV().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.VVV().decimals)
+        });
+    }
+
+    function VVV_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.VVV().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 0,
+            liquidationFactor: 0,
+            maxExposure: uint112(0 * 10 ** Assets.VVV().decimals)
+        });
+    }
+
     // WEETH
     function WEETH_USDC() internal pure returns (AssetRiskParams memory) {
         return AssetRiskParams({
