@@ -722,7 +722,7 @@ library AssetRiskParameters {
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
             collateralFactor: 7200,
             liquidationFactor: 8750,
-            maxExposure: uint112(1_000_000 * 10 ** Assets.USDC().decimals)
+            maxExposure: uint112(10_000_000 * 10 ** Assets.USDC().decimals)
         });
     }
 
@@ -732,7 +732,7 @@ library AssetRiskParameters {
             creditor: ArcadiaLending.LENDINGPOOL_USDC,
             collateralFactor: 9325,
             liquidationFactor: 9750,
-            maxExposure: uint112(5_000_000 * 10 ** Assets.USDC().decimals)
+            maxExposure: uint112(10_000_000 * 10 ** Assets.USDC().decimals)
         });
     }
 
@@ -742,7 +742,7 @@ library AssetRiskParameters {
             creditor: ArcadiaLending.LENDINGPOOL_WETH,
             collateralFactor: 8850,
             liquidationFactor: 9475,
-            maxExposure: uint112(5_000_000 * 10 ** Assets.USDC().decimals)
+            maxExposure: uint112(10_000_000 * 10 ** Assets.USDC().decimals)
         });
     }
 
