@@ -216,6 +216,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function addTranche(address tranche, uint16 interestWeight_) external onlyOwner processInterests {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
+        if (tranche == treasury) revert LendingPoolErrors.InvalidTreasury();
 
         totalInterestWeight += interestWeight_;
         interestWeightTranches.push(interestWeight_);
@@ -299,7 +300,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Sets new treasury address.
      * @param treasury_ The new address of the treasury.
      */
-    function setTreasury(address treasury_) external onlyOwner {
+    function setTreasury(address treasury_) external onlyOwner processInterests {
+        if (isTranche[treasury_]) revert LendingPoolErrors.InvalidTreasury();
+
+        // Set interestWeight to the new treasury.
+        interestWeight[treasury_] = interestWeight[treasury];
+        interestWeight[treasury] = 0;
+
         treasury = treasury_;
     }
 
