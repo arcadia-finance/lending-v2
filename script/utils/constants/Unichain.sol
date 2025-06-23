@@ -135,6 +135,6 @@ library Tranches {
 
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
-        return Treasury({ treasury: Safes.TREASURY, interestWeight: 15, liquidationWeight: 50 });
+        return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });
     }
 }
