@@ -1179,9 +1179,7 @@ library TrancheParameters {
 }
 
 library Treasuries {
-    address constant SWEEPER = 0xD6aA7216dADd79120460ADc1C46959592063f07A;
-
     function TREASURY() internal pure returns (Treasury memory) {
-        return Treasury({ treasury: SWEEPER, interestWeight: 15, liquidationWeight: 50 });
+        return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });
     }
 }

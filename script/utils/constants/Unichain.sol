@@ -16,7 +16,7 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Optimism.sol";
+import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
 import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 library AssetModuleRiskParameters { }
