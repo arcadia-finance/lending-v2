@@ -649,7 +649,7 @@ library AssetRiskParameters {
             creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
             collateralFactor: 8625,
             liquidationFactor: 9675,
-            maxExposure: uint112(5 * 10 ** Assets.TBTC().decimals)
+            maxExposure: uint112(15 * 10 ** Assets.TBTC().decimals)
         });
     }
 
