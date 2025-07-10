@@ -17,9 +17,7 @@ contract SetRiskParameter is Base_Lending_Script {
 
     function run() public {
         // Set risk parameters.
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.TBTC_CBBTC()));
-        //addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.USDC_USDC()));
-        //addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.USDC_WETH()));
+        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.USDS_CBBTC()));
 
         // Create and write away batched transaction data to be signed with Safe.
         bytes memory data = createBatchedData(SAFE);
