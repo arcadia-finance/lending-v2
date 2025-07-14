@@ -15,13 +15,13 @@ contract Unpause is Base_Lending_Script {
     function run() public {
         // Pause Lending Pools.
         bytes memory calldata_ =
-            abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, false, false, false);
+            abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, true, false, false);
         addToBatch(SAFE, address(lendingPoolCbbtc), calldata_);
 
-        calldata_ = abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, false, false, false);
+        calldata_ = abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, true, false, false);
         addToBatch(SAFE, address(lendingPoolUsdc), calldata_);
 
-        calldata_ = abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, false, false, false);
+        calldata_ = abi.encodeWithSignature("unpause(bool,bool,bool,bool,bool)", false, false, true, false, false);
         addToBatch(SAFE, address(lendingPoolWeth), calldata_);
 
         // Pause Registry.
