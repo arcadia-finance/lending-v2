@@ -9,7 +9,6 @@ import { BaseGuardian } from "../lib/accounts-v2/src/guardians/BaseGuardian.sol"
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract CircuitBreaker is Base_Lending_Script {
-
     address internal SAFE = Safes.GUARDIAN;
 
     constructor() Base_Lending_Script() { }
