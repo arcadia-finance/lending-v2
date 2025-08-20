@@ -6,8 +6,8 @@ pragma solidity 0.8.22;
 
 import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 
-import { AccountV1 } from "accounts-v2/src/accounts/AccountV1.sol";
-import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
+import { AccountV3 } from "accounts-v2/src/accounts/AccountV3.sol";
+import { AccountV3Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV3Extension.sol";
 import { AccountErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { FixedPointMathLib } from "../../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { LendingPoolErrors } from "../../../../src/libraries/Errors.sol";
@@ -34,7 +34,7 @@ contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
     function testFuzz_Revert_liquidateAccount_NotAnAccount(address nonAccount, address caller) public {
         vm.assume(nonAccount != address(account));
-        vm.assume(nonAccount != address(accountV1Logic));
+        vm.assume(nonAccount != address(accountLogic));
 
         vm.prank(caller);
         vm.expectRevert(LiquidatorErrors.IsNotAnAccount.selector);
@@ -91,7 +91,7 @@ contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     function testFuzz_Revert_liquidateAccount_NoCreditorInAccount(address liquidationInitiator) public {
         // Given: Account is there and no creditor
         address proxyAddress_NoCreditor = factory.createAccount(2, 0, address(0));
-        AccountV1 proxyAccount_ = AccountV1(proxyAddress_NoCreditor);
+        AccountV3 proxyAccount_ = AccountV3(proxyAddress_NoCreditor);
 
         // When Then: LiquidatorL2 tries to liquidate, It should revert because there is no creditor to call to get the account debt
         vm.startPrank(liquidationInitiator);
@@ -326,7 +326,7 @@ contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
-        uint256 slot = stdstore.target(address(accountV1Logic)).sig(accountV1Logic.erc20Balances.selector).with_key(
+        uint256 slot = stdstore.target(address(accountLogic)).sig(accountLogic.erc20Balances.selector).with_key(
             address(mockERC20.stable1)
         ).find();
         vm.store(address(account), bytes32(slot), bytes32(0));

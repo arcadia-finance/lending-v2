@@ -12,7 +12,7 @@ import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 contract SetAuctionCurveParameters is Base_Lending_Script {
     LiquidatorParams internal LIQUIDATOR = LiquidatorParameters.LIQUIDATOR();
 
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         // Set auction parameters.

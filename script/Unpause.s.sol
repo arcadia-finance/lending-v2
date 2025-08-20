@@ -10,7 +10,7 @@ import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 contract Unpause is Base_Lending_Script {
     address SAFE = Safes.OWNER;
 
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         // Pause Lending Pools.

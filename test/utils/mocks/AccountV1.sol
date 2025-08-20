@@ -4,7 +4,7 @@
  */
 pragma solidity ^0.8.22;
 
-contract AccountV1 {
+contract AccountV3 {
     address public owner;
     uint256 public totalValue;
     uint256 public lockedValue;

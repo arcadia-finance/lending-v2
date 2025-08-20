@@ -11,7 +11,7 @@ import { LendingPoolParameters } from "./utils/constants/Base.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract SetInterestRates is Base_Lending_Script {
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         // Set interest rates.

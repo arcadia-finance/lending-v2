@@ -113,7 +113,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
 
     function testScenario_Revert_doActionWithLeverage_BadAccountVersion() public {
         vm.prank(users.owner);
-        pool.setAccountVersion(1, false);
+        pool.setAccountVersion(3, false);
 
         //Prepare input parameters
         ActionData memory withdrawData = ActionData({

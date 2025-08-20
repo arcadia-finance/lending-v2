@@ -4,7 +4,8 @@
  */
 pragma solidity 0.8.22;
 
-import { AccountV1 } from "../../../../lib/accounts-v2/src/accounts/AccountV1.sol";
+import { AccountsGuardExtension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountsGuardExtension.sol";
+import { AccountV3 } from "../../../../lib/accounts-v2/src/accounts/AccountV3.sol";
 import { ArcadiaOracle } from "../../../../lib/accounts-v2/test/utils/mocks/oracles/ArcadiaOracle.sol";
 import { BitPackingLib } from "../../../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { ChainlinkOMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/ChainlinkOMExtension.sol";
@@ -12,7 +13,7 @@ import { Constants } from "../../../../lib/accounts-v2/test/utils/Constants.sol"
 import { DebtTokenExtension } from "../../../utils/extensions/DebtTokenExtension.sol";
 import { ERC20, ERC20Mock } from "../../../../lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
 import { ERC20PrimaryAMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/ERC20PrimaryAMExtension.sol";
-import { Factory } from "../../../../lib/accounts-v2/src/Factory.sol";
+import { FactoryExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FactoryExtension.sol";
 import { FloorERC721AMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FloorERC721AMExtension.sol";
 import { FloorERC1155AMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FloorERC1155AMExtension.sol";
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
@@ -45,15 +46,17 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithAccounts();
 
         vm.startPrank(users.owner);
-        factory = new Factory();
+        factory = new FactoryExtension();
         registry_ = new RegistryL1Extension(address(factory));
         chainlinkOM = new ChainlinkOMExtension(address(registry_));
         erc20AM = new ERC20PrimaryAMExtension(address(registry_));
         floorERC721AM = new FloorERC721AMExtension(address(registry_));
         floorERC1155AM = new FloorERC1155AMExtension(address(registry_));
 
-        accountV1Logic = new AccountV1(address(factory));
-        factory.setNewAccountInfo(address(registry_), address(accountV1Logic), Constants.upgradeProof1To2, "");
+        accountsGuard = new AccountsGuardExtension(users.owner, address(factory));
+        accountLogic = new AccountV3(address(factory), address(accountsGuard));
+        factory.setLatestAccountVersion(2);
+        factory.setNewAccountInfo(address(registry_), address(accountLogic), Constants.upgradeRoot3To4And4To3, "");
 
         // Set the Guardians.
         factory.changeGuardian(users.guardian);
@@ -89,7 +92,7 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         // Deploy an initial Account with all inputs to zero
         vm.prank(users.accountOwner);
         address proxyAddress = factory.createAccount(0, 0, address(0));
-        account = AccountV1(proxyAddress);
+        account = AccountV3(proxyAddress);
 
         // Set Risk Variables.
         vm.startPrank(users.riskManager);
@@ -243,7 +246,7 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         pool.setTreasuryWeights(10, 80);
         pool.setLiquidationParameters(100, 500, 50, 0, 0);
         pool.setLiquidationWeightTranche(20);
-        pool.setAccountVersion(1, true);
+        pool.setAccountVersion(3, true);
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);
