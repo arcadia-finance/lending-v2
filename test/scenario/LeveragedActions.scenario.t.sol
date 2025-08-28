@@ -51,8 +51,12 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         action = new ActionMultiCall();
         vm.stopPrank();
 
+        address[] memory assetManagers = new address[](1);
+        assetManagers[0] = address(pool);
+        bool[] memory statuses = new bool[](1);
+        statuses[0] = true;
         vm.prank(users.accountOwner);
-        account.setAssetManager(address(pool), true);
+        account.setAssetManagers(assetManagers, statuses, new bytes[](1));
 
         // Set the risk parameters.
         vm.prank(users.riskManager);
@@ -75,7 +79,12 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     function testScenario_Revert_doActionWithLeverage_DifferentCreditor() public {
         vm.startPrank(users.accountOwner);
         account.closeMarginAccount();
-        account.setAssetManager(address(pool), true);
+
+        address[] memory assetManagers = new address[](1);
+        assetManagers[0] = address(pool);
+        bool[] memory statuses = new bool[](1);
+        statuses[0] = true;
+        account.setAssetManagers(assetManagers, statuses, new bytes[](1));
         vm.stopPrank();
 
         //Prepare input parameters
