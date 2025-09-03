@@ -57,7 +57,6 @@ abstract contract Fuzz_Lending_Test is Base_Lending_Test, Fuzz_Test, ArcadiaLend
         deployArcadiaLending(address(asset));
         srTranche = createTranche("Senior", "SR", 50);
         jrTranche = createTranche("Junior", "JR", 40);
-
         // For clarity, some contracts have a generalised name in some tests.
         tranche = srTranche;
     }

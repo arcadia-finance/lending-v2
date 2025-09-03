@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
 
 library LiquidatorErrors {
     // Thrown when the liquidateAccount function is called on an Account that is already in an auction.
@@ -49,6 +49,8 @@ library LendingPoolErrors {
     error AmountExceedsBalance();
     // Thrown when an auction is in process.
     error AuctionOngoing();
+    // Thrown when Treasury is set as tranche.
+    error InvalidTreasury();
     // Thrown when an Account would become unhealthy OR the creditor of the Account is not the specific lending pool OR the Account version would not be valid.
     error InvalidVersion();
     // Thrown when account specified is not an Arcadia Account.

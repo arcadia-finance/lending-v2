@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
@@ -216,6 +216,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function addTranche(address tranche, uint16 interestWeight_) external onlyOwner processInterests {
         if (auctionsInProgress > 0) revert LendingPoolErrors.AuctionOngoing();
         if (isTranche[tranche]) revert LendingPoolErrors.TrancheAlreadyExists();
+        if (tranche == treasury) revert LendingPoolErrors.InvalidTreasury();
 
         totalInterestWeight += interestWeight_;
         interestWeightTranches.push(interestWeight_);
@@ -299,7 +300,13 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @notice Sets new treasury address.
      * @param treasury_ The new address of the treasury.
      */
-    function setTreasury(address treasury_) external onlyOwner {
+    function setTreasury(address treasury_) external onlyOwner processInterests {
+        if (isTranche[treasury_]) revert LendingPoolErrors.InvalidTreasury();
+
+        // Set interestWeight to the new treasury.
+        interestWeight[treasury_] = interestWeight[treasury];
+        interestWeight[treasury] = 0;
+
         treasury = treasury_;
     }
 
@@ -1024,17 +1031,20 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
             totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
+            (terminationReward, liquidationPenalty) = (0, 0);
         } else {
             uint256 remainder = liquidationPenalty + terminationReward - openDebt;
             if (openDebt >= liquidationPenalty) {
                 // "openDebt" is bigger than the "liquidationPenalty" but smaller than the total pending liquidation incentives.
                 // Don't pay out the "liquidationPenalty" to Lps, partially pay out the "terminator".
                 realisedLiquidityOf[terminator] += remainder;
+                (terminationReward, liquidationPenalty) = (remainder, 0);
             } else {
                 // "openDebt" is smaller than the "liquidationPenalty".
                 // Fully pay out the "terminator" and partially pay out the "liquidationPenalty".
                 realisedLiquidityOf[terminator] += terminationReward;
-                _syncLiquidationFee(remainder - terminationReward);
+                liquidationPenalty = remainder - terminationReward;
+                _syncLiquidationFee(liquidationPenalty);
             }
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity + remainder);
         }

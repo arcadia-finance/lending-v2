@@ -4,8 +4,8 @@
  */
 pragma solidity 0.8.22;
 
+import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 import { stdError } from "../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
@@ -120,12 +120,16 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setOpenPosition(address(account), openDebt);
         debt.setRealisedDebt(openDebt);
 
-        // When: Liquidator settles a liquidation
-        vm.prank(address(liquidator));
-        pool.settleLiquidationUnhappyFlow(address(account), startDebt, 0, auctionTerminator);
-
         // As all liquidation penalty can not be distributed
         uint256 liquidationFee = liquidationPenalty - openDebt;
+
+        // When: Liquidator settles a liquidation
+        vm.expectEmit(address(pool));
+        emit LendingPool.AuctionFinished(
+            address(account), address(pool), startDebt, initiationReward, auctionTerminationReward, liquidationFee, 0, 0
+        );
+        vm.prank(address(liquidator));
+        pool.settleLiquidationUnhappyFlow(address(account), startDebt, 0, auctionTerminator);
 
         // round up
         uint256 totalLiquidationWeight = pool.getLiquidationWeightTreasury() + pool.getLiquidationWeightTranche();
@@ -210,11 +214,15 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setOpenPosition(address(account), openDebt);
         debt.setRealisedDebt(openDebt);
 
+        uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
+
         // When: Liquidator settles a liquidation
+        vm.expectEmit(address(pool));
+        emit LendingPool.AuctionFinished(
+            address(account), address(pool), startDebt, initiationReward, leftAuctionTerminationReward, 0, 0, 0
+        );
         vm.prank(address(liquidator));
         pool.settleLiquidationUnhappyFlow(address(account), startDebt, 0, auctionTerminator);
-
-        uint256 leftAuctionTerminationReward = (liquidationPenalty + auctionTerminationReward) - openDebt;
 
         // Then: Terminator should be able to claim his rewards for liquidation termination
         assertEq(pool.liquidityOf(auctionTerminator), leftAuctionTerminationReward);
@@ -289,6 +297,8 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         jrTranche.setAuctionInProgress(true);
 
         // When: Liquidator settles a liquidation
+        vm.expectEmit(address(pool));
+        emit LendingPool.AuctionFinished(address(account), address(pool), startDebt, initiationReward, 0, 0, 0, 0);
         vm.prank(address(liquidator));
         pool.settleLiquidationUnhappyFlow(address(account), startDebt, 0, auctionTerminator);
 

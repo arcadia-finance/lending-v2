@@ -38,13 +38,13 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_flashActionCallback_Unauthorised(
-        address account,
+        address account_,
         address sender,
         bytes calldata callbackData
     ) public {
-        vm.assume(account != sender);
+        vm.assume(account_ != sender);
 
-        pool.setCallbackAccount(account);
+        pool.setCallbackAccount(account_);
 
         vm.prank(sender);
         vm.expectRevert(LendingPoolErrors.Unauthorized.selector);
@@ -54,7 +54,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_flashActionCallback_InsufficientLiquidity(
         uint128 amountLoaned,
         uint128 liquidity,
-        address account,
+        address account_,
         address actionTarget,
         address sender,
         bytes3 referrer
@@ -65,10 +65,10 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        pool.setCallbackAccount(account);
+        pool.setCallbackAccount(account_);
         bytes memory callbackData = abi.encode(amountLoaned, actionTarget, sender, referrer);
 
-        vm.prank(account);
+        vm.prank(account_);
         vm.expectRevert("TRANSFER_FAILED");
         pool.flashActionCallback(callbackData);
     }
@@ -76,16 +76,19 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_flashActionCallback(
         uint128 amountLoaned,
         uint128 liquidity,
-        address account,
+        address account_,
         address actionTarget,
         address sender,
         bytes3 referrer,
         uint8 originationFee
     ) public {
-        vm.assume(account != users.liquidityProvider);
-        vm.assume(account != address(pool));
-        vm.assume(account != actionTarget);
-        vm.assume(account != users.treasury);
+        vm.assume(account_ != users.liquidityProvider);
+        vm.assume(account_ != address(pool));
+        vm.assume(account_ != actionTarget);
+        vm.assume(account_ != users.treasury);
+        vm.assume(actionTarget != users.liquidityProvider);
+        vm.assume(actionTarget != address(pool));
+        vm.assume(actionTarget != users.treasury);
 
         vm.assume(liquidity >= amountLoaned);
         uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
@@ -101,19 +104,19 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
-        pool.setCallbackAccount(account);
+        pool.setCallbackAccount(account_);
         bytes memory callbackData = abi.encode(amountLoaned, actionTarget, sender, referrer);
 
-        vm.startPrank(account);
+        vm.startPrank(account_);
         vm.expectEmit(true, true, true, true);
-        emit LendingPool.Borrow(account, sender, actionTarget, amountLoaned, fee, referrer);
+        emit LendingPool.Borrow(account_, sender, actionTarget, amountLoaned, fee, referrer);
         pool.flashActionCallback(callbackData);
         vm.stopPrank();
 
         assertEq(pool.getCallbackAccount(), address(0));
         assertEq(mockERC20.stable1.balanceOf(address(pool)), liquidity - amountLoaned);
         assertEq(mockERC20.stable1.balanceOf(actionTarget), amountLoaned);
-        assertEq(debt.balanceOf(account), uint256(amountLoaned) + fee);
+        assertEq(debt.balanceOf(account_), uint256(amountLoaned) + fee);
         assertEq(pool.liquidityOf(users.treasury), fee);
         assertEq(pool.totalLiquidity(), liquidity + fee);
     }

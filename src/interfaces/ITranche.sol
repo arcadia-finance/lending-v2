@@ -2,7 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
+
+import { ILendingPool } from "./ILendingPool.sol";
 
 interface ITranche {
     /**
@@ -15,4 +17,6 @@ interface ITranche {
      * @param auctionInProgress Flag indicating if there are auctions in progress.
      */
     function setAuctionInProgress(bool auctionInProgress) external;
+
+    function LENDING_POOL() external returns (ILendingPool lendingPool);
 }

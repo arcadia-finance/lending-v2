@@ -2,13 +2,13 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
 
 import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 
 import { DebtTokenExtension } from "./utils/extensions/DebtTokenExtension.sol";
 import { LendingPoolExtension } from "./utils/extensions/LendingPoolExtension.sol";
-import { LiquidatorExtension } from "./utils/extensions/LiquidatorExtension.sol";
+import { LiquidatorL2Extension } from "./utils/extensions/LiquidatorL2Extension.sol";
 import { TrancheExtension } from "./utils/extensions/TrancheExtension.sol";
 
 /// @notice Base test contract with common logic needed by all tests in Arcadia Lending repo.
@@ -25,7 +25,7 @@ abstract contract Base_Lending_Test is Base_Test {
 
     DebtTokenExtension internal debt;
     LendingPoolExtension internal pool;
-    LiquidatorExtension internal liquidator;
+    LiquidatorL2Extension internal liquidator;
     TrancheExtension internal tranche;
 
     /*//////////////////////////////////////////////////////////////////////////
