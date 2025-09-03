@@ -21,7 +21,7 @@ contract AddCbbtc is Base_Lending_Script {
     TrancheParams internal TRANCHE = POOL.tranche;
     TrancheWrapper internal wrappedTranche;
 
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         require(vm.addr(deployer) == Deployers.ARCADIA, "Wrong deployer.");

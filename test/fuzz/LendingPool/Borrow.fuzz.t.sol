@@ -135,7 +135,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool pool_ = new LendingPool(
             users.riskManager, ERC20(address(mockERC20.stable1)), users.treasury, address(factory), address(liquidator)
         );
-        pool_.setAccountVersion(1, true);
+        pool_.setAccountVersion(3, true);
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);
@@ -168,7 +168,7 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.owner);
-        pool.setAccountVersion(1, false);
+        pool.setAccountVersion(3, false);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert(LendingPoolErrors.InvalidVersion.selector);

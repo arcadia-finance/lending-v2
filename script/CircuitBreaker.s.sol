@@ -8,7 +8,7 @@ import { Base_Lending_Script } from "./Base.s.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract CircuitBreaker is Base_Lending_Script {
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         // Pause Lending Pools.

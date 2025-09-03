@@ -33,7 +33,7 @@ contract ArcadiaLendingFixture is Base_Lending_Test {
         pool.setTreasuryWeights(10, 80);
         pool.setLiquidationParameters(100, 500, 50, 0, 0);
         pool.setLiquidationWeightTranche(20);
-        pool.setAccountVersion(1, true);
+        pool.setAccountVersion(3, true);
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);

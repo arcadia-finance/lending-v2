@@ -14,7 +14,7 @@ import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 contract SetRiskParametersAM is Base_Lending_Script {
     address SAFE = Safes.RISK_MANAGER;
 
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         // Set risk parameters.

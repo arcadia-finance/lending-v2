@@ -5,7 +5,7 @@
 pragma solidity 0.8.22;
 
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
-import { AccountV1 } from "lib/accounts-v2/src/accounts/AccountV1.sol";
+import { AccountV3 } from "lib/accounts-v2/src/accounts/AccountV3.sol";
 import { ERC20Mock } from "lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
 
 /**
