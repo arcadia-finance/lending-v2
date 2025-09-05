@@ -5,7 +5,7 @@
 pragma solidity ^0.8.22;
 
 import { ERC20 } from "../../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
-import { ERC4626 } from "../../../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
+import { ERC4626 } from "../../../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { ITranche } from "./interfaces/ITranche.sol";
 import { SafeTransferLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
