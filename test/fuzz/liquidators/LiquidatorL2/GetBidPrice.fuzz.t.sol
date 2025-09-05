@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 import { AccountV3Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV3Extension.sol";
@@ -39,7 +39,7 @@ contract GetBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_getBidPrice_notInAuction() public {
+    function testFuzz_Success_getBidPrice_notInAuction() public view {
         uint256[] memory assetAmounts_ = new uint256[](2);
 
         // When : Calling getBidPrice on an Account that is not in liquidation

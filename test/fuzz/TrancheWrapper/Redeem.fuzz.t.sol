@@ -1,4 +1,4 @@
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 

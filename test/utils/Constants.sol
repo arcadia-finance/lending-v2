@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 library Constants {
     uint72 internal constant interestRate = 5e16; //5% with 18 decimals precision
