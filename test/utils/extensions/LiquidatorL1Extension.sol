@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { LiquidatorL1 } from "../../../src/liquidators/LiquidatorL1.sol";

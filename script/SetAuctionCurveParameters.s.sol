@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { Base_Lending_Script } from "./Base.s.sol";
 import { LiquidatorL2 } from "../src/liquidators/LiquidatorL2.sol";
