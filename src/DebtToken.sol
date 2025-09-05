@@ -4,9 +4,9 @@
  */
 pragma solidity ^0.8.0;
 
+import { DebtTokenErrors } from "./libraries/Errors.sol";
 import { ERC20, ERC4626 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
-import { DebtTokenErrors } from "./libraries/Errors.sol";
 
 /**
  * @title Debt Token.
