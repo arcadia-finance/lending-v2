@@ -51,8 +51,8 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(realisedDebt, address(account), address(account), emptyBytes3);
 
         // And: deltaTimestamp have passed
-        uint256 start_timestamp = block.timestamp;
-        vm.warp(start_timestamp + deltaTimestamp);
+        uint256 startTimestamp = block.timestamp;
+        vm.warp(startTimestamp + deltaTimestamp);
 
         // When: Interests are synced
         vm.prank(users.owner);
@@ -66,6 +66,6 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.maxWithdraw(address(account)), realisedDebt + interests);
         assertEq(debt.maxRedeem(address(account)), realisedDebt);
         assertEq(debt.totalAssets(), realisedDebt + interests);
-        assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
+        assertEq(pool.getLastSyncedTimestamp(), startTimestamp + deltaTimestamp);
     }
 }

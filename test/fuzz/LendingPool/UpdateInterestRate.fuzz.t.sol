@@ -46,8 +46,8 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setInterestRate(interestRate);
         pool.setLastSyncedTimestamp(uint32(block.timestamp));
 
-        uint256 start_timestamp = block.timestamp;
-        vm.warp(start_timestamp + deltaTimestamp);
+        uint256 startTimestamp = block.timestamp;
+        vm.warp(startTimestamp + deltaTimestamp);
 
         vm.prank(sender);
         pool.updateInterestRate();
@@ -55,7 +55,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 interest = calcUnrealisedDebtChecked(interestRate, deltaTimestamp, realisedDebt);
 
         assertEq(debt.totalAssets(), realisedDebt + interest);
-        assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
+        assertEq(pool.getLastSyncedTimestamp(), startTimestamp + deltaTimestamp);
         // Pools have no liquidity -> all interests go to the Treasury.
         assertEq(pool.liquidityOf(address(users.treasury)), interest);
         assertEq(pool.totalLiquidity(), realisedLiquidity + interest);

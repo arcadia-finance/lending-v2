@@ -14,6 +14,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
  */
+/// forge-lint: disable-next-item(divide-before-multiply)
 contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////

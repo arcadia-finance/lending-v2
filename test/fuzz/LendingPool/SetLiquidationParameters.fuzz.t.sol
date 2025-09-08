@@ -5,8 +5,6 @@
 pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**

@@ -15,20 +15,20 @@ contract SetProtocolFees is Base_Lending_Script {
 
     function run() public {
         //Set fees.
-        LendingPoolParams memory POOL = LendingPoolParameters.CBBTC();
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setLiquidationWeightTranche(POOL));
+        LendingPoolParams memory pool_ = LendingPoolParameters.CBBTC();
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setLiquidationWeightTranche(pool_));
 
-        POOL = LendingPoolParameters.USDC();
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setLiquidationWeightTranche(POOL));
+        pool_ = LendingPoolParameters.USDC();
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setLiquidationWeightTranche(pool_));
 
-        POOL = LendingPoolParameters.WETH();
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setLiquidationWeightTranche(POOL));
+        pool_ = LendingPoolParameters.WETH();
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setLiquidationWeightTranche(pool_));
 
         // Create and write away batched transaction data to be signed with Safe.
         bytes memory data = createBatchedData(Safes.OWNER);

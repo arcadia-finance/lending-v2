@@ -6,8 +6,6 @@ pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-
 /**
  * @notice Fuzz tests for the function "totalLiquidity" of contract "LendingPool".
  */

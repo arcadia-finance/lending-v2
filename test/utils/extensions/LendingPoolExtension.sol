@@ -8,8 +8,8 @@ import { ERC20 } from "../../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol
 import { LendingPool } from "../../../src/LendingPool.sol";
 
 contract LendingPoolExtension is LendingPool {
-    constructor(address riskManager_, ERC20 asset_, address treasury_, address account_factory, address liquidator_)
-        LendingPool(riskManager_, asset_, treasury_, account_factory, liquidator_)
+    constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory, address liquidator_)
+        LendingPool(riskManager_, asset_, treasury_, accountFactory, liquidator_)
     { }
 
     function getCallbackAccount() public view returns (address callbackAccount_) {

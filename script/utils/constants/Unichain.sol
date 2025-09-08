@@ -6,8 +6,6 @@ pragma solidity ^0.8.0;
 
 import {
     ArcadiaLending,
-    AssetModuleRiskParams,
-    AssetRiskParams,
     InterestRateParams,
     LendingPoolParams,
     LiquidationParams,
@@ -16,13 +14,13 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
-import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
 
 library AssetModuleRiskParameters { }
 
 library AssetRiskParameters { }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
     function USDC() internal pure returns (InterestRateParams memory) {
         return InterestRateParams({
@@ -43,6 +41,7 @@ library InterestRateParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
     function USDC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
@@ -77,6 +76,7 @@ library LendingPoolParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LiquidationParameters {
     function USDC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
@@ -99,6 +99,7 @@ library LiquidationParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library Tranches {
     function USDC() internal pure returns (TrancheParams[] memory tranches) {
         tranches = new TrancheParams[](1);
@@ -133,6 +134,7 @@ library Tranches {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
         return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });

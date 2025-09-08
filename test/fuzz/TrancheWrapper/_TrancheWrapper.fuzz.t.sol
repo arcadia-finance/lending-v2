@@ -60,6 +60,7 @@ abstract contract TrancheWrapper_Fuzz_Test is Fuzz_Lending_Test {
         stdstore.target(address(trancheWrapper)).sig(trancheWrapper.totalSupply.selector).checked_write(wrapperShares);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         asset.transfer(address(pool), initialAssets);
     }
 }

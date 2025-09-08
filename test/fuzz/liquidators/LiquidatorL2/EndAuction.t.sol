@@ -13,6 +13,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "LiquidatorL2".
  */
+/// forge-lint: disable-next-item(divide-before-multiply)
 contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////

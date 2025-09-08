@@ -8,7 +8,6 @@ import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
 
 import { LiquidatorL1 } from "../../../../src/liquidators/LiquidatorL1.sol";
 import { LiquidatorL1Extension } from "../../../utils/extensions/LiquidatorL1Extension.sol";
-import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
 
 /**
  * @notice Fuzz tests for the function "constructor" of contract "LiquidatorL1".

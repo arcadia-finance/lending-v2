@@ -43,6 +43,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.prank(address(srTranche));
@@ -78,6 +79,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
@@ -105,6 +107,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != address(account));
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
@@ -131,6 +134,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountRepaid);
 
         vm.prank(address(srTranche));
@@ -166,6 +170,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountLoaned);
 
         vm.prank(address(srTranche));
@@ -204,6 +209,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.prank(address(srTranche));

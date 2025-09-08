@@ -5,8 +5,6 @@
 pragma solidity ^0.8.0;
 
 import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
-
-import { AccountV3Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV3Extension.sol";
 import { Bidder } from "../../../utils/mocks/Bidder.sol";
 import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
 import { RegistryErrors } from "../../../../lib/accounts-v2/src/libraries/Errors.sol";
@@ -15,6 +13,7 @@ import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError
 /**
  * @notice Fuzz tests for the function "bid" of contract "LiquidatorL2".
  */
+/// forge-lint: disable-next-item(divide-before-multiply)
 contract Bid_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
