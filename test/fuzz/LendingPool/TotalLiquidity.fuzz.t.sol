@@ -37,7 +37,7 @@ contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);
 
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);

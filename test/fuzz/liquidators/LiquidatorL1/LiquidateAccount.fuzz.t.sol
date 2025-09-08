@@ -48,7 +48,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -116,7 +116,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         bytes3 emptyBytes3;
         vm.assume(amountLoaned > 0);
         vm.assume(amountLoaned <= type(uint112).max - 2); // No overflow when debt is increased
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -148,7 +148,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -199,7 +199,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -262,7 +262,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));
@@ -313,7 +313,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

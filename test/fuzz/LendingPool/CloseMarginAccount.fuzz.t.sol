@@ -33,7 +33,7 @@ contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
