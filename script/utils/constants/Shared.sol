@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 library ArcadiaLending {
     address internal constant LIQUIDATOR = 0xA4B0b9fD1d91fA2De44F6ABFd59cC14bA1E1a7Af;

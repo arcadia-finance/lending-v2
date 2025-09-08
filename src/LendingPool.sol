@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
 import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
@@ -174,7 +174,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         _syncInterests();
         _;
         // _updateInterestRate() modifies the state (effect), but can safely be called after interactions.
-        // Cannot be exploited by re-entrancy attack.
+        // Cannot be exploited by reentrancy attack.
         _updateInterestRate(realisedDebt, totalRealisedLiquidity);
     }
 
@@ -337,7 +337,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         processInterests
     {
         // Need to transfer before minting or ERC777s could reenter.
-        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        // Address(this) is trusted -> no risk on reentrancy attack after transfer.
         asset.safeTransferFrom(from, address(this), assets);
 
         unchecked {
@@ -361,7 +361,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address tranche = tranches[trancheIndex];
 
         // Need to transfer before donating or ERC777s could reenter.
-        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        // Address(this) is trusted -> no risk on reentrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         unchecked {
@@ -476,7 +476,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         amount = accountDebt > amount ? amount : accountDebt;
 
         // Need to transfer before burning debt or ERC777s could reenter.
-        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        // Address(this) is trusted -> no risk on reentrancy attack after transfer.
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _withdraw(amount, address(this), account);
@@ -502,7 +502,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         returns (bool earlyTerminate)
     {
         // Need to transfer before burning debt or ERC777s could reenter.
-        // Address(this) is trusted -> no risk on re-entrancy attack after transfer.
+        // Address(this) is trusted -> no risk on reentrancy attack after transfer.
         asset.safeTransferFrom(bidder, address(this), amount);
 
         uint256 accountDebt = maxWithdraw(account);

@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -42,7 +42,7 @@ contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.closeMarginAccount(address(account));
     }
 
-    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public {
+    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public view {
         // Given: account does not have an open position
         vm.assume(account_ != address(0));
         vm.assume(account_ != address(account));

@@ -2,11 +2,11 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
-import { ERC20, ERC4626 } from "../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
-import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { DebtTokenErrors } from "./libraries/Errors.sol";
+import { ERC20, ERC4626 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
+import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 
 /**
  * @title Debt Token.
