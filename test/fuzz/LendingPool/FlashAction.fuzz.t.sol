@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
-import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { ActionTargetMock } from "../../../lib/accounts-v2/test/utils/mocks/action-targets/ActionTargetMock.sol";
 import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
@@ -23,7 +23,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCall internal actionHandler;
+    ActionTargetMock internal actionHandler;
     bytes internal callData;
 
     /* ///////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool_Fuzz_Test.setUp();
 
         vm.prank(users.owner);
-        actionHandler = new ActionMultiCall();
+        actionHandler = new ActionTargetMock();
 
         ActionData memory emptyActionData;
         address[] memory to;

@@ -10,12 +10,12 @@ import { StdStorage, stdStorage } from "../../lib/accounts-v2/lib/forge-std/src/
 
 import { AccountErrors } from "../../lib/accounts-v2/src/libraries/Errors.sol";
 import { ActionData } from "../../lib/accounts-v2/src/interfaces/IActionBase.sol";
-import { ActionMultiCall } from "../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { ActionTargetMock } from "../../lib/accounts-v2/test/utils/mocks/action-targets/ActionTargetMock.sol";
 import { AssetValuationLib } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { BitPackingLib } from "../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { Constants } from "../../lib/accounts-v2/test/utils/Constants.sol";
 import { IPermit2 } from "../../lib/accounts-v2/src/interfaces/IPermit2.sol";
-import { MultiActionMock } from "../../lib/accounts-v2/test/utils/mocks/actions/MultiActionMock.sol";
+import { RouterMock } from "../../lib/accounts-v2/test/utils/mocks/action-targets/RouterMock.sol";
 import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 
 /**
@@ -34,8 +34,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
                            TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCall public action;
-    MultiActionMock public multiActionMock;
+    ActionTargetMock public action;
+    RouterMock public routerMock;
 
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -45,8 +45,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         Scenario_Lending_Test.setUp();
 
         vm.startPrank(users.owner);
-        multiActionMock = new MultiActionMock();
-        action = new ActionMultiCall();
+        routerMock = new RouterMock();
+        action = new ActionTargetMock();
         vm.stopPrank();
 
         address[] memory assetManagers = new address[](1);
@@ -188,7 +188,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         bytes[] memory data = new bytes[](3);
         address[] memory to = new address[](3);
 
-        data[0] = abi.encodeWithSignature("approve(address,uint256)", address(multiActionMock), stableIn);
+        data[0] = abi.encodeWithSignature("approve(address,uint256)", address(routerMock), stableIn);
         data[1] = abi.encodeWithSignature(
             "swapAssets(address,address,uint256,uint256)",
             address(mockERC20.stable1),
@@ -199,10 +199,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
         vm.prank(users.tokenCreator);
-        mockERC20.token1.mint(address(multiActionMock), tokenOut);
+        mockERC20.token1.mint(address(routerMock), tokenOut);
 
         to[0] = address(mockERC20.stable1);
-        to[1] = address(multiActionMock);
+        to[1] = address(routerMock);
         to[2] = address(mockERC20.token1);
 
         ActionData memory withdrawData = ActionData({
@@ -283,7 +283,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         bytes[] memory data = new bytes[](3);
         address[] memory to = new address[](3);
 
-        data[0] = abi.encodeWithSignature("approve(address,uint256)", address(multiActionMock), stableIn);
+        data[0] = abi.encodeWithSignature("approve(address,uint256)", address(routerMock), stableIn);
         data[1] = abi.encodeWithSignature(
             "swapAssets(address,address,uint256,uint256)",
             address(mockERC20.stable1),
@@ -294,10 +294,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
         vm.prank(users.tokenCreator);
-        mockERC20.token1.mint(address(multiActionMock), tokenOut);
+        mockERC20.token1.mint(address(routerMock), tokenOut);
 
         to[0] = address(mockERC20.stable1);
-        to[1] = address(multiActionMock);
+        to[1] = address(routerMock);
         to[2] = address(mockERC20.token1);
 
         ActionData memory withdrawData = ActionData({
@@ -338,7 +338,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         pool.flashAction(stableMargin, address(account), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
-        assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
+        assertEq(mockERC20.stable1.balanceOf(address(routerMock)), stableIn);
         assertEq(mockERC20.token1.balanceOf(address(account)), tokenOut);
         assertEq(debt.balanceOf(address(account)), uint256(stableDebt) + stableMargin);
 
@@ -407,7 +407,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             bytes[] memory data = new bytes[](3);
             address[] memory to = new address[](3);
 
-            data[0] = abi.encodeWithSignature("approve(address,uint256)", address(multiActionMock), stableIn);
+            data[0] = abi.encodeWithSignature("approve(address,uint256)", address(routerMock), stableIn);
             data[1] = abi.encodeWithSignature(
                 "swapAssets(address,address,uint256,uint256)",
                 address(mockERC20.stable1),
@@ -418,10 +418,10 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             data[2] = abi.encodeWithSignature("approve(address,uint256)", address(account), uint256(tokenOut));
 
             vm.prank(users.tokenCreator);
-            mockERC20.token1.mint(address(multiActionMock), tokenOut);
+            mockERC20.token1.mint(address(routerMock), tokenOut);
 
             to[0] = address(mockERC20.stable1);
-            to[1] = address(multiActionMock);
+            to[1] = address(routerMock);
             to[2] = address(mockERC20.token1);
 
             ActionData memory withdrawData = ActionData({
@@ -462,7 +462,7 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         pool.flashAction(stableMargin, address(account), address(action), callData, emptyBytes3);
 
         assertEq(mockERC20.stable1.balanceOf(address(pool)), type(uint128).max - stableMargin);
-        assertEq(mockERC20.stable1.balanceOf(address(multiActionMock)), stableIn);
+        assertEq(mockERC20.stable1.balanceOf(address(routerMock)), stableIn);
         assertEq(mockERC20.token1.balanceOf(address(account)), tokenOut);
         assertEq(debt.balanceOf(address(account)), uint256(stableDebt) + stableMargin);
     }
