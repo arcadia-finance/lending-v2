@@ -4,22 +4,24 @@
  */
 pragma solidity ^0.8.0;
 
-import { ArcadiaLending, LendingPoolParams, TrancheParams } from "../utils/constants/Shared.sol";
 import { Base_Lending_Script } from "../Base.s.sol";
 import { Deployers } from "../../lib/accounts-v2/script/utils/constants/Shared.sol";
 import { ERC20 } from "../../lib/accounts-v2/lib/solmate/src/tokens/ERC20.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
-import { LendingPoolParameters, TrancheParameters } from "../utils/constants/Base.sol";
+import { LendingPoolParameters } from "../utils/constants/Base.sol";
+import { LendingPoolParams, TrancheParams } from "../utils/constants/Shared.sol";
 import { Safes } from "../../lib/accounts-v2/script/utils/constants/Base.sol";
 import { Tranche } from "../../src/Tranche.sol";
 import { TrancheWrapper } from "../../src/periphery/tranche-wrapper/TrancheWrapper.sol";
 
 contract AddCbbtc is Base_Lending_Script {
+    /// forge-lint: disable-start(mixed-case-variable)
     LendingPool internal pool;
     LendingPoolParams internal POOL = LendingPoolParameters.CBBTC();
     Tranche internal tranche;
     TrancheParams internal TRANCHE = POOL.tranche;
     TrancheWrapper internal wrappedTranche;
+    /// forge-lint: disable-end(mixed-case-variable)
 
     constructor() { }
 

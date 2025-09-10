@@ -41,7 +41,7 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(realisedDebt <= realisedLiquidity);
 
         // And: the users.accountOwner takes realisedDebt debt
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -51,8 +51,8 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.borrow(realisedDebt, address(account), address(account), emptyBytes3);
 
         // And: deltaTimestamp have passed
-        uint256 start_timestamp = block.timestamp;
-        vm.warp(start_timestamp + deltaTimestamp);
+        uint256 startTimestamp = block.timestamp;
+        vm.warp(startTimestamp + deltaTimestamp);
 
         // When: Interests are synced
         vm.prank(users.owner);
@@ -66,6 +66,6 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(debt.maxWithdraw(address(account)), realisedDebt + interests);
         assertEq(debt.maxRedeem(address(account)), realisedDebt);
         assertEq(debt.totalAssets(), realisedDebt + interests);
-        assertEq(pool.getLastSyncedTimestamp(), start_timestamp + deltaTimestamp);
+        assertEq(pool.getLastSyncedTimestamp(), startTimestamp + deltaTimestamp);
     }
 }

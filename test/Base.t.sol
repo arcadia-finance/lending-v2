@@ -17,7 +17,7 @@ abstract contract Base_Lending_Test is Base_Test {
                                      CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    uint16 internal ONE_4 = 10_000;
+    uint16 internal constant ONE_4 = 10_000;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS

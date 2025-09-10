@@ -5,8 +5,6 @@
 pragma solidity ^0.8.0;
 
 import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
-
-import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 import { TrancheWrapper } from "../../../src/periphery/tranche-wrapper/TrancheWrapper.sol";
 
 /**

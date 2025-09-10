@@ -5,7 +5,7 @@
 pragma solidity ^0.8.30;
 
 import { Creditor } from "../lib/accounts-v2/src/abstracts/Creditor.sol";
-import { DebtToken, ERC20, ERC4626 } from "./DebtToken.sol";
+import { DebtToken, ERC20 } from "./DebtToken.sol";
 import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "./interfaces/IAccount.sol";
 import { IFactory } from "./interfaces/IFactory.sol";
@@ -192,7 +192,6 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev The name and symbol of the DebtToken are automatically generated, based on the name and symbol of the underlying token.
      */
     constructor(address riskManager_, ERC20 asset_, address treasury_, address accountFactory, address liquidator)
-        LendingPoolGuardian()
         Creditor(riskManager_)
         DebtToken(asset_)
     {

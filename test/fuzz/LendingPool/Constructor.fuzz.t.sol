@@ -33,7 +33,7 @@ contract Constructor_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         assertEq(pool_.name(), string("ArcadiaV2 STABLE1 Debt"));
         assertEq(pool_.symbol(), string("darcV2S1"));
-        assertEq(pool_.decimals(), Constants.stableDecimals);
+        assertEq(pool_.decimals(), Constants.STABLE_DECIMALS);
         assertEq(pool_.riskManager(), riskManager_);
         assertEq(pool_.getTreasury(), treasury_);
         assertEq(pool_.getAccountFactory(), factory_);

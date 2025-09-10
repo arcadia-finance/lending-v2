@@ -6,8 +6,6 @@ pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-
 /**
  * @notice Fuzz tests for the function "totalLiquidity" of contract "LendingPool".
  */
@@ -39,7 +37,7 @@ contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);
 
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);

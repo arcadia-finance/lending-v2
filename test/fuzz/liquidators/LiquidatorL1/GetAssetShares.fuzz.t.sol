@@ -5,7 +5,6 @@
 pragma solidity ^0.8.0;
 
 import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
-import { AccountV3Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV3Extension.sol";
 import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**

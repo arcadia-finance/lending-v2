@@ -9,7 +9,6 @@ import { ERC20, SafeTransferLib } from "../../lib/accounts-v2/lib/solmate/src/ut
 import { FixedPointMathLib } from "../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "../interfaces/IAccount.sol";
 import { IBidCallback } from "../interfaces/IBidCallback.sol";
-import { IChainLinkData } from "../../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
 import { ICreditor } from "../../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "../interfaces/IFactory.sol";
 import { ILendingPool } from "../interfaces/ILendingPool.sol";

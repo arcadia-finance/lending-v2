@@ -45,7 +45,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
 
         vm.prank(users.owner);
         pool.setInterestParameters(
-            Constants.interestRate, Constants.interestRate, Constants.interestRate, Constants.utilisationThreshold
+            Constants.INTEREST_RATE, Constants.INTEREST_RATE, Constants.INTEREST_RATE, Constants.UTILISATION_THRESHOLD
         );
     }
 

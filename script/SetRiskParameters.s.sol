@@ -5,12 +5,12 @@
 pragma solidity ^0.8.0;
 
 import { Base_Lending_Script } from "./Base.s.sol";
-import { LendingPool } from "../src/LendingPool.sol";
 import { AssetRiskParameters } from "./utils/constants/Base.sol";
 import { AssetRiskParams } from "./utils/constants/Shared.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract SetRiskParameters is Base_Lending_Script {
+    /// forge-lint: disable-next-line(mixed-case-variable)
     address SAFE = Safes.RISK_MANAGER;
 
     constructor() { }

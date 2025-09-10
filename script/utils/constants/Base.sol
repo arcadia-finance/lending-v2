@@ -16,9 +16,10 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
+import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
 import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library AssetModuleRiskParameters {
     // Aerodrome Pool Asset Module
     function AERO_POOL_USDC() internal pure returns (AssetModuleRiskParams memory) {
@@ -256,6 +257,7 @@ library AssetModuleRiskParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library AssetRiskParameters {
     // AAVE
     function AAVE_CBBTC() internal pure returns (AssetRiskParams memory) {
@@ -1017,6 +1019,7 @@ library AssetRiskParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
     function CBBTC() internal pure returns (InterestRateParams memory) {
         return InterestRateParams({
@@ -1046,6 +1049,7 @@ library InterestRateParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
     function CBBTC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
@@ -1096,6 +1100,7 @@ library LendingPoolParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LiquidationParameters {
     function CBBTC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
@@ -1128,6 +1133,7 @@ library LiquidationParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library TrancheParameters {
     function CBBTC() internal pure returns (TrancheParams[] memory tranches) {
         tranches = new TrancheParams[](1);
@@ -1178,6 +1184,7 @@ library TrancheParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
         return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });
