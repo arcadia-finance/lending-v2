@@ -5,7 +5,7 @@
 pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { ActionTargetMock } from "../../../lib/accounts-v2/test/utils/mocks/action-targets/ActionTargetMock.sol";
 import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
@@ -20,7 +20,7 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCall internal actionHandler;
+    ActionTargetMock internal actionHandler;
     bytes internal callData;
 
     /* ///////////////////////////////////////////////////////////////
