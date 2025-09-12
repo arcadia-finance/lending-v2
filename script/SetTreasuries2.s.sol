@@ -15,17 +15,14 @@ contract SetTreasuries2 is Base_Lending_Script {
 
     function run() public {
         // Set treasuries.
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), abi.encodeCall(LendingPool.setTreasury, (Safes.TREASURY)));
         addToBatch(Safes.OWNER, address(lendingPoolCbbtc), abi.encodeCall(LendingPool.setTreasuryWeights, (0, 0)));
         addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasury(LendingPoolParameters.CBBTC()));
         addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasuryWeights(LendingPoolParameters.CBBTC()));
 
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), abi.encodeCall(LendingPool.setTreasury, (Safes.TREASURY)));
         addToBatch(Safes.OWNER, address(lendingPoolUsdc), abi.encodeCall(LendingPool.setTreasuryWeights, (0, 0)));
         addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasury(LendingPoolParameters.USDC()));
         addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasuryWeights(LendingPoolParameters.USDC()));
 
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), abi.encodeCall(LendingPool.setTreasury, (Safes.TREASURY)));
         addToBatch(Safes.OWNER, address(lendingPoolWeth), abi.encodeCall(LendingPool.setTreasuryWeights, (0, 0)));
         addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasury(LendingPoolParameters.WETH()));
         addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasuryWeights(LendingPoolParameters.WETH()));

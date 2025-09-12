@@ -9,7 +9,7 @@ library ArcadiaLending {
     address internal constant LENDINGPOOL_CBBTC = 0xa37E9b4369dc20940009030BfbC2088F09645e3B;
     address internal constant LENDINGPOOL_USDC = 0x3ec4a293Fb906DD2Cd440c20dECB250DeF141dF1;
     address internal constant LENDINGPOOL_WETH = 0x803ea69c7e87D1d6C86adeB40CB636cC0E6B98E2;
-    address internal constant SWEEPER = 0xD6aA7216dADd79120460ADc1C46959592063f07A;
+    address internal constant SWEEPER = 0x9EBCa9299006B37373e1E3a98914E927c50989a5;
     address internal constant TRANCHE_CBBTC = 0x9c63A4c499B323a25D389Da759c2ac1e385eEc92;
     address internal constant TRANCHE_USDC = 0xEFE32813dBA3A783059d50e5358b9e3661218daD;
     address internal constant TRANCHE_WETH = 0x393893caeB06B5C16728bb1E354b6c36942b1382;
