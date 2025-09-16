@@ -66,6 +66,8 @@ struct LendingPoolParams {
     uint16 liquidationWeightTranche;
     uint96 minimumMargin;
     uint256 originationFee;
+    address guardian;
+    address risk_manager;
     InterestRateParams interestRateParameters;
     LiquidationParams liquidationParameters;
     PoolRiskParams poolRiskParameters;
@@ -75,6 +77,7 @@ struct LendingPoolParams {
 }
 
 struct LiquidationParams {
+    address accountRecipient;
     uint16 initiationWeight;
     uint16 penaltyWeight;
     uint16 terminationWeight;

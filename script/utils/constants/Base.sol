@@ -16,8 +16,8 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
-import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
+import { AssetModules, EOAS } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 /// forge-lint: disable-next-item(mixed-case-function)
 library AssetModuleRiskParameters {
@@ -1058,6 +1058,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 0.00004 * 10 ** 8,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            risk_manager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.CBBTC(),
             liquidationParameters: LiquidationParameters.CBBTC(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -1074,6 +1076,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 2 * 10 ** 6,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            risk_manager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.USDC(),
             liquidationParameters: LiquidationParameters.USDC(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -1090,6 +1094,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 0.002 * 10 ** 18,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            risk_manager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.WETH(),
             liquidationParameters: LiquidationParameters.WETH(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -1104,6 +1110,7 @@ library LendingPoolParameters {
 library LiquidationParameters {
     function CBBTC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
@@ -1114,6 +1121,7 @@ library LiquidationParameters {
 
     function USDC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
@@ -1124,6 +1132,7 @@ library LiquidationParameters {
 
     function WETH() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
