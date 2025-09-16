@@ -17,7 +17,7 @@ import {
     Treasury
 } from "./Shared.sol";
 import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
-import { AssetModules, EOAS } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { AssetModules, EOAs } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 /// forge-lint: disable-next-item(mixed-case-function)
 library AssetModuleRiskParameters {
