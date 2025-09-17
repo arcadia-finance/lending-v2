@@ -67,7 +67,7 @@ struct LendingPoolParams {
     uint96 minimumMargin;
     uint256 originationFee;
     address guardian;
-    address risk_manager;
+    address riskManager;
     InterestRateParams interestRateParameters;
     LiquidationParams liquidationParameters;
     PoolRiskParams poolRiskParameters;
