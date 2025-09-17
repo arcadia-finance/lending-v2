@@ -38,7 +38,7 @@ abstract contract LendingPoolGuardian_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithoutAccounts();
 
         vm.startPrank(users.owner);
-        lendingPoolGuardian = new LendingPoolGuardianExtension();
+        lendingPoolGuardian = new LendingPoolGuardianExtension(users.owner);
         lendingPoolGuardian.changeGuardian(users.guardian);
         vm.stopPrank();
 

@@ -103,10 +103,11 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
 
     /**
      * @notice The constructor for the Liquidator.
+     * @param owner_ The address of the Owner.
      * @param accountFactory The contract address of the Arcadia Account Factory.
      * @param sequencerUptimeOracle_ The contract address of the sequencer uptime oracle.
      */
-    constructor(address accountFactory, address sequencerUptimeOracle_) Owned(msg.sender) {
+    constructor(address owner_, address accountFactory, address sequencerUptimeOracle_) Owned(owner_) {
         ACCOUNT_FACTORY = accountFactory;
         sequencerUptimeOracle = sequencerUptimeOracle_;
 

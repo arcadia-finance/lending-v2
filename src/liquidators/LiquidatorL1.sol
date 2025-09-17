@@ -99,9 +99,10 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
 
     /**
      * @notice The constructor for the Liquidator.
+     * @param owner_ The address of the Owner.
      * @param accountFactory The contract address of the Arcadia Account Factory.
      */
-    constructor(address accountFactory) Owned(msg.sender) {
+    constructor(address owner_, address accountFactory) Owned(owner_) {
         ACCOUNT_FACTORY = accountFactory;
 
         // Half life of 3600s.

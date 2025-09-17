@@ -8,7 +8,7 @@ import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries
 import { LiquidatorL1 } from "../../../src/liquidators/LiquidatorL1.sol";
 
 contract LiquidatorL1Extension is LiquidatorL1 {
-    constructor(address accountFactory) LiquidatorL1(accountFactory) { }
+    constructor(address owner_, address accountFactory) LiquidatorL1(owner_, accountFactory) { }
 
     function setInAuction(address account, address creditor, uint128 startDebt) public {
         auctionInformation[account].inAuction = true;

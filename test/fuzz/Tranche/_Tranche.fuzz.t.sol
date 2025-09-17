@@ -35,7 +35,7 @@ abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
 
     function setTrancheState(uint256 vas, uint256 totalSupply, uint128 totalAssets) public returns (address tranche_) {
         vm.startPrank(users.owner);
-        tranche = new TrancheExtension(address(pool), vas, "Tranche", "T");
+        tranche = new TrancheExtension(users.owner, address(pool), vas, "Tranche", "T");
         pool.addTranche(address(tranche), 0);
         vm.stopPrank();
 
