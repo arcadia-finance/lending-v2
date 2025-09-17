@@ -14,7 +14,8 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
+import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
+import { EOAs } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 library AssetModuleRiskParameters { }
 
@@ -50,6 +51,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 2 * 10 ** 6,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            riskManager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.USDC(),
             liquidationParameters: LiquidationParameters.USDC(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -66,6 +69,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 0.002 * 10 ** 18,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            riskManager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.WETH(),
             liquidationParameters: LiquidationParameters.WETH(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -80,6 +85,7 @@ library LendingPoolParameters {
 library LiquidationParameters {
     function USDC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
@@ -90,6 +96,7 @@ library LiquidationParameters {
 
     function WETH() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
