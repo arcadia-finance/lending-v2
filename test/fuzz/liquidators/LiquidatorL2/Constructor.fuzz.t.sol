@@ -35,7 +35,7 @@ contract Constructor_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         sequencerUptimeOracle.setLatestRoundData(1, startedAt);
 
         vm.expectRevert(LiquidatorErrors.SequencerDown.selector);
-        new LiquidatorL2Extension(factory_, address(sequencerUptimeOracle));
+        new LiquidatorL2Extension(users.owner, factory_, address(sequencerUptimeOracle));
     }
 
     function testFuzz_Revert_deployment_OracleReverting(address factory_, int256 answer, uint32 startedAt) public {
@@ -44,7 +44,7 @@ contract Constructor_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         sequencerUptimeOracle.setRevertsFlag(true);
 
         vm.expectRevert(LiquidatorErrors.OracleReverting.selector);
-        new LiquidatorL2Extension(factory_, address(sequencerUptimeOracle));
+        new LiquidatorL2Extension(users.owner, factory_, address(sequencerUptimeOracle));
     }
 
     function testFuzz_Success_deployment(address factory_, uint32 startedAt) public {
@@ -52,7 +52,7 @@ contract Constructor_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         vm.expectEmit(true, true, true, true);
         emit LiquidatorL2.AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
-        liquidator_ = new LiquidatorL2Extension(factory_, address(sequencerUptimeOracle));
+        liquidator_ = new LiquidatorL2Extension(users.owner, factory_, address(sequencerUptimeOracle));
 
         assertEq(liquidator_.getSequencerUptimeOracle(), address(sequencerUptimeOracle));
         assertEq(liquidator_.getAccountFactory(), factory_);

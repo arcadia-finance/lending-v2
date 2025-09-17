@@ -29,9 +29,10 @@ contract AddCbbtc is Base_Lending_Script {
         require(vm.addr(deployer) == Deployers.ARCADIA, "Wrong deployer.");
 
         vm.startBroadcast(deployer);
-        pool =
-            new LendingPool(Deployers.ARCADIA, ERC20(POOL.asset), Safes.TREASURY, address(factory), address(liquidator));
-        tranche = new Tranche(address(pool), TRANCHE.vas, TRANCHE.prefix, TRANCHE.prefixSymbol);
+        pool = new LendingPool(
+            Safes.OWNER, Deployers.ARCADIA, ERC20(POOL.asset), Safes.TREASURY, address(factory), address(liquidator)
+        );
+        tranche = new Tranche(Safes.OWNER, address(pool), TRANCHE.vas, TRANCHE.prefix, TRANCHE.prefixSymbol);
         wrappedTranche = new TrancheWrapper(address(tranche));
 
         pool.addTranche(address(tranche), TRANCHE.interestWeight);

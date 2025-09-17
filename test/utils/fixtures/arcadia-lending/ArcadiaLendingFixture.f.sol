@@ -15,9 +15,9 @@ import { TrancheExtension } from "../../extensions/TrancheExtension.sol";
 contract ArcadiaLendingFixture is Base_Lending_Test {
     function deployArcadiaLending(address numeraire) internal {
         vm.startPrank(users.owner);
-        liquidator = new LiquidatorL2Extension(address(factory), address(sequencerUptimeOracle));
+        liquidator = new LiquidatorL2Extension(users.owner, address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(
-            users.riskManager, ERC20(numeraire), users.treasury, address(factory), address(liquidator)
+            users.owner, users.riskManager, ERC20(numeraire), users.treasury, address(factory), address(liquidator)
         );
         pool.changeGuardian(users.guardian);
         vm.stopPrank();
@@ -52,7 +52,7 @@ contract ArcadiaLendingFixture is Base_Lending_Test {
         returns (TrancheExtension tranche_)
     {
         vm.startPrank(users.owner);
-        tranche_ = new TrancheExtension(address(pool), 0, prefix, prefixSymbol);
+        tranche_ = new TrancheExtension(users.owner, address(pool), 0, prefix, prefixSymbol);
         pool.addTranche(address(tranche_), interestWeight);
         vm.stopPrank();
 

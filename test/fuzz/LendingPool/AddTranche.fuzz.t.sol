@@ -30,7 +30,12 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(users.owner);
         pool_ = new LendingPoolExtension(
-            users.riskManager, ERC20(address(mockERC20.stable1)), users.treasury, address(factory), address(liquidator)
+            users.owner,
+            users.riskManager,
+            ERC20(address(mockERC20.stable1)),
+            users.treasury,
+            address(factory),
+            address(liquidator)
         );
 
         // Set the Liquidation parameters.

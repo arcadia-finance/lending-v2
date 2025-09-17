@@ -45,12 +45,12 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithAccounts();
 
         vm.startPrank(users.owner);
-        factory = new FactoryExtension();
-        registry_ = new RegistryL1Extension(address(factory));
+        factory = new FactoryExtension(users.owner);
+        registry_ = new RegistryL1Extension(users.owner, address(factory));
         chainlinkOM = new ChainlinkOMExtension(address(registry_));
-        erc20AM = new ERC20PrimaryAMExtension(address(registry_));
-        floorERC721AM = new FloorERC721AMExtension(address(registry_));
-        floorERC1155AM = new FloorERC1155AMExtension(address(registry_));
+        erc20AM = new ERC20PrimaryAMExtension(users.owner, address(registry_));
+        floorERC721AM = new FloorERC721AMExtension(users.owner, address(registry_));
+        floorERC1155AM = new FloorERC1155AMExtension(users.owner, address(registry_));
 
         accountsGuard = new AccountsGuardExtension(users.owner, address(factory));
         accountLogic = new AccountV3(address(factory), address(accountsGuard), address(0));
@@ -228,9 +228,14 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.startPrank(users.owner);
-        liquidator_ = new LiquidatorL1Extension(address(factory));
+        liquidator_ = new LiquidatorL1Extension(users.owner, address(factory));
         pool = new LendingPoolExtension(
-            users.riskManager, ERC20(mockERC20.stable1), users.treasury, address(factory), address(liquidator_)
+            users.owner,
+            users.riskManager,
+            ERC20(mockERC20.stable1),
+            users.treasury,
+            address(factory),
+            address(liquidator_)
         );
         pool.changeGuardian(users.guardian);
         vm.stopPrank();

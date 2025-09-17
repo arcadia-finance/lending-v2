@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 import { LendingPoolGuardian } from "../../../src/guardians/LendingPoolGuardian.sol";
 
 contract LendingPoolGuardianExtension is LendingPoolGuardian {
-    constructor() { }
+    constructor(address owner_) LendingPoolGuardian(owner_) { }
 
     function setPauseTimestamp(uint256 pauseTimestamp_) public {
         pauseTimestamp = uint96(pauseTimestamp_);
