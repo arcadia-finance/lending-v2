@@ -2,17 +2,17 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
-import { AccountV1 } from "../../../../lib/accounts-v2/src/accounts/AccountV1.sol";
-import { ArcadiaOracle } from "../../../../lib/accounts-v2/test/utils/mocks/oracles/ArcadiaOracle.sol";
+import { AccountsGuardExtension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountsGuardExtension.sol";
+import { AccountV3 } from "../../../../lib/accounts-v2/src/accounts/AccountV3.sol";
 import { BitPackingLib } from "../../../../lib/accounts-v2/src/libraries/BitPackingLib.sol";
 import { ChainlinkOMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/ChainlinkOMExtension.sol";
 import { Constants } from "../../../../lib/accounts-v2/test/utils/Constants.sol";
 import { DebtTokenExtension } from "../../../utils/extensions/DebtTokenExtension.sol";
-import { ERC20, ERC20Mock } from "../../../../lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
+import { ERC20 } from "../../../../lib/accounts-v2/test/utils/mocks/tokens/ERC20Mock.sol";
 import { ERC20PrimaryAMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/ERC20PrimaryAMExtension.sol";
-import { Factory } from "../../../../lib/accounts-v2/src/Factory.sol";
+import { FactoryExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FactoryExtension.sol";
 import { FloorERC721AMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FloorERC721AMExtension.sol";
 import { FloorERC1155AMExtension } from "../../../../lib/accounts-v2/test/utils/extensions/FloorERC1155AMExtension.sol";
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
@@ -45,15 +45,17 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithAccounts();
 
         vm.startPrank(users.owner);
-        factory = new Factory();
-        registry_ = new RegistryL1Extension(address(factory));
-        chainlinkOM = new ChainlinkOMExtension(address(registry_));
-        erc20AM = new ERC20PrimaryAMExtension(address(registry_));
-        floorERC721AM = new FloorERC721AMExtension(address(registry_));
-        floorERC1155AM = new FloorERC1155AMExtension(address(registry_));
+        factory = new FactoryExtension(users.owner);
+        registry_ = new RegistryL1Extension(users.owner, address(factory));
+        chainlinkOM = new ChainlinkOMExtension(users.owner, address(registry_));
+        erc20AM = new ERC20PrimaryAMExtension(users.owner, address(registry_));
+        floorERC721AM = new FloorERC721AMExtension(users.owner, address(registry_));
+        floorERC1155AM = new FloorERC1155AMExtension(users.owner, address(registry_));
 
-        accountV1Logic = new AccountV1(address(factory));
-        factory.setNewAccountInfo(address(registry_), address(accountV1Logic), Constants.upgradeProof1To2, "");
+        accountsGuard = new AccountsGuardExtension(users.owner, address(factory));
+        accountLogic = new AccountV3(address(factory), address(accountsGuard), address(0));
+        factory.setLatestAccountVersion(2);
+        factory.setNewAccountInfo(address(registry_), address(accountLogic), Constants.ROOT, "");
 
         // Set the Guardians.
         factory.changeGuardian(users.guardian);
@@ -89,7 +91,7 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         // Deploy an initial Account with all inputs to zero
         vm.prank(users.accountOwner);
         address proxyAddress = factory.createAccount(0, 0, address(0));
-        account = AccountV1(proxyAddress);
+        account = AccountV3(proxyAddress);
 
         // Set Risk Variables.
         vm.startPrank(users.riskManager);
@@ -102,24 +104,24 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
             address(mockERC20.stable1),
             0,
             type(uint112).max,
-            Constants.stableToStableCollFactor,
-            Constants.stableToStableLiqFactor
+            Constants.STABLE_TO_STABLE_COLL_FACTOR,
+            Constants.STABLE_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorStable1),
             address(mockERC20.stable1),
             0,
             type(uint112).max,
-            Constants.stableToStableCollFactor,
-            Constants.stableToStableLiqFactor
+            Constants.STABLE_TO_STABLE_COLL_FACTOR,
+            Constants.STABLE_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorToken1),
             address(mockERC20.stable1),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
 
         registry_.setRiskParametersOfPrimaryAsset(
@@ -127,24 +129,24 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
             address(mockERC20.stable2),
             0,
             type(uint112).max,
-            Constants.stableToStableCollFactor,
-            Constants.stableToStableLiqFactor
+            Constants.STABLE_TO_STABLE_COLL_FACTOR,
+            Constants.STABLE_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorStable1),
             address(mockERC20.stable2),
             0,
             type(uint112).max,
-            Constants.stableToStableCollFactor,
-            Constants.stableToStableLiqFactor
+            Constants.STABLE_TO_STABLE_COLL_FACTOR,
+            Constants.STABLE_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorToken1),
             address(mockERC20.stable2),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
 
         registry_.setRiskParametersOfPrimaryAsset(
@@ -152,24 +154,24 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
             address(mockERC20.token1),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorStable1),
             address(mockERC20.token1),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorToken1),
             address(mockERC20.token1),
             0,
             type(uint112).max,
-            Constants.tokenToTokenCollFactor,
-            Constants.tokenToTokenLiqFactor
+            Constants.TOKEN_TO_TOKEN_COLL_FACTOR,
+            Constants.TOKEN_TO_TOKEN_LIQ_FACTOR
         );
 
         registry_.setRiskParametersOfPrimaryAsset(
@@ -177,24 +179,24 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
             address(mockERC20.token2),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorStable1),
             address(mockERC20.token2),
             0,
             type(uint112).max,
-            Constants.tokenToStableCollFactor,
-            Constants.tokenToStableLiqFactor
+            Constants.TOKEN_TO_STABLE_COLL_FACTOR,
+            Constants.TOKEN_TO_STABLE_LIQ_FACTOR
         );
         registry_.setRiskParametersOfPrimaryAsset(
             address(creditorToken1),
             address(mockERC20.token2),
             0,
             type(uint112).max,
-            Constants.tokenToTokenCollFactor,
-            Constants.tokenToTokenLiqFactor
+            Constants.TOKEN_TO_TOKEN_COLL_FACTOR,
+            Constants.TOKEN_TO_TOKEN_LIQ_FACTOR
         );
 
         registry_.setRiskParametersOfPrimaryAsset(
@@ -226,9 +228,14 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         mockERC20.stable1.approve(address(pool), type(uint256).max);
 
         vm.startPrank(users.owner);
-        liquidator_ = new LiquidatorL1Extension(address(factory));
+        liquidator_ = new LiquidatorL1Extension(users.owner, address(factory));
         pool = new LendingPoolExtension(
-            users.riskManager, ERC20(mockERC20.stable1), users.treasury, address(factory), address(liquidator_)
+            users.owner,
+            users.riskManager,
+            ERC20(mockERC20.stable1),
+            users.treasury,
+            address(factory),
+            address(liquidator_)
         );
         pool.changeGuardian(users.guardian);
         vm.stopPrank();
@@ -243,7 +250,7 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
         pool.setTreasuryWeights(10, 80);
         pool.setLiquidationParameters(100, 500, 50, 0, 0);
         pool.setLiquidationWeightTranche(20);
-        pool.setAccountVersion(1, true);
+        pool.setAccountVersion(3, true);
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);
@@ -264,7 +271,7 @@ abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
     function initiateLiquidation(uint112 amountLoaned) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

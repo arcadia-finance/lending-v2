@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -40,9 +40,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.accountOwner);
         vm.assume(sender != address(account));
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.prank(address(srTranche));
@@ -75,9 +76,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.transmitter);
         mockOracles.stable1ToUsd.transmit(int256(rates.stable1ToUsd));
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
@@ -105,6 +107,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != address(account));
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
@@ -128,9 +131,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
         vm.assume(sender != address(account));
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountRepaid);
 
         vm.prank(address(srTranche));
@@ -163,9 +167,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
         vm.assume(sender != address(account));
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountLoaned);
 
         vm.prank(address(srTranche));
@@ -201,9 +206,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(sender != address(pool));
         vm.assume(sender != address(account));
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.prank(address(srTranche));

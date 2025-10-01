@@ -2,13 +2,13 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { LiquidatorL1 } from "../../../src/liquidators/LiquidatorL1.sol";
 
 contract LiquidatorL1Extension is LiquidatorL1 {
-    constructor(address accountFactory) LiquidatorL1(accountFactory) { }
+    constructor(address owner_, address accountFactory) LiquidatorL1(owner_, accountFactory) { }
 
     function setInAuction(address account, address creditor, uint128 startDebt) public {
         auctionInformation[account].inAuction = true;

@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
@@ -282,7 +282,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
 
         // And : The Account has some debt
-        depositERC20InAccount(account, mockERC20.stable1, liquidity);
+        depositErc20InAccount(account, mockERC20.stable1, liquidity);
         vm.prank(users.accountOwner);
         pool.borrow(
             uint256(liquidationPenalty) + uint256(auctionTerminationReward),

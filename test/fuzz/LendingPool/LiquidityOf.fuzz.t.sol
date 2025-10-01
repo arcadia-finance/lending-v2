@@ -2,11 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
  * @notice Fuzz tests for the function "liquidityOf" of contract "LendingPool".
@@ -56,7 +54,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);
 
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
@@ -108,7 +106,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);
         pool.setRealisedLiquidityOf(pool.getTreasury(), initialLiquidityTreasury);
 
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);
@@ -163,7 +161,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);
         pool.setRealisedLiquidityOf(user, initialLiquidityUser);
 
-        depositERC20InAccount(account, mockERC20.stable1, realisedDebt);
+        depositErc20InAccount(account, mockERC20.stable1, realisedDebt);
 
         vm.prank(users.accountOwner);
         pool.borrow(realisedDebt, address(account), users.accountOwner, emptyBytes3);

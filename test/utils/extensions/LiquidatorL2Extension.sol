@@ -2,14 +2,14 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { AssetValueAndRiskFactors } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { LiquidatorL2 } from "../../../src/liquidators/LiquidatorL2.sol";
 
 contract LiquidatorL2Extension is LiquidatorL2 {
-    constructor(address accountFactory, address sequencerUptimeOracle_)
-        LiquidatorL2(accountFactory, sequencerUptimeOracle_)
+    constructor(address owner_, address accountFactory, address sequencerUptimeOracle_)
+        LiquidatorL2(owner_, accountFactory, sequencerUptimeOracle_)
     { }
 
     function getSequencerUptimeOracle() public view returns (address sequencerUptimeOracle_) {

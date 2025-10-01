@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { Fuzz_Lending_Test } from "../fuzz/Fuzz.t.sol";
 
@@ -45,7 +45,7 @@ abstract contract Scenario_Lending_Test is Fuzz_Lending_Test {
 
         vm.prank(users.owner);
         pool.setInterestParameters(
-            Constants.interestRate, Constants.interestRate, Constants.interestRate, Constants.utilisationThreshold
+            Constants.INTEREST_RATE, Constants.INTEREST_RATE, Constants.INTEREST_RATE, Constants.UTILISATION_THRESHOLD
         );
     }
 

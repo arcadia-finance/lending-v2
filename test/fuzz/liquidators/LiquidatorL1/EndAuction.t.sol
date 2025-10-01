@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
 
@@ -43,7 +43,7 @@ contract EndAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         // Account has debt
         bytes3 emptyBytes3;
         uint256 collateralValue = uint256(minimumMargin) + amountLoaned;
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

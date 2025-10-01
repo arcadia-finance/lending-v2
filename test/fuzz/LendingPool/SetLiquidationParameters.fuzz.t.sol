@@ -2,11 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
-
-import { LendingPool } from "../../../src/LendingPool.sol";
 import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 
 /**

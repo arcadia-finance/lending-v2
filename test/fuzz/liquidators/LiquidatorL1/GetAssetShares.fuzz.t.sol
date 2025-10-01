@@ -2,10 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
-import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
 import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 
 /**
@@ -23,7 +22,7 @@ contract GetAssetShares_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_getAssetShare_EmptyArray() public {
+    function testFuzz_Success_getAssetShare_EmptyArray() public view {
         // When: getAssetShares is called.
         uint32[] memory assetShares = liquidator_.getAssetShares(new AssetValueAndRiskFactors[](0));
 
@@ -31,7 +30,7 @@ contract GetAssetShares_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         assertEq(assetShares.length, 0);
     }
 
-    function testFuzz_Success_getAssetShare_NonEmptyArray_ZeroTotalValue(uint8 length) public {
+    function testFuzz_Success_getAssetShare_NonEmptyArray_ZeroTotalValue(uint8 length) public view {
         AssetValueAndRiskFactors[] memory assetValues = new AssetValueAndRiskFactors[](length);
 
         // When: getAssetShares is called.
@@ -45,7 +44,7 @@ contract GetAssetShares_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
     function testFuzz_Success_getAssetShare_NonEmptyArray_NonZeroTotalValue(
         AssetValueAndRiskFactors[] memory assetValues
-    ) public {
+    ) public view {
         // Given: all values per asset are smaller as type(uint112).max.
         uint256 totalValue;
         vm.assume(assetValues.length > 0);

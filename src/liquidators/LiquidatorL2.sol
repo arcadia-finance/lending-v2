@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { ERC20, SafeTransferLib } from "../../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
@@ -103,10 +103,11 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
 
     /**
      * @notice The constructor for the Liquidator.
+     * @param owner_ The address of the Owner.
      * @param accountFactory The contract address of the Arcadia Account Factory.
      * @param sequencerUptimeOracle_ The contract address of the sequencer uptime oracle.
      */
-    constructor(address accountFactory, address sequencerUptimeOracle_) Owned(msg.sender) {
+    constructor(address owner_, address accountFactory, address sequencerUptimeOracle_) Owned(owner_) {
         ACCOUNT_FACTORY = accountFactory;
         sequencerUptimeOracle = sequencerUptimeOracle_;
 

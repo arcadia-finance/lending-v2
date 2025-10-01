@@ -2,12 +2,10 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import {
     ArcadiaLending,
-    AssetModuleRiskParams,
-    AssetRiskParams,
     InterestRateParams,
     LendingPoolParams,
     LiquidationParams,
@@ -17,12 +15,13 @@ import {
     Treasury
 } from "./Shared.sol";
 import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Optimism.sol";
-import { AssetModules } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { EOAs } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 library AssetModuleRiskParameters { }
 
 library AssetRiskParameters { }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
     function USDC() internal pure returns (InterestRateParams memory) {
         return InterestRateParams({
@@ -43,6 +42,7 @@ library InterestRateParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
     function USDC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
@@ -51,6 +51,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 2 * 10 ** 6,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            riskManager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.USDC(),
             liquidationParameters: LiquidationParameters.USDC(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -67,6 +69,8 @@ library LendingPoolParameters {
             liquidationWeightTranche: 50,
             minimumMargin: 0.002 * 10 ** 18,
             originationFee: 0,
+            guardian: Safes.GUARDIAN,
+            riskManager: Safes.RISK_MANAGER,
             interestRateParameters: InterestRateParameters.WETH(),
             liquidationParameters: LiquidationParameters.WETH(),
             poolRiskParameters: PoolRisk.PARAMETERS(),
@@ -77,9 +81,11 @@ library LendingPoolParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LiquidationParameters {
     function USDC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
@@ -90,6 +96,7 @@ library LiquidationParameters {
 
     function WETH() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
+            accountRecipient: EOAs.MANAGER,
             initiationWeight: 12,
             penaltyWeight: 200,
             terminationWeight: 12,
@@ -99,6 +106,7 @@ library LiquidationParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library Tranches {
     function USDC() internal pure returns (TrancheParams[] memory tranches) {
         tranches = new TrancheParams[](1);
@@ -133,6 +141,7 @@ library Tranches {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
         return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });

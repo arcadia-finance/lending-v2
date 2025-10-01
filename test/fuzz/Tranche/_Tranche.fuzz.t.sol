@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { Fuzz_Lending_Test } from "../Fuzz.t.sol";
 
@@ -35,7 +35,7 @@ abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
 
     function setTrancheState(uint256 vas, uint256 totalSupply, uint128 totalAssets) public returns (address tranche_) {
         vm.startPrank(users.owner);
-        tranche = new TrancheExtension(address(pool), vas, "Tranche", "T");
+        tranche = new TrancheExtension(users.owner, address(pool), vas, "Tranche", "T");
         pool.addTranche(address(tranche), 0);
         vm.stopPrank();
 

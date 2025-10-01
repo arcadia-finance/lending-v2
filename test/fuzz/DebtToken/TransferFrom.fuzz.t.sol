@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { DebtToken_Fuzz_Test } from "./_DebtToken.fuzz.t.sol";
 
@@ -26,6 +26,7 @@ contract TransferFrom_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     function testFuzz_Revert_transferFrom(address from, address to, uint256 amount, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(DebtTokenErrors.FunctionNotImplemented.selector);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         debt_.transferFrom(from, to, amount);
         vm.stopPrank();
     }

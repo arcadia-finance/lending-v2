@@ -2,14 +2,13 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
 import { AssetValueAndRiskFactors } from "../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { ERC20, SafeTransferLib } from "../../lib/accounts-v2/lib/solmate/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IAccount } from "../interfaces/IAccount.sol";
 import { IBidCallback } from "../interfaces/IBidCallback.sol";
-import { IChainLinkData } from "../../lib/accounts-v2/src/interfaces/IChainLinkData.sol";
 import { ICreditor } from "../../lib/accounts-v2/src/interfaces/ICreditor.sol";
 import { IFactory } from "../interfaces/IFactory.sol";
 import { ILendingPool } from "../interfaces/ILendingPool.sol";
@@ -100,9 +99,10 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
 
     /**
      * @notice The constructor for the Liquidator.
+     * @param owner_ The address of the Owner.
      * @param accountFactory The contract address of the Arcadia Account Factory.
      */
-    constructor(address accountFactory) Owned(msg.sender) {
+    constructor(address owner_, address accountFactory) Owned(owner_) {
         ACCOUNT_FACTORY = accountFactory;
 
         // Half life of 3600s.
@@ -372,8 +372,6 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
      * @dev We use a Dutch auction: price of the assets constantly decreases.
      * @dev The "askedAssetAmounts" array should have equal length as the stored "assetAmounts" array.
      * An amount 0 should be passed for assets the bidder does not want to buy.
-     * @dev Only use as off-chain view function!
-     * getBidPrice() will not be accurate if the sequencer went down during the auction.
      */
     function getBidPrice(address account, uint256[] memory askedAssetAmounts)
         external

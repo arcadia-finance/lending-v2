@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -47,6 +47,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);
         Tranche(tranche_).mint(initialShares, users.liquidityProvider);
+        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(donator, assets);
         vm.stopPrank();
 

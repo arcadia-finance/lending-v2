@@ -12,8 +12,9 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
+/// forge-lint: disable-next-line(unaliased-plain-import)
 import "./BalancerErrors.sol";
 
 /* solhint-disable */
@@ -28,6 +29,7 @@ import "./BalancerErrors.sol";
  * @author Sergio Yuhjtman - @sergioyuhjtman
  * @author Daniel Fernandez - @dmf7z
  */
+/// forge-lint: disable-next-item(divide-before-multiply,screaming-snake-case-const,mixed-case-function,mixed-case-variable)
 library LogExpMath {
     // All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
     // two numbers, and multiply by ONE when dividing them.

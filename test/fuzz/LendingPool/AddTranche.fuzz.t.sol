@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -30,7 +30,12 @@ contract AddTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(users.owner);
         pool_ = new LendingPoolExtension(
-            users.riskManager, ERC20(address(mockERC20.stable1)), users.treasury, address(factory), address(liquidator)
+            users.owner,
+            users.riskManager,
+            ERC20(address(mockERC20.stable1)),
+            users.treasury,
+            address(factory),
+            address(liquidator)
         );
 
         // Set the Liquidation parameters.

@@ -2,9 +2,10 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 interface ITranche {
+    /// forge-lint: disable-next-line(mixed-case-function)
     function LENDING_POOL() external returns (address lendingPool);
 
     function previewMintAndSync(uint256 shares) external returns (uint256 assets);

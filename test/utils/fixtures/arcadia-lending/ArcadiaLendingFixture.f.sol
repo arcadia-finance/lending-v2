@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { Base_Lending_Test } from "../../../Base.t.sol";
 
@@ -15,9 +15,9 @@ import { TrancheExtension } from "../../extensions/TrancheExtension.sol";
 contract ArcadiaLendingFixture is Base_Lending_Test {
     function deployArcadiaLending(address numeraire) internal {
         vm.startPrank(users.owner);
-        liquidator = new LiquidatorL2Extension(address(factory), address(sequencerUptimeOracle));
+        liquidator = new LiquidatorL2Extension(users.owner, address(factory), address(sequencerUptimeOracle));
         pool = new LendingPoolExtension(
-            users.riskManager, ERC20(numeraire), users.treasury, address(factory), address(liquidator)
+            users.owner, users.riskManager, ERC20(numeraire), users.treasury, address(factory), address(liquidator)
         );
         pool.changeGuardian(users.guardian);
         vm.stopPrank();
@@ -33,7 +33,7 @@ contract ArcadiaLendingFixture is Base_Lending_Test {
         pool.setTreasuryWeights(10, 80);
         pool.setLiquidationParameters(100, 500, 50, 0, 0);
         pool.setLiquidationWeightTranche(20);
-        pool.setAccountVersion(1, true);
+        pool.setAccountVersion(3, true);
         vm.stopPrank();
 
         vm.startPrank(users.riskManager);
@@ -52,7 +52,7 @@ contract ArcadiaLendingFixture is Base_Lending_Test {
         returns (TrancheExtension tranche_)
     {
         vm.startPrank(users.owner);
-        tranche_ = new TrancheExtension(address(pool), 0, prefix, prefixSymbol);
+        tranche_ = new TrancheExtension(users.owner, address(pool), 0, prefix, prefixSymbol);
         pool.addTranche(address(tranche_), interestWeight);
         vm.stopPrank();
 

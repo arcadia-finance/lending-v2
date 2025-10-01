@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { BaseGuardian, GuardianErrors } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
@@ -85,6 +85,15 @@ abstract contract LendingPoolGuardian is BaseGuardian {
         if (liquidationPaused) revert GuardianErrors.FunctionIsPaused();
         _;
     }
+
+    /* //////////////////////////////////////////////////////////////
+                                CONSTRUCTOR
+    ////////////////////////////////////////////////////////////// */
+
+    /**
+     * @param owner_ The address of the Owner.
+     */
+    constructor(address owner_) BaseGuardian(owner_) { }
 
     /* //////////////////////////////////////////////////////////////
                             PAUSING LOGIC

@@ -2,11 +2,9 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { Fuzz_Lending_Test } from "../../Fuzz.t.sol";
-
-import { BaseGuardian, GuardianErrors } from "../../../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 import { LendingPoolGuardianExtension } from "../../../utils/extensions/LendingPoolGuardianExtension.sol";
 
 /**
@@ -40,7 +38,7 @@ abstract contract LendingPoolGuardian_Fuzz_Test is Fuzz_Lending_Test {
         deployArcadiaLendingWithoutAccounts();
 
         vm.startPrank(users.owner);
-        lendingPoolGuardian = new LendingPoolGuardianExtension();
+        lendingPoolGuardian = new LendingPoolGuardianExtension(users.owner);
         lendingPoolGuardian.changeGuardian(users.guardian);
         vm.stopPrank();
 

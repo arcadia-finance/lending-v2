@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
@@ -33,7 +33,7 @@ contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
 
-        depositERC20InAccount(account, mockERC20.stable1, amountLoaned);
+        depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.accountOwner);
         pool.borrow(amountLoaned, address(account), users.accountOwner, emptyBytes3);
 
@@ -42,7 +42,7 @@ contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.closeMarginAccount(address(account));
     }
 
-    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public {
+    function testFuzz_Success_closeMarginAccount_OpenPositionIsZero(address account_) public view {
         // Given: account does not have an open position
         vm.assume(account_ != address(0));
         vm.assume(account_ != address(account));

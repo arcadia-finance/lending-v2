@@ -2,17 +2,15 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LiquidatorL1_Fuzz_Test } from "./_LiquidatorL1.fuzz.t.sol";
-import { AccountV1Extension } from "../../../../lib/accounts-v2/test/utils/extensions/AccountV1Extension.sol";
-import { AssetValueAndRiskFactors } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
-import { AssetValuationLib } from "../../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError.sol";
 
 /**
  * @notice Fuzz tests for the function "getBidPrice" of contract "LiquidatorL1".
  */
+/// forge-lint: disable-next-item(divide-before-multiply)
 contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -39,7 +37,7 @@ contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_getBidPrice_notInAuction() public {
+    function testFuzz_Success_getBidPrice_notInAuction() public view {
         uint256[] memory assetAmounts_ = new uint256[](2);
 
         // When : Calling getBidPrice on an Account that is not in liquidation
@@ -61,8 +59,8 @@ contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         );
 
         // And : Account has debt
-        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
-        depositERC20InAccount(account, mockERC20.token1, amountToken1);
+        depositErc20InAccount(account, mockERC20.stable1, amountStable1);
+        depositErc20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);
@@ -130,8 +128,8 @@ contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         );
 
         // And : Account has debt
-        depositERC20InAccount(account, mockERC20.stable1, amountStable1);
-        depositERC20InAccount(account, mockERC20.token1, amountToken1);
+        depositErc20InAccount(account, mockERC20.stable1, amountStable1);
+        depositErc20InAccount(account, mockERC20.token1, amountToken1);
 
         uint256 valueInNumeraire;
         uint256[] memory assetAmounts_ = new uint256[](2);

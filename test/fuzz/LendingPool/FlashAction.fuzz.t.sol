@@ -2,12 +2,12 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
 import { ActionData } from "../../../lib/accounts-v2/src/interfaces/IActionBase.sol";
-import { ActionMultiCall } from "../../../lib/accounts-v2/src/actions/MultiCall.sol";
+import { ActionTargetMock } from "../../../lib/accounts-v2/test/utils/mocks/action-targets/ActionTargetMock.sol";
 import { FixedPointMathLib } from "../../../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
 import { IPermit2 } from "../../../lib/accounts-v2/src/interfaces/IPermit2.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
@@ -23,7 +23,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                             TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    ActionMultiCall internal actionHandler;
+    ActionTargetMock internal actionHandler;
     bytes internal callData;
 
     /* ///////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         LendingPool_Fuzz_Test.setUp();
 
         vm.prank(users.owner);
-        actionHandler = new ActionMultiCall();
+        actionHandler = new ActionTargetMock();
 
         ActionData memory emptyActionData;
         address[] memory to;
@@ -106,7 +106,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert("TRANSFER_FAILED");
@@ -126,7 +126,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(liquidity >= amountLoaned);
         vm.assume(amountLoaned > 0);
 
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -156,7 +156,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(amountLoaned > 0);
         vm.assume(beneficiary != users.accountOwner);
 
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -190,7 +190,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
 
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -238,7 +238,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.prank(users.owner);
         pool.setOriginationFee(0);
 
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);

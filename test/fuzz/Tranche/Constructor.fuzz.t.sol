@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { Tranche_Fuzz_Test } from "./_Tranche.fuzz.t.sol";
 
@@ -24,7 +24,7 @@ contract Constructor_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_deployment(uint256 vas) public {
-        tranche = new TrancheExtension(address(pool), vas, "Senior", "SR");
+        tranche = new TrancheExtension(users.owner, address(pool), vas, "Senior", "SR");
 
         assertEq(tranche.name(), string("Senior ArcadiaV2 Asset"));
         assertEq(tranche.symbol(), string("SRarcV2ASSET"));

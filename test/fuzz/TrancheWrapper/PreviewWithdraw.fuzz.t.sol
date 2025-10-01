@@ -2,12 +2,10 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
-
 import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/src/StdStorage.sol";
-import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 
 /**
  * @notice Fuzz tests for the function "totalAssets" of contract "Tranche".

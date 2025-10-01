@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity 0.8.22;
+pragma solidity ^0.8.0;
 
 import { LiquidatorL2_Fuzz_Test } from "./_LiquidatorL2.fuzz.t.sol";
 
@@ -13,6 +13,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "LiquidatorL2".
  */
+/// forge-lint: disable-next-item(divide-before-multiply)
 contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         // Account has debt
         bytes3 emptyBytes3;
         uint256 collateralValue = uint256(minimumMargin) + amountLoaned;
-        depositERC20InAccount(account, mockERC20.stable1, collateralValue);
+        depositErc20InAccount(account, mockERC20.stable1, collateralValue);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
         vm.prank(address(srTranche));

@@ -2,14 +2,14 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 library ArcadiaLending {
     address internal constant LIQUIDATOR = 0xA4B0b9fD1d91fA2De44F6ABFd59cC14bA1E1a7Af;
     address internal constant LENDINGPOOL_CBBTC = 0xa37E9b4369dc20940009030BfbC2088F09645e3B;
     address internal constant LENDINGPOOL_USDC = 0x3ec4a293Fb906DD2Cd440c20dECB250DeF141dF1;
     address internal constant LENDINGPOOL_WETH = 0x803ea69c7e87D1d6C86adeB40CB636cC0E6B98E2;
-    address internal constant SWEEPER = 0xD6aA7216dADd79120460ADc1C46959592063f07A;
+    address internal constant SWEEPER = 0x9EBCa9299006B37373e1E3a98914E927c50989a5;
     address internal constant TRANCHE_CBBTC = 0x9c63A4c499B323a25D389Da759c2ac1e385eEc92;
     address internal constant TRANCHE_USDC = 0xEFE32813dBA3A783059d50e5358b9e3661218daD;
     address internal constant TRANCHE_WETH = 0x393893caeB06B5C16728bb1E354b6c36942b1382;
@@ -18,6 +18,7 @@ library ArcadiaLending {
     address internal constant WRAPPED_TRANCHE_WETH = 0xD82BFa27D49e5a394ba371B293DaE65E9B7a8C60;
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library LiquidatorParameters {
     function LIQUIDATOR() internal pure returns (LiquidatorParams memory) {
         return LiquidatorParams({
@@ -30,6 +31,7 @@ library LiquidatorParameters {
     }
 }
 
+/// forge-lint: disable-next-item(mixed-case-function)
 library PoolRisk {
     function PARAMETERS() internal pure returns (PoolRiskParams memory) {
         return PoolRiskParams({ minUsdValue: 1 * 1e18, gracePeriod: 15 minutes, maxRecursiveCalls: 6 });
@@ -64,6 +66,8 @@ struct LendingPoolParams {
     uint16 liquidationWeightTranche;
     uint96 minimumMargin;
     uint256 originationFee;
+    address guardian;
+    address riskManager;
     InterestRateParams interestRateParameters;
     LiquidationParams liquidationParameters;
     PoolRiskParams poolRiskParameters;
@@ -73,6 +77,7 @@ struct LendingPoolParams {
 }
 
 struct LiquidationParams {
+    address accountRecipient;
     uint16 initiationWeight;
     uint16 penaltyWeight;
     uint16 terminationWeight;

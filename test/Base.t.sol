@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { Base_Test } from "../lib/accounts-v2/test/Base.t.sol";
 
@@ -17,7 +17,7 @@ abstract contract Base_Lending_Test is Base_Test {
                                      CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    uint16 internal ONE_4 = 10_000;
+    uint16 internal constant ONE_4 = 10_000;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    TEST CONTRACTS

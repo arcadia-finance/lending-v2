@@ -2,12 +2,12 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { LendingPoolGuardian } from "../../../src/guardians/LendingPoolGuardian.sol";
 
 contract LendingPoolGuardianExtension is LendingPoolGuardian {
-    constructor() LendingPoolGuardian() { }
+    constructor(address owner_) LendingPoolGuardian(owner_) { }
 
     function setPauseTimestamp(uint256 pauseTimestamp_) public {
         pauseTimestamp = uint96(pauseTimestamp_);

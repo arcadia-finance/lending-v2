@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: MIT
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { ILendingPool } from "./ILendingPool.sol";
 
@@ -18,5 +18,6 @@ interface ITranche {
      */
     function setAuctionInProgress(bool auctionInProgress) external;
 
+    /// forge-lint: disable-next-line(mixed-case-function)
     function LENDING_POOL() external returns (ILendingPool lendingPool);
 }

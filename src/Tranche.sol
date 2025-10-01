@@ -2,14 +2,14 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.30;
 
-import { Owned } from "../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
-import { ERC4626 } from "../lib/accounts-v2/lib/solmate/src/mixins/ERC4626.sol";
-import { ILendingPool } from "./interfaces/ILendingPool.sol";
+import { ERC4626 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";
-import { ITranche } from "./interfaces/ITranche.sol";
 import { IGuardian } from "./interfaces/IGuardian.sol";
+import { ILendingPool } from "./interfaces/ILendingPool.sol";
+import { ITranche } from "./interfaces/ITranche.sol";
+import { Owned } from "../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
 import { TrancheErrors } from "./libraries/Errors.sol";
 
 /**
@@ -85,19 +85,20 @@ contract Tranche is ITranche, ERC4626, Owned {
 
     /**
      * @notice The constructor for a tranche.
+     * @param owner_ The address of the Owner.
      * @param lendingPool_ The Lending Pool of the underlying ERC20 token, with the lending logic.
      * @param vas The amount of Virtual Assets and Shares.
      * @param prefix_ The prefix of the contract name (eg. Senior -> Mezzanine -> Junior).
      * @param prefixSymbol_ The prefix of the contract symbol (eg. SR  -> MZ -> JR).
      * @dev The name and symbol of the tranche are automatically generated, based on the name and symbol of the underlying token.
      */
-    constructor(address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
+    constructor(address owner_, address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
         ERC4626(
             ERC4626(address(lendingPool_)).asset(),
             string(abi.encodePacked(prefix_, " ArcadiaV2 ", ERC4626(lendingPool_).asset().name())),
             string(abi.encodePacked(prefixSymbol_, "arcV2", ERC4626(lendingPool_).asset().symbol()))
         )
-        Owned(msg.sender)
+        Owned(owner_)
     {
         LENDING_POOL = ILendingPool(lendingPool_);
         VAS = vas;

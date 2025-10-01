@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.0;
 
 import { Base_Lending_Script } from "./Base.s.sol";
 import { LendingPool } from "../src/LendingPool.sol";
@@ -11,24 +11,24 @@ import { LendingPoolParameters } from "./utils/constants/Base.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract SetProtocolFees is Base_Lending_Script {
-    constructor() Base_Lending_Script() { }
+    constructor() { }
 
     function run() public {
         //Set fees.
-        LendingPoolParams memory POOL = LendingPoolParameters.CBBTC();
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setLiquidationWeightTranche(POOL));
+        LendingPoolParams memory pool_ = LendingPoolParameters.CBBTC();
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolCbbtc), setLiquidationWeightTranche(pool_));
 
-        POOL = LendingPoolParameters.USDC();
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setLiquidationWeightTranche(POOL));
+        pool_ = LendingPoolParameters.USDC();
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolUsdc), setLiquidationWeightTranche(pool_));
 
-        POOL = LendingPoolParameters.WETH();
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasuryWeights(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setInterestWeightTranche(POOL));
-        addToBatch(Safes.OWNER, address(lendingPoolWeth), setLiquidationWeightTranche(POOL));
+        pool_ = LendingPoolParameters.WETH();
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setTreasuryWeights(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setInterestWeightTranche(pool_));
+        addToBatch(Safes.OWNER, address(lendingPoolWeth), setLiquidationWeightTranche(pool_));
 
         // Create and write away batched transaction data to be signed with Safe.
         bytes memory data = createBatchedData(Safes.OWNER);
