@@ -581,6 +581,37 @@ library AssetRiskParameters {
         });
     }
 
+    // OUSDT
+    function OUSDT_CBBTC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.OUSDT().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_CBBTC,
+            collateralFactor: 7200,
+            liquidationFactor: 8750,
+            maxExposure: uint112(350_000 * 10 ** Assets.OUSDT().decimals)
+        });
+    }
+
+    function OUSDT_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.OUSDT().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 9000,
+            liquidationFactor: 9500,
+            maxExposure: uint112(500_000 * 10 ** Assets.OUSDT().decimals)
+        });
+    }
+
+    function OUSDT_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.OUSDT().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 8000,
+            liquidationFactor: 8500,
+            maxExposure: uint112(350_000 * 10 ** Assets.OUSDT().decimals)
+        });
+    }
+
     // RDNT
     function RDNT_USDC() internal pure returns (AssetRiskParams memory) {
         return AssetRiskParams({

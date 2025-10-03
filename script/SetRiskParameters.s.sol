@@ -17,18 +17,9 @@ contract SetRiskParameters is Base_Lending_Script {
 
     function run() public {
         // Set risk parameters.
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.AAVE_CBBTC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.AAVE_USDC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.AAVE_WETH()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_CBBTC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_USDC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.GHO_WETH()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_CBBTC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_USDC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.MORPHO_WETH()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.WELL_CBBTC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.WELL_USDC()));
-        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.WELL_WETH()));
+        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.OUSDT_CBBTC()));
+        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.OUSDT_USDC()));
+        addToBatch(SAFE, address(registry), setRiskParameters(AssetRiskParameters.OUSDT_WETH()));
 
         // Create and write away batched transaction data to be signed with Safe.
         bytes memory data = createBatchedData(SAFE);
