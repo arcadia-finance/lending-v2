@@ -80,6 +80,7 @@ contract Fork_Test is Base_Test {
         POOL.setAccountVersion(3, true);
         vm.stopPrank();
 
+        uint256 freeMarginBefore = accountMargin.getFreeMargin();
         bytes32 stateHashMarginBefore = getState(accountMargin);
         bytes32 stateHashSpotBefore = getState(accountSpot);
 
@@ -92,9 +93,11 @@ contract Fork_Test is Base_Test {
         vm.prank(accountSpot.owner());
         FACTORY.upgradeAccountVersion(address(accountSpot), 4, proofs);
 
+        uint256 freeMarginAfter = accountMargin.getFreeMargin();
         bytes32 stateHashMarginAfter = getState(accountMargin_);
         bytes32 stateHashSpotAfter = getState(accountSpot_);
 
+        assertEq(freeMarginBefore, freeMarginAfter);
         assertEq(stateHashMarginBefore, stateHashMarginAfter);
         assertEq(stateHashSpotBefore, stateHashSpotAfter);
     }
