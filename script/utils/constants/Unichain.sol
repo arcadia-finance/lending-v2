@@ -14,8 +14,8 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
-import { EOAs } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
+import { EOAs, Safes } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 library AssetModuleRiskParameters { }
 
@@ -44,6 +44,8 @@ library InterestRateParameters {
 
 /// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
+    function CBBTC() internal pure returns (LendingPoolParams memory empty) { }
+
     function USDC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_USDC,
