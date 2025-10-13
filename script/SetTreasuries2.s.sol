@@ -8,7 +8,7 @@ import { Base_Lending_Script } from "./Base.s.sol";
 import { LendingPool } from "../src/LendingPool.sol";
 import { LendingPoolParams } from "./utils/constants/Shared.sol";
 import { LendingPoolParameters } from "./utils/constants/Base.sol";
-import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
+import { Safes } from "../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 contract SetTreasuries2 is Base_Lending_Script {
     constructor() { }

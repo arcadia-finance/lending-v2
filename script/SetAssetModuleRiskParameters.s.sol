@@ -4,11 +4,10 @@
  */
 pragma solidity ^0.8.0;
 
-import { ArcadiaAccounts } from "../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { ArcadiaAccounts, Safes } from "../lib/accounts-v2/script/utils/constants/Shared.sol";
 import { Base_Lending_Script } from "./Base.s.sol";
 import { AssetModuleRiskParameters } from "./utils/constants/Base.sol";
 import { AssetModuleRiskParams } from "./utils/constants/Shared.sol";
-import { Safes } from "../lib/accounts-v2/script/utils/constants/Base.sol";
 
 contract SetRiskParametersAM is Base_Lending_Script {
     /// forge-lint: disable-next-line(mixed-case-variable)

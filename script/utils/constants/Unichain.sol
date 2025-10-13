@@ -6,6 +6,8 @@ pragma solidity ^0.8.0;
 
 import {
     ArcadiaLending,
+    AssetModuleRiskParams,
+    AssetRiskParams,
     InterestRateParams,
     LendingPoolParams,
     LiquidationParams,
@@ -14,12 +16,208 @@ import {
     TrancheParams,
     Treasury
 } from "./Shared.sol";
-import { Assets, Safes } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
-import { EOAs } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Unichain.sol";
+import { AssetModules, EOAs, Safes } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
-library AssetModuleRiskParameters { }
+/// forge-lint: disable-next-item(mixed-case-function)
+library AssetModuleRiskParameters {
+    // Aerodrome Pool Asset Module
+    function AERO_POOL_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.AERO_POOL,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
 
-library AssetRiskParameters { }
+    function AERO_POOL_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.AERO_POOL,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Default UniswapV4 Asset Module
+    function DEFAULT_UNISWAPV4_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.DEFAULT_UNISWAPV4,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function DEFAULT_UNISWAPV4_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.DEFAULT_UNISWAPV4,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Slipstream Asset Module
+    function SLIPSTREAM_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.SLIPSTREAM,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function SLIPSTREAM_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.SLIPSTREAM,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Staked Aerodrome Pool Asset Module
+    function STAKED_AERO_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STAKED_AERO,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function STAKED_AERO_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STAKED_AERO,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Staked Slipstream Asset Module
+    function STAKED_SLIPSTREAM_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STAKED_SLIPSTREAM,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function STAKED_SLIPSTREAM_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STAKED_SLIPSTREAM,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Stargate Asset Module
+    function STARGATE_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STARGATE,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9700,
+            maxExposure: 0
+        });
+    }
+
+    function STARGATE_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.STARGATE,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9700,
+            maxExposure: 0
+        });
+    }
+
+    // Uniswap V3 Asset Module
+    function UNISWAPV3_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.UNISWAPV3,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function UNISWAPV3_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.UNISWAPV3,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    // Wrapped Aerodrome Pool Asset Module
+    function WRAPPED_AERO_USDC() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.WRAPPED_AERO,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+
+    function WRAPPED_AERO_WETH() internal pure returns (AssetModuleRiskParams memory) {
+        return AssetModuleRiskParams({
+            assetModule: AssetModules.WRAPPED_AERO,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            riskFactor: 9800,
+            maxExposure: uint112(1_000_000 * 1e18)
+        });
+    }
+}
+
+/// forge-lint: disable-next-item(mixed-case-function)
+library AssetRiskParameters {
+    // USDC
+    function USDC_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.USDC().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 9325,
+            liquidationFactor: 9750,
+            maxExposure: uint112(1_000_000 * 10 ** Assets.USDC().decimals)
+        });
+    }
+
+    function USDC_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.USDC().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 8850,
+            liquidationFactor: 9475,
+            maxExposure: uint112(1_000_000 * 10 ** Assets.USDC().decimals)
+        });
+    }
+
+    // WETH
+    function WETH_USDC() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.WETH().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_USDC,
+            collateralFactor: 8850,
+            liquidationFactor: 9475,
+            maxExposure: uint112(2850 * 10 ** Assets.WETH().decimals)
+        });
+    }
+
+    function WETH_WETH() internal pure returns (AssetRiskParams memory) {
+        return AssetRiskParams({
+            asset: Assets.WETH().asset,
+            creditor: ArcadiaLending.LENDINGPOOL_WETH,
+            collateralFactor: 9325,
+            liquidationFactor: 9750,
+            maxExposure: uint112(2850 * 10 ** Assets.WETH().decimals)
+        });
+    }
+}
 
 /// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
@@ -44,6 +242,8 @@ library InterestRateParameters {
 
 /// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
+    function CBBTC() internal pure returns (LendingPoolParams memory empty) { }
+
     function USDC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_USDC,

@@ -4,7 +4,7 @@
  */
 pragma solidity ^0.8.0;
 
-import { AccountLogic, ArcadiaAccounts } from "../../lib/accounts-v2/script/utils/constants/Shared.sol";
+import { AccountLogic, ArcadiaAccounts, Safes } from "../../lib/accounts-v2/script/utils/constants/Shared.sol";
 import { AccountV1 } from "../../lib/accounts-v2/src/accounts/AccountV1.sol";
 import { AccountSpot } from "../../lib/accounts-v2/src/accounts/AccountV2.sol";
 import { AccountV3 } from "../../lib/accounts-v2/src/accounts/AccountV3.sol";
@@ -13,7 +13,6 @@ import { ArcadiaLending } from "../../script/utils/constants/Shared.sol";
 import { Base_Test } from "../Base.t.sol";
 import { Factory } from "../../lib/accounts-v2/src/Factory.sol";
 import { LendingPool } from "../../src/LendingPool.sol";
-import { Safes } from "../../lib/accounts-v2/script/utils/constants/Base.sol";
 import { Utils } from "../../lib/accounts-v2/test/utils/Utils.sol";
 
 /**
