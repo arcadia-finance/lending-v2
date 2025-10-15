@@ -42,9 +42,10 @@ contract GetAssetShares_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         }
     }
 
-    function testFuzz_Success_getAssetShare_NonEmptyArray_NonZeroTotalValue(
-        AssetValueAndRiskFactors[] memory assetValues
-    ) public view {
+    function testFuzz_Success_getAssetShare_NonEmptyArray_NonZeroTotalValue(AssetValueAndRiskFactors[] memory assetValues)
+        public
+        view
+    {
         // Given: all values per asset are smaller as type(uint112).max.
         uint256 totalValue;
         vm.assume(assetValues.length > 0);

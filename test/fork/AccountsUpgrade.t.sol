@@ -26,7 +26,7 @@ contract Fork_Test is Base_Test {
                             CONSTANTS
     ///////////////////////////////////////////////////////////////*/
 
-    /// forge-lint: disable-next-line(mixed-case-variable)
+    // forge-lint: disable-next-line(mixed-case-variable)
     string internal RPC_URL = vm.envString("RPC_URL_BASE");
 
     Factory internal constant FACTORY = Factory(ArcadiaAccounts.FACTORY);

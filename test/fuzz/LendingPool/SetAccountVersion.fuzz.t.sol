@@ -23,9 +23,11 @@ contract SetAccountVersion_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setAccountVersion_NonOwner(address unprivilegedAddress, uint256 accountVersion, bool valid)
-        public
-    {
+    function testFuzz_Revert_setAccountVersion_NonOwner(
+        address unprivilegedAddress,
+        uint256 accountVersion,
+        bool valid
+    ) public {
         vm.assume(unprivilegedAddress != users.owner);
 
         vm.startPrank(unprivilegedAddress);

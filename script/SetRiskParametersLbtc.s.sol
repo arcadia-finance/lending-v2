@@ -10,7 +10,7 @@ import { AssetRiskParams } from "./utils/constants/Shared.sol";
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 contract SetRiskParametersLbtc is Base_Lending_Script {
-    /// forge-lint: disable-next-line(mixed-case-variable)
+    // forge-lint: disable-next-line(mixed-case-variable)
     address SAFE = Safes.RISK_MANAGER;
 
     constructor() { }

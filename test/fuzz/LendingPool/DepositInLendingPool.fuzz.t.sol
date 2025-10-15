@@ -73,9 +73,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         assertEq(mockERC20.stable1.balanceOf(address(pool)), amount);
     }
 
-    function testFuzz_Success_depositInLendingPool_MultipleDepositsByTranches(uint128 amount0, uint128 amount1)
-        public
-    {
+    function testFuzz_Success_depositInLendingPool_MultipleDepositsByTranches(uint128 amount0, uint128 amount1) public {
         vm.assume(amount0 <= type(uint128).max - amount1);
 
         uint256 totalAmount = uint256(amount0) + uint256(amount1);

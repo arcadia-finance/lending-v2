@@ -13,7 +13,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "LiquidatorL2".
  */
-/// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply)
 contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -54,9 +54,8 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
-            amountLoaned + 1
-        );
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+            .checked_write(amountLoaned + 1);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
 
         // Initiate liquidation
@@ -193,9 +192,8 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(shares);
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
         debt.setRealisedDebt(uint256(totalDebt));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
-            liquidity
-        );
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+            .checked_write(liquidity);
         pool.setTotalRealisedLiquidity(uint128(liquidity));
 
         // And: All liquidation parameters are 0 (we do not tests want to test _calculateRewards and want to avoid overflows).
@@ -242,9 +240,8 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Healthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
-            amountLoaned
-        );
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+            .checked_write(amountLoaned);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =
@@ -293,9 +290,8 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Healthy (open position is zero)
         debt.setRealisedDebt(0);
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche)).checked_write(
-            uint256(0)
-        );
+        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+            .checked_write(uint256(0));
         pool.setTotalRealisedLiquidity(0);
 
         (uint256 initiationReward, uint256 terminationReward, uint256 liquidationPenalty) =

@@ -186,7 +186,7 @@ contract SetAuctionCurveParameters_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_T
 
         vm.startPrank(users.owner);
         vm.expectEmit(true, true, true, true);
-        emit LiquidatorL1.AuctionCurveParametersSet(
+        emit LiquidatorL1.AuctionCurveParametersSet(// forge-lint: disable-next-line(unsafe-typecast)
             uint64(expectedBase), cutoffTime, startPriceMultiplier, minPriceMultiplier
         );
         liquidator_.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);

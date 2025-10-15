@@ -18,6 +18,7 @@ import { LogExpMath } from "../libraries/LogExpMath.sol";
 import { LiquidatorErrors } from "../libraries/Errors.sol";
 import { Owned } from "../../lib/accounts-v2/lib/solmate/src/auth/Owned.sol";
 import { ReentrancyGuard } from "../../lib/accounts-v2/lib/solmate/src/utils/ReentrancyGuard.sol";
+import { SafeCastLib } from "../../lib/accounts-v2/lib/solmate/src/utils/SafeCastLib.sol";
 
 /**
  * @title Liquidator for L2s.
@@ -140,9 +141,8 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
      * startedAt will be 0 in this case.
      */
     function _getSequencerUpTime() internal view returns (bool success, uint256 startedAt) {
-        try IChainLinkData(sequencerUptimeOracle).latestRoundData() returns (
-            uint80, int256 answer, uint256 startedAt_, uint256, uint80
-        ) {
+        try IChainLinkData(sequencerUptimeOracle)
+            .latestRoundData() returns (uint80, int256 answer, uint256 startedAt_, uint256, uint80) {
             if (answer == 1) revert LiquidatorErrors.SequencerDown();
 
             success = true;
@@ -293,7 +293,7 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         auctionInformation_.assetAmounts = assetAmounts;
         auctionInformation_.creditor = creditor;
         auctionInformation_.minimumMargin = minimumMargin;
-        auctionInformation_.startDebt = uint128(debt);
+        auctionInformation_.startDebt = SafeCastLib.safeCastTo128(debt);
 
         // Store the relative value of each asset (the "assetShare"), with respect to the total value of the Account.
         // These will be used to calculate the price of bids to partially liquidate the Account.
@@ -383,14 +383,14 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         // Restart pending auctions if the sequencer went down during the auction.
         (, uint256 sequencerStartedAt) = _getSequencerUpTime();
         if (sequencerStartedAt > auctionInformation_.startTime) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             auctionInformation_.startTime = uint32(sequencerStartedAt);
         }
 
         // Transfer the assets to the bidder, returns updated bidAmounts with the actual bought assets.
         // The actual bought assets are equal or smaller than the asked assets.
-        bidAmounts = IAccount(account).auctionBid(
-            auctionInformation_.assetAddresses, auctionInformation_.assetIds, bidAmounts, msg.sender
-        );
+        bidAmounts = IAccount(account)
+            .auctionBid(auctionInformation_.assetAddresses, auctionInformation_.assetIds, bidAmounts, msg.sender);
 
         // Calculate the current auction price of the assets bought.
         uint256 totalShare = _calculateTotalShare(auctionInformation_, bidAmounts);
@@ -405,9 +405,8 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
-        bool earlyTerminate = ILendingPool(auctionInformation_.creditor).auctionRepay(
-            auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender
-        );
+        bool earlyTerminate = ILendingPool(auctionInformation_.creditor)
+            .auctionRepay(auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender);
 
         // If all the debt is repaid, the auction must be ended, even if the bidder did not set endAuction to true.
         if (earlyTerminate) {
@@ -511,14 +510,12 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
             // No overflow possible: uint128 * uint32 * uint18 * uint18.
-            price = (
-                auctionInformation_.startDebt * totalShare
-                    * (
-                        LogExpMath.pow(auctionInformation_.base, timePassed)
-                            * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
-                            + 1e18 * uint256(minPriceMultiplier_)
-                    )
-            ) / 1e26;
+            price = (auctionInformation_.startDebt
+                    * totalShare
+                    * (LogExpMath.pow(auctionInformation_.base, timePassed)
+                        * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
+                        + 1e18
+                        * uint256(minPriceMultiplier_))) / 1e26;
         }
     }
 
@@ -539,6 +536,7 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         // Restart pending auctions if the sequencer went down during the auction.
         (, uint256 sequencerStartedAt) = _getSequencerUpTime();
         if (sequencerStartedAt > auctionInformation_.startTime) {
+            // forge-lint: disable-next-line(unsafe-typecast)
             auctionInformation_.startTime = uint32(sequencerStartedAt);
         }
 

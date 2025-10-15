@@ -10,7 +10,7 @@ import { AssetModuleRiskParameters } from "./utils/constants/Base.sol";
 import { AssetModuleRiskParams } from "./utils/constants/Shared.sol";
 
 contract SetRiskParametersAM is Base_Lending_Script {
-    /// forge-lint: disable-next-line(mixed-case-variable)
+    // forge-lint: disable-next-line(mixed-case-variable)
     address SAFE = Safes.RISK_MANAGER;
 
     constructor() { }

@@ -14,7 +14,7 @@
 
 pragma solidity ^0.8.0;
 
-/// forge-lint: disable-next-line(unaliased-plain-import)
+// forge-lint: disable-next-line(unaliased-plain-import)
 import "./BalancerErrors.sol";
 
 /* solhint-disable */
@@ -29,7 +29,7 @@ import "./BalancerErrors.sol";
  * @author Sergio Yuhjtman - @sergioyuhjtman
  * @author Daniel Fernandez - @dmf7z
  */
-/// forge-lint: disable-next-item(divide-before-multiply,screaming-snake-case-const,mixed-case-function,mixed-case-variable)
+// forge-lint: disable-next-item(divide-before-multiply,mixed-case-variable,screaming-snake-case-const,mixed-case-function,unsafe-typecast)
 library LogExpMath {
     // All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
     // two numbers, and multiply by ONE when dividing them.
