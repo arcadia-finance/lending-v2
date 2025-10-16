@@ -170,9 +170,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(receiver != address(pool));
 
         setTrancheState(initialShares, wrapperShares, initialAssets);
-        stdstore.target(address(trancheWrapper)).sig(tranche.balanceOf.selector).with_key(owner).checked_write(
-            ownerShares
-        );
+        stdstore.target(address(trancheWrapper)).sig(tranche.balanceOf.selector).with_key(owner)
+            .checked_write(ownerShares);
         withdrawnAssets = uint128(bound(withdrawnAssets, 0, trancheWrapper.maxWithdraw(owner)));
 
         uint256 expectedShares = tranche.previewWithdraw(withdrawnAssets);

@@ -26,7 +26,7 @@ contract Transfer_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     function testFuzz_Revert_transfer(address to, uint256 amount, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(DebtTokenErrors.FunctionNotImplemented.selector);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         debt_.transfer(to, amount);
         vm.stopPrank();
     }

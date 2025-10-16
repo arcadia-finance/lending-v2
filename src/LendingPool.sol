@@ -246,6 +246,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         address tranche = tranches[index];
         interestWeight[tranche] = interestWeight_;
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         emit InterestWeightTrancheUpdated(tranche, uint8(index), interestWeight_);
     }
 
@@ -381,11 +382,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * @dev This function can be called by anyone with an open balance (realisedLiquidityOf[address] bigger than 0),
      * which can be both Tranches as other address (treasury, Liquidation Initiators, Liquidated Account Owner...).
      */
-    function withdrawFromLendingPool(uint256 assets, address receiver)
-        external
-        whenWithdrawNotPaused
-        processInterests
-    {
+    function withdrawFromLendingPool(uint256 assets, address receiver) external whenWithdrawNotPaused processInterests {
         if (realisedLiquidityOf[msg.sender] < assets) revert LendingPoolErrors.AmountExceedsBalance();
 
         unchecked {
@@ -464,7 +461,9 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Transfer fails if there is insufficient liquidity in the pool.
         asset.safeTransfer(to, amount);
 
-        emit Borrow(account, msg.sender, to, amount, amountWithFee - amount, referrer);
+        unchecked {
+            emit Borrow(account, msg.sender, to, amount, amountWithFee - amount, referrer);
+        }
     }
 
     /**
@@ -597,7 +596,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Add origination fee to the treasury.
         unchecked {
             if (amountBorrowedWithFee - amountBorrowed > 0) {
-                totalRealisedLiquidity += SafeCastLib.safeCastTo128(amountBorrowedWithFee - amountBorrowed);
+                totalRealisedLiquidity =
+                    SafeCastLib.safeCastTo128(amountBorrowedWithFee + totalRealisedLiquidity - amountBorrowed);
                 realisedLiquidityOf[treasury] += amountBorrowedWithFee - amountBorrowed;
             }
         }
@@ -859,6 +859,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // While repays are paused, interest rate is set to 0.
         if (repayPaused) return 0;
 
+        // forge-lint: disable-next-item(unsafe-typecast)
         unchecked {
             if (utilisation >= utilisationThreshold) {
                 // lsIR (1e22) = uT (1e4) * ls (1e18).
@@ -929,6 +930,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         // Emit event
+        // forge-lint: disable-next-line(unsafe-typecast)
         emit AuctionStarted(msg.sender, address(this), uint128(startDebt));
     }
 
@@ -1033,6 +1035,8 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 badDebt = openDebt - terminationReward - liquidationPenalty;
             }
 
+            // unsafe cast: uint128 - uint256 is always smaller than uint128.
+            // forge-lint: disable-next-line(unsafe-typecast)
             totalRealisedLiquidity = uint128(totalRealisedLiquidity - badDebt);
             _processDefault(badDebt);
             (terminationReward, liquidationPenalty) = (0, 0);

@@ -19,7 +19,7 @@ import {
 import { Assets } from "../../../lib/accounts-v2/script/utils/constants/Base.sol";
 import { AssetModules, EOAs, Safes } from "../../../lib/accounts-v2/script/utils/constants/Shared.sol";
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library AssetModuleRiskParameters {
     // Aerodrome Pool Asset Module
     function AERO_POOL_USDC() internal pure returns (AssetModuleRiskParams memory) {
@@ -257,7 +257,7 @@ library AssetModuleRiskParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library AssetRiskParameters {
     // AAVE
     function AAVE_CBBTC() internal pure returns (AssetRiskParams memory) {
@@ -1050,7 +1050,7 @@ library AssetRiskParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
     function CBBTC() internal pure returns (InterestRateParams memory) {
         return InterestRateParams({
@@ -1058,7 +1058,7 @@ library InterestRateParameters {
             baseRatePerYear: 3 * 1e16, // 3%
             lowSlopePerYear: 0 * 1e16, // -> Interest rate goes from 3% to 3% for utilisation of 0 to 80%
             highSlopePerYear: 200 * 1e16 // -> Interest rate goes from 3% to 43% for utilisation of 80 to 100%
-         });
+        });
     }
 
     function USDC() internal pure returns (InterestRateParams memory) {
@@ -1067,7 +1067,7 @@ library InterestRateParameters {
             baseRatePerYear: 8 * 1e16, // 8%
             lowSlopePerYear: 0 * 1e16, // -> Interest rate goes from 8% to 8% for utilisation of 0 to 80%
             highSlopePerYear: 200 * 1e16 // -> Interest rate goes from 8% to 48% for utilisation of 80 to 100%
-         });
+        });
     }
 
     function WETH() internal pure returns (InterestRateParams memory) {
@@ -1076,18 +1076,18 @@ library InterestRateParameters {
             baseRatePerYear: 6 * 1e16, // 6%
             lowSlopePerYear: 0 * 1e16, // -> Interest rate goes from 6% to 6% for utilisation of 0 to 80%
             highSlopePerYear: 200 * 1e16 // -> Interest rate goes from 6% to 46% for utilisation of 80 to 100%
-         });
+        });
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
     function CBBTC() internal pure returns (LendingPoolParams memory) {
         return LendingPoolParams({
             lendingPool: ArcadiaLending.LENDINGPOOL_CBBTC,
             asset: Assets.CBBTC().asset,
             liquidationWeightTranche: 50,
-            minimumMargin: 0.00004 * 10 ** 8,
+            minimumMargin: 0.000_04 * 10 ** 8,
             originationFee: 0,
             guardian: Safes.GUARDIAN,
             riskManager: Safes.RISK_MANAGER,
@@ -1137,7 +1137,7 @@ library LendingPoolParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library LiquidationParameters {
     function CBBTC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
@@ -1173,7 +1173,7 @@ library LiquidationParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library TrancheParameters {
     function CBBTC() internal pure returns (TrancheParams[] memory tranches) {
         tranches = new TrancheParams[](1);
@@ -1224,7 +1224,7 @@ library TrancheParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
         return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });

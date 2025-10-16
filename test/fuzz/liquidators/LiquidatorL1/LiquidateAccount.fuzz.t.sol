@@ -16,7 +16,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Fuzz tests for the function "liquidateAccount" of contract "LiquidatorL1".
  */
-/// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply)
 contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     using FixedPointMathLib for uint256;
     using stdStorage for StdStorage;
@@ -76,9 +76,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_liquidateAccount_Account_Not_Exist(address liquidationInitiator, address account_)
-        public
-    {
+    function testFuzz_Revert_liquidateAccount_Account_Not_Exist(address liquidationInitiator, address account_) public {
         // Given: Account does not exist
         vm.assume(account_ != address(account));
         // When Then: Liquidate Account is called, It should revert
@@ -326,9 +324,8 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
-        uint256 slot = stdstore.target(address(accountLogic)).sig(accountLogic.erc20Balances.selector).with_key(
-            address(mockERC20.stable1)
-        ).find();
+        uint256 slot = stdstore.target(address(accountLogic)).sig(accountLogic.erc20Balances.selector)
+            .with_key(address(mockERC20.stable1)).find();
         vm.store(address(account), bytes32(slot), bytes32(0));
 
         // When: Liquidation Initiator calls liquidateAccount

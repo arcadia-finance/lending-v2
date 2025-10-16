@@ -10,6 +10,7 @@ contract LendingPoolGuardianExtension is LendingPoolGuardian {
     constructor(address owner_) LendingPoolGuardian(owner_) { }
 
     function setPauseTimestamp(uint256 pauseTimestamp_) public {
+        // forge-lint: disable-next-line(unsafe-typecast)
         pauseTimestamp = uint96(pauseTimestamp_);
     }
 

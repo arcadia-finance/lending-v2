@@ -67,6 +67,7 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         pool.setAuctionsInProgress(2);
 
         // And:Account has a debt
+        // forge-lint: disable-next-line(unsafe-typecast)
         pool.setOpenPosition(address(account), uint128(openDebt));
         debt.setRealisedDebt(openDebt);
 

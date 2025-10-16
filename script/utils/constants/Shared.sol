@@ -18,7 +18,7 @@ library ArcadiaLending {
     address internal constant WRAPPED_TRANCHE_WETH = 0xD82BFa27D49e5a394ba371B293DaE65E9B7a8C60;
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library LiquidatorParameters {
     function LIQUIDATOR() internal pure returns (LiquidatorParams memory) {
         return LiquidatorParams({
@@ -27,11 +27,11 @@ library LiquidatorParameters {
             cutoffTime: 14_400, // 4 hours.
             startPriceMultiplier: 16_000, // 160%. 1.6x
             minPriceMultiplier: 8000 // 80%. 0.8x
-         });
+        });
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library PoolRisk {
     function PARAMETERS() internal pure returns (PoolRiskParams memory) {
         return PoolRiskParams({ minUsdValue: 1 * 1e18, gracePeriod: 15 minutes, maxRecursiveCalls: 6 });

@@ -21,7 +21,7 @@ library AssetModuleRiskParameters { }
 
 library AssetRiskParameters { }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library InterestRateParameters {
     function USDC() internal pure returns (InterestRateParams memory) {
         return InterestRateParams({
@@ -29,7 +29,7 @@ library InterestRateParameters {
             baseRatePerYear: 8 * 1e16, // 8%
             lowSlopePerYear: 0 * 1e16, // -> Interest rate goes from 8% to 8% for utilisation of 0 to 80%
             highSlopePerYear: 200 * 1e16 // -> Interest rate goes from 8% to 48% for utilisation of 80 to 100%
-         });
+        });
     }
 
     function WETH() internal pure returns (InterestRateParams memory) {
@@ -38,11 +38,11 @@ library InterestRateParameters {
             baseRatePerYear: 6 * 1e16, // 6%
             lowSlopePerYear: 0 * 1e16, // -> Interest rate goes from 6% to 6% for utilisation of 0 to 80%
             highSlopePerYear: 200 * 1e16 // -> Interest rate goes from 6% to 46% for utilisation of 80 to 100%
-         });
+        });
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library LendingPoolParameters {
     function CBBTC() internal pure returns (LendingPoolParams memory empty) { }
 
@@ -83,7 +83,7 @@ library LendingPoolParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library LiquidationParameters {
     function USDC() internal pure returns (LiquidationParams memory) {
         return LiquidationParams({
@@ -108,7 +108,7 @@ library LiquidationParameters {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library Tranches {
     function USDC() internal pure returns (TrancheParams[] memory tranches) {
         tranches = new TrancheParams[](1);
@@ -143,7 +143,7 @@ library Tranches {
     }
 }
 
-/// forge-lint: disable-next-item(mixed-case-function)
+// forge-lint: disable-next-item(mixed-case-function)
 library Treasuries {
     function TREASURY() internal pure returns (Treasury memory) {
         return Treasury({ treasury: ArcadiaLending.SWEEPER, interestWeight: 15, liquidationWeight: 50 });

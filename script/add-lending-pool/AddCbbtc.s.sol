@@ -14,13 +14,13 @@ import { Tranche } from "../../src/Tranche.sol";
 import { TrancheWrapper } from "../../src/periphery/tranche-wrapper/TrancheWrapper.sol";
 
 contract AddCbbtc is Base_Lending_Script {
-    /// forge-lint: disable-start(mixed-case-variable)
+    // forge-lint: disable-start(mixed-case-variable)
     LendingPool internal pool;
     LendingPoolParams internal POOL = LendingPoolParameters.CBBTC();
     Tranche internal tranche;
     TrancheParams internal TRANCHE = POOL.tranche;
     TrancheWrapper internal wrappedTranche;
-    /// forge-lint: disable-end(mixed-case-variable)
+    // forge-lint: disable-end(mixed-case-variable)
 
     constructor() { }
 

@@ -10,7 +10,7 @@ import { LiquidatorParameters, LiquidatorParams } from "./utils/constants/Shared
 import { Safes } from "../lib/accounts-v2/script/utils/constants/Shared.sol";
 
 contract SetAuctionCurveParameters is Base_Lending_Script {
-    /// forge-lint: disable-next-line(mixed-case-variable)
+    // forge-lint: disable-next-line(mixed-case-variable)
     LiquidatorParams internal LIQUIDATOR = LiquidatorParameters.LIQUIDATOR();
 
     constructor() { }

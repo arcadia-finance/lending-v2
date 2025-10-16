@@ -206,9 +206,12 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_borrow_Paused(uint128 amountLoaned, uint112 collateralValue, uint128 liquidity, address to)
-        public
-    {
+    function testFuzz_Revert_borrow_Paused(
+        uint128 amountLoaned,
+        uint112 collateralValue,
+        uint128 liquidity,
+        address to
+    ) public {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
 

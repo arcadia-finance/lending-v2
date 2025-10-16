@@ -10,7 +10,7 @@ import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError
 /**
  * @notice Fuzz tests for the function "getBidPrice" of contract "LiquidatorL1".
  */
-/// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply)
 contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

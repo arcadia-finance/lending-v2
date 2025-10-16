@@ -97,6 +97,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
+        // forge-lint: disable-next-item(unsafe-typecast)
         emit LendingPool.PoolStateUpdated(
             uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
         );
@@ -135,7 +136,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // When: interest rate is updated.
         vm.expectEmit();
-        emit LendingPool.PoolStateUpdated(
+        emit LendingPool.PoolStateUpdated( // forge-lint: disable-next-line(unsafe-typecast)
             uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
         );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);
@@ -166,7 +167,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate = baseRate_;
 
         vm.expectEmit();
-        emit LendingPool.PoolStateUpdated(
+        emit LendingPool.PoolStateUpdated( // forge-lint: disable-next-line(unsafe-typecast)
             uint256(realisedDebt_), uint256(totalRealisedLiquidity_), uint80(expectedInterestRate)
         );
         pool.updateInterestRate(realisedDebt_, totalRealisedLiquidity_);

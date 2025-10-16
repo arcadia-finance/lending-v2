@@ -32,7 +32,9 @@ contract PreviewMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         // Given: totalSupply is bigger than zero.
         // And: no overflows.
         totalSupply = bound(totalSupply, 1, type(uint256).max - vas);
-        if (uint256(totalAssets) + vas > 0) shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
+        if (uint256(totalAssets) + vas > 0) {
+            shares = bound(shares, 0, type(uint256).max / (uint256(totalAssets) + vas));
+        }
 
         // And: Tranche state is set.
         tranche = TrancheExtension(setTrancheState(vas, totalSupply, totalAssets));

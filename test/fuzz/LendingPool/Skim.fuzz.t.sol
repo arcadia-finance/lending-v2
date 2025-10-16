@@ -42,7 +42,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedDebt(totalDebt);
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(address(pool), balanceOf);
 
         vm.prank(sender);

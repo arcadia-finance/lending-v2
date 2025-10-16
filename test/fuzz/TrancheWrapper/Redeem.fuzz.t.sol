@@ -156,9 +156,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         vm.assume(receiver != address(pool));
 
         setTrancheState(initialShares, wrapperShares, initialAssets);
-        stdstore.target(address(trancheWrapper)).sig(tranche.balanceOf.selector).with_key(owner).checked_write(
-            ownerShares
-        );
+        stdstore.target(address(trancheWrapper)).sig(tranche.balanceOf.selector).with_key(owner)
+            .checked_write(ownerShares);
 
         uint256 expectedAssets = tranche.previewRedeem(redeemedShares);
         vm.assume(expectedAssets > 0);
