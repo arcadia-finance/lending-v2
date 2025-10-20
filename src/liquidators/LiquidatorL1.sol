@@ -449,12 +449,13 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
             // No overflow possible: uint128 * uint32 * uint18 * uint18.
-            price = (auctionInformation_.startDebt
-                    * totalShare
-                    * (LogExpMath.pow(auctionInformation_.base, timePassed)
-                        * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
-                        + 1e18
-                        * uint256(minPriceMultiplier_))) / 1e26;
+            price =
+                (auctionInformation_.startDebt
+                        * totalShare
+                        * (LogExpMath.pow(auctionInformation_.base, timePassed)
+                            * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
+                            + 1e18
+                            * uint256(minPriceMultiplier_))) / 1e26;
         }
     }
 

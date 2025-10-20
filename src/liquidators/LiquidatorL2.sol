@@ -141,8 +141,9 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
      * startedAt will be 0 in this case.
      */
     function _getSequencerUpTime() internal view returns (bool success, uint256 startedAt) {
-        try IChainLinkData(sequencerUptimeOracle)
-            .latestRoundData() returns (uint80, int256 answer, uint256 startedAt_, uint256, uint80) {
+        try IChainLinkData(sequencerUptimeOracle).latestRoundData() returns (
+            uint80, int256 answer, uint256 startedAt_, uint256, uint80
+        ) {
             if (answer == 1) revert LiquidatorErrors.SequencerDown();
 
             success = true;
@@ -510,12 +511,13 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
             // No overflow possible: uint128 * uint32 * uint18 * uint18.
-            price = (auctionInformation_.startDebt
-                    * totalShare
-                    * (LogExpMath.pow(auctionInformation_.base, timePassed)
-                        * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
-                        + 1e18
-                        * uint256(minPriceMultiplier_))) / 1e26;
+            price =
+                (auctionInformation_.startDebt
+                        * totalShare
+                        * (LogExpMath.pow(auctionInformation_.base, timePassed)
+                            * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
+                            + 1e18
+                            * uint256(minPriceMultiplier_))) / 1e26;
         }
     }
 
