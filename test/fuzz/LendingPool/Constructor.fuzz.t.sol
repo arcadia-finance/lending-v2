@@ -25,12 +25,9 @@ contract Constructor_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Success_deployment(
-        address riskManager_,
-        address treasury_,
-        address factory_,
-        address liquidator_
-    ) public {
+    function testFuzz_Success_deployment(address riskManager_, address treasury_, address factory_, address liquidator_)
+        public
+    {
         LendingPoolExtension pool_ = new LendingPoolExtension(
             users.owner, riskManager_, ERC20(address(mockERC20.stable1)), treasury_, factory_, liquidator_
         );
