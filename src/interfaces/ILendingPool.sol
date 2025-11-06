@@ -70,10 +70,6 @@ interface ILendingPool {
      * @param minimumMargin The minimum margin of the Account.
      * @param terminator The address of the liquidation terminator.
      */
-    function settleLiquidationUnhappyFlow(
-        address account,
-        uint256 startDebt,
-        uint256 minimumMargin,
-        address terminator
-    ) external;
+    function settleLiquidationUnhappyFlow(address account, uint256 startDebt, uint256 minimumMargin, address terminator)
+        external;
 }

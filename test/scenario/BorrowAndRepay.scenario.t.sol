@@ -164,8 +164,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
 
-        uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_
-                / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS));
+        uint256 maxCredit =
+            ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_ / AssetValuationLib.ONE_4
+                / 10 ** (18 - Constants.STABLE_DECIMALS));
 
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
@@ -196,8 +197,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         depositErc20InAccount(account, mockERC20.token1, amountToken);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
 
-        uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_
-                / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS));
+        uint256 maxCredit =
+            ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_ / AssetValuationLib.ONE_4
+                / 10 ** (18 - Constants.STABLE_DECIMALS));
 
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
