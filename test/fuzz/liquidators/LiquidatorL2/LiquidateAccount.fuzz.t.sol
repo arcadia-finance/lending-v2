@@ -33,7 +33,7 @@ contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
     function testFuzz_Revert_liquidateAccount_NotAnAccount(address nonAccount, address caller) public {
         vm.assume(nonAccount != address(account));
-        vm.assume(nonAccount != address(accountLogic));
+        vm.assume(nonAccount != address(accountV3Logic));
 
         vm.prank(caller);
         vm.expectRevert(LiquidatorErrors.IsNotAnAccount.selector);
@@ -323,7 +323,7 @@ contract LiquidateAccount_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
-        uint256 slot = stdstore.target(address(accountLogic)).sig(accountLogic.erc20Balances.selector)
+        uint256 slot = stdstore.target(address(accountV3Logic)).sig(accountV3Logic.erc20Balances.selector)
             .with_key(address(mockERC20.stable1)).find();
         vm.store(address(account), bytes32(slot), bytes32(0));
 
