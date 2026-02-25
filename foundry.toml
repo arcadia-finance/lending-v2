@@ -8,6 +8,14 @@ optimizer_runs = 200
 fuzz = { runs = 50, max_test_rejects = 100_000_000}
 no_match_path = "**/{script/,test/fork/}*"
 fs_permissions = [{ access = "write", path = "./script/out"}]
+# Solmate deprecation warnings (used in deployed contracts via accounts-v2):
+# - 2424: memory-safe-assembly natspec deprecated (FixedPointMathLib.sol, SafeTransferLib.sol, MerkleProofLib.sol)
+# - 8429: virtual modifiers deprecated (Owned.sol, ReentrancyGuard.sol)
+# Test files exceed max sizes:
+# - 3860: Contract initcode size exceeds 49152 bytes
+# - 4591: More than 256 warnings (meta-warning triggered by suppressed max size warnings)
+# - 5574: Contract code size exceeds 24576 bytes
+ignored_error_codes = [2424, 3860, 4591, 5574, 8429]
 
 [profile.lite]
 src = 'src'
