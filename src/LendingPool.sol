@@ -622,6 +622,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function totalAssets() public view override returns (uint256 totalDebt) {
         // Avoid a second calculation of unrealised debt (expensive)
         // if interests are already synced this block.
+        // forge-lint: disable-next-line(block-timestamp)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             totalDebt = realisedDebt + calcUnrealisedDebt();
         } else {
@@ -636,6 +637,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function totalLiquidity() external view returns (uint256 totalLiquidity_) {
         // Avoid a second calculation of unrealised debt (expensive)
         // if interests are already synced this block.
+        // forge-lint: disable-next-line(block-timestamp)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity equals the sum of the realised liquidity, and the pending interests.
             unchecked {
@@ -670,6 +672,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function liquidityOf(address owner_) external view returns (uint256 assets) {
         // Avoid a second calculation of unrealised debt (expensive).
         // if interests are already synced this block.
+        // forge-lint: disable-next-line(block-timestamp)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity of a tranche equals the sum of the realised liquidity
             // of the tranche, and its pending interests.
@@ -719,6 +722,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function _syncInterests() internal {
         // Only Sync interests once per block.
+        // forge-lint: disable-next-line(block-timestamp)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             uint256 unrealisedDebt = calcUnrealisedDebt();
             lastSyncedTimestamp = uint32(block.timestamp);

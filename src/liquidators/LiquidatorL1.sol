@@ -507,6 +507,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         uint96 minimumMargin = auctionInformation_.minimumMargin;
 
         // Check the different conditions to end the auction.
+        // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp > auctionInformation_.startTime + auctionInformation_.cutoffTime) {
             // Unhappy flow: Auction did not end within the cutoffTime.
             ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
