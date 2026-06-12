@@ -13,7 +13,7 @@ import { stdError } from "../../../../lib/accounts-v2/lib/forge-std/src/StdError
 /**
  * @notice Fuzz tests for the function "bid" of contract "LiquidatorL1".
  */
-/// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply)
 contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -92,9 +92,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Revert_bid_FromEOA_NoFundsBidder(address bidder, uint112 amountLoaned, bytes memory data)
-        public
-    {
+    function testFuzz_Revert_bid_FromEOA_NoFundsBidder(address bidder, uint112 amountLoaned, bytes memory data) public {
         // Given: Bidder is not a contract.
         vm.assume(bidder.code.length == 0);
 

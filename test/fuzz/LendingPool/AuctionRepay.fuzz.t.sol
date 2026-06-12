@@ -60,7 +60,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.prank(address(srTranche));
@@ -96,7 +96,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
@@ -124,7 +124,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(availableFunds > amountRepaid);
         vm.assume(sender != users.liquidityProvider);
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
 
         vm.startPrank(sender);
@@ -179,7 +179,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountRepaid);
 
         vm.prank(address(srTranche));
@@ -220,7 +220,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountLoaned);
 
         vm.prank(address(srTranche));
@@ -268,7 +268,7 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
 
         vm.prank(users.liquidityProvider);
-        /// forge-lint: disable-next-line(erc20-unchecked-transfer)
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, amountRepaid);
 
         vm.prank(address(srTranche));

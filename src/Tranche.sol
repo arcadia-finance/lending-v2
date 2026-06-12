@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.34;
 
 import { ERC4626 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "../lib/accounts-v2/lib/solmate/src/utils/FixedPointMathLib.sol";

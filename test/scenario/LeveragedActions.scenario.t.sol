@@ -163,8 +163,8 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         uint256 tokenRate = registry.getRateInUsd(oracleToken1ToUsd); //18 decimals
         uint256 stableRate = registry.getRateInUsd(oracleStable1ToUsd); //18 decimals
 
-        uint256 stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.TOKEN_DECIMALS
-            * 10 ** Constants.STABLE_DECIMALS / stableRate;
+        uint256 stableIn = uint256(tokenOut) * tokenRate / 10 ** Constants.TOKEN_DECIMALS * 10
+            ** Constants.STABLE_DECIMALS / stableRate;
 
         //With leverage -> stableIn should be bigger than the available collateral
         vm.assume(stableIn > stableCollateral);

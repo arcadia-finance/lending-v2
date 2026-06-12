@@ -40,7 +40,7 @@ contract UnPause_WithArgs_LendingPoolGuardian_Fuzz_Test is LendingPoolGuardian_F
         Flags memory initialFlags,
         Flags memory flags
     ) public {
-        lastPauseTimestamp = bound(lastPauseTimestamp, 32 days + 1, type(uint32).max);
+        lastPauseTimestamp = bound(lastPauseTimestamp, 1441 minutes + 1, type(uint32).max);
         timePassed = bound(timePassed, 0, type(uint32).max);
 
         // Given: A random "lastPauseTimestamp".

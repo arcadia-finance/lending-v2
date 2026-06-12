@@ -76,7 +76,8 @@ contract SyncInterestsToLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Te
         uint128 liquiditySr,
         uint128 liquidityJr
     ) public {
-        uint256 totalInterestWeight = uint256(weightSr) + uint256(weightJr) + uint256(weightTreasury);
+        uint256 totalInterestWeight =
+            uint256(weightSr) + uint256(weightJr) + uint256(weightTreasury);
         vm.assume(totalInterestWeight > 0);
 
         vm.startPrank(users.owner);

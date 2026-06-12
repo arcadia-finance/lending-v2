@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.34;
 
 import { BaseGuardian, GuardianErrors } from "../../lib/accounts-v2/src/guardians/BaseGuardian.sol";
 
@@ -108,7 +108,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * - Deposit liquidity.
      * - Liquidate positions.
      */
-    function pause() external override onlyGuardian afterCoolDownOf(32 days) {
+    function pause() external override onlyGuardian afterCoolDownOf(1441 minutes) {
         pauseTimestamp = uint96(block.timestamp);
 
         emit PauseFlagsUpdated(
@@ -154,7 +154,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * - Withdraw liquidity.
      * - Liquidate positions.
      */
-    function unpause() external override afterCoolDownOf(30 days) {
+    function unpause() external override afterCoolDownOf(1440 minutes) {
         emit PauseFlagsUpdated(
             repayPaused = false, withdrawPaused = false, borrowPaused, depositPaused, liquidationPaused = false
         );

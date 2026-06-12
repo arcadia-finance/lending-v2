@@ -18,6 +18,6 @@ interface ITranche {
      */
     function setAuctionInProgress(bool auctionInProgress) external;
 
-    /// forge-lint: disable-next-line(mixed-case-function)
+    // forge-lint: disable-next-line(mixed-case-function)
     function LENDING_POOL() external returns (ILendingPool lendingPool);
 }

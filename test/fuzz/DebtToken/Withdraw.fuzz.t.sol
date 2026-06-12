@@ -25,9 +25,7 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_withdraw_External(uint256 assets, address receiver, address owner, address sender)
-        public
-    {
+    function testFuzz_Revert_withdraw_External(uint256 assets, address receiver, address owner, address sender) public {
         vm.startPrank(sender);
         vm.expectRevert(DebtTokenErrors.FunctionNotImplemented.selector);
         debt_.withdraw(assets, receiver, owner);

@@ -17,7 +17,7 @@ contract Constructor_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
                           TEST CONTRACTS
     /////////////////////////////////////////////////////////////// */
 
-    LiquidatorL1Extension internal liquidator__;
+    LiquidatorL1Extension internal _liquidator_;
 
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -33,12 +33,12 @@ contract Constructor_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     function testFuzz_Success_deployment(address factory_) public {
         vm.expectEmit(true, true, true, true);
         emit LiquidatorL1.AuctionCurveParametersSet(999_807_477_651_317_446, 14_400, 15_000, 6000);
-        liquidator__ = new LiquidatorL1Extension(users.owner, factory_);
+        _liquidator_ = new LiquidatorL1Extension(users.owner, factory_);
 
-        assertEq(liquidator__.getAccountFactory(), factory_);
-        assertEq(liquidator__.getBase(), 999_807_477_651_317_446);
-        assertEq(liquidator__.getCutoffTime(), 14_400);
-        assertEq(liquidator__.getStartPriceMultiplier(), 15_000);
-        assertEq(liquidator__.getMinPriceMultiplier(), 6000);
+        assertEq(_liquidator_.getAccountFactory(), factory_);
+        assertEq(_liquidator_.getBase(), 999_807_477_651_317_446);
+        assertEq(_liquidator_.getCutoffTime(), 14_400);
+        assertEq(_liquidator_.getStartPriceMultiplier(), 15_000);
+        assertEq(_liquidator_.getMinPriceMultiplier(), 6000);
     }
 }

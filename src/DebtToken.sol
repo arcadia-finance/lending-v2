@@ -2,7 +2,7 @@
  * Created by Pragma Labs
  * SPDX-License-Identifier: BUSL-1.1
  */
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.34;
 
 import { DebtTokenErrors } from "./libraries/Errors.sol";
 import { ERC20, ERC4626 } from "../lib/accounts-v2/lib/solmate/src/tokens/ERC4626.sol";
