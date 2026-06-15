@@ -486,12 +486,12 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
      * This function will check three of the four conditions (the fourth is already checked in the bid-function):
      *  1) The Auction did not finish within the cutoff-period.
      *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
-     *  3) There are no remaining assets in the Account left to sell.
+     *  3) The remaining assets in the Account have no more value.
      *  4) All open debt was repaid (not checked within this function).
-     * @dev If the first condition is met, an emergency process is triggered.
-     * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
+     * @dev If the first or third condition is met, an emergency process is triggered.
+     * The auction will be stopped and the Account with any remaining assets will be transferred to the Account recipient.
      * The Tranches of the liquidity pool will pay for the bad debt.
-     * The protocol will sell/auction the assets manually to recover the debt.
+     * The protocol will sell/auction any remaining assets manually to recover the debt.
      * The protocol will later "donate" these proceeds back to the
      * impacted Tranches, this last step is not enforced by the smart contracts.
      * While this process is not fully trustless, it is the only way to solve an extreme unhappy flow,
@@ -510,10 +510,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp > auctionInformation_.startTime + auctionInformation_.cutoffTime) {
             // Unhappy flow: Auction did not end within the cutoffTime.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
-            // All remaining assets are transferred to the asset recipient,
-            // and a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
+            _settleUnhappyFlow(account, startDebt, minimumMargin, creditor);
         } else {
             uint256 collateralValue = IAccount(account).getCollateralValue();
             uint256 usedMargin = IAccount(account).getUsedMargin();
@@ -522,9 +519,9 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
                 // An Account is healthy if the collateral value is equal or greater than the used margin.
                 // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
                 ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
-            } else if (collateralValue == 0) {
-                // Unhappy flow: All collateral is sold.
-                ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+            } else if (IAccount(account).getAccountValue(IAccount(account).numeraire()) == 0) {
+                // Unhappy flow: The remaining assets have no more value.
+                _settleUnhappyFlow(account, startDebt, minimumMargin, creditor);
             } else {
                 // None of the conditions to end the auction are met.
                 return false;
@@ -532,6 +529,21 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         }
         // One of the conditions to end the auction was met.
         return true;
+    }
+
+    /**
+     * @notice Settles the unhappy flow of a liquidation.
+     * @param account The contract address of the account in liquidation.
+     * @param startDebt The open debt at the moment the liquidation was initiated.
+     * @param minimumMargin The minimum margin of the Account.
+     * @param creditor The contract address of the Creditor.
+     * @dev The Tranches of the Creditor pay for the remaining open debt (bad debt).
+     * The Account is transferred to the Account recipient.
+     * If the Account still holds assets, a manual (trusted) liquidation of these has to be done.
+     */
+    function _settleUnhappyFlow(address account, uint256 startDebt, uint96 minimumMargin, address creditor) internal {
+        ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+        IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
     }
 
     /**

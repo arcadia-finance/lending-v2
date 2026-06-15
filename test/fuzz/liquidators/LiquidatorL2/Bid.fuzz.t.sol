@@ -289,7 +289,7 @@ contract Bid_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     function testFuzz_Success_bid_FromEOA_full_earlyTerminate(address bidder, uint112 amountLoaned, bytes memory data)
         public
     {
-        vm.startPrank(users.owner);
+        vm.prank(users.owner);
         pool.setLiquidationParameters(2, 2, 5, 0, type(uint80).max);
 
         // Given: Bidder is not a contract.
