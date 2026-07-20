@@ -415,11 +415,11 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
      * calculated based on the relative value of the assets when the auction was initiated.
      * @return price The price for which the bid can be purchased, denominated in the Numeraire.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
-     * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
-     * Debt: The total debt of the Account at the moment the auction was initiated.
+     * @dev Price P(t) decreases exponentially over time: P(t) = UM * S * [(SPM - MPM) * base^t + MPM]:
+     * UM: The used margin (open debt + minimumMargin) of the Account at the moment the auction was initiated.
      * S: The share of the assets being bought in the bid.
-     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (4 decimals precision).
-     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (4 decimals precision).
+     * SPM: The startPriceMultiplier defines the initial price: P(0) = UM * S * SPM (4 decimals precision).
+     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = UM * MPM (4 decimals precision).
      * base: defines how fast the exponential curve decreases (18 decimals precision).
      * t: time passed since start auction (in seconds, 18 decimals precision).
      * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
@@ -441,16 +441,16 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
             // Cache minPriceMultiplier.
             uint256 minPriceMultiplier_ = auctionInformation_.minPriceMultiplier;
 
-            // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
+            // Calculate askPrice as: P = UM * S * [(SPM - MPM) * base^t + MPM]
             // P: price, denominated in the Numeraire.
-            // Debt: The initial debt of the Account, denominated in the Numeraire.
+            // UM: The used margin at auction start (initial debt + minimumMargin), denominated in the Numeraire.
             // S: The share of assets being bought, 4 decimals precision
             // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
-            // No overflow possible: uint128 * uint32 * uint18 * uint18.
+            // No overflow possible: (uint128 + uint96) * uint32 * uint18 * uint18.
             price =
-                (auctionInformation_.startDebt
+                ((uint256(auctionInformation_.startDebt) + auctionInformation_.minimumMargin)
                         * totalShare
                         * (LogExpMath.pow(auctionInformation_.base, timePassed)
                             * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)

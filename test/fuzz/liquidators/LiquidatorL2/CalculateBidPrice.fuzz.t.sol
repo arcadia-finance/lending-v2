@@ -63,6 +63,7 @@ contract CalculateBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         uint16 startPriceMultiplier,
         uint8 minPriceMultiplier,
         uint32 timePassed,
+        uint96 minimumMargin,
         uint112 amountLoaned,
         uint256 askedShare
     ) public {
@@ -76,10 +77,9 @@ contract CalculateBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         vm.prank(users.owner);
         liquidator.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
-        // And: The account auction is initiated.
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
-        initiateLiquidation(amountLoaned);
+        // And: The account auction is initiated, with a minimumMargin that is priced into the auction.
+        amountLoaned = uint112(bound(amountLoaned, 2, (uint256(type(uint112).max) / 300) * 100 - minimumMargin));
+        initiateLiquidation(minimumMargin, amountLoaned);
 
         (uint128 startDebt,, uint32 startTime,) = liquidator.getAuctionInformationPartOne(address(account));
 
@@ -90,9 +90,9 @@ contract CalculateBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         // When: calculateBidPrice is called.
         uint256 price = liquidator.calculateBidPrice(address(account), askedShare);
 
-        // Then: The price equals the price-curve formula.
+        // Then: The price equals the price-curve formula, with the minimumMargin included in the debt term.
         uint256 expectedPrice =
-            (uint256(startDebt)
+            ((uint256(startDebt) + minimumMargin)
                     * askedShare
                     * (LogExpMath.pow(liquidator.getBase(), uint256(timePassed) * 1e18)
                         * (liquidator.getStartPriceMultiplier() - liquidator.getMinPriceMultiplier())
