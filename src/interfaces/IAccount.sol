@@ -13,6 +13,18 @@ interface IAccount {
     function owner() external view returns (address);
 
     /**
+     * @notice Returns the Numeraire of the Account.
+     */
+    function numeraire() external view returns (address);
+
+    /**
+     * @notice Returns the total value (mark to market) of the Account in a specific Numeraire.
+     * @param numeraire_ The Numeraire to return the value in.
+     * @return accountValue Total value stored in the account, denominated in Numeraire.
+     */
+    function getAccountValue(address numeraire_) external view returns (uint256);
+
+    /**
      * @notice Calculates the total collateral value (MTM discounted with a haircut) of the Account.
      * @return collateralValue The collateral value, returned in the decimal precision of the Numeraire.
      */

@@ -24,17 +24,38 @@ contract GetBidPrice_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
 
-    function testFuzz_Revert_bid_AssetAmountsShorter(address bidder, uint112 amountLoaned) public {
+    function testFuzz_Revert_getBidPrice_AssetAmountsShorter(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
         vm.assume(amountLoaned > 1);
         vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
         initiateLiquidation(amountLoaned);
 
-        // When Then: Bid is called with the assetAmounts that is not the same as auction, It should revert
+        // When: getBidPrice is called with fewer asset amounts than the auction.
+        // Then: It reverts.
         vm.startPrank(bidder);
         vm.expectRevert(stdError.indexOOBError);
         liquidator.getBidPrice(address(account), new uint256[](0));
         vm.stopPrank();
+    }
+
+    function testFuzz_Revert_getBidPrice_AfterCutoff(address bidder, uint112 amountLoaned, uint32 timePassed) public {
+        // Given: The account auction is initiated.
+        vm.assume(amountLoaned > 1);
+        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        initiateLiquidation(amountLoaned);
+
+        // And: A timestamp far beyond the cutoffTime, where the price curve underflows the LogExpMath precision.
+        timePassed = uint32(bound(timePassed, 30 days, type(uint32).max));
+        vm.warp(block.timestamp + timePassed);
+
+        uint256[] memory askedAssetAmounts = new uint256[](1);
+        askedAssetAmounts[0] = amountLoaned;
+
+        // When: getBidPrice is called.
+        // Then: It reverts in LogExpMath (matches the PowerFunctionReverts pattern, no clean selector).
+        vm.prank(bidder);
+        vm.expectRevert();
+        liquidator.getBidPrice(address(account), askedAssetAmounts);
     }
 
     function testFuzz_Success_getBidPrice_notInAuction() public view {

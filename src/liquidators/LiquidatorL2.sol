@@ -477,11 +477,11 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
      * calculated based on the relative value of the assets when the auction was initiated.
      * @return price The price for which the bid can be purchased, denominated in the Numeraire.
      * @dev We use a Dutch auction: price of the assets constantly decreases.
-     * @dev Price P(t) decreases exponentially over time: P(t) = Debt * S * [(SPM - MPM) * base^t + MPM]:
-     * Debt: The total debt of the Account at the moment the auction was initiated.
+     * @dev Price P(t) decreases exponentially over time: P(t) = UM * S * [(SPM - MPM) * base^t + MPM]:
+     * UM: The used margin (open debt + minimumMargin) of the Account at the moment the auction was initiated.
      * S: The share of the assets being bought in the bid.
-     * SPM: The startPriceMultiplier defines the initial price: P(0) = Debt * S * SPM (4 decimals precision).
-     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = Debt * MPM (4 decimals precision).
+     * SPM: The startPriceMultiplier defines the initial price: P(0) = UM * S * SPM (4 decimals precision).
+     * MPM: The minPriceMultiplier defines the asymptotic end price for P(∞) = UM * MPM (4 decimals precision).
      * base: defines how fast the exponential curve decreases (18 decimals precision).
      * t: time passed since start auction (in seconds, 18 decimals precision).
      * @dev LogExpMath was made in solidity 0.7, where operations were unchecked.
@@ -503,16 +503,16 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
             // Cache minPriceMultiplier.
             uint256 minPriceMultiplier_ = auctionInformation_.minPriceMultiplier;
 
-            // Calculate askPrice as: P = Debt * S * [(SPM - MPM) * base^t + MPM]
+            // Calculate askPrice as: P = UM * S * [(SPM - MPM) * base^t + MPM]
             // P: price, denominated in the Numeraire.
-            // Debt: The initial debt of the Account, denominated in the Numeraire.
+            // UM: The used margin at auction start (initial debt + minimumMargin), denominated in the Numeraire.
             // S: The share of assets being bought, 4 decimals precision
             // SPM and MPM: multipliers to scale the price curve, 4 decimals precision.
             // base^t: the exponential decay over time of the price (strictly smaller than 1), has 18 decimals precision.
             // Since the result must be denominated in the Numeraire, we need to divide by 1e26 (1e18 + 1e4 + 1e4).
-            // No overflow possible: uint128 * uint32 * uint18 * uint18.
+            // No overflow possible: (uint128 + uint96) * uint32 * uint18 * uint18.
             price =
-                (auctionInformation_.startDebt
+                ((uint256(auctionInformation_.startDebt) + auctionInformation_.minimumMargin)
                         * totalShare
                         * (LogExpMath.pow(auctionInformation_.base, timePassed)
                             * (auctionInformation_.startPriceMultiplier - minPriceMultiplier_)
@@ -555,12 +555,12 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
      * This function will check three of the four conditions (the fourth is already checked in the bid-function):
      *  1) The Auction did not finish within the cutoff-period.
      *  2) The Account is back in a healthy state (collateral value is equal or bigger than the used margin).
-     *  3) There are no remaining assets in the Account left to sell.
+     *  3) The remaining assets in the Account have no more value.
      *  4) All open debt was repaid (not checked within this function).
-     * @dev If the first condition is met, an emergency process is triggered.
-     * The auction will be stopped and the remaining assets of the Account will be transferred to the Liquidator owner.
+     * @dev If the first or third condition is met, an emergency process is triggered.
+     * The auction will be stopped and the Account with any remaining assets will be transferred to the Account recipient.
      * The Tranches of the liquidity pool will pay for the bad debt.
-     * The protocol will sell/auction the assets manually to recover the debt.
+     * The protocol will sell/auction any remaining assets manually to recover the debt.
      * The protocol will later "donate" these proceeds back to the
      * impacted Tranches, this last step is not enforced by the smart contracts.
      * While this process is not fully trustless, it is the only way to solve an extreme unhappy flow,
@@ -579,10 +579,7 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         // forge-lint: disable-next-line(block-timestamp)
         if (block.timestamp > auctionInformation_.startTime + auctionInformation_.cutoffTime) {
             // Unhappy flow: Auction did not end within the cutoffTime.
-            ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
-            // All remaining assets are transferred to the asset recipient,
-            // and a manual (trusted) liquidation has to be done.
-            IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
+            _settleUnhappyFlow(account, startDebt, minimumMargin, creditor);
         } else {
             uint256 collateralValue = IAccount(account).getCollateralValue();
             uint256 usedMargin = IAccount(account).getUsedMargin();
@@ -591,9 +588,10 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
                 // An Account is healthy if the collateral value is equal or greater than the used margin.
                 // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
                 ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
-            } else if (collateralValue == 0) {
-                // Unhappy flow: All collateral is sold.
-                ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+            } else if (IAccount(account).getAccountValue(IAccount(account).numeraire()) == 0) {
+                // Unhappy flow: The remaining assets have no more value.
+                // USD-values are summed before converting to the Numeraire, asset values that round to 0 individually still count.
+                _settleUnhappyFlow(account, startDebt, minimumMargin, creditor);
             } else {
                 // None of the conditions to end the auction are met.
                 return false;
@@ -601,6 +599,21 @@ contract LiquidatorL2 is Owned, ReentrancyGuard, ILiquidator {
         }
         // One of the conditions to end the auction was met.
         return true;
+    }
+
+    /**
+     * @notice Settles the unhappy flow of a liquidation.
+     * @param account The contract address of the account in liquidation.
+     * @param startDebt The open debt at the moment the liquidation was initiated.
+     * @param minimumMargin The minimum margin of the Account.
+     * @param creditor The contract address of the Creditor.
+     * @dev The Tranches of the Creditor pay for the remaining open debt (bad debt).
+     * The Account is transferred to the Account recipient.
+     * If the Account still holds assets, a manual (trusted) liquidation of these has to be done.
+     */
+    function _settleUnhappyFlow(address account, uint256 startDebt, uint96 minimumMargin, address creditor) internal {
+        ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+        IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
     }
 
     /**

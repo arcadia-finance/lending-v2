@@ -99,6 +99,14 @@ contract LiquidatorL1Extension is LiquidatorL1 {
         return _getAssetShares(riskValues_);
     }
 
+    function settleAuction(address account) public returns (bool) {
+        return _settleAuction(account, auctionInformation[account]);
+    }
+
+    function settleUnhappyFlow(address account, uint256 startDebt, uint96 minimumMargin, address creditor) public {
+        _settleUnhappyFlow(account, startDebt, minimumMargin, creditor);
+    }
+
     function getAuctionAssetAmounts(address account) public view returns (uint256[] memory) {
         return auctionInformation[account].assetAmounts;
     }

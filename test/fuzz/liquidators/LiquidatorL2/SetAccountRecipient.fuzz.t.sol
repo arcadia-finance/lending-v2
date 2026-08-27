@@ -22,7 +22,7 @@ contract SetAccountRecipient_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     /*//////////////////////////////////////////////////////////////
                               TESTS
     //////////////////////////////////////////////////////////////*/
-    function testFuzz_Revert_setAssetRecipient_NonRiskManager(address unprivilegedAddress_, address newAssetRecipient)
+    function testFuzz_Revert_setAccountRecipient_NonRiskManager(address unprivilegedAddress_, address newAssetRecipient)
         public
     {
         vm.assume(unprivilegedAddress_ != users.riskManager);
@@ -33,7 +33,7 @@ contract SetAccountRecipient_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         vm.stopPrank();
     }
 
-    function testFuzz_Success_setAssetRecipient(address newAssetRecipient) public {
+    function testFuzz_Success_setAccountRecipient(address newAssetRecipient) public {
         vm.prank(users.riskManager);
         liquidator.setAccountRecipient(address(pool), newAssetRecipient);
     }
