@@ -64,7 +64,9 @@ contract MaxWithdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
-        stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool))
+        stdstore.target(address(asset))
+            .sig(pool.balanceOf.selector)
+            .with_key(address(pool))
             .checked_write(availableLiquidityOfTranche);
 
         uint256 claimableAssets;
@@ -94,7 +96,9 @@ contract MaxWithdraw_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedLiquidityOf(address(tranche), claimableLiquidityOfTranche);
-        stdstore.target(address(asset)).sig(pool.balanceOf.selector).with_key(address(pool))
+        stdstore.target(address(asset))
+            .sig(pool.balanceOf.selector)
+            .with_key(address(pool))
             .checked_write(availableLiquidityOfTranche);
 
         uint256 claimableAssets;
