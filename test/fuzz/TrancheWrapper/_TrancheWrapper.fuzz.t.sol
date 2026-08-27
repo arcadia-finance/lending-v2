@@ -55,7 +55,9 @@ abstract contract TrancheWrapper_Fuzz_Test is Fuzz_Lending_Test {
         pool.setTotalRealisedLiquidity(initialAssets);
         pool.setRealisedLiquidityOf(address(tranche), initialAssets);
         stdstore.target(address(tranche)).sig(tranche.totalSupply.selector).checked_write(initialShares);
-        stdstore.target(address(tranche)).sig(tranche.balanceOf.selector).with_key(address(trancheWrapper))
+        stdstore.target(address(tranche))
+            .sig(tranche.balanceOf.selector)
+            .with_key(address(trancheWrapper))
             .checked_write(wrapperShares);
         stdstore.target(address(trancheWrapper)).sig(trancheWrapper.totalSupply.selector).checked_write(wrapperShares);
 

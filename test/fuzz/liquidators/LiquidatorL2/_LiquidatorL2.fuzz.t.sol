@@ -62,7 +62,9 @@ abstract contract LiquidatorL2_Fuzz_Test is Fuzz_Lending_Test {
 
         // And: Account becomes Unhealthy (Realised debt grows above Liquidation value).
         debt.setRealisedDebt(uint256(amountLoaned + 1));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(amountLoaned + 1);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
 

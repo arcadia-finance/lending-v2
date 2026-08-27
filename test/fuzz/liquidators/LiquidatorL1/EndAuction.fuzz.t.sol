@@ -93,7 +93,9 @@ contract EndAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: Account becomes healthy so the auction can be ended.
         debt.setRealisedDebt(uint256(amountLoaned));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(amountLoaned);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 

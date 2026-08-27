@@ -90,7 +90,9 @@ contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: Account becomes healthy (collateral value is equal or greater than the used margin).
         debt.setRealisedDebt(uint256(amountLoaned));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(amountLoaned);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
@@ -138,7 +140,9 @@ contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The open position is repaid (used margin equals minimum margin).
         debt.setRealisedDebt(0);
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(uint256(0));
         pool.setTotalRealisedLiquidity(0);
 
@@ -261,7 +265,9 @@ contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(shares);
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
         debt.setRealisedDebt(uint256(totalDebt));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(liquidity);
         pool.setTotalRealisedLiquidity(uint128(liquidity));
 
