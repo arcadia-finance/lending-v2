@@ -54,7 +54,9 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Unhealthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned + 1));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(amountLoaned + 1);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
 
@@ -192,7 +194,9 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         stdstore.target(address(debt)).sig(debt.balanceOf.selector).with_key(address(account)).checked_write(shares);
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(totalSupply);
         debt.setRealisedDebt(uint256(totalDebt));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(liquidity);
         pool.setTotalRealisedLiquidity(uint128(liquidity));
 
@@ -240,7 +244,9 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Healthy (Realised debt grows above Liquidation value)
         debt.setRealisedDebt(uint256(amountLoaned));
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(amountLoaned);
         pool.setTotalRealisedLiquidity(uint128(amountLoaned));
 
@@ -290,7 +296,9 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
         // Account becomes Healthy (open position is zero)
         debt.setRealisedDebt(0);
-        stdstore.target(address(pool)).sig(pool.liquidityOf.selector).with_key(address(srTranche))
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
             .checked_write(uint256(0));
         pool.setTotalRealisedLiquidity(0);
 

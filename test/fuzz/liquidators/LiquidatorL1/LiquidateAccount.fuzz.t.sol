@@ -323,8 +323,10 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         pool.setLiquidationParameters(initiationWeight, penaltyWeight, terminationWeight, 0, maxReward);
 
         // And : erc20Balances for mockERC20.stable1 is set to zero (in order for totalValue to equal 0 in _getAssetShares()).
-        uint256 slot = stdstore.target(address(accountV3Logic)).sig(accountV3Logic.erc20Balances.selector)
-            .with_key(address(mockERC20.stable1)).find();
+        uint256 slot = stdstore.target(address(accountV3Logic))
+            .sig(accountV3Logic.erc20Balances.selector)
+            .with_key(address(mockERC20.stable1))
+            .find();
         vm.store(address(account), bytes32(slot), bytes32(0));
 
         // When: Liquidation Initiator calls liquidateAccount
