@@ -13,11 +13,11 @@ jobs:
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Main Checkout
         env:
           SSH_KEY_FOR_SUBMODULE: ${{secrets.ACCOUNT_V2_DEPLOY_KEY}}
-        run: mkdir $HOME/.ssh && echo "$SSH_KEY_FOR_SUBMODULE" > $HOME/.ssh/id_rsa && chmod 600 $HOME/.ssh/id_rsa && git submodule update --init --recursive
+        run: mkdir $HOME/.ssh && echo "$SSH_KEY_FOR_SUBMODULE" > $HOME/.ssh/id_rsa && chmod 600 $HOME/.ssh/id_rsa && git submodule update --init && git -C lib/accounts-v2 submodule update --init && git -C lib/accounts-v2 submodule update --init --recursive lib/slipstream lib/v4-periphery
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
