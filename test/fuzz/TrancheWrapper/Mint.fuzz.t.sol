@@ -11,6 +11,7 @@ import { TrancheWrapper_Fuzz_Test } from "./_TrancheWrapper.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "totalAssets" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////

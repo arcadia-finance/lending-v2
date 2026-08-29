@@ -10,6 +10,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "setLiquidationParameters" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

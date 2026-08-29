@@ -59,6 +59,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         debt_.setRealisedDebt(totalDebt);
 
         uint256 shares = assets * totalSupply / totalDebt;
+        // forge-lint: disable-next-item(divide-before-multiply)
         if (shares * totalDebt < assets * totalSupply) {
             //Must round up
             shares += 1;

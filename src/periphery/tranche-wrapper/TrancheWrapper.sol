@@ -60,9 +60,11 @@ contract TrancheWrapper is ERC4626 {
      * @return shares The amount of shares minted.
      */
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         // Approval has to be given to the Lending Pool, not the Tranche.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeApprove(LENDING_POOL, assets);
 
         shares = ERC4626(TRANCHE).deposit(assets, address(this));
@@ -79,9 +81,11 @@ contract TrancheWrapper is ERC4626 {
      */
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         assets = ITranche(TRANCHE).previewMintAndSync(shares);
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         // Approval has to be given to the Lending Pool, not the Tranche.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeApprove(LENDING_POOL, assets);
 
         ERC4626(TRANCHE).mint(shares, address(this));
@@ -107,6 +111,7 @@ contract TrancheWrapper is ERC4626 {
 
         _burn(owner, shares);
         ERC4626(TRANCHE).withdraw(assets, address(this), address(this));
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransfer(receiver, assets);
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
@@ -127,6 +132,7 @@ contract TrancheWrapper is ERC4626 {
 
         _burn(owner, shares);
         assets = ERC4626(TRANCHE).redeem(shares, address(this), address(this));
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransfer(receiver, assets);
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);

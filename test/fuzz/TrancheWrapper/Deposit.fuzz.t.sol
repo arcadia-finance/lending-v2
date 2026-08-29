@@ -10,6 +10,7 @@ import { TrancheErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "deposit" of contract "Tranche Wrapper".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Deposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

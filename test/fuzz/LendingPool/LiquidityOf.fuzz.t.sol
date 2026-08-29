@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "liquidityOf" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -100,6 +101,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
         vm.assume(interestRate > 0);
         vm.assume(initialLiquidityTranche >= realisedDebt);
+        // forge-lint: disable-next-item(type-based-tautology)
         vm.assume(initialLiquidityTranche >= 0);
 
         vm.prank(address(srTranche));

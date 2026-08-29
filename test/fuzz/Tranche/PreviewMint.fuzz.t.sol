@@ -46,6 +46,7 @@ contract PreviewMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         // Then: correct number of shares is returned.
         uint256 expectedAssets = shares * (uint256(totalAssets) + vas) / (totalSupply + vas);
         // Rounds up.
+        // forge-lint: disable-next-item(divide-before-multiply)
         if ((totalSupply + vas) * expectedAssets < shares * (uint256(totalAssets) + vas)) expectedAssets++;
         assertEq(actualAssets, expectedAssets);
         assertEq(actualAssets, actualAssets_);

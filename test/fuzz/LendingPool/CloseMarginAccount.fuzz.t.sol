@@ -25,6 +25,7 @@ contract CloseMarginAccount_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_closeMarginAccount_OpenPositionNonZero(uint112 amountLoaned) public {
         // Given: collateralValue is smaller than maxExposure.
+        // forge-lint: disable-next-item(unsafe-typecast)
         amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
 
         // Given: an Account has taken out debt

@@ -13,6 +13,7 @@ import { LogExpMath } from "../../../../src/libraries/LogExpMath.sol";
 /**
  * @notice Fuzz tests for the function "setAuctionCurveParameters" of contract "LiquidatorL1".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract SetAuctionCurveParameters_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

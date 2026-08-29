@@ -11,7 +11,7 @@ import { LogExpMath } from "../../../../src/libraries/LogExpMath.sol";
 /**
  * @notice Fuzz tests for the function "_calculateBidPrice" of contract "LiquidatorL1".
  */
-// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply,unsafe-typecast)
 contract CalculateBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

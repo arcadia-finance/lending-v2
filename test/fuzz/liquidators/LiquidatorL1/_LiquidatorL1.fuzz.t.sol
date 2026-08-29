@@ -24,6 +24,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Common logic needed by all "LiquidatorL1" fuzz tests.
  */
+// forge-lint: disable-next-item(reentrancy-no-eth)
 abstract contract LiquidatorL1_Fuzz_Test is Fuzz_Lending_Test {
     using stdStorage for StdStorage;
 

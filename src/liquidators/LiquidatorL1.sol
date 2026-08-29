@@ -174,6 +174,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         if (cutoffTime_ > 64_800) revert LiquidatorErrors.CutOffTooHigh(); // 18 hours.
 
         // Derive base from the halfLifeTime.
+        // forge-lint: disable-next-item(unsafe-typecast)
         uint64 base_ = uint64(1e18 * 1e18 / LogExpMath.pow(2 * 1e18, 1e18 / halfLifeTime));
 
         // Check that LogExpMath.pow(base, timePassed) does not error at cutoffTime (due to numbers smaller than minimum precision).
@@ -217,6 +218,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         // Store the auction price-curve parameters.
         // This ensures that changes of the price-curve parameters do not impact ongoing auctions.
         auctionInformation_.base = base;
+        // forge-lint: disable-next-item(unsafe-typecast)
         auctionInformation_.startTime = uint32(block.timestamp);
         auctionInformation_.cutoffTime = cutoffTime;
         auctionInformation_.startPriceMultiplier = startPriceMultiplier;
@@ -225,6 +227,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         // Check if the Account is insolvent and if it is, start the liquidation in the Account.
         // startLiquidation will revert if the Account is still solvent.
         // set by the Creditor, has passed.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         (
             address[] memory assetAddresses,
             uint256[] memory assetIds,
@@ -271,6 +274,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
 
         for (uint256 i; i < length; ++i) {
             // The asset shares are calculated relative to the total value of the Account.
+            // forge-lint: disable-next-item(unsafe-typecast)
             assetShares[i] = uint32(assetValues[i].assetValue.mulDivUp(ONE_4, totalValue));
         }
     }
@@ -330,6 +334,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
 
         // Transfer the assets to the bidder, returns updated bidAmounts with the actual bought assets.
         // The actual bought assets are equal or smaller than the asked assets.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         bidAmounts = IAccount(account)
             .auctionBid(auctionInformation_.assetAddresses, auctionInformation_.assetIds, bidAmounts, msg.sender);
 
@@ -341,11 +346,13 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
         // Bidders can optionally first liquidate the assets before repaying the debt.
         // Bidders should NOT call a LendingPool.repay() or LendingPool.auctionRepay() within the callback,
         // as this will cause the bidder to pay twice!
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         if (msg.sender.code.length > 0) IBidCallback(msg.sender).bidCallback(bidAmounts, price, data);
 
         // Transfer an amount of "price" in "Numeraire" to the LendingPool to repay the Accounts debt.
         // The LendingPool will call a "transferFrom" from the bidder to the pool -> the bidder must approve the LendingPool.
         // If the amount transferred would exceed the debt, the surplus is paid out to the Account Owner and earlyTerminate is True.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         bool earlyTerminate = ILendingPool(auctionInformation_.creditor)
             .auctionRepay(auctionInformation_.startDebt, auctionInformation_.minimumMargin, price, account, msg.sender);
 
@@ -379,6 +386,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
     {
         AuctionInformation storage auctionInformation_ = auctionInformation[account];
         inAuction = auctionInformation_.inAuction;
+        // forge-lint: disable-next-item(boolean-cst)
         if (!inAuction) return (0, false);
         // Calculate the current auction price of the assets being bought.
         uint256 totalShare = _calculateTotalShare(auctionInformation_, askedAssetAmounts);
@@ -518,6 +526,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
                 // Happy flow: Account is back in a healthy state.
                 // An Account is healthy if the collateral value is equal or greater than the used margin.
                 // If usedMargin is equal to minimumMargin, the open liabilities are 0 and the Account is always healthy.
+                // forge-lint: disable-next-item(reentrancy-no-eth)
                 ILendingPool(creditor).settleLiquidationHappyFlow(account, startDebt, minimumMargin, msg.sender);
             } else if (IAccount(account).getAccountValue(IAccount(account).numeraire()) == 0) {
                 // Unhappy flow: The remaining assets have no more value.
@@ -542,7 +551,9 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
      * If the Account still holds assets, a manual (trusted) liquidation of these has to be done.
      */
     function _settleUnhappyFlow(address account, uint256 startDebt, uint96 minimumMargin, address creditor) internal {
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         ILendingPool(creditor).settleLiquidationUnhappyFlow(account, startDebt, minimumMargin, msg.sender);
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         IAccount(account).auctionBoughtIn(creditorToAccountRecipient[creditor]);
     }
 
@@ -551,6 +562,7 @@ contract LiquidatorL1 is Owned, ReentrancyGuard, ILiquidator {
      */
     function _endAuction(address account) internal {
         delete auctionInformation[account];
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         IAccount(account).endAuction();
     }
 }

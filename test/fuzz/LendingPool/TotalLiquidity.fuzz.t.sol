@@ -28,6 +28,7 @@ contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint120 initialLiquidity
     ) public {
         // Given: collateralValue is smaller than maxExposure.
+        // forge-lint: disable-next-item(unsafe-typecast)
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
         vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
         vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%

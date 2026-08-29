@@ -16,6 +16,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "flashAction" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using FixedPointMathLib for uint256;
 

@@ -48,6 +48,7 @@ contract PreviewWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         // Then: correct number of shares is returned.
         uint256 expectedShares = assets * (totalSupply + vas) / (uint256(totalAssets) + vas);
         // Rounds up.
+        // forge-lint: disable-next-item(divide-before-multiply)
         if ((uint256(totalAssets) + vas) * expectedShares < assets * (totalSupply + vas)) expectedShares++;
         assertEq(actualShares, expectedShares);
         assertEq(actualShares, actualShares_);

@@ -23,6 +23,7 @@ contract TotalAssets_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Success_totalAssets(uint112 realisedDebt, uint80 interestRate, uint24 deltaTimestamp) public {
         // Given: collateralValue is smaller than maxExposure.
+        // forge-lint: disable-next-item(unsafe-typecast)
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
         vm.assume(interestRate <= 1e3 * 1e18); // 1000%.
         vm.assume(interestRate > 0);

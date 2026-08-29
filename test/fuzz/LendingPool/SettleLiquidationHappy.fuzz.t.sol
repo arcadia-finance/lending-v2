@@ -46,6 +46,7 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address auctionTerminator,
         uint128 surplus
     ) public {
+        // forge-lint: disable-next-item(unsafe-typecast)
         surplus = uint128(bound(surplus, 1, type(uint128).max));
         vm.assume(startDebt > 0);
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
