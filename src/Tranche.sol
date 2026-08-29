@@ -92,6 +92,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @param prefixSymbol_ The prefix of the contract symbol (eg. SR  -> MZ -> JR).
      * @dev The name and symbol of the tranche are automatically generated, based on the name and symbol of the underlying token.
      */
+    // forge-lint: disable-next-item(encode-packed-collision)
     constructor(address owner_, address lendingPool_, uint256 vas, string memory prefix_, string memory prefixSymbol_)
         ERC4626(
             ERC4626(address(lendingPool_)).asset(),
@@ -165,6 +166,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         if ((shares = previewDepositAndSync(assets)) == 0) revert TrancheErrors.ZeroShares();
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
@@ -192,6 +194,7 @@ contract Tranche is ITranche, ERC4626, Owned {
         assets = previewMintAndSync(shares);
 
         // Need to transfer (via lendingPool.depositInLendingPool()) before minting or ERC777s could reenter.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         LENDING_POOL.depositInLendingPool(assets, msg.sender);
 
         _mint(receiver, shares);
@@ -280,6 +283,7 @@ contract Tranche is ITranche, ERC4626, Owned {
      * @dev Modification of totalAssets() where interests are realised (state modification).
      */
     function totalAssetsAndSync() public returns (uint256 assets) {
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         assets = LENDING_POOL.liquidityOfAndSync(address(this));
     }
 

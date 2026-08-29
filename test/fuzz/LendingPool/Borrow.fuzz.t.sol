@@ -18,6 +18,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "borrow" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;

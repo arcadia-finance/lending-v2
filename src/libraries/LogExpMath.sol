@@ -139,6 +139,7 @@ library LogExpMath {
         return uint256(exp(logx_times_y));
     }
 
+    // forge-lint: disable-next-item(unsafe-typecast)
     /**
      * @dev Natural exponentiation (e^x) with signed 18 decimal fixed point exponent.
      *

@@ -12,6 +12,7 @@ import { TrancheExtension } from "../../utils/extensions/TrancheExtension.sol";
 /**
  * @notice Common logic needed by all "Tranche" fuzz tests.
  */
+// forge-lint: disable-next-item(reentrancy-no-eth)
 abstract contract Tranche_Fuzz_Test is Fuzz_Lending_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////

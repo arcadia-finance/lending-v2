@@ -226,6 +226,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         interestWeightTranches.push(interestWeight_);
         interestWeight[tranche] = interestWeight_;
 
+        // forge-lint: disable-next-item(unsafe-typecast)
         uint8 trancheIndex = uint8(tranches.length);
         tranches.push(tranche);
         isTranche[tranche] = true;
@@ -322,6 +323,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      * 4 decimal precision (10 = 0.1%).
      */
     function setOriginationFee(uint8 originationFee_) external onlyOwner {
+        // forge-lint: disable-next-item(missing-events-arithmetic)
         originationFee = originationFee_;
     }
 
@@ -343,6 +345,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     {
         // Need to transfer before minting or ERC777s could reenter.
         // Address(this) is trusted -> no risk on reentrancy attack after transfer.
+        // forge-lint: disable-next-item(arbitrary-send-erc20,solmate-safe-transfer-lib)
         asset.safeTransferFrom(from, address(this), assets);
 
         unchecked {
@@ -367,6 +370,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Need to transfer before donating or ERC777s could reenter.
         // Address(this) is trusted -> no risk on reentrancy attack after transfer.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         unchecked {
@@ -390,6 +394,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             totalRealisedLiquidity = SafeCastLib.safeCastTo128(totalRealisedLiquidity - assets);
         }
 
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransfer(receiver, assets);
     }
 
@@ -455,10 +460,12 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // UpdateOpenPosition checks that the Account indeed has opened a margin account for this Lending Pool and
         // checks that it is still healthy after the debt is increased with amountWithFee.
         // Reverts in Account if one of the checks fails.
+        // forge-lint: disable-next-item(reentrancy-no-eth)
         uint256 accountVersion = IAccount(account).increaseOpenPosition(maxWithdraw(account));
         if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
 
         // Transfer fails if there is insufficient liquidity in the pool.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransfer(to, amount);
 
         unchecked {
@@ -480,6 +487,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on reentrancy attack after transfer.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
         _withdraw(amount, address(this), account);
@@ -506,6 +514,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     {
         // Need to transfer before burning debt or ERC777s could reenter.
         // Address(this) is trusted -> no risk on reentrancy attack after transfer.
+        // forge-lint: disable-next-item(arbitrary-send-erc20,solmate-safe-transfer-lib)
         asset.safeTransferFrom(bidder, address(this), amount);
 
         uint256 accountDebt = maxWithdraw(account);
@@ -573,6 +582,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // The Collateral Value of all assets in the Account must be bigger than the total liabilities against the Account (including the debt taken during this function).
         // flashActionByCreditor also checks that the Account indeed has opened a margin account for this Lending Pool.
         {
+            // forge-lint: disable-next-item(reentrancy-no-eth)
             uint256 accountVersion = IAccount(account).flashActionByCreditor(callbackData, actionTarget, actionData);
             if (!isValidVersion[accountVersion]) revert LendingPoolErrors.InvalidVersion();
         }
@@ -604,6 +614,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
 
         // Send Borrowed funds to the actionTarget.
         // Transfer fails if there is insufficient liquidity in the pool.
+        // forge-lint: disable-next-item(solmate-safe-transfer-lib)
         asset.safeTransfer(actionTarget, amountBorrowed);
 
         unchecked {
@@ -622,7 +633,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function totalAssets() public view override returns (uint256 totalDebt) {
         // Avoid a second calculation of unrealised debt (expensive)
         // if interests are already synced this block.
-        // forge-lint: disable-next-line(block-timestamp)
+        // forge-lint: disable-next-item(block-timestamp,unsafe-typecast)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             totalDebt = realisedDebt + calcUnrealisedDebt();
         } else {
@@ -637,7 +648,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function totalLiquidity() external view returns (uint256 totalLiquidity_) {
         // Avoid a second calculation of unrealised debt (expensive)
         // if interests are already synced this block.
-        // forge-lint: disable-next-line(block-timestamp)
+        // forge-lint: disable-next-item(block-timestamp,unsafe-typecast)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity equals the sum of the realised liquidity, and the pending interests.
             unchecked {
@@ -672,7 +683,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     function liquidityOf(address owner_) external view returns (uint256 assets) {
         // Avoid a second calculation of unrealised debt (expensive).
         // if interests are already synced this block.
-        // forge-lint: disable-next-line(block-timestamp)
+        // forge-lint: disable-next-item(block-timestamp,unsafe-typecast)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             // The total liquidity of a tranche equals the sum of the realised liquidity
             // of the tranche, and its pending interests.
@@ -722,9 +733,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
      */
     function _syncInterests() internal {
         // Only Sync interests once per block.
-        // forge-lint: disable-next-line(block-timestamp)
+        // forge-lint: disable-next-item(block-timestamp,unsafe-typecast)
         if (lastSyncedTimestamp != uint32(block.timestamp)) {
             uint256 unrealisedDebt = calcUnrealisedDebt();
+            // forge-lint: disable-next-item(unsafe-typecast)
             lastSyncedTimestamp = uint32(block.timestamp);
 
             // Sync interests for borrowers.
@@ -925,6 +937,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // If this is the sole ongoing auction, prevent any deposits and withdrawals in the most jr tranche
         if (auctionsInProgress == 0 && tranches.length > 0) {
             unchecked {
+                // forge-lint: disable-next-item(reentrancy-no-eth)
                 ITranche(tranches[tranches.length - 1]).setAuctionInProgress(true);
             }
         }
@@ -934,7 +947,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         }
 
         // Emit event
-        // forge-lint: disable-next-line(unsafe-typecast)
+        // forge-lint: disable-next-item(unsafe-typecast)
         emit AuctionStarted(msg.sender, address(this), uint128(startDebt));
     }
 
@@ -1086,6 +1099,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
         // Hook to the most junior Tranche.
         if (auctionsInProgress == 0 && tranches.length > 0) {
             unchecked {
+                // forge-lint: disable-next-item(reentrancy-no-eth)
                 ITranche(tranches[tranches.length - 1]).setAuctionInProgress(false);
             }
         }
@@ -1114,6 +1128,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
             if (badDebt < maxBurnable) {
                 // Deduct badDebt from the balance of the most junior Tranche.
                 unchecked {
+                    // forge-lint: disable-next-item(unsafe-typecast)
                     realisedLiquidityOf[tranche] -= badDebt;
                 }
                 break;
@@ -1127,8 +1142,10 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
                 unchecked {
                     badDebt -= maxBurnable;
                 }
+                // forge-lint: disable-next-item(reentrancy-no-eth)
                 ITranche(tranche).lock();
                 // Hook to the new most junior Tranche to inform that auctions are ongoing.
+                // forge-lint: disable-next-item(reentrancy-no-eth)
                 if (i != 0) ITranche(tranches[i - 1]).setAuctionInProgress(true);
             }
         }

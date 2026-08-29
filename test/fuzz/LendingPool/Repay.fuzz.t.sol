@@ -14,6 +14,7 @@ import { LendingPool } from "../../../src/LendingPool.sol";
 /**
  * @notice Fuzz tests for the function "repay" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

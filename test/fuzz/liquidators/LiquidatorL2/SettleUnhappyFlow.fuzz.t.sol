@@ -33,6 +33,7 @@ contract SettleUnhappyFlow_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         vm.assume(caller != address(0));
 
         // And: The account auction is initiated.
+        // forge-lint: disable-next-item(unsafe-typecast)
         usedMargin = uint112(bound(usedMargin, uint256(minimumMargin) + 1, type(uint112).max - 1));
         uint112 amountLoaned = usedMargin - minimumMargin;
         initiateLiquidation(minimumMargin, amountLoaned);

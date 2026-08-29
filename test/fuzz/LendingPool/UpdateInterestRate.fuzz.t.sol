@@ -11,6 +11,7 @@ import { LendingPool } from "../../../src/LendingPool.sol";
 /**
  * @notice Fuzz tests for the function "updateInterestRate" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -86,6 +87,7 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint256 expectedInterestRate;
         uint256 utilisation = (ONE_4 * realisedDebt_) / totalRealisedLiquidity_;
         if (utilisation <= utilisationThreshold_) {
+            // forge-lint: disable-next-item(divide-before-multiply)
             expectedInterestRate = uint256(baseRate_) + uint256(lowSlope_) * utilisation / ONE_4;
         } else {
             uint256 lowSlopeInterest = uint256(utilisationThreshold_) * lowSlope_;

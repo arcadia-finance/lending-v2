@@ -109,6 +109,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
      * - Liquidate positions.
      */
     function pause() external override onlyGuardian afterCoolDownOf(1441 minutes) {
+        // forge-lint: disable-next-item(unsafe-typecast)
         pauseTimestamp = uint96(block.timestamp);
 
         emit PauseFlagsUpdated(

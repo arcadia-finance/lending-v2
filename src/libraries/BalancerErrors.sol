@@ -40,6 +40,7 @@ function _revert(uint256 errorCode) pure {
     // The dynamic string creation algorithm that follows could be implemented in Solidity, but assembly allows for a
     // much denser implementation, again saving bytecode size. Given this function unconditionally reverts, this is a
     // safe place to rely on it without worrying about how its usage might affect e.g. memory contents.
+    // forge-lint: disable-next-item(unsafe-typecast)
     assembly {
         // First, we need to compute the ASCII representation of the error code. We assume that it is in the 0-999
         // range, so we only need to convert three digits. To convert the digits to ASCII, we add 0x30, the value for

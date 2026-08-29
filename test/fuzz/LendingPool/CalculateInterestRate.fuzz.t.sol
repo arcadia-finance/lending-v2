@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "calculateInterestRate" of contract "InterestRateModule".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract CalculateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

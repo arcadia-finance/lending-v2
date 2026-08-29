@@ -12,6 +12,7 @@ import { LendingPoolExtension } from "../../extensions/LendingPoolExtension.sol"
 import { LiquidatorL2Extension } from "../../extensions/LiquidatorL2Extension.sol";
 import { TrancheExtension } from "../../extensions/TrancheExtension.sol";
 
+// forge-lint: disable-next-item(reentrancy-no-eth)
 contract ArcadiaLendingFixture is Base_Lending_Test {
     function deployArcadiaLending(address numeraire) internal {
         vm.startPrank(users.owner);

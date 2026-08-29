@@ -62,6 +62,7 @@ contract CalculateTotalShare_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         for (uint256 i; i < assetAmounts.length; ++i) {
             uint256 share = assetShares[i] * askedAssetAmounts[i] / assetAmounts[i];
             // Round up.
+            // forge-lint: disable-next-item(divide-before-multiply)
             if (share * assetAmounts[i] < assetShares[i] * askedAssetAmounts[i]) share += 1;
 
             expectedTotalShare += share;

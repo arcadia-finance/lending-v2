@@ -66,6 +66,7 @@ contract GetAssetShares_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
         for (uint256 i; i < assetValues.length; ++i) {
             expectedValue = assetValues[i].assetValue * ONE_4 / totalValue;
             // Round up.
+            // forge-lint: disable-next-item(divide-before-multiply)
             if (expectedValue * totalValue < assetValues[i].assetValue * ONE_4) expectedValue += 1;
 
             assertEq(assetShares[i], expectedValue);

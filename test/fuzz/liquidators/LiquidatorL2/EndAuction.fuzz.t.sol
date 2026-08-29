@@ -12,7 +12,7 @@ import { LiquidatorErrors } from "../../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "endAuction" of contract "LiquidatorL2".
  */
-// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply,unsafe-typecast)
 contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP

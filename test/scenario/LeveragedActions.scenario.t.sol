@@ -21,6 +21,7 @@ import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 /**
  * @notice Scenario tests for With Leveraged Actions flows.
  */
+// forge-lint: disable-next-item(divide-before-multiply)
 contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////

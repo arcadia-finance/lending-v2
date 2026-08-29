@@ -14,6 +14,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
  * @dev "_settleAuction" has no own reverts, it returns a bool indicating if a termination condition was met.
  * Each test asserts the returned bool and the side effects of the matched condition.
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////

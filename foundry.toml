@@ -35,7 +35,14 @@ tab_width = 4
 
 [lint]
 exclude_lints = [
+    "asm-keccak256",
+    "calls-loop",
+    "missing-events-access-control",
+    "missing-zero-check",
+    "reentrancy-events",
+    "uninitialized-local",
     "unsafe-cheatcode",
+    "unused-return",
     "unwrapped-modifier-logic",
 ]
 
