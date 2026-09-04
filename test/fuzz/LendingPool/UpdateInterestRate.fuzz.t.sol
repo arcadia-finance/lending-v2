@@ -32,15 +32,14 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint80 interestRate
     ) public {
         // realisedDebt smaller than equal to than 3402823669209384912995114146594816
-        //5 year
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //1000%
-        vm.assume(interestRate <= 10 * 10 ** 18);
-        //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
-        vm.assume(realisedDebt <= type(uint128).max / (10 ** 5));
+        interestRate = uint80(bound(interestRate, 0, 10 * 10 ** 18));
+
+        // Highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816.
+        realisedDebt = uint128(bound(realisedDebt, 0, type(uint128).max / (10 ** 5)));
 
         // Given: Utilisation below 100% (test-case).
-        vm.assume(realisedDebt <= realisedLiquidity);
+        realisedLiquidity = uint120(bound(realisedLiquidity, realisedDebt, type(uint120).max));
 
         pool.setTotalRealisedLiquidity(realisedLiquidity);
         pool.setRealisedDebt(realisedDebt);
@@ -75,8 +74,15 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // And: Utilisation is below 100% (test-case).
         // And: utilisation does not overflow.
-        realisedDebt_ = uint128(bound(realisedDebt_, 0, type(uint128).max / ONE_4));
-        realisedDebt_ = uint128(bound(realisedDebt_, 0, totalRealisedLiquidity_));
+        realisedDebt_ = uint128(
+            bound(
+                realisedDebt_,
+                0,
+                totalRealisedLiquidity_ < type(uint128).max / ONE_4
+                    ? totalRealisedLiquidity_
+                    : type(uint128).max / ONE_4
+            )
+        );
 
         // And: The InterestConfiguration is set.
         vm.prank(users.owner);
@@ -158,8 +164,8 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Given: totalRealisedLiquidity_ is equal to 0, baseRate_ is less than 100000, highSlope_ is bigger than lowSlope_
         uint256 totalRealisedLiquidity_ = 0;
-        vm.assume(realisedDebt_ <= type(uint128).max / ONE_4); //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
-        vm.assume(utilisationThreshold_ <= ONE_4);
+        realisedDebt_ = bound(realisedDebt_, 0, type(uint128).max / ONE_4);
+        utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
 
         // When: The InterestConfiguration is set
         vm.prank(users.owner);

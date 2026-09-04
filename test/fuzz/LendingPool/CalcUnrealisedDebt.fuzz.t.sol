@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "calcUnrealisedDebt" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract CalcUnrealisedDebt_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -26,11 +27,10 @@ contract CalcUnrealisedDebt_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     {
         // Given: deltaTimestamp smaller than equal to 5 years,
         // realisedDebt smaller than equal to than 3402823669209384912995114146594816
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //5 year
-        vm.assume(interestRate <= 10 * 10 ** 18);
+        interestRate = uint80(bound(interestRate, 0, 10 * 10 ** 18));
         //1000%
-        vm.assume(realisedDebt <= type(uint128).max / (10 ** 5));
+        realisedDebt = uint128(bound(realisedDebt, 0, type(uint128).max / (10 ** 5)));
         //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
 
         pool.setInterestRate(interestRate);

@@ -11,6 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "totalAssets" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -57,9 +58,18 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint128 claimableLiquidityOfTranche,
         uint128 availableLiquidityOfTranche
     ) public {
-        vm.assume(shares <= totalShares);
-        vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
-        vm.assume(availableLiquidityOfTranche <= totalLiquidity);
+        shares = uint128(bound(shares, 0, totalShares));
+        claimableLiquidityOfTranche = uint128(bound(claimableLiquidityOfTranche, 0, totalLiquidity));
+
+        uint256 claimableAssets;
+        if (shares == 0) {
+            claimableAssets = 0;
+        } else {
+            claimableAssets = uint256(shares) * claimableLiquidityOfTranche / totalShares;
+        }
+
+        // And: The tranche holds enough underlying assets.
+        availableLiquidityOfTranche = uint128(bound(availableLiquidityOfTranche, claimableAssets, totalLiquidity));
 
         stdstore.target(address(tranche))
             .sig(pool.balanceOf.selector)
@@ -74,14 +84,6 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
             .sig(pool.balanceOf.selector)
             .with_key(address(pool))
             .checked_write(availableLiquidityOfTranche);
-
-        uint256 claimableAssets;
-        if (shares == 0) {
-            claimableAssets = 0;
-        } else {
-            claimableAssets = uint256(shares) * claimableLiquidityOfTranche / totalShares;
-        }
-        vm.assume(availableLiquidityOfTranche >= claimableAssets);
 
         assertEq(trancheWrapper.maxWithdraw(owner), claimableAssets);
     }
@@ -94,9 +96,18 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         uint128 claimableLiquidityOfTranche,
         uint128 availableLiquidityOfTranche
     ) public {
-        vm.assume(shares <= totalShares);
-        vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
-        vm.assume(availableLiquidityOfTranche <= totalLiquidity);
+        shares = uint128(bound(shares, 0, totalShares));
+        claimableLiquidityOfTranche = uint128(bound(claimableLiquidityOfTranche, 0, totalLiquidity));
+
+        uint256 claimableAssets;
+        if (shares == 0) {
+            claimableAssets = 0;
+        } else {
+            claimableAssets = uint256(shares) * claimableLiquidityOfTranche / totalShares;
+        }
+
+        // And: The underlying assets are the limiting factor.
+        availableLiquidityOfTranche = uint128(bound(availableLiquidityOfTranche, 0, claimableAssets));
 
         stdstore.target(address(tranche))
             .sig(pool.balanceOf.selector)
@@ -111,14 +122,6 @@ contract MaxWithdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
             .sig(pool.balanceOf.selector)
             .with_key(address(pool))
             .checked_write(availableLiquidityOfTranche);
-
-        uint256 claimableAssets;
-        if (shares == 0) {
-            claimableAssets = 0;
-        } else {
-            claimableAssets = uint256(shares) * claimableLiquidityOfTranche / totalShares;
-        }
-        vm.assume(availableLiquidityOfTranche <= claimableAssets);
 
         assertEq(trancheWrapper.maxWithdraw(owner), availableLiquidityOfTranche);
     }

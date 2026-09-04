@@ -48,8 +48,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         address bidder = address(srTranche);
 
         // And: The account auction is initiated
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -61,8 +60,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
     function testFuzz_Revert_bid_AssetAmountsLonger(address bidder, uint112 amountLoaned, bytes memory data) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -78,8 +76,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         address bidder = address(srTranche);
 
         // And: The account auction is initiated
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -98,8 +95,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -119,10 +115,8 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.assume(bidder.code.length == 0);
 
         // And: The account auction is initiated
-        vm.assume(bidder != address(0));
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -148,8 +142,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.assume(bidder.code.length == 0);
 
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 12);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 12 + 1, (type(uint112).max / 300) * 100));
 
         // Given: Sequencer did not go down during the auction.
         liquidationStartTime =
@@ -187,8 +180,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 12);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 12 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -223,8 +215,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 2);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 2 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -252,15 +243,15 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         assertEq(inAuction, false);
     }
 
-    function testFuzz_Success_bid_FromContract_Partial(uint112 amountLoaned, uint112 bidAssetAmount, bytes memory data)
+    function testFuzz_Success_bid_FromContract_Partial(uint256 amountToken1, uint112 bidAssetAmount, bytes memory data)
         public
     {
         // Given: Bidder is a contract.
         Bidder bidder = new Bidder();
 
-        // And: The account auction is initiated
-        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
-        initiateLiquidation(amountLoaned);
+        // And: The account auction is initiated, with token1 as collateral and stable1 as numeraire.
+        amountToken1 = bound(amountToken1, 1e12, 1e30);
+        initiateLiquidationToken1(amountToken1);
 
         uint256[] memory originalAssetAmounts = liquidator_.getAuctionAssetAmounts(address(account));
         uint256 originalAmount = originalAssetAmounts[0];
@@ -285,6 +276,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         // Get Initial balances.
         uint256 initialBalancePool = mockERC20.stable1.balanceOf(address(pool));
         uint256 initialBalanceBidder = mockERC20.stable1.balanceOf(address(bidder));
+        uint256 initialCollateralBidder = mockERC20.token1.balanceOf(address(bidder));
 
         // When: Bidder bids for the asset
         // Then: Bidder contract gets called with the actual amounts transferred and actual bid price.
@@ -294,21 +286,21 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: Tokens are transferred.
         assertEq(mockERC20.stable1.balanceOf(address(pool)), initialBalancePool + price);
-        // ToDo: collateral and numeraire are both stable1 -> balance of bidder increases and decreases -> use two different tokens.
-        assertEq(mockERC20.stable1.balanceOf(address(bidder)), initialBalanceBidder - price + bidAssetAmount);
+        assertEq(mockERC20.stable1.balanceOf(address(bidder)), initialBalanceBidder - price);
+        assertEq(mockERC20.token1.balanceOf(address(bidder)), initialCollateralBidder + bidAssetAmount);
     }
 
     function testFuzz_Success_bid_FromContract_BidExceeding(
-        uint112 amountLoaned,
+        uint256 amountToken1,
         uint112 bidAssetAmount,
         bytes memory data
     ) public {
         // Given: Bidder is a contract.
         Bidder bidder = new Bidder();
 
-        // And: The account auction is initiated
-        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
-        initiateLiquidation(amountLoaned);
+        // And: The account auction is initiated, with token1 as collateral and stable1 as numeraire.
+        amountToken1 = bound(amountToken1, 1e12, 1e30);
+        initiateLiquidationToken1(amountToken1);
 
         uint256[] memory originalAssetAmounts = liquidator_.getAuctionAssetAmounts(address(account));
         uint256 originalAmount = originalAssetAmounts[0];
@@ -333,6 +325,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         // Get Initial balances.
         uint256 initialBalancePool = mockERC20.stable1.balanceOf(address(pool));
         uint256 initialBalanceBidder = mockERC20.stable1.balanceOf(address(bidder));
+        uint256 initialCollateralBidder = mockERC20.token1.balanceOf(address(bidder));
 
         // When: Bidder bids for the asset
         // Then: Bidder contract gets called with the actual amounts transferred and actual bid price.
@@ -342,7 +335,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: Tokens are transferred.
         assertEq(mockERC20.stable1.balanceOf(address(pool)), initialBalancePool + price);
-        // ToDo: collateral and numeraire are both stable1 -> balance of bidder increases and decreases -> use two different tokens.
-        assertEq(mockERC20.stable1.balanceOf(address(bidder)), initialBalanceBidder - price + originalAmount);
+        assertEq(mockERC20.stable1.balanceOf(address(bidder)), initialBalanceBidder - price);
+        assertEq(mockERC20.token1.balanceOf(address(bidder)), initialCollateralBidder + originalAmount);
     }
 }

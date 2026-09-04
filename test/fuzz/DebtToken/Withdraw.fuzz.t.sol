@@ -38,12 +38,11 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         uint256 totalSupply,
         uint256 totalDebt
     ) public {
-        vm.assume(assets <= totalDebt);
-        vm.assume(totalSupply > 0); //First mint new shares are issued equal to amount of assets -> error will not throw
-        vm.assume(assets <= type(uint256).max / totalSupply); //Avoid overflow in next assumption
+        totalSupply = bound(totalSupply, 1, type(uint256).max);
+        totalDebt = bound(totalDebt, 1, type(uint256).max);
 
         //Will result in zero shares being created
-        vm.assume(totalDebt > assets * totalSupply);
+        assets = bound(assets, 0, (totalDebt - 1) / totalSupply);
 
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
         debt_.setRealisedDebt(totalDebt);
@@ -63,15 +62,20 @@ contract Withdraw_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         uint256 totalSupply,
         uint256 totalDebt
     ) public {
-        vm.assume(assetsWithdrawn <= totalDebt);
-        vm.assume(totalDebt > 0);
-        vm.assume(initialShares <= totalSupply);
-        vm.assume(totalSupply > 0);
-        vm.assume(assetsWithdrawn <= type(uint256).max / totalSupply); //Avoid overflow in next assumption
-        vm.assume(totalDebt <= assetsWithdrawn * totalSupply);
+        totalSupply = bound(totalSupply, 1, type(uint256).max);
+        totalDebt = bound(totalDebt, 1, type(uint256).max);
+
+        // Shares are created, and "assetsWithdrawn * totalSupply" does not overflow.
+        uint256 minAssets = totalDebt / totalSupply;
+        if (totalDebt % totalSupply != 0) minAssets += 1;
+        uint256 maxAssets = type(uint256).max / totalSupply;
+        if (maxAssets > totalDebt) maxAssets = totalDebt;
+        vm.assume(minAssets <= maxAssets);
+        assetsWithdrawn = bound(assetsWithdrawn, minAssets, maxAssets);
 
         uint256 sharesRedeemed = assetsWithdrawn * totalSupply / totalDebt;
-        vm.assume(sharesRedeemed <= initialShares);
+        vm.assume(sharesRedeemed <= totalSupply);
+        initialShares = bound(initialShares, sharesRedeemed, totalSupply);
 
         stdstore.target(address(debt_)).sig(debt_.balanceOf.selector).with_key(owner).checked_write(initialShares);
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);

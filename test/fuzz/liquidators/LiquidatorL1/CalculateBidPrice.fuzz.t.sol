@@ -43,8 +43,7 @@ contract CalculateBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         liquidator_.setAuctionCurveParameters(halfLifeTime, cutoffTime, startPriceMultiplier, minPriceMultiplier);
 
         // And: The account auction is initiated.
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
 
         // And: A timestamp far beyond the cutoffTime, where the price curve underflows the LogExpMath precision.

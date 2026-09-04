@@ -53,7 +53,7 @@ contract GetAssetShares_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
             assetValues[i].assetValue = bound(assetValues[i].assetValue, 0, type(uint112).max);
             totalValue += assetValues[i].assetValue;
         }
-        vm.assume(totalValue > 0);
+        totalValue = bound(totalValue, 1, type(uint256).max);
 
         vm.assume(totalValue != 0);
 

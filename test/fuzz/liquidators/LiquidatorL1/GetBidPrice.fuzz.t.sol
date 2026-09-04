@@ -26,8 +26,7 @@ contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
     function testFuzz_Revert_getBidPrice_AssetAmountsShorter(address bidder, uint112 amountLoaned) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
 
         // When: getBidPrice is called with fewer asset amounts than the auction.
@@ -40,8 +39,7 @@ contract GetBidPrice_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
     function testFuzz_Revert_getBidPrice_AfterCutoff(address bidder, uint112 amountLoaned, uint32 timePassed) public {
         // Given: The account auction is initiated.
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
 
         // And: A timestamp far beyond the cutoffTime, where the price curve underflows the LogExpMath precision.

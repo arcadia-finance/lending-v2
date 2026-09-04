@@ -11,6 +11,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "skim" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -24,7 +25,7 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_skim_OngoingAuctions(uint16 auctionsInProgress_, address sender) public {
-        vm.assume(auctionsInProgress_ > 0);
+        auctionsInProgress_ = uint16(bound(auctionsInProgress_, 1, type(uint16).max));
         pool.setAuctionsInProgress(auctionsInProgress_);
 
         vm.startPrank(sender);
@@ -36,8 +37,8 @@ contract Skim_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_skim(uint128 balanceOf, uint128 totalDebt, uint128 totalLiquidity, address sender)
         public
     {
-        vm.assume(uint256(balanceOf) + totalDebt <= type(uint128).max);
-        vm.assume(totalLiquidity <= balanceOf + totalDebt);
+        totalDebt = uint128(bound(totalDebt, 0, type(uint128).max - balanceOf));
+        totalLiquidity = uint128(bound(totalLiquidity, 0, balanceOf + totalDebt));
 
         pool.setTotalRealisedLiquidity(totalLiquidity);
         pool.setRealisedDebt(totalDebt);
