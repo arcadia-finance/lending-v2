@@ -36,7 +36,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 interestWeightTranche,
         uint16 totalInterestWeight
     ) public {
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTranche = uint16(bound(interestWeightTranche, 0, totalInterestWeight));
         vm.startPrank(users.owner);
@@ -84,7 +84,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 interestWeightTreasury,
         uint16 totalInterestWeight
     ) public {
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTreasury = uint16(bound(interestWeightTreasury, 0, totalInterestWeight));
         vm.startPrank(users.owner);
@@ -141,7 +141,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(user != address(srTranche));
         vm.assume(user != address(jrTranche));
 
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         vm.prank(users.owner);
         pool.setInterestWeightTranche(0, totalInterestWeight);
