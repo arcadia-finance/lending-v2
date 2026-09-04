@@ -315,7 +315,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         // Given: collateralValue is smaller than maxExposure and its value does not overflow.
         uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
         if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
-        // And: the collateral is worth at least one unit of credit.
+        // And: The collateral is worth at least one unit of credit.
         uint256 minAmountToken =
             (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
         minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
@@ -355,7 +355,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         // Given: collateralValue is smaller than maxExposure and its value does not overflow.
         uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
         if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
-        // And: the collateral is worth at least one unit of credit.
+        // And: The collateral is worth at least one unit of credit.
         uint256 minAmountToken =
             (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
         minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
@@ -399,7 +399,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         // Given: collateralValue is smaller than maxExposure and its value does not overflow.
         uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
         if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
-        // And: the collateral is worth at least one unit of credit.
+        // And: The collateral is worth at least one unit of credit.
         uint256 minAmountToken =
             (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
         minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
