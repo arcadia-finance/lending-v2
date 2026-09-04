@@ -49,6 +49,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     /**
      * @dev Throws if the repay functionality is paused.
      */
+    // forge-lint: disable-next-item(modifier-used-only-once)
     modifier whenRepayNotPaused() {
         if (repayPaused) revert GuardianErrors.FunctionIsPaused();
         _;
@@ -57,6 +58,7 @@ abstract contract LendingPoolGuardian is BaseGuardian {
     /**
      * @dev Throws if the withdraw functionality is paused.
      */
+    // forge-lint: disable-next-item(modifier-used-only-once)
     modifier whenWithdrawNotPaused() {
         if (withdrawPaused) revert GuardianErrors.FunctionIsPaused();
         _;

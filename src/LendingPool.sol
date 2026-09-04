@@ -144,6 +144,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     event LiquidationWeightTrancheUpdated(uint16 liquidationWeight);
     event PoolStateUpdated(uint256 totalDebt, uint256 totalLiquidity, uint80 interestRate);
     event Repay(address indexed account, address indexed from, uint256 amount);
+    // forge-lint: disable-next-item(event-fields)
     event TranchePopped(address tranche);
     event TreasuryWeightsUpdated(uint16 interestWeight, uint16 liquidationWeight);
 
@@ -162,6 +163,7 @@ contract LendingPool is LendingPoolGuardian, Creditor, DebtToken, ILendingPool {
     /**
      * @notice Checks if caller is a Tranche.
      */
+    // forge-lint: disable-next-item(modifier-used-only-once)
     modifier onlyTranche() {
         if (!isTranche[msg.sender]) revert LendingPoolErrors.Unauthorized();
         _;
