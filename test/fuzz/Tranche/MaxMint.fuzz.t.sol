@@ -11,6 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "maxMint" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -46,8 +47,8 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         uint128 totalLiquidity,
         uint128 liquidityOf
     ) public {
-        vm.assume(liquidityOf > 0);
-        vm.assume(liquidityOf <= totalLiquidity);
+        liquidityOf = uint128(bound(liquidityOf, 1, type(uint128).max));
+        totalLiquidity = uint128(bound(totalLiquidity, liquidityOf, type(uint128).max));
 
         vm.prank(users.owner);
         pool.setTotalRealisedLiquidity(totalLiquidity);
@@ -65,9 +66,9 @@ contract MaxMint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         uint128 liquidityOf,
         uint128 totalShares
     ) public {
-        vm.assume(liquidityOf > 0);
-        vm.assume(totalShares > 0);
-        vm.assume(liquidityOf <= totalLiquidity);
+        liquidityOf = uint128(bound(liquidityOf, 1, type(uint128).max));
+        totalShares = uint128(bound(totalShares, 1, type(uint128).max));
+        totalLiquidity = uint128(bound(totalLiquidity, liquidityOf, type(uint128).max));
 
         vm.prank(users.owner);
         pool.setTotalRealisedLiquidity(totalLiquidity);

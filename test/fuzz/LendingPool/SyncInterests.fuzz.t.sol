@@ -11,6 +11,7 @@ import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetV
 /**
  * @notice Fuzz tests for the function "syncInterests" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -29,16 +30,13 @@ contract SyncInterests_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint120 realisedLiquidity,
         uint80 interestRate
     ) public {
-        vm.assume(realisedDebt <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
+        // Highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816.
+        realisedDebt = uint128(bound(realisedDebt, 1, type(uint128).max / (10 ** 5)));
         // Given: deltaTimestamp than 5 years, realisedDebt than 3402823669209384912995114146594816 and bigger than 0
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60);
         //5 year
-        vm.assume(interestRate <= 10 * 10 ** 18);
+        interestRate = uint80(bound(interestRate, 0, 10 * 10 ** 18));
         //1000%
-        vm.assume(realisedDebt <= type(uint128).max / (10 ** 5));
-        //highest possible debt at 1000% over 5 years: 3402823669209384912995114146594816
-        vm.assume(realisedDebt > 0);
-        vm.assume(realisedDebt <= realisedLiquidity);
+        realisedLiquidity = uint120(bound(realisedLiquidity, realisedDebt, type(uint120).max));
 
         // And: the users.accountOwner takes realisedDebt debt
         depositErc20InAccount(account, mockERC20.stable1, realisedDebt);

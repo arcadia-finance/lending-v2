@@ -38,7 +38,7 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address unprivilegedAddress
     ) public {
         vm.assume(unprivilegedAddress != owner);
-        vm.assume(shares > 0);
+        shares = uint128(bound(shares, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.mint(shares, owner);
@@ -57,8 +57,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address beneficiary
     ) public {
         vm.assume(beneficiary != owner);
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesMinted < sharesAllowed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max - 1));
+        sharesAllowed = uint128(bound(sharesAllowed, uint256(sharesMinted) + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.mint(sharesMinted, owner);
@@ -78,8 +78,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesMinted < sharesRedeemed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max - 1));
+        sharesRedeemed = uint128(bound(sharesRedeemed, uint256(sharesMinted) + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.mint(sharesMinted, owner);
@@ -96,9 +96,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesRedeemed > 0);
-        vm.assume(sharesMinted >= sharesRedeemed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max));
+        sharesRedeemed = uint128(bound(sharesRedeemed, 1, sharesMinted));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
 
@@ -120,9 +119,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesRedeemed > 0);
-        vm.assume(sharesMinted >= sharesRedeemed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max));
+        sharesRedeemed = uint128(bound(sharesRedeemed, 1, sharesMinted));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
 
@@ -186,10 +184,9 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address beneficiary
     ) public {
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesRedeemed > 0);
-        vm.assume(sharesMinted >= sharesRedeemed);
-        vm.assume(sharesAllowed >= sharesRedeemed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max));
+        sharesRedeemed = uint128(bound(sharesRedeemed, 1, sharesMinted));
+        sharesAllowed = uint128(bound(sharesAllowed, sharesRedeemed, type(uint128).max));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
         vm.assume(beneficiary != owner);
@@ -218,9 +215,8 @@ contract Redeem_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address beneficiary
     ) public {
-        vm.assume(sharesMinted > 0);
-        vm.assume(sharesRedeemed > 0);
-        vm.assume(sharesMinted >= sharesRedeemed);
+        sharesMinted = uint128(bound(sharesMinted, 1, type(uint128).max));
+        sharesRedeemed = uint128(bound(sharesRedeemed, 1, sharesMinted));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
         vm.assume(beneficiary != owner);

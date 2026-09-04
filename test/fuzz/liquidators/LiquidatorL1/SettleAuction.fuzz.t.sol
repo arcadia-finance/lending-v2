@@ -14,7 +14,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
  * @dev "_settleAuction" has no own reverts, it returns a bool indicating if a termination condition was met.
  * Each test asserts the returned bool and the side effects of the matched condition.
  */
-// forge-lint: disable-next-item(unsafe-typecast)
+// forge-lint: disable-next-item(unsafe-typecast,divide-before-multiply)
 contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -219,9 +219,8 @@ contract SettleAuction_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.assume(bidder != address(0));
 
         // And: The account auction is initiated.
-        vm.assume(amountLoaned > 12);
+        amountLoaned = uint112(bound(amountLoaned, 12 + 1, (type(uint112).max / 300) * 100));
         // forge-lint: disable-next-line(divide-before-multiply)
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
         initiateLiquidation(amountLoaned);
 
         // And: The auction price decayed below the open debt, within the cutoffTime.

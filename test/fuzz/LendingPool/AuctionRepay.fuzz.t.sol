@@ -48,11 +48,10 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address sender
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
 
-        vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
-        vm.assume(availableFunds > 0);
+        // And: The sender has insufficient funds to repay the loan.
+        availableFunds = bound(availableFunds, 1, amountLoaned - 1);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -80,11 +79,10 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_auctionRepay_Paused(uint112 amountLoaned, uint256 availableFunds, address sender) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
 
-        vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
-        vm.assume(availableFunds > 0);
+        // And: The sender has insufficient funds to repay the loan.
+        availableFunds = bound(availableFunds, 1, amountLoaned - 1);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -122,8 +120,11 @@ contract AuctionRepay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address nonAccount
     ) public {
         vm.assume(nonAccount != address(account));
-        vm.assume(availableFunds > amountRepaid);
         vm.assume(sender != users.liquidityProvider);
+
+        // Given: The bidder has sufficient funds.
+        availableFunds = uint128(bound(availableFunds, 1, type(uint128).max));
+        amountRepaid = bound(amountRepaid, 0, availableFunds - 1);
         vm.prank(users.liquidityProvider);
         // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);

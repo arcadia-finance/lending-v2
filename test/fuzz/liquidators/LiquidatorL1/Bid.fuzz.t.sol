@@ -48,8 +48,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         address bidder = address(srTranche);
 
         // And: The account auction is initiated
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -61,8 +60,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
     function testFuzz_Revert_bid_AssetAmountsLonger(address bidder, uint112 amountLoaned, bytes memory data) public {
         // Given: The account auction is initiated
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -78,8 +76,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         address bidder = address(srTranche);
 
         // And: The account auction is initiated
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -98,8 +95,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -119,10 +115,8 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.assume(bidder.code.length == 0);
 
         // And: The account auction is initiated
-        vm.assume(bidder != address(0));
         vm.assume(bidder != address(0) && bidder != users.liquidityProvider && bidder != address(srTranche));
-        vm.assume(amountLoaned > 3);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 3 + 1, (type(uint112).max / 150) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -148,8 +142,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         vm.assume(bidder.code.length == 0);
 
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 12);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 12 + 1, (type(uint112).max / 300) * 100));
 
         // Given: Sequencer did not go down during the auction.
         liquidationStartTime =
@@ -187,8 +180,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 12);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 12 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 
@@ -223,8 +215,7 @@ contract Bid_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
 
         // And: The account auction is initiated
         vm.assume(bidder != address(0));
-        vm.assume(amountLoaned > 2);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 2 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(amountLoaned);
         bool endAuction = false;
 

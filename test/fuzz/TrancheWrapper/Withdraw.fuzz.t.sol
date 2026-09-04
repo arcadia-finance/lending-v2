@@ -31,7 +31,7 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address unprivilegedAddress
     ) public {
         vm.assume(unprivilegedAddress != owner);
-        vm.assume(assets > 0);
+        assets = uint128(bound(assets, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.deposit(assets, owner);
@@ -50,8 +50,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address beneficiary
     ) public {
         vm.assume(beneficiary != owner);
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited < sharesAllowed);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max - 1));
+        sharesAllowed = uint128(bound(sharesAllowed, uint256(assetsDeposited) + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.deposit(assetsDeposited, owner);
@@ -72,8 +72,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited < assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max - 1));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, uint256(assetsDeposited) + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.deposit(assetsDeposited, owner);
@@ -90,8 +90,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 0, assetsDeposited));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
 
@@ -113,8 +113,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 0, assetsDeposited));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
 
@@ -136,8 +136,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address receiver
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 0, assetsDeposited));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
 
@@ -201,9 +201,9 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address beneficiary
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
-        vm.assume(sharesAllowed >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 0, assetsDeposited));
+        sharesAllowed = uint128(bound(sharesAllowed, assetsWithdrawn, type(uint128).max));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
         vm.assume(beneficiary != owner);
@@ -234,8 +234,8 @@ contract Withdraw_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
         address owner,
         address beneficiary
     ) public {
-        vm.assume(assetsDeposited > 0);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, 1, type(uint128).max));
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 0, assetsDeposited));
         vm.assume(receiver != users.liquidityProvider);
         vm.assume(receiver != address(pool));
         vm.assume(beneficiary != owner);
