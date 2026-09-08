@@ -21,7 +21,7 @@ import { LendingPoolErrors } from "../../src/libraries/Errors.sol";
 /**
  * @notice Scenario tests for With Leveraged Actions flows.
  */
-// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply,unsafe-typecast)
 contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -168,14 +168,18 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
             ** Constants.STABLE_DECIMALS / stableRate;
 
         //With leverage -> stableIn should be bigger than the available collateral
-        vm.assume(stableIn > stableCollateral);
+        vm.assume(stableIn > 0);
+        stableCollateral =
+            uint64(bound(stableCollateral, 0, stableIn - 1 > type(uint64).max ? type(uint64).max : stableIn - 1));
 
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is not successfull -> total debt after transaction should be bigger than the Collateral Value
         uint256 collValue = uint256(tokenOut) * tokenRate / 10 ** Constants.TOKEN_DECIMALS
             * Constants.TOKEN_TO_STABLE_COLL_FACTOR / 100 * 10 ** Constants.STABLE_DECIMALS / stableRate;
-        vm.assume(stableMargin + stableDebt > collValue);
+        vm.assume(collValue < stableMargin + type(uint64).max);
+        stableDebt =
+            uint64(bound(stableDebt, collValue >= stableMargin ? collValue - stableMargin + 1 : 0, type(uint64).max));
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
@@ -265,12 +269,19 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
-        vm.assume(stableIn > stableCollateral);
+        vm.assume(stableIn > 0);
+        stableCollateral =
+            uint72(bound(stableCollateral, 0, stableIn - 1 > type(uint72).max ? type(uint72).max : stableIn - 1));
 
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is successfull -> total debt after transaction should be smaller than the Collateral Value
-        vm.assume(stableMargin + stableDebt <= collValue);
+        vm.assume(collValue >= stableMargin);
+        stableDebt = uint32(
+            bound(
+                stableDebt, 0, collValue - stableMargin > type(uint32).max ? type(uint32).max : collValue - stableMargin
+            )
+        );
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);
@@ -387,12 +398,19 @@ contract LeveragedActions_Scenario_Test is Scenario_Lending_Test {
         }
 
         //With leverage -> stableIn should be bigger than the available collateral
-        vm.assume(stableIn > stableCollateral);
+        vm.assume(stableIn > 0);
+        stableCollateral =
+            uint72(bound(stableCollateral, 0, stableIn - 1 > type(uint72).max ? type(uint72).max : stableIn - 1));
 
         uint256 stableMargin = stableIn - stableCollateral;
 
         //Action is successfull -> total debt after transaction should be smaller than the Collateral Value
-        vm.assume(stableMargin + stableDebt <= collValue);
+        vm.assume(collValue >= stableMargin);
+        stableDebt = uint32(
+            bound(
+                stableDebt, 0, collValue - stableMargin > type(uint32).max ? type(uint32).max : collValue - stableMargin
+            )
+        );
 
         //Set initial debt
         stdstore.target(address(debt)).sig(debt.totalSupply.selector).checked_write(stableDebt);

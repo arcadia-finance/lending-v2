@@ -9,6 +9,7 @@ import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 /**
  * @notice Fuzz tests for the function "totalLiquidity" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -30,10 +31,8 @@ contract TotalLiquidity_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given: collateralValue is smaller than maxExposure.
         // forge-lint: disable-next-item(unsafe-typecast)
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
-        vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
-        vm.assume(interestRate > 0);
-        vm.assume(initialLiquidity >= realisedDebt);
+        interestRate = uint80(bound(interestRate, 0 + 1, 1e3 * 10 ** 18));
+        initialLiquidity = uint120(bound(initialLiquidity, realisedDebt, type(uint120).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);

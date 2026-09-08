@@ -46,11 +46,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
+        amountToken = uint112(bound(amountToken, 1, type(uint112).max - 1));
 
-        vm.assume(amountToken > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
-        vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -58,7 +56,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS);
 
-        vm.assume(amountCredit > maxCredit);
+        amountCredit = uint112(bound(amountCredit, maxCredit + 1, type(uint112).max));
 
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
@@ -69,11 +67,11 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     }
 
     function testScenario_Revert_borrow_NotAllowCreditAfterLargeUnrealizedDebt(uint112 amountToken) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
         uint128 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS);
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        amountToken = uint112(bound(amountToken, 1, maxAmountToken));
 
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
         uint128 amountCredit = uint128(
@@ -100,15 +98,16 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint112 amountTokenWithdrawal,
         uint128 amountCredit
     ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0 && amountTokenWithdrawal > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
-        vm.assume(amountToken >= amountTokenWithdrawal);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        amountToken = uint112(bound(amountToken, 1, maxAmountToken));
+
+        // And: the withdrawal is not bigger than the deposit.
+        amountTokenWithdrawal = uint112(bound(amountTokenWithdrawal, 1, amountToken));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
 
@@ -155,11 +154,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
     function testScenario_Success_borrow_AllowCreditAfterDeposit(uint112 amountToken, uint128 amountCredit) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
+        amountToken = uint112(bound(amountToken, 1, type(uint112).max - 1));
 
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
-        vm.assume(amountToken > 0);
-        vm.assume(uint256(amountCredit) * collFactor_ < type(uint128).max); //prevent overflow in takecredit with absurd values
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -167,6 +164,9 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 maxCredit =
             ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_ / AssetValuationLib.ONE_4
                 / 10 ** (18 - Constants.STABLE_DECIMALS));
+
+        // And: Taking the credit does not overflow.
+        if (maxCredit >= type(uint128).max / collFactor_) maxCredit = type(uint128).max / collFactor_ - 1;
 
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
@@ -184,14 +184,11 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint24 deltaTimestamp
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
+        amountToken = uint112(bound(amountToken, 1, type(uint112).max - 1));
 
-        vm.assume(amountToken > 0);
         uint256 _yearlyInterestRate = pool.interestRate();
         uint128 base = 1e18 + 5e16; //1 + r expressed as 18 decimals fixed point number
         uint128 exponent = (uint128(deltaTimestamp) * 1e18) / uint128(pool.getYearlySeconds());
-        vm.assume(amountCredit < type(uint128).max / LogExpMath.pow(base, exponent));
-
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -200,6 +197,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint256 maxCredit =
             ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS * collFactor_ / AssetValuationLib.ONE_4
                 / 10 ** (18 - Constants.STABLE_DECIMALS));
+
+        // And: The debt does not overflow when the interest compounds.
+        uint256 maxDebt = type(uint128).max / LogExpMath.pow(base, exponent);
+        if (maxCredit >= maxDebt) maxCredit = maxDebt - 1;
 
         vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
@@ -234,10 +235,10 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint16 newPrice
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
+        amountToken = uint112(bound(amountToken, 1, type(uint112).max - 1));
 
-        vm.assume(amountToken > 0);
-        vm.assume(newPrice * 10 ** Constants.TOKEN_ORACLE_DECIMALS > rates.token1ToUsd);
+        newPrice =
+            uint16(bound(newPrice, rates.token1ToUsd / 10 ** Constants.TOKEN_ORACLE_DECIMALS + 1, type(uint16).max));
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
         uint256 valueOfOneToken = uint128((Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS);
 
@@ -271,15 +272,16 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint112 amountTokenWithdrawal,
         uint128 amountCredit
     ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0 && amountTokenWithdrawal > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
-        vm.assume(amountToken >= amountTokenWithdrawal);
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        amountToken = uint112(bound(amountToken, 1, maxAmountToken));
+
+        // And: the withdrawal is not bigger than the deposit.
+        amountTokenWithdrawal = uint112(bound(amountTokenWithdrawal, 1, amountToken));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
 
@@ -307,19 +309,21 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint128 amountCredit,
         uint24 deltaTimestamp
     ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        // And: The collateral is worth at least one unit of credit.
+        uint256 minAmountToken =
+            (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
+        minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
+        amountToken = uint112(bound(amountToken, minAmountToken, maxAmountToken));
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS);
 
-        vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -345,20 +349,21 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
     function testScenario_Success_repay_ExactDebt(uint112 amountToken, uint128 amountCredit, uint16 blocksToRoll)
         public
     {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0);
-        vm.assume(amountCredit > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        // And: The collateral is worth at least one unit of credit.
+        uint256 minAmountToken =
+            (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
+        minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
+        amountToken = uint112(bound(amountToken, minAmountToken, maxAmountToken));
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS);
 
-        vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -387,21 +392,22 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint16 blocksToRoll,
         uint8 factor
     ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0);
-        vm.assume(factor > 0);
-        vm.assume(amountCredit > 0);
+        factor = uint8(bound(factor, 1, type(uint8).max));
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        // And: The collateral is worth at least one unit of credit.
+        uint256 minAmountToken =
+            (AssetValuationLib.ONE_4 * 10 ** (18 - Constants.STABLE_DECIMALS) - 1) / collFactor_ + 1;
+        minAmountToken = (minAmountToken * 10 ** Constants.TOKEN_DECIMALS - 1) / valueOfOneToken + 1;
+        amountToken = uint112(bound(amountToken, minAmountToken, maxAmountToken));
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS);
 
-        vm.assume(maxCredit > 0);
         amountCredit = uint128(bound(amountCredit, 1, maxCredit));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
@@ -435,21 +441,22 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         uint24 deltaTimestamp,
         uint128 toRepay
     ) public {
-        // Given: collateralValue is smaller than maxExposure.
-        amountToken = uint112(bound(amountToken, 0, type(uint112).max - 1));
-
-        vm.assume(amountToken > 0);
-        vm.assume(toRepay > 0);
         uint16 collFactor_ = Constants.TOKEN_TO_STABLE_COLL_FACTOR;
 
         uint256 valueOfOneToken = (Constants.WAD * rates.token1ToUsd) / 10 ** Constants.TOKEN_ORACLE_DECIMALS;
-        vm.assume(amountToken < type(uint128).max / valueOfOneToken);
+        // Given: collateralValue is smaller than maxExposure and its value does not overflow.
+        uint256 maxAmountToken = type(uint128).max / valueOfOneToken - 1;
+        if (maxAmountToken > type(uint112).max - 1) maxAmountToken = type(uint112).max - 1;
+        amountToken = uint112(bound(amountToken, 1, maxAmountToken));
 
         uint256 maxCredit = ((valueOfOneToken * amountToken) / 10 ** Constants.TOKEN_DECIMALS) * collFactor_
             / AssetValuationLib.ONE_4 / 10 ** (18 - Constants.STABLE_DECIMALS);
 
-        vm.assume(maxCredit > 0);
-        amountCredit = uint128(bound(amountCredit, 1, maxCredit));
+        vm.assume(maxCredit > 1);
+        amountCredit = uint128(bound(amountCredit, 2, maxCredit));
+
+        // And: Only part of the credit is repaid.
+        toRepay = uint128(bound(toRepay, 1, uint256(amountCredit) - 1));
 
         depositErc20InAccount(account, mockERC20.token1, amountToken);
 
@@ -463,7 +470,6 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         // total liquidity does not overflow.
         vm.assume(pool.calcUnrealisedDebt() + totalLiquidity <= type(uint128).max);
 
-        vm.assume(toRepay < amountCredit);
         vm.assume(debt.previewWithdraw(toRepay) > 0);
 
         vm.prank(users.accountOwner);

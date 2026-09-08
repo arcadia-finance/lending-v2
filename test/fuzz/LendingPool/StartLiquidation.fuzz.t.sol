@@ -14,7 +14,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "startLiquidation" of contract "LendingPool".
  */
-// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply,unsafe-typecast)
 contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using FixedPointMathLib for uint256;
     /* ///////////////////////////////////////////////////////////////
@@ -52,8 +52,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Revert_StartLiquidation_Paused(uint112 amountLoaned, address liquidationInitiator) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -83,9 +82,10 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint16(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint16(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -143,9 +143,10 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint16(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint16(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -213,9 +214,10 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     ) public {
         // Given: Account has debt
         bytes3 emptyBytes4;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 150) * 100)); // No overflow when debt is increased
+        initiationWeight = uint16(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint16(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -232,8 +234,7 @@ contract StartLiquidation_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         debt.setRealisedDebt(uint256(amountLoaned + 1));
 
         //And: an auction is ongoing
-        vm.assume(auctionsInProgress > 0);
-        vm.assume(auctionsInProgress < type(uint16).max);
+        auctionsInProgress = uint16(bound(auctionsInProgress, 1, type(uint16).max - 1));
         pool.setAuctionsInProgress(auctionsInProgress);
         vm.prank(address(pool));
         jrTranche.setAuctionInProgress(true);

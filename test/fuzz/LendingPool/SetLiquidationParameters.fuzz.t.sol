@@ -63,7 +63,12 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint16 minRewardWeight,
         uint80 maxReward
     ) public {
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight > pool.getMaxTotalPenalty());
+        // Given: The sum of the weights exceeds the maximum total penalty.
+        uint256 maxTotalPenalty = pool.getMaxTotalPenalty();
+        uint256 minTerminationWeight = maxTotalPenalty + 1 > uint32(initiationWeight) + penaltyWeight
+            ? maxTotalPenalty + 1 - initiationWeight - penaltyWeight
+            : 0;
+        terminationWeight = uint16(bound(terminationWeight, minTerminationWeight, type(uint16).max));
 
         vm.startPrank(users.owner);
         vm.expectRevert(LendingPoolErrors.LiquidationWeightsTooHigh.selector);
@@ -78,7 +83,10 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint16 minRewardWeight,
         uint80 maxReward
     ) public {
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= pool.getMaxTotalPenalty());
+        initiationWeight = uint16(bound(initiationWeight, 0, pool.getMaxTotalPenalty()));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, pool.getMaxTotalPenalty() - initiationWeight));
+        terminationWeight =
+            uint16(bound(terminationWeight, 0, pool.getMaxTotalPenalty() - initiationWeight - penaltyWeight));
 
         minRewardWeight = uint16(bound(minRewardWeight, 5000 + 1, type(uint16).max));
 
@@ -95,7 +103,10 @@ contract SetLiquidationParameters_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         uint16 minRewardWeight,
         uint80 maxReward
     ) public {
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= pool.getMaxTotalPenalty());
+        initiationWeight = uint16(bound(initiationWeight, 0, pool.getMaxTotalPenalty()));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, pool.getMaxTotalPenalty() - initiationWeight));
+        terminationWeight =
+            uint16(bound(terminationWeight, 0, pool.getMaxTotalPenalty() - initiationWeight - penaltyWeight));
 
         minRewardWeight = uint16(bound(minRewardWeight, 0, 5000));
 

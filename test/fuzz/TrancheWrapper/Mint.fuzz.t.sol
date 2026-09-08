@@ -37,7 +37,7 @@ contract Mint_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     }
 
     function testFuzz_Success_mint(uint128 shares, address receiver) public {
-        vm.assume(shares > 0);
+        shares = uint128(bound(shares, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.mint(shares, receiver);

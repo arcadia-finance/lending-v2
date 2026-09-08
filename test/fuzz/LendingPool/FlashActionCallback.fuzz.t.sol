@@ -13,6 +13,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "flashActionCallback" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using FixedPointMathLib for uint256;
 
@@ -56,8 +57,9 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address sender,
         bytes3 referrer
     ) public {
-        vm.assume(liquidity < amountLoaned);
-        vm.assume(liquidity > 0);
+        // Given: There is insufficient liquidity for the loan.
+        amountLoaned = uint128(bound(amountLoaned, 2, type(uint128).max));
+        liquidity = uint128(bound(liquidity, 1, uint256(amountLoaned) - 1));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -87,10 +89,14 @@ contract FlashActionCallback_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(actionTarget != address(pool));
         vm.assume(actionTarget != users.treasury);
 
-        vm.assume(liquidity >= amountLoaned);
+        // Given: The loan and its origination fee do not overflow.
+        amountLoaned = uint128(
+            bound(amountLoaned, 1, uint256(type(uint128).max) * 10_000 / (10_000 + uint256(originationFee)) - 1)
+        );
         uint256 fee = uint256(amountLoaned).mulDivUp(originationFee, 10_000);
-        vm.assume(liquidity <= type(uint128).max - fee);
-        vm.assume(amountLoaned > 0);
+
+        // And: There is sufficient liquidity.
+        liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max - fee));
 
         vm.prank(users.owner);
         pool.setOriginationFee(originationFee);

@@ -24,10 +24,9 @@ contract GetOpenPosition_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_getOpenPosition(uint112 amountLoaned) public {
         // Given: collateralValue is smaller than maxExposure.
         // forge-lint: disable-next-item(unsafe-typecast)
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 0 + 1, type(uint112).max - 1));
 
         // Given: an Account has taken out debt
-        vm.assume(amountLoaned > 0);
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amountLoaned, users.liquidityProvider);

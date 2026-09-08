@@ -13,6 +13,7 @@ import { Tranche } from "../../../src/Tranche.sol";
 /**
  * @notice Fuzz tests for the function "donateToTranche" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -26,7 +27,7 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
                               TESTS
     //////////////////////////////////////////////////////////////*/
     function testFuzz_Revert_donateToTranche_indexIsNoTranche(uint256 index) public {
-        vm.assume(index >= pool.numberOfTranches());
+        index = bound(index, pool.numberOfTranches(), type(uint256).max);
 
         vm.expectRevert(stdError.indexOOBError);
         pool.donateToTranche(index, 1);
@@ -40,9 +41,9 @@ contract DonateToTranche_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     function testFuzz_Success_donateToTranche(uint8 index, uint128 assets, address donator, uint128 initialShares)
         public
     {
-        vm.assume(assets > 0);
-        vm.assume(assets <= type(uint128).max - pool.totalLiquidity() - initialShares);
-        vm.assume(index < pool.numberOfTranches());
+        initialShares = uint128(bound(initialShares, 0, type(uint128).max - pool.totalLiquidity() - 1));
+        assets = uint128(bound(assets, 1, type(uint128).max - pool.totalLiquidity() - initialShares));
+        index = uint8(bound(index, 0, pool.numberOfTranches() - 1));
 
         address tranche_ = pool.getTranches(index);
         vm.startPrank(users.liquidityProvider);

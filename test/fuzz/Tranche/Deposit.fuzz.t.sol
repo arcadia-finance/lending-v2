@@ -11,6 +11,7 @@ import { TrancheErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "deposit" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -51,7 +52,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     }
 
     function testFuzz_Success_deposit(uint128 assets, address receiver) public {
-        vm.assume(assets > 0);
+        assets = uint128(bound(assets, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         tranche.deposit(assets, receiver);
@@ -63,7 +64,7 @@ contract Deposit_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     }
 
     function testFuzz_Success_deposit_sync(uint128 assets, address receiver) public {
-        vm.assume(assets > 3);
+        assets = uint128(bound(assets, 3 + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         tranche.deposit(assets / 3, receiver);

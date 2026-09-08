@@ -15,7 +15,7 @@ fs_permissions = [{ access = "write", path = "./script/out"}]
 # - 3860: Contract initcode size exceeds 49152 bytes
 # - 4591: More than 256 warnings (meta-warning triggered by suppressed max size warnings)
 # - 5574: Contract code size exceeds 24576 bytes
-ignored_error_codes = [2424, 3860, 4591, 5574, 8429]
+ignored_error_codes = [2394, 2424, 3860, 4591, 5574, 8429]
 
 [profile.lite]
 src = 'src'
@@ -37,11 +37,22 @@ tab_width = 4
 exclude_lints = [
     "asm-keccak256",
     "calls-loop",
+    "costly-loop",
+    "inline-assembly",
+    "internal-function-used-once",
+    "literal-instead-of-constant",
+    "low-level-calls",
     "missing-events-access-control",
+    "missing-inheritance",
     "missing-zero-check",
+    "multi-contract-file",
+    "non-reentrant-not-first",
+    "pragma-inconsistent",
     "reentrancy-events",
+    "require-revert-in-loop",
     "uninitialized-local",
     "unsafe-cheatcode",
+    "unused-error",
     "unused-return",
     "unwrapped-modifier-logic",
 ]

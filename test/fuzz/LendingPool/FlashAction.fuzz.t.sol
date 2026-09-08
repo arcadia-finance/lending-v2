@@ -82,7 +82,7 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes calldata actionData
     ) public {
         vm.assume(beneficiary != users.accountOwner);
-        vm.assume(amountAllowed < type(uint256).max);
+        amountAllowed = bound(amountAllowed, 0, type(uint256).max - 1);
 
         vm.prank(users.accountOwner);
         pool.approveBeneficiary(beneficiary, amountAllowed, address(account));
@@ -99,11 +99,13 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
+        collateralValue = uint112(bound(collateralValue, 2, type(uint112).max - 1));
 
-        vm.assume(collateralValue >= amountLoaned);
-        vm.assume(liquidity < amountLoaned);
-        vm.assume(liquidity > 0);
+        // And: The loan is covered by the collateral.
+        amountLoaned = uint128(bound(amountLoaned, 2, collateralValue));
+
+        // And: There is insufficient liquidity for the loan.
+        liquidity = uint128(bound(liquidity, 1, uint256(amountLoaned) - 1));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(liquidity, users.liquidityProvider);
@@ -121,11 +123,13 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint128 liquidity
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
+        collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
 
-        vm.assume(collateralValue >= amountLoaned);
-        vm.assume(liquidity >= amountLoaned);
-        vm.assume(amountLoaned > 0);
+        // And: The loan is covered by the collateral.
+        amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
+
+        // And: There is sufficient liquidity.
+        liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max));
 
         depositErc20InAccount(account, mockERC20.stable1, collateralValue);
 
@@ -150,11 +154,13 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address beneficiary
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
+        collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
 
-        vm.assume(collateralValue >= amountLoaned);
-        vm.assume(liquidity >= amountLoaned);
-        vm.assume(amountLoaned > 0);
+        // And: The loan is covered by the collateral.
+        amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
+
+        // And: There is sufficient liquidity.
+        liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max));
         vm.assume(beneficiary != users.accountOwner);
 
         depositErc20InAccount(account, mockERC20.stable1, collateralValue);
@@ -183,10 +189,14 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         // Given: collateralValue is smaller than maxExposure.
         collateralValue = uint112(bound(collateralValue, type(uint96).max, type(uint112).max - 1));
 
-        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned).mulDivDown(originationFee, 10_000)));
-        vm.assume(liquidity >= amountLoaned);
-        vm.assume(liquidity <= type(uint128).max - (uint256(amountLoaned).mulDivUp(originationFee, 10_000)));
-        vm.assume(amountLoaned > 0);
+        // And: The loan and its origination fee stay below the collateral value.
+        amountLoaned =
+            uint128(bound(amountLoaned, 1, uint256(collateralValue) * 10_000 / (10_000 + uint256(originationFee))));
+
+        // And: There is sufficient liquidity and the origination fee does not overflow.
+        liquidity = uint128(
+            bound(liquidity, amountLoaned, type(uint128).max - uint256(amountLoaned).mulDivUp(originationFee, 10_000))
+        );
 
         vm.prank(users.owner);
         pool.setOriginationFee(originationFee);
@@ -230,11 +240,14 @@ contract FlashAction_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         bytes3 ref
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
+        collateralValue = uint112(bound(collateralValue, 2, type(uint112).max - 1));
 
-        vm.assume(collateralValue >= uint256(amountLoaned) + (uint256(amountLoaned) * originationFee / 10_000));
-        vm.assume(liquidity >= amountLoaned);
-        vm.assume(amountLoaned > 0);
+        // And: The loan and its origination fee stay below the collateral value.
+        amountLoaned =
+            uint128(bound(amountLoaned, 1, uint256(collateralValue) * 10_000 / (10_000 + uint256(originationFee))));
+
+        // And: There is sufficient liquidity.
+        liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max));
 
         vm.prank(users.owner);
         pool.setOriginationFee(0);

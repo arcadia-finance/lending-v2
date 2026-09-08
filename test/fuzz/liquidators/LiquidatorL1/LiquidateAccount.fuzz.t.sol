@@ -15,7 +15,7 @@ import { stdStorage, StdStorage } from "../../../../lib/accounts-v2/lib/forge-st
 /**
  * @notice Fuzz tests for the function "liquidateAccount" of contract "LiquidatorL1".
  */
-// forge-lint: disable-next-item(divide-before-multiply)
+// forge-lint: disable-next-item(divide-before-multiply,unsafe-typecast)
 contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     using FixedPointMathLib for uint256;
     using stdStorage for StdStorage;
@@ -45,8 +45,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     {
         // Given: Account auction is already started
         bytes3 emptyBytes3;
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 150) * 100); // No overflow when debt is increased
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 150) * 100));
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -111,8 +110,7 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
     ) public {
         // Given: Account has debt
         bytes3 emptyBytes3;
-        vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint112).max - 2); // No overflow when debt is increased
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 2)); // No overflow when debt is increased
         depositErc20InAccount(account, mockERC20.stable1, amountLoaned);
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), type(uint256).max);
@@ -139,9 +137,10 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         uint80 maxReward,
         address liquidationInitiator
     ) public {
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint16(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint16(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -187,12 +186,10 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         uint80 maxReward,
         address liquidationInitiator
     ) public {
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint256(amountLoaned) * initiationWeight <= (type(uint256).max));
-        vm.assume(uint256(amountLoaned) * terminationWeight <= (type(uint256).max));
-        vm.assume(uint256(amountLoaned) * penaltyWeight <= (type(uint256).max));
-        vm.assume(uint32(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint16(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint16(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint16(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -253,9 +250,10 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         uint80 maxReward,
         address liquidationInitiator
     ) public {
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint8(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint8(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint8(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
 
         // Given: Account has debt
         bytes3 emptyBytes3;
@@ -304,9 +302,10 @@ contract LiquidateAccount_LiquidatorL1_Fuzz_Test is LiquidatorL1_Fuzz_Test {
         uint80 maxReward,
         address liquidationInitiator
     ) public {
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100); // No overflow when debt is increased
-        vm.assume(uint16(initiationWeight) + penaltyWeight + terminationWeight <= 1100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100)); // No overflow when debt is increased
+        initiationWeight = uint8(bound(initiationWeight, 0, 1100));
+        penaltyWeight = uint8(bound(penaltyWeight, 0, 1100 - initiationWeight));
+        terminationWeight = uint8(bound(terminationWeight, 0, 1100 - initiationWeight - penaltyWeight));
 
         // Given: Account has debt
         bytes3 emptyBytes3;

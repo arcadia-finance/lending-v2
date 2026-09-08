@@ -12,6 +12,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "withdrawFromLendingPool" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -30,7 +31,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         address unprivilegedAddress
     ) public {
         vm.assume(unprivilegedAddress != address(srTranche));
-        vm.assume(assetsWithdrawn > 0);
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 1, type(uint128).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(assetsWithdrawn, users.liquidityProvider);
@@ -46,7 +47,8 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
         uint128 assetsWithdrawn,
         address receiver
     ) public {
-        vm.assume(assetsDeposited < assetsWithdrawn);
+        assetsWithdrawn = uint128(bound(assetsWithdrawn, 1, type(uint128).max));
+        assetsDeposited = uint128(bound(assetsDeposited, 0, assetsWithdrawn - 1));
 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
@@ -63,7 +65,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
     ) public {
         vm.assume(receiver != address(pool));
         vm.assume(receiver != users.liquidityProvider);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, assetsWithdrawn, type(uint128).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);
@@ -84,7 +86,7 @@ contract WithdrawFromLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test 
     ) public {
         vm.assume(receiver != address(pool));
         vm.assume(receiver != users.liquidityProvider);
-        vm.assume(assetsDeposited >= assetsWithdrawn);
+        assetsDeposited = uint128(bound(assetsDeposited, assetsWithdrawn, type(uint128).max));
 
         vm.startPrank(address(srTranche));
         pool.depositInLendingPool(assetsDeposited, users.liquidityProvider);

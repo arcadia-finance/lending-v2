@@ -40,8 +40,7 @@ contract EndAuction_LiquidatorL2_Fuzz_Test is LiquidatorL2_Fuzz_Test {
 
     function testFuzz_Revert_endAuction_SequencerDown(address caller, uint112 amountLoaned, uint32 startedAt) public {
         // Given: The account auction is initiated.
-        vm.assume(amountLoaned > 1);
-        vm.assume(amountLoaned <= (type(uint112).max / 300) * 100);
+        amountLoaned = uint112(bound(amountLoaned, 1 + 1, (type(uint112).max / 300) * 100));
         initiateLiquidation(0, amountLoaned);
 
         // And: The sequencer is down.

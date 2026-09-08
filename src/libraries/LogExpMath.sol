@@ -145,6 +145,7 @@ library LogExpMath {
      *
      * Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
      */
+    // forge-lint: disable-next-item(cyclomatic-complexity)
     function exp(int256 x) internal pure returns (int256) {
         _require(x >= MIN_NATURAL_EXPONENT && x <= MAX_NATURAL_EXPONENT, Errors.INVALID_EXPONENT);
 
@@ -285,6 +286,7 @@ library LogExpMath {
     /**
      * @dev Internal natural logarithm (ln(a)) with signed 18 decimal fixed point argument.
      */
+    // forge-lint: disable-next-item(cyclomatic-complexity)
     function _ln(int256 a) private pure returns (int256) {
         if (a < ONE_18) {
             // Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)). If a is less

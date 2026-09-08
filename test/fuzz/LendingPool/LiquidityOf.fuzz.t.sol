@@ -36,7 +36,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 interestWeightTranche,
         uint16 totalInterestWeight
     ) public {
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTranche = uint16(bound(interestWeightTranche, 0, totalInterestWeight));
         vm.startPrank(users.owner);
@@ -47,10 +47,8 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
-        vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
-        vm.assume(interestRate > 0);
-        vm.assume(initialLiquidity >= realisedDebt);
+        interestRate = uint80(bound(interestRate, 0 + 1, 1e3 * 10 ** 18));
+        initialLiquidity = uint120(bound(initialLiquidity, realisedDebt, type(uint120).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidity, users.liquidityProvider);
@@ -86,7 +84,7 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         uint16 interestWeightTreasury,
         uint16 totalInterestWeight
     ) public {
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         interestWeightTreasury = uint16(bound(interestWeightTreasury, 0, totalInterestWeight));
         vm.startPrank(users.owner);
@@ -97,12 +95,8 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
         // Given: collateralValue is smaller than maxExposure.
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
-        vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
-        vm.assume(interestRate > 0);
-        vm.assume(initialLiquidityTranche >= realisedDebt);
-        // forge-lint: disable-next-item(type-based-tautology)
-        vm.assume(initialLiquidityTranche >= 0);
+        interestRate = uint80(bound(interestRate, 0 + 1, 1e3 * 10 ** 18));
+        initialLiquidityTranche = uint120(bound(initialLiquidityTranche, realisedDebt, type(uint120).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);
@@ -147,17 +141,15 @@ contract LiquidityOf_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         vm.assume(user != address(srTranche));
         vm.assume(user != address(jrTranche));
 
-        // Given interestWeights:
+        // Given: interestWeights:
         totalInterestWeight = uint16(bound(totalInterestWeight, 1, type(uint16).max));
         vm.prank(users.owner);
         pool.setInterestWeightTranche(0, totalInterestWeight);
 
         // Given: collateralValue is smaller than maxExposure.
         realisedDebt = uint112(bound(realisedDebt, 1, type(uint112).max - 1));
-        vm.assume(deltaTimestamp <= 5 * 365 * 24 * 60 * 60); // 5 year
-        vm.assume(interestRate <= 1e3 * 10 ** 18); // 1000%
-        vm.assume(interestRate > 0);
-        vm.assume(initialLiquidityTranche >= realisedDebt);
+        interestRate = uint80(bound(interestRate, 0 + 1, 1e3 * 10 ** 18));
+        initialLiquidityTranche = uint120(bound(initialLiquidityTranche, realisedDebt, type(uint120).max));
 
         vm.prank(address(srTranche));
         pool.depositInLendingPool(initialLiquidityTranche, users.liquidityProvider);

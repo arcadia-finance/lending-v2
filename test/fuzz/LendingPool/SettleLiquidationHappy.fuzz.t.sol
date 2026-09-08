@@ -11,6 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "settleLiquidationHappyFlow" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -46,16 +47,13 @@ contract SettleLiquidationHappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address auctionTerminator,
         uint128 surplus
     ) public {
-        // forge-lint: disable-next-item(unsafe-typecast)
-        surplus = uint128(bound(surplus, 1, type(uint128).max));
-        vm.assume(startDebt > 0);
+        startDebt = uint128(bound(startDebt, 1, type(uint128).max));
         (uint256 initiationReward, uint256 auctionTerminationReward, uint256 liquidationPenalty) =
             pool.getCalculateRewards(startDebt, 0);
-        vm.assume(uint256(liquidity) >= startDebt + initiationReward + auctionTerminationReward + liquidationPenalty);
-        vm.assume(
-            uint256(liquidity) + surplus + initiationReward + auctionTerminationReward + liquidationPenalty
-                <= type(uint128).max
-        );
+        uint256 rewards = initiationReward + auctionTerminationReward + liquidationPenalty;
+        vm.assume(uint256(startDebt) + 2 * rewards < type(uint128).max);
+        surplus = uint128(bound(surplus, 1, type(uint128).max - startDebt - 2 * rewards));
+        liquidity = uint128(bound(liquidity, startDebt + rewards, type(uint128).max - surplus - rewards));
 
         vm.assume(
             auctionTerminator != address(srTranche) && auctionTerminator != address(jrTranche)

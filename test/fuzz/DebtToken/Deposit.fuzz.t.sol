@@ -33,7 +33,7 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
     }
 
     function testFuzz_Success_deposit_Internal_FirstDeposit(uint256 assets, address receiver) public {
-        vm.assume(assets > 0);
+        assets = bound(assets, 1, type(uint256).max);
 
         debt_.deposit_(assets, receiver);
 
@@ -48,11 +48,11 @@ contract Deposit_DebtToken_Fuzz_Test is DebtToken_Fuzz_Test {
         uint256 totalSupply,
         uint256 totalDebt
     ) public {
-        vm.assume(assets <= totalDebt);
-        vm.assume(assets <= type(uint256).max - totalDebt);
-        vm.assume(assets > 0);
-        vm.assume(totalSupply > 0); //Not first deposit
-        vm.assume(assets <= type(uint256).max / totalSupply); //Avoid overflow in next assumption
+        totalDebt = bound(totalDebt, 1, type(uint256).max / 2);
+        totalSupply = bound(totalSupply, 1, type(uint256).max);
+        // Avoid overflow of the shares calculation.
+        uint256 maxAssets = type(uint256).max / totalSupply;
+        assets = bound(assets, 1, totalDebt < maxAssets ? totalDebt : maxAssets);
 
         stdstore.target(address(debt_)).sig(debt_.totalSupply.selector).checked_write(totalSupply);
 

@@ -11,6 +11,7 @@ import { stdStorage, StdStorage } from "../../../lib/accounts-v2/lib/forge-std/s
 /**
  * @notice Fuzz tests for the function "maxRedeem" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     using stdStorage for StdStorage;
     /* ///////////////////////////////////////////////////////////////
@@ -56,10 +57,13 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         uint128 claimableLiquidityOfTranche,
         uint128 availableLiquidityOfTranche
     ) public {
-        vm.assume(shares <= totalShares);
-        vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
-        vm.assume(availableLiquidityOfTranche <= totalLiquidity);
-        if (totalShares > 0) vm.assume(claimableLiquidityOfTranche > 0);
+        if (totalShares > 0) {
+            totalLiquidity = uint128(bound(totalLiquidity, 1, type(uint128).max));
+        }
+        shares = uint128(bound(shares, 0, totalShares));
+        claimableLiquidityOfTranche =
+            uint128(bound(claimableLiquidityOfTranche, totalShares > 0 ? 1 : 0, totalLiquidity));
+        availableLiquidityOfTranche = uint128(bound(availableLiquidityOfTranche, 0, totalLiquidity));
 
         stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);
@@ -89,10 +93,13 @@ contract MaxRedeem_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
         uint128 claimableLiquidityOfTranche,
         uint128 availableLiquidityOfTranche
     ) public {
-        vm.assume(shares <= totalShares);
-        vm.assume(claimableLiquidityOfTranche <= totalLiquidity);
-        vm.assume(availableLiquidityOfTranche <= totalLiquidity);
-        if (totalShares > 0) vm.assume(claimableLiquidityOfTranche > 0);
+        if (totalShares > 0) {
+            totalLiquidity = uint128(bound(totalLiquidity, 1, type(uint128).max));
+        }
+        shares = uint128(bound(shares, 0, totalShares));
+        claimableLiquidityOfTranche =
+            uint128(bound(claimableLiquidityOfTranche, totalShares > 0 ? 1 : 0, totalLiquidity));
+        availableLiquidityOfTranche = uint128(bound(availableLiquidityOfTranche, 0, totalLiquidity));
 
         stdstore.target(address(tranche)).sig(pool.balanceOf.selector).with_key(owner).checked_write(shares);
         stdstore.target(address(tranche)).sig(pool.totalSupply.selector).checked_write(totalShares);

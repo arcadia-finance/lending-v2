@@ -11,6 +11,7 @@ import { TrancheErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "mint" of contract "Tranche".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -34,7 +35,7 @@ contract Mint_Tranche_Fuzz_Test is Tranche_Fuzz_Test {
     }
 
     function testFuzz_Success_mint(uint128 shares, address receiver) public {
-        vm.assume(shares > 0);
+        shares = uint128(bound(shares, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         tranche.mint(shares, receiver);

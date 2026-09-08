@@ -12,6 +12,7 @@ import { LendingPoolErrors } from "../../../src/libraries/Errors.sol";
 /**
  * @notice Fuzz tests for the function "depositInLendingPool" of contract "LendingPool".
  */
+// forge-lint: disable-next-item(unsafe-typecast)
 contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     /* ///////////////////////////////////////////////////////////////
                               SETUP
@@ -37,7 +38,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_depositInLendingPool_NotApproved(uint128 amount) public {
-        vm.assume(amount > 0);
+        amount = uint128(bound(amount, 1, type(uint128).max));
         vm.prank(users.liquidityProvider);
         mockERC20.stable1.approve(address(pool), 0);
 
@@ -48,7 +49,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Revert_depositInLendingPool_Paused(uint128 amount0, uint128 amount1) public {
-        vm.assume(amount0 <= type(uint128).max - amount1);
+        amount0 = uint128(bound(amount0, 0, type(uint128).max - amount1));
 
         vm.warp(35 days);
         vm.prank(users.guardian);
@@ -64,7 +65,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_depositInLendingPool_FirstDepositByTranche(uint256 amount) public {
-        vm.assume(amount <= type(uint128).max);
+        amount = bound(amount, 0, type(uint128).max);
         vm.prank(address(srTranche));
         pool.depositInLendingPool(amount, users.liquidityProvider);
 
@@ -74,7 +75,7 @@ contract DepositInLendingPool_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
     }
 
     function testFuzz_Success_depositInLendingPool_MultipleDepositsByTranches(uint128 amount0, uint128 amount1) public {
-        vm.assume(amount0 <= type(uint128).max - amount1);
+        amount0 = uint128(bound(amount0, 0, type(uint128).max - amount1));
 
         uint256 totalAmount = uint256(amount0) + uint256(amount1);
 

@@ -52,7 +52,7 @@ contract Deposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     }
 
     function testFuzz_Success_deposit(uint128 assets, address receiver) public {
-        vm.assume(assets > 0);
+        assets = uint128(bound(assets, 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.deposit(assets, receiver);
@@ -98,7 +98,7 @@ contract Deposit_TrancheWrapper_Fuzz_Test is TrancheWrapper_Fuzz_Test {
     }
 
     function testFuzz_Success_deposit_sync(uint128 assets, address receiver) public {
-        vm.assume(assets > 3);
+        assets = uint128(bound(assets, 3 + 1, type(uint128).max));
 
         vm.prank(users.liquidityProvider);
         trancheWrapper.deposit(assets / 3, receiver);

@@ -6,7 +6,6 @@ pragma solidity ^0.8.0;
 
 import { LendingPool_Fuzz_Test } from "./_LendingPool.fuzz.t.sol";
 
-import { AssetValuationLib } from "../../../lib/accounts-v2/src/libraries/AssetValuationLib.sol";
 import { DebtTokenErrors } from "../../../src/libraries/Errors.sol";
 import { GuardianErrors } from "../../../lib/accounts-v2/src/libraries/Errors.sol";
 import { LendingPool } from "../../../src/LendingPool.sol";
@@ -31,11 +30,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
 
-        vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
-        vm.assume(availableFunds > 0);
+        // And: The sender has insufficient funds to repay the loan.
+        availableFunds = bound(availableFunds, 1, amountLoaned - 1);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -62,11 +60,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Revert_repay_Paused(uint112 amountLoaned, uint256 availableFunds, address sender) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
 
-        vm.assume(amountLoaned > availableFunds);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
-        vm.assume(availableFunds > 0);
+        // And: The sender has insufficient funds to repay the loan.
+        availableFunds = bound(availableFunds, 1, amountLoaned - 1);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -104,9 +101,12 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address nonAccount
     ) public {
         vm.assume(nonAccount != address(account));
-        vm.assume(availableFunds > amountRepaid);
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != address(account));
+
+        // Given: The sender has sufficient funds.
+        availableFunds = uint128(bound(availableFunds, 1, type(uint128).max));
+        amountRepaid = bound(amountRepaid, 0, availableFunds - 1);
         vm.prank(users.liquidityProvider);
         // forge-lint: disable-next-line(erc20-unchecked-transfer)
         mockERC20.stable1.transfer(sender, availableFunds);
@@ -121,11 +121,10 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 2, type(uint112).max - 1));
 
-        vm.assume(amountLoaned > amountRepaid);
-        vm.assume(amountRepaid > 0);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
+        // And: The repaid amount is smaller than the loan.
+        amountRepaid = bound(amountRepaid, 1, amountLoaned - 1);
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -158,10 +157,7 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
 
     function testFuzz_Success_Repay_ExactAmount(uint112 amountLoaned, address sender) public {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
-
-        vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);
@@ -196,11 +192,9 @@ contract Repay_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        amountLoaned = uint112(bound(amountLoaned, 0, type(uint112).max - 1));
+        amountLoaned = uint112(bound(amountLoaned, 1, type(uint112).max - 1));
 
-        vm.assume(availableFunds > amountLoaned);
-        vm.assume(amountLoaned > 0);
-        vm.assume(amountLoaned <= type(uint256).max / AssetValuationLib.ONE_4); // No overflow Risk Module
+        availableFunds = uint128(bound(availableFunds, uint256(amountLoaned) + 1, type(uint128).max));
         vm.assume(sender != address(0));
         vm.assume(sender != users.liquidityProvider);
         vm.assume(sender != users.accountOwner);

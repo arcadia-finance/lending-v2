@@ -36,6 +36,49 @@ abstract contract LiquidatorL2_Fuzz_Test is Fuzz_Lending_Test {
                         HELPER FUNCTIONS
     /////////////////////////////////////////////////////////////// */
 
+    // forge-lint: disable-next-item(unsafe-typecast)
+    function initiateLiquidationToken1(uint256 amountToken1) public returns (uint256 amountLoaned) {
+        vm.prank(users.riskManager);
+        registry.setRiskParametersOfPrimaryAsset(
+            address(pool), address(mockERC20.token1), 0, type(uint112).max, 1e4, 1e4
+        );
+
+        vm.startPrank(users.accountOwner);
+        account.closeMarginAccount();
+        account.openMarginAccount(address(pool));
+        vm.stopPrank();
+
+        depositErc20InAccount(account, mockERC20.token1, amountToken1);
+
+        address[] memory assetAddresses = new address[](1);
+        assetAddresses[0] = address(mockERC20.token1);
+        uint256[] memory assetIds = new uint256[](1);
+        uint256[] memory assetAmounts = new uint256[](1);
+        assetAmounts[0] = amountToken1;
+        amountLoaned = registry.getCollateralValue(
+            address(mockERC20.stable1), address(pool), assetAddresses, assetIds, assetAmounts
+        );
+        vm.assume(amountLoaned > 2);
+        vm.assume(amountLoaned < type(uint112).max);
+
+        bytes3 emptyBytes3;
+        vm.prank(users.liquidityProvider);
+        mockERC20.stable1.approve(address(pool), type(uint256).max);
+        vm.prank(address(srTranche));
+        pool.depositInLendingPool(amountLoaned, users.liquidityProvider);
+        vm.prank(users.accountOwner);
+        pool.borrow(uint112(amountLoaned), address(account), users.accountOwner, emptyBytes3);
+
+        debt.setRealisedDebt(amountLoaned + 1);
+        stdstore.target(address(pool))
+            .sig(pool.liquidityOf.selector)
+            .with_key(address(srTranche))
+            .checked_write(amountLoaned + 1);
+        pool.setTotalRealisedLiquidity(uint128(amountLoaned + 1));
+
+        liquidator.liquidateAccount(address(account));
+    }
+
     function initiateLiquidation(uint112 amountLoaned) public {
         initiateLiquidation(0, amountLoaned);
     }

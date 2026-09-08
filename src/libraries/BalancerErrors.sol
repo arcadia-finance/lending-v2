@@ -29,6 +29,7 @@ function _require(bool condition, uint256 errorCode) pure {
 /**
  * @dev Reverts with a revert reason containing `errorCode`. Only codes up to 999 are supported.
  */
+// forge-lint: disable-next-item(too-many-digits)
 function _revert(uint256 errorCode) pure {
     // We're going to dynamically create a revert string based on the error code, with the following format:
     // 'BAL#{errorCode}'
