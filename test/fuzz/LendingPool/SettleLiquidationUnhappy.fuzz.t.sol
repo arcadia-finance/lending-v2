@@ -247,8 +247,6 @@ contract SettleLiquidationUnhappy_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test
         address auctionTerminator
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        liquidity = uint112(bound(liquidity, 0, type(uint112).max - 1));
-
         vm.prank(users.owner);
         pool.setLiquidationParameters(2, 5, 2, 0, type(uint80).max);
 

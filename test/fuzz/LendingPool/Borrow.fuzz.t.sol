@@ -122,8 +122,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address trustedCreditor_
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
         vm.assume(trustedCreditor_ != address(pool));
@@ -164,8 +162,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         public
     {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
 
@@ -187,8 +183,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 2, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 2, collateralValue));
         liquidity = uint128(bound(liquidity, 1, uint256(amountLoaned) - 1));
@@ -235,8 +229,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
         liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max));
@@ -269,8 +261,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
         amountAllowed = uint128(bound(amountAllowed, amountLoaned, type(uint128).max));
@@ -305,8 +295,6 @@ contract Borrow_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         address to
     ) public {
         // Given: collateralValue is smaller than maxExposure.
-        collateralValue = uint112(bound(collateralValue, 0, type(uint112).max - 1));
-
         collateralValue = uint112(bound(collateralValue, 1, type(uint112).max - 1));
         amountLoaned = uint128(bound(amountLoaned, 1, collateralValue));
         liquidity = uint128(bound(liquidity, amountLoaned, type(uint128).max));

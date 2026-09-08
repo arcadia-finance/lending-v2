@@ -85,8 +85,8 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         );
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.owner);
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // Calculate expectedInterestRate.
@@ -131,8 +131,8 @@ contract UpdateInterestRate_LendingPool_Fuzz_Test is LendingPool_Fuzz_Test {
         totalRealisedLiquidity_ = uint128(bound(totalRealisedLiquidity_, 1, realisedDebt_ - 1));
 
         // And: The InterestConfiguration is set.
-        vm.prank(users.owner);
         utilisationThreshold_ = uint16(bound(utilisationThreshold_, 0, ONE_4));
+        vm.prank(users.owner);
         pool.setInterestParameters(baseRate_, lowSlope_, highSlope_, utilisationThreshold_);
 
         // Calculate expectedInterestRate.
