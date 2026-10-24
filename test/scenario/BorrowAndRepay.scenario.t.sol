@@ -86,7 +86,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
         vm.stopPrank();
 
-        vm.roll(block.number + 10);
+        vm.roll(vm.getBlockNumber() + 10);
         vm.startPrank(users.accountOwner);
         vm.expectRevert(AccountErrors.AccountUnhealthy.selector);
         pool.borrow(1, address(account), users.accountOwner, emptyBytes3);
@@ -371,7 +371,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         vm.prank(users.accountOwner);
         pool.borrow(amountCredit, address(account), users.accountOwner, emptyBytes3);
 
-        vm.roll(block.number + blocksToRoll);
+        vm.roll(vm.getBlockNumber() + blocksToRoll);
 
         uint256 openDebt = account.getUsedMargin();
 
@@ -382,7 +382,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         assertEq(account.getUsedMargin(), 0);
 
-        vm.roll(block.number + uint256(blocksToRoll) * 2);
+        vm.roll(vm.getBlockNumber() + uint256(blocksToRoll) * 2);
         assertEq(account.getUsedMargin(), 0);
     }
 
@@ -417,7 +417,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
 
         deal(address(mockERC20.stable1), users.accountOwner, factor * amountCredit, true);
 
-        vm.roll(block.number + blocksToRoll);
+        vm.roll(vm.getBlockNumber() + blocksToRoll);
 
         uint256 openDebt = account.getUsedMargin();
         uint256 balanceBefore = mockERC20.stable1.balanceOf(users.accountOwner);
@@ -431,7 +431,7 @@ contract BorrowAndRepay_Scenario_Test is Scenario_Lending_Test {
         assertEq(balanceBefore - openDebt, balanceAfter);
         assertEq(account.getUsedMargin(), 0);
 
-        vm.roll(block.number + uint256(blocksToRoll) * 2);
+        vm.roll(vm.getBlockNumber() + uint256(blocksToRoll) * 2);
         assertEq(account.getUsedMargin(), 0);
     }
 

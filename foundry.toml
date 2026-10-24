@@ -7,6 +7,12 @@ optimizer = true
 optimizer_runs = 200
 fuzz = { runs = 50, max_test_rejects = 100_000_000}
 no_match_path = "**/{script/,test/fork/}*"
+libraries = [
+    "lib/accounts-v2/lib/metadex/V3/src/libraries/AllocationLogicLibrary.sol:AllocationLogicLibrary:0x3000000000000000000000000000000000000001",
+    "lib/accounts-v2/lib/metadex/V3/src/libraries/LeafAllocationLibrary.sol:LeafAllocationLibrary:0x3000000000000000000000000000000000000002",
+    "lib/accounts-v2/lib/metadex/V3/src/libraries/RewardsLogicLibrary.sol:RewardsLogicLibrary:0x3000000000000000000000000000000000000003",
+    "lib/accounts-v2/lib/metadex/V3/src/libraries/VotingRewardsFactoryLibrary.sol:VotingRewardsFactoryLibrary:0x3000000000000000000000000000000000000004",
+]
 fs_permissions = [{ access = "write", path = "./script/out"}]
 # Solmate deprecation warnings (used in deployed contracts via accounts-v2):
 # - 2424: memory-safe-assembly natspec deprecated (FixedPointMathLib.sol, SafeTransferLib.sol, MerkleProofLib.sol)
