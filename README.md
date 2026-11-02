@@ -65,7 +65,7 @@ src
 ├── liquidators/        Dutch auction Liquidator for L1s and L2s
 ├── periphery/          TrancheWrapper, a fully ERC-4626 compliant Tranche wrapper
 ├── interfaces/
-└── libraries/          Errors and LogExpMath (exponential price decay)
+└── libraries/          Errors, LogExpMath (exponential price decay) and its BalancerErrors
 test
 ├── fuzz/               Fuzz tests, one folder per contract
 ├── scenario/           End-to-end scenarios: borrow and repay, leveraged actions
@@ -152,4 +152,8 @@ The core contracts are licensed under the Business Source License 1.1, see [LICE
 
 ## Links
 
-[Website](https://arcadia.finance) · [Docs](https://docs.arcadia.finance) · [Discord](https://discord.gg/PXcr8SEeTH) · [X](https://x.com/ArcadiaFi) · [Blog](https://arcadiafinance.medium.com/)
+- [Website](https://arcadia.finance)
+- [Docs](https://docs.arcadia.finance)
+- [Discord](https://discord.gg/PXcr8SEeTH)
+- [X](https://x.com/ArcadiaFi)
+- [Blog](https://arcadiafinance.medium.com/)
